@@ -16,7 +16,7 @@ app.use(
   cors({
     origin: [
       process.env.FRONTEND_URL || "http://localhost:5173",
-      "https://society-website-bdqq.vercel.app"
+      "https://society-website-bdqq.vercel.app",
     ], // your frontend origin
     credentials: true, // allow cookies and auth headers
   })
