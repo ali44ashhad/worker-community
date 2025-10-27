@@ -7,13 +7,17 @@ import bookingRouter from "./routes/booking.route.js";
 import commentRouter from "./routes/comment.routes.js";
 import adminRouter from "./routes/admin.route.js";
 import cors from "cors";
+import "dotenv/config"
 
 const app = express();
 
 // ✅ CORS configuration
 app.use(
   cors({
-    origin: "http://localhost:5173", // your frontend origin
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:5173",
+      "https://society-website-bdqq.vercel.app"
+    ], // your frontend origin
     credentials: true, // allow cookies and auth headers
   })
 );
