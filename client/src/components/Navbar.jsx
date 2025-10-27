@@ -99,12 +99,16 @@ const Navbar = () => {
             </Link>
           ) : (
             <div className="flex items-center gap-3">
-              { user &&               <button
-                onClick={handleLogout}
+              { user && user.role!=='provider' &&              <Link to='/become-provider'
                 className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
               >
                 Become Provider
-              </button> }
+              </Link> }
+              { user && user.role==='provider' && <Link to='/update-services'
+                className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
+              >
+                Update Services
+              </Link> }
               <button
                 onClick={handleLogout}
                 className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"

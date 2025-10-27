@@ -122,7 +122,7 @@ const providerSlice = createSlice({
         state.isUpdatingProfile = true;
         state.error = null;
       })
-      .addCase(becomeProvider.fulfilled, (state, action) => {
+      .addCase(becomeProvider.fulfilled, (state) => {
         state.isUpdatingProfile = false;
         // You might update allProviders or selectedProvider if needed
         toast.success("Profile created!");

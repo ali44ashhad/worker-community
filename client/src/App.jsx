@@ -13,6 +13,10 @@ import { checkAuth } from './features/authSlice'
 import { Toaster } from 'react-hot-toast'
 import HomePageLoader from './components/loaders/HomePageLoader'
 import { useSelector } from 'react-redux'
+import BecomeProvider from './pages/BecomeProvider'
+import Contact from './pages/Contact'
+import UpdateProfile from './pages/UpdateProfile'
+import UpdateServices from './pages/UpdateServices'
 
 const App = () => {
 
@@ -43,6 +47,10 @@ const App = () => {
         <Route path='/faq' element={<FAQ></FAQ>}></Route>
         <Route path='/provider' element={<Providers></Providers>}></Route>
         <Route path='/login' element={<Login></Login>}></Route>
+        <Route path='/become-provider' element={<BecomeProvider></BecomeProvider>}></Route>
+        <Route path='/contact' element={<Contact></Contact>}></Route>
+        <Route path='/update-profile' element={<UpdateProfile></UpdateProfile>}></Route>
+        <Route path='/update-services' element={<UpdateServices></UpdateServices>}></Route>
       </Routes>
     </div>
   )

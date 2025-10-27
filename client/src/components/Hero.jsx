@@ -70,7 +70,7 @@ const Hero = () => {
 
           {/* Buttons */}
           <div className="flex  gap-4 ">
-            <button className="px-6 py-2.5 bg-black text-white text-sm font-medium rounded-lg shadow-sm hover:bg-indigo-700 transition-colors">
+            <button className="px-6 py-2.5 bg-black text-white text-sm font-medium rounded-lg shadow-sm hover:bg-gray-900 transition-colors">
               Explore Services
             </button>
             <button className="px-6 py-2.5 border border-black text-black text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors">
