@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { HiOutlineMenu, HiOutlineX } from 'react-icons/hi';
+import { 
+  HiOutlineMenu, 
+  HiOutlineX, 
+  HiOutlineSearch, 
+  HiOutlineUserCircle
+} from 'react-icons/hi';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -9,17 +14,7 @@ const Navbar = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const user = useSelector((state) => state.auth.user);
-
-  // Scroll detection
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Scroll to top on route change
   useEffect(() => {
@@ -54,65 +49,75 @@ const Navbar = () => {
     { to: '/testimonials', text: 'Testimonials' },
     { to: '/faq', text: 'FAQ' },
     { to: '/provider', text: 'Providers' },
+    { to: '/contact', text: 'Contact' },
   ];
 
   return (
-    <header
-      className={`fixed top-0 left-0 w-full z-50 h-16 transition-all duration-500 ${
-        isScrolled
-          ? 'bg-white/20 backdrop-blur-md border-b border-gray-300 shadow-sm'
-          : 'bg-transparent border-b border-transparent'
-      }`}
-    >
+    <header className="fixed top-0 text-white left-0 w-full bg-black z-50 h-16 shadow-md border-b border-gray-800">
       <nav className="max-w-[1370px] mx-auto px-3 sm:px-6 lg:px-8 h-full flex items-center justify-between relative">
-        {/* Logo */}
-        <div className="flex">
-          <Link
-            to="/"
-            className="text-[1.4rem] font-bold tracking-tight flex items-center gap-0.5 text-gray-800"
-          >
-            <img src="newFevicon.png" className="h-6" alt="" />
-            SOCIETY
-          </Link>
-        </div>
 
-        {/* Desktop Nav Links */}
-        <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center font-semibold text-[0.94rem] space-x-8">
+        {/* Left Side: Logo */}
+        <Link
+          to="/"
+          className="text-[1.45rem] font-semibold text-white tracking-tight flex items-center gap-0.5"
+        >
+          Commun
+        </Link>
+
+        {/* Centered Nav Links */}
+        <div className="hidden md:flex flex-1 justify-center  ml-24 items-center text-[0.94rem] space-x-8">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className="text-gray-800 hover:text-blue-700 transition-colors duration-200 tracking-wide cursor-pointer"
+              className="text-gray-300 hover:text-white transition-colors duration-200 tracking-wide cursor-pointer"
             >
               {link.text}
             </Link>
           ))}
         </div>
 
-        {/* Desktop Buttons */}
-        {!user ? (
-          <div className="hidden md:flex items-center space-x-4">
+        {/* Right Side: Search, Icons & Auth */}
+        <div className="hidden md:flex items-center gap-3">
+          {/* Search Input */}
+          <div className="relative">
+            <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search services..." 
+              className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg pl-9 py-2 w-56 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+            />
+          </div>
+
+          {/* Auth Buttons */}
+          {!user ? (
             <Link
               to="/login"
-              className="text-white rounded-lg px-4 py-1 bg-blue-500 transition-all duration-300 shadow-lg"
+              className="text-black text-[0.94rem] bg-white rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
             >
               Login
             </Link>
-          </div>
-        ) : (
-          <div className="hidden md:flex items-center space-x-4">
-            <button
-              onClick={handleLogout}
-              className="text-white rounded-lg px-4 py-1 hover:cursor-pointer bg-blue-500 transition-all duration-300 shadow-lg"
-            >
-              Logout
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="flex items-center gap-3">
+              { user &&               <button
+                onClick={handleLogout}
+                className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
+              >
+                Become Provider
+              </button> }
+              <button
+                onClick={handleLogout}
+                className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Mobile Toggle Button */}
         <button
-          className="md:hidden text-gray-700 focus:outline-none z-60"
+          className="md:hidden text-white focus:outline-none z-60"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <HiOutlineX size={28} /> : <HiOutlineMenu size={28} />}
@@ -134,7 +139,7 @@ const Navbar = () => {
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-start px-6 py-5 border-b border-gray-200 bg-linear-to-r from-blue-50 to-purple-50">
+        <div className="flex items-center justify-start px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
           <Link to="/" onClick={closeMenu} className="text-xl font-bold tracking-tight text-gray-700">
             SOCIETY
           </Link>
@@ -169,7 +174,7 @@ const Navbar = () => {
             ) : (
               <button
                 onClick={handleLogout}
-                className="block w-full text-center hover:cursor-pointer text-white rounded-lg px-4 py-3 bg-blue-500 transition-all duration-300 shadow-lg font-medium"
+                className="block w-full text-center text-white rounded-lg px-4 py-3 bg-blue-500 transition-all duration-300 shadow-lg font-medium"
               >
                 Logout
               </button>

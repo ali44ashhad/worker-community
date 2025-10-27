@@ -63,10 +63,10 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen h-screen flex items-center justify-center p-4 bg-gray-50">
+    <div className="min-h-[calc(100vh-45px)] flex mt-11 items-center justify-center p-4 bg-gray-50">
       {/* Toast container */}
 
-      <div className="bg-white flex w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden">
+      <div className="bg-white flex w-full max-w-4xl rounded-lg shadow-2xl overflow-hidden">
         {/* Left Image */}
         <div className="hidden md:block md:w-1/2">
           <img
@@ -94,7 +94,7 @@ const Login = () => {
             {/* Signup-only fields */}
             {mode === "signup" && (
               <>
-                <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-full px-4 gap-3 focus-within:border-indigo-500">
+                <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-lg px-4 gap-3 focus-within:border-indigo-500">
                   <input
                     type="text"
                     name="name"
@@ -106,7 +106,7 @@ const Login = () => {
                   />
                 </div>
 
-                <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-full px-4 gap-3 focus-within:border-indigo-500">
+                <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-lg px-4 gap-3 focus-within:border-indigo-500">
                   <input
                     type="tel"
                     name="phoneNumber"
@@ -121,7 +121,7 @@ const Login = () => {
             )}
 
             {/* Email Input */}
-            <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-full px-4 gap-3 focus-within:border-indigo-500">
+            <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-lg px-4 gap-3 focus-within:border-indigo-500">
               <input
                 type="email"
                 name="email"
@@ -134,7 +134,7 @@ const Login = () => {
             </div>
 
             {/* Password Input */}
-            <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-full px-4 focus-within:border-indigo-500">
+            <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-lg px-4 focus-within:border-indigo-500">
               <input
                 ref={passwordRef}
                 type="password"
@@ -151,7 +151,7 @@ const Login = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="mt-8 w-full h-12 rounded-full text-white font-semibold bg-[#2B7FFF] flex items-center justify-center hover:bg-[#256DEB] transition-colors"
+              className="mt-8 w-full h-12 rounded-lg text-white font-semibold bg-black flex items-center justify-center hover:bg-gray-900 hover:cursor-pointer transition-colors"
               disabled={loading}
             >
               {loading

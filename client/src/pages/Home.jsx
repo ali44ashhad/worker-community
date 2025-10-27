@@ -1,10 +1,12 @@
 import React from 'react'
 import Hero from '../components/Hero'
+import TopCategory from '../components/home/TopCategoty'
 
 const Home = () => {
   return (
     <div className='h-[1000vh]'>
         <Hero></Hero>
+        <TopCategory></TopCategory>
     </div>
   )
 }
