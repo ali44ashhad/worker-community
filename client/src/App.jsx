@@ -50,6 +50,7 @@ const App = () => {
         <Route path='/become-provider' element={<BecomeProvider></BecomeProvider>}></Route>
         <Route path='/contact' element={<Contact></Contact>}></Route>
         <Route path='/update-profile' element={<UpdateProfile></UpdateProfile>}></Route>
+        <Route path='/update-profile/:id' element={<UpdateProfile></UpdateProfile>}></Route>
         <Route path='/update-services' element={<UpdateServices></UpdateServices>}></Route>
       </Routes>
     </div>

@@ -56,6 +56,23 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+// ========================== UPDATE PROFILE ==========================
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async (formData, { rejectWithValue }) => {
+    try {
+      const response = await axios.put(`${API_URL}/api/user/update-profile`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Profile update failed");
+    }
+  }
+);
+
 // ========================== INITIAL STATE ==========================
 const initialState = {
   user: null,
@@ -128,8 +145,23 @@ const authSlice = createSlice({
       .addCase(logoutUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+
+      // ---------- UPDATE PROFILE ----------
+      .addCase(updateProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       });
   },
 });
 
+// export { updateProfile };
 export default authSlice.reducer;

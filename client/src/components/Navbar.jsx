@@ -109,6 +109,16 @@ const Navbar = () => {
               >
                 Update Services
               </Link> }
+
+                {user && (
+                  <Link
+                    to={`/update-profile/${user._id}`}
+                    className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
+                  >
+                    Profile   
+                  </Link>
+                )}
+
               <button
                 onClick={handleLogout}
                 className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
