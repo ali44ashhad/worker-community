@@ -310,13 +310,195 @@ const getProviderById = async (req, res) => {
     }
 };
 
+/**
+ * @description Become a provider with multiple services in one submission
+ * @route POST /api/provider-profile/become-provider-multi
+ * @access Private (Auth User)
+ */
+const becomeProviderWithServices = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        // Parse services from body (expecting JSON string or object)
+        let services;
+        if (typeof req.body.services === 'string') {
+            services = JSON.parse(req.body.services);
+        } else {
+            services = req.body.services;
+        }
+
+        // Validate that services array exists and is not empty
+        if (!services || !Array.isArray(services) || services.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "At least one service is required." 
+            });
+        }
+
+        // Check if user is already a provider
+        const existingProfile = await ProviderProfile.findOne({ user: userId });
+        if (existingProfile) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "You are already a provider." 
+            });
+        }
+
+        // Validate each service has required fields
+        for (let i = 0; i < services.length; i++) {
+            const service = services[i];
+            if (!service.category) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Service ${i + 1}: Category is required.` 
+                });
+            }
+            if (!service.subCategories || service.subCategories.length === 0) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Service ${i + 1}: At least one sub-category is required.` 
+                });
+            }
+            if (!service.keywords || service.keywords.length === 0) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Service ${i + 1}: At least one keyword is required.` 
+                });
+            }
+            if (!service.bio || !service.bio.trim()) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Service ${i + 1}: Bio/Description is required.` 
+                });
+            }
+            if (service.experience === undefined || service.experience === '') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Service ${i + 1}: Experience is required.` 
+                });
+            }
+        }
+
+        // For multi-service, we'll need to handle images differently
+        // Images need to be mapped to the correct service index
+        // Since the frontend uploads preview URLs, we'll need to handle actual file uploads
+        
+        // Calculate average experience
+        const avgExperience = Math.round(
+            services.reduce((sum, s) => sum + parseInt(s.experience || 0), 0) / services.length
+        );
+        
+        const firstService = services[0];
+        const providerBio = firstService.bio.substring(0, 500);
+
+        const newProfile = await ProviderProfile.create({
+            user: userId,
+            bio: providerBio,
+            experience: avgExperience
+        });
+
+        // Create all service offerings
+        const createdServices = [];
+        // req.files is an array when using upload.any()
+        const filesArray = req.files || [];
+        
+        // Group files by service index
+        const filesByService = {};
+        filesArray.forEach(file => {
+            // Extract service index from fieldname (e.g., "service_0_images", "0", etc.)
+            const match = file.fieldname.match(/(\d+)/);
+            if (match) {
+                const index = parseInt(match[1]);
+                if (!filesByService[index]) {
+                    filesByService[index] = [];
+                }
+                filesByService[index].push(file);
+            }
+        });
+        
+        for (let i = 0; i < services.length; i++) {
+            const service = services[i];
+            
+            try {
+                // Get images for this service index
+                const serviceImages = filesByService[i] || [];
+
+                if (serviceImages.length === 0) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: `Service ${i + 1}: Please upload at least one image.` 
+                    });
+                }
+
+                // Upload images to Cloudinary
+                const uploadPromises = serviceImages.map(file => uploadBufferToCloudinary(file.buffer));
+                const portfolioImages = await Promise.all(uploadPromises);
+
+                // Create the service offering
+                const newServiceOffering = new ServiceOffering({
+                    provider: newProfile._id,
+                    serviceCategory: service.category,
+                    subCategories: Array.isArray(service.subCategories) 
+                        ? service.subCategories 
+                        : [service.subCategories],
+                    keywords: Array.isArray(service.keywords) 
+                        ? service.keywords 
+                        : [service.keywords],
+                    description: service.bio,
+                    portfolioImages: portfolioImages,
+                    experience: parseInt(service.experience)
+                });
+
+                await newServiceOffering.save();
+                createdServices.push(newServiceOffering);
+
+            } catch (serviceError) {
+                console.error(`Error creating service ${i + 1}:`, serviceError.message);
+                // If critical, clean up and return error
+                await ProviderProfile.findByIdAndDelete(newProfile._id);
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Error creating service ${i + 1}: ${serviceError.message}` 
+                });
+            }
+        }
+
+        // Check if at least one service was created
+        if (createdServices.length === 0) {
+            await ProviderProfile.findByIdAndDelete(newProfile._id);
+            return res.status(400).json({ 
+                success: false, 
+                message: "Failed to create any services." 
+            });
+        }
+
+        // Update user role to provider
+        await User.findByIdAndUpdate(userId, { role: "provider" });
+
+        return res.status(201).json({
+            success: true,
+            message: `Congratulations! You are now a provider with ${createdServices.length} service(s).`,
+            profile: newProfile,
+            services: createdServices
+        });
+
+    } catch (error) {
+        console.error("Error in becomeProviderWithServices:", error.message);
+        return res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        });
+    }
+};
+
 // --- Export all functions from this file ---
 export {
     becomeProvider,
+    becomeProviderWithServices,
     updateProviderProfile,
     addServiceOffering,
     deleteServiceOffering,
-    getProviderDashboardStats, // <-- This was the missing export!
+    getProviderDashboardStats,
     getAllProviders,
     getProviderById,
 };

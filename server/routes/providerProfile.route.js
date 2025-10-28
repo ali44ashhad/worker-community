@@ -1,6 +1,7 @@
 import express from "express";
 import {
     becomeProvider,
+    becomeProviderWithServices,
     updateProviderProfile,
     addServiceOffering,      // <-- NEW
     deleteServiceOffering,     // <-- NEW
@@ -22,6 +23,13 @@ router.post(
     "/become-provider",
     protect,
     becomeProvider // Does NOT upload images anymore
+);
+
+router.post(
+    "/become-provider-multi",
+    protect,
+    upload.any(), // Accept any file fields
+    becomeProviderWithServices
 );
 
 router.put(

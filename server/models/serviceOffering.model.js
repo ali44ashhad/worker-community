@@ -135,7 +135,13 @@ const serviceOfferingSchema = new Schema({
             public_id: { type: String, required: true },
         },
     ],
-    description: { type: String, default: "" }
+    description: { type: String, default: "" },
+    experience: {
+        type: Number,
+        required: true,
+        min: [0, "Experience cannot be negative"],
+        default: 0
+    }
 }, { timestamps: true });
 
 // --- 2. Add the Pre-Save Hook ---
