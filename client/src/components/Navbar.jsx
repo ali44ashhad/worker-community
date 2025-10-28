@@ -59,13 +59,13 @@ const Navbar = () => {
         {/* Left Side: Logo */}
         <Link
           to="/"
-          className="text-[1.45rem] font-semibold text-white tracking-tight flex items-center gap-0.5"
+          className="text-[1.45rem] font-semibold  min-w-[300px] text-white flex items-center gap-0.5"
         >
-          Commun
+          {user?  `Hi ${user.name},` : "Commun" } 
         </Link>
 
         {/* Centered Nav Links */}
-        <div className="hidden md:flex flex-1 justify-center  ml-24 items-center text-[0.94rem] space-x-8">
+    {!user &&  <div className="hidden md:flex flex-1 justify-center  ml-24 items-center text-[0.94rem] space-x-8">
           {navLinks.map((link) => (
             <Link
               key={link.to}
@@ -75,7 +75,7 @@ const Navbar = () => {
               {link.text}
             </Link>
           ))}
-        </div>
+        </div> }
 
         {/* Right Side: Search, Icons & Auth */}
         <div className="hidden md:flex items-center gap-3">
@@ -115,7 +115,7 @@ const Navbar = () => {
                     to={`/update-profile/${user._id}`}
                     className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
                   >
-                    Profile   
+                    Update Profile   
                   </Link>
                 )}
 

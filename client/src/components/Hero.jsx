@@ -54,30 +54,8 @@ const Hero = () => {
   // ✅ User logged in
   if (user) {
     return (
-      <div className="mt-20 max-w-[1350px] mx-auto px-5">
-        <div className="flex flex-col gap-3">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
-            Hi {user?.name || "User"},
-          </h1>
+      <div className="mt-26 max-w-[1350px] mx-auto px-5">
 
-          <p className="text-gray-600 text-[1rem] md:text-[1.1rem] max-w-3xl">
-            Welcome to{" "}
-            <span className="font-semibold text-indigo-600">Commun</span> — your
-            neighborhood's trusted space for connection and collaboration. You
-            can explore verified services from providers around you or even
-            share your own skills to help others in your community.
-          </p>
-
-          {/* Buttons */}
-          <div className="flex  gap-4 ">
-            <button className="px-6 py-2.5 bg-black text-white text-sm font-medium rounded-lg shadow-sm hover:bg-gray-900 transition-colors">
-              Explore Services
-            </button>
-            <button className="px-6 py-2.5 border border-black text-black text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors">
-              Become a Provider
-            </button>
-          </div>
-        </div>
 
         {/* ✅ Custom Carousel */}
         <div className="mt-6 w-full relative group">
@@ -132,6 +110,30 @@ const Hero = () => {
                 />
               ))}
             </div>
+          </div>
+        </div>
+
+                <div className="flex flex-col gap-3">
+          {/* <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+            Hi {user?.name || "User"},
+          </h1> */}
+
+          <p className="text-gray-600 text-[1rem] mt-6 md:text-[1.1rem] max-w-3xl">
+            Welcome to{" "}
+            <span className="font-semibold text-indigo-600">Commun</span> — your
+            neighborhood's trusted space for connection and collaboration. You
+            can explore verified services from providers around you or even
+            share your own skills to help others in your community.Together, let's build a stronger, more supportive neighborhood where everyone grows and thrives.
+          </p>
+
+          {/* Buttons */}
+          <div className="flex  gap-4 mt-2">
+            <button className="px-6 py-2.5 bg-black text-white text-sm font-medium rounded-lg shadow-sm hover:bg-gray-900 transition-colors">
+              Explore Services
+            </button>
+            {user && user.role!=="provider" && <button className="px-6 py-2.5 border border-black text-black text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors">
+              Become a Provider
+            </button> } 
           </div>
         </div>
       </div>

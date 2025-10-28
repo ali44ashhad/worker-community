@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { Navigate } from 'react-router-dom';
 
 const BecomeProvider = () => {
   const [services, setServices] = useState([{
@@ -333,6 +334,7 @@ const BecomeProvider = () => {
 
       if (data.success) {
         toast.success(data.message || 'Provider registration submitted successfully!');
+        <Navigate to='/' ></Navigate>
         // Reset form or redirect
         setServices([{
           id: Date.now(),
