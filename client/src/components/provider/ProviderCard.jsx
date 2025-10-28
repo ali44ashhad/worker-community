@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { HiOutlineUserCircle, HiArrowRight } from 'react-icons/hi';
+import { useNavigate } from 'react-router-dom';
 
 const ProviderCard = ({ provider }) => {
 
     console.log(provider);
 
+  const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
   
   // Get provider info
   const userName = provider?.user?.name || 'Unknown Provider';
   const profileImage = provider?.user?.profileImage;
   const bio = provider?.bio || 'No bio available.';
-  const experience = provider?.experience || 0;
+  const experience = provider?.experience || 0; 
   const services = provider?.serviceOfferings || [];
   
   // Get first service portfolio images
@@ -135,7 +137,10 @@ const ProviderCard = ({ provider }) => {
         )}
 
         {/* View Profile Button */}
-        <button className="w-full bg-black text-white py-3 px-4 rounded-lg font-semibold hover:bg-white hover:text-black border-2 border-black transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-lg">
+        <button 
+          onClick={() => navigate(`/provider/${provider._id}`)}
+          className="w-full bg-black text-white py-3 px-4 rounded-lg font-semibold hover:bg-white hover:text-black border-2 border-black transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-lg"
+        >
           View Profile
           <HiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>

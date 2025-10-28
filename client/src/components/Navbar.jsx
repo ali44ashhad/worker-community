@@ -50,6 +50,7 @@ const Navbar = () => {
     { to: '/faq', text: 'FAQ' },
     { to: '/provider', text: 'Providers' },
     { to: '/contact', text: 'Contact' },
+    { to: '/service', text: 'Service' },
   ];
 
   return (

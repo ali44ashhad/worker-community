@@ -17,6 +17,9 @@ import BecomeProvider from './pages/BecomeProvider'
 import Contact from './pages/Contact'
 import UpdateProfile from './pages/UpdateProfile'
 import UpdateServices from './pages/UpdateServices'
+import Services from './pages/Services'
+import SpecificProvider from './pages/SpecificProvider'
+import SpecificService from './pages/SpecificService'
 
 const App = () => {
 
@@ -52,6 +55,9 @@ const App = () => {
         <Route path='/update-profile' element={<UpdateProfile></UpdateProfile>}></Route>
         <Route path='/update-profile/:id' element={<UpdateProfile></UpdateProfile>}></Route>
         <Route path='/update-services' element={<UpdateServices></UpdateServices>}></Route>
+        <Route path='/service' element={ <Services></Services> } ></Route>
+        <Route path='/service/:id' element={ <SpecificService></SpecificService> } ></Route>
+        <Route path='/provider/:id' element={<SpecificProvider></SpecificProvider>}></Route>
       </Routes>
     </div>
   )

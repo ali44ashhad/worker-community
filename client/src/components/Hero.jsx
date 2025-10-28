@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -128,9 +129,9 @@ const Hero = () => {
 
           {/* Buttons */}
           <div className="flex  gap-4 mt-2">
-            <button className="px-6 py-2.5 bg-black text-white text-sm font-medium rounded-lg shadow-sm hover:bg-gray-900 transition-colors">
+            <Link to='/service' className="px-6 py-2.5 bg-black text-white text-sm font-medium rounded-lg shadow-sm hover:cursor-pointer hover:bg-gray-900 transition-colors">
               Explore Services
-            </button>
+            </Link>
             {user && user.role!=="provider" && <button className="px-6 py-2.5 border border-black text-black text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors">
               Become a Provider
             </button> } 

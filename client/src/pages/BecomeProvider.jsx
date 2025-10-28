@@ -15,6 +15,9 @@ const BecomeProvider = () => {
     experience: ''
   }]);
 
+  // State for provider bio
+  const [providerBio, setProviderBio] = useState('');
+
   // New state to hold validation errors
   const [errors, setErrors] = useState({});
 
@@ -251,6 +254,12 @@ const BecomeProvider = () => {
     const newErrors = {};
     let hasErrors = false;
 
+    // Validate provider bio
+    if (!providerBio.trim()) {
+      newErrors['providerBio'] = "Provider bio is required.";
+      hasErrors = true;
+    }
+
     services.forEach((service) => {
       const serviceId = service.id;
 
@@ -306,6 +315,9 @@ const BecomeProvider = () => {
     try {
       // Prepare FormData
       const formData = new FormData();
+      
+      // Add provider bio
+      formData.append('providerBio', providerBio);
       
       // Add services as JSON
       formData.append('services', JSON.stringify(services));
@@ -367,6 +379,37 @@ const BecomeProvider = () => {
 
       {/* Changed to a <form> element */}
       <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Provider Bio Section */}
+        <div className="bg-white rounded-xl shadow-lg border-2 border-black p-8 mb-8 hover:shadow-xl transition-shadow">
+          <h2 className="text-3xl font-bold text-black mb-6">
+            About You
+          </h2>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+              Provider Bio *
+            </label>
+            <textarea
+              value={providerBio}
+              onChange={(e) => {
+                setProviderBio(e.target.value);
+                if (errors['providerBio']) {
+                  setErrors(prev => ({ ...prev, ['providerBio']: null }));
+                }
+              }}
+              placeholder="Tell us about yourself and your background..."
+              rows="4"
+              className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
+                errors['providerBio'] ? 'border-red-500 focus:ring-red-500' : 'border-black focus:ring-black'
+              }`}
+            />
+            {errors['providerBio'] && (
+              <p className="text-red-600 text-sm mt-2 font-medium">{errors['providerBio']}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Services Section */}
         {services.map((service, index) => (
           <div key={service.id} className="bg-white rounded-xl shadow-lg border-2 border-black p-8 relative hover:shadow-xl transition-shadow">
             {services.length > 1 && (

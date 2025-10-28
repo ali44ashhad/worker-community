@@ -388,12 +388,19 @@ const becomeProviderWithServices = async (req, res) => {
             services.reduce((sum, s) => sum + parseInt(s.experience || 0), 0) / services.length
         );
         
-        const firstService = services[0];
-        const providerBio = firstService.bio.substring(0, 500);
+        // Get provider bio from request body (not from first service)
+        const providerBioFromRequest = req.body.providerBio;
+        
+        if (!providerBioFromRequest || !providerBioFromRequest.trim()) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Provider bio is required." 
+            });
+        }
 
         const newProfile = await ProviderProfile.create({
             user: userId,
-            bio: providerBio,
+            bio: providerBioFromRequest.substring(0, 500), // Limit to 500 characters
             experience: avgExperience
         });
 
