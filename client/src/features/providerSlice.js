@@ -42,6 +42,7 @@ export const becomeProvider = createAsyncThunk(
     try {
       const res = await axios.post(`${API_URL}/api/provider-profile/become-provider`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
       });
       return res.data; // Return { success, user, profile }
     } catch (err) {
