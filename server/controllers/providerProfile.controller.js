@@ -337,7 +337,7 @@ const becomeProviderWithServices = async (req, res) => {
 
         // Check if user is already a provider
         const existingProfile = await ProviderProfile.findOne({ user: userId });
-        if (existingProfile) {
+        if (existingProfile) {  
             return res.status(400).json({ 
                 success: false, 
                 message: "You are already a provider." 
@@ -477,7 +477,7 @@ const becomeProviderWithServices = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: `Congratulations! You are now a provider with ${createdServices.length} service(s).`,
+            message: `Congratulations! You are now a provider`,
             profile: newProfile,
             services: createdServices
         });

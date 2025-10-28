@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, Upload, Trash2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const BecomeProvider = () => {
   const [services, setServices] = useState([{
@@ -297,7 +298,7 @@ const BecomeProvider = () => {
     e.preventDefault();
     
     if (!validateForm()) {
-      alert('Please correct the errors in the form before submitting.');
+      toast.error('Please correct the errors in the form before submitting.');
       return;
     }
 
@@ -311,7 +312,7 @@ const BecomeProvider = () => {
       // Add images with proper fieldnames - images array contains File objects
       services.forEach((service, index) => {
         if (service.images && service.images.length > 0) {
-          service.images.forEach((file, imgIndex) => {
+          service.images.forEach((file) => {
             if (file instanceof File) {
               formData.append(`service_${index}_images`, file);
             }
@@ -331,7 +332,7 @@ const BecomeProvider = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert(data.message || 'Provider registration submitted successfully!');
+        toast.success(data.message || 'Provider registration submitted successfully!');
         // Reset form or redirect
         setServices([{
           id: Date.now(),
@@ -345,50 +346,57 @@ const BecomeProvider = () => {
         }]);
         setErrors({});
       } else {
-        alert(data.message || 'Failed to submit provider registration.');
+        toast.error(data.message || 'Failed to submit provider registration.');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('An error occurred while submitting the form. Please try again.');
+      toast.error('An error occurred while submitting the form. Please try again.');
     }
   };
 
   return (
     <div className='max-w-[1350px] mx-auto mt-20 px-4 pb-12'>
-      <h1 className="text-3xl md:text-4xl md:pl-2 font-bold text-gray-800 leading-tight mb-8">
-        Become a Provider
-      </h1>
+      <div className=" mb-5">
+        <h1 className="text-4xl md:text-5xl font-bold text-black leading-tight">
+          Become a Provider
+        </h1>
+        <p className=" text-gray-600">Share your expertise with our community</p>
+      </div>
 
       {/* Changed to a <form> element */}
       <form onSubmit={handleSubmit} className="space-y-8">
         {services.map((service, index) => (
-          <div key={service.id} className="bg-white rounded-lg shadow-md border border-gray-200 p-6 relative">
+          <div key={service.id} className="bg-white rounded-xl shadow-lg border-2 border-black p-8 relative hover:shadow-xl transition-shadow">
             {services.length > 1 && (
               <button
                 type="button"
                 onClick={() => removeService(service.id)}
-                className="absolute top-4 right-4 text-red-500 hover:text-red-700 transition-colors"
+                className="absolute top-4 right-4 text-white bg-black hover:bg-gray-800 transition-all rounded-full p-2 border-2 border-black"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             )}
 
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-              Service {index + 1}
-            </h2>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="bg-black text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg">
+                {index + 1}
+              </div>
+              <h2 className="text-3xl font-bold text-black">
+                Service 
+              </h2>
+            </div>
 
             {/* Category Selection */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                 Select Category *
               </label>
               <select
                 value={service.category}
                 onChange={(e) => handleCategoryChange(service.id, e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none ${
-                  errors[`service-${service.id}-category`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
+                  errors[`service-${service.id}-category`] ? 'border-red-500 focus:ring-red-500' : 'border-black focus:ring-black'
                 }`}
-                // `required` attribute removed to rely on JS validation
               >
                 <option value="">Choose a category</option>
                 {Object.keys(SERVICE_RULES).map(cat => (
@@ -396,26 +404,26 @@ const BecomeProvider = () => {
                 ))}
               </select>
               {errors[`service-${service.id}-category`] && (
-                <p className="text-red-500 text-sm mt-1">{errors[`service-${service.id}-category`]}</p>
+                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-category`]}</p>
               )}
             </div>
 
             {/* Sub-categories */}
             {service.category && (
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                   Select Sub-Categories *
                 </label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                   {SERVICE_RULES[service.category].subCategories.map(subCat => (
                     <button
                       key={subCat}
                       type="button"
                       onClick={() => handleSubCategoryToggle(service.id, subCat)}
-                      className={`px-4 py-2 rounded-lg border transition-all ${
+                      className={`px-5 py-2.5 rounded-lg border-2 font-semibold transition-all ${
                         service.subCategories.includes(subCat)
-                          ? 'bg-blue-500 text-white border-blue-500'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500'
+                          ? 'bg-black text-white border-black shadow-md'
+                          : 'bg-white text-black border-black hover:bg-black hover:text-white hover:shadow-md'
                       }`}
                     >
                       {subCat}
@@ -423,7 +431,7 @@ const BecomeProvider = () => {
                   ))}
                 </div>
                 {errors[`service-${service.id}-subCategories`] && (
-                  <p className="text-red-500 text-sm mt-1">{errors[`service-${service.id}-subCategories`]}</p>
+                  <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-subCategories`]}</p>
                 )}
               </div>
             )}
@@ -431,7 +439,7 @@ const BecomeProvider = () => {
             {/* Keywords */}
             {service.category && SERVICE_RULES[service.category].keywords.length > 0 && (
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                   Select Keywords/Specializations *
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -440,10 +448,10 @@ const BecomeProvider = () => {
                       key={keyword}
                       type="button"
                       onClick={() => handleKeywordToggle(service.id, keyword)}
-                      className={`px-3 py-1.5 rounded-full border text-sm transition-all ${
+                      className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
                         service.keywords.includes(keyword)
-                          ? 'bg-green-500 text-white border-green-500'
-                          : 'bg-white text-gray-600 border-gray-300 hover:border-green-500'
+                          ? 'bg-black text-white border-black shadow-md'
+                          : 'bg-white text-black border-black hover:bg-gray-900 hover:text-white hover:shadow-md'
                       }`}
                     >
                       {keyword}
@@ -451,14 +459,14 @@ const BecomeProvider = () => {
                   ))}
                 </div>
                 {errors[`service-${service.id}-keywords`] && (
-                  <p className="text-red-500 text-sm mt-1">{errors[`service-${service.id}-keywords`]}</p>
+                  <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-keywords`]}</p>
                 )}
               </div>
             )}
 
             {/* Bio */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                 Bio/Description *
               </label>
               <textarea
@@ -466,18 +474,18 @@ const BecomeProvider = () => {
                 onChange={(e) => handleInputChange(service.id, 'bio', e.target.value)}
                 placeholder="Tell us about your service..."
                 rows="4"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none ${
-                  errors[`service-${service.id}-bio`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
+                  errors[`service-${service.id}-bio`] ? 'border-red-500 focus:ring-red-500' : 'border-black focus:ring-black'
                 }`}
               />
               {errors[`service-${service.id}-bio`] && (
-                <p className="text-red-500 text-sm mt-1">{errors[`service-${service.id}-bio`]}</p>
+                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-bio`]}</p>
               )}
             </div>
 
             {/* Experience */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                 Experience (in years) *
               </label>
               <input
@@ -486,22 +494,22 @@ const BecomeProvider = () => {
                 onChange={(e) => handleInputChange(service.id, 'experience', e.target.value)}
                 placeholder="e.g., 5"
                 min="0"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none ${
-                  errors[`service-${service.id}-experience`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
+                  errors[`service-${service.id}-experience`] ? 'border-red-500 focus:ring-red-500' : 'border-black focus:ring-black'
                 }`}
               />
               {errors[`service-${service.id}-experience`] && (
-                <p className="text-red-500 text-sm mt-1">{errors[`service-${service.id}-experience`]}</p>
+                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-experience`]}</p>
               )}
             </div>
 
             {/* Image Upload */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                 Upload Work Images *
               </label>
-              <div className={`border-2 border-dashed rounded-lg p-6 text-center hover:border-blue-500 transition-colors ${
-                  errors[`service-${service.id}-images`] ? 'border-red-500' : 'border-gray-300'
+              <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
+                  errors[`service-${service.id}-images`] ? 'border-red-500 bg-red-50' : 'border-black hover:bg-gray-50'
                 }`}>
                 <input
                   type="file"
@@ -515,31 +523,31 @@ const BecomeProvider = () => {
                   htmlFor={`images-${service.id}`}
                   className="cursor-pointer flex flex-col items-center"
                 >
-                  <Upload className="text-gray-400 mb-2" size={40} />
-                  <span className="text-gray-600">Click to upload images</span>
-                  <span className="text-sm text-gray-400 mt-1">PNG, JPG up to 10MB</span>
+                  <Upload className="text-black mb-3" size={48} />
+                  <span className="text-black font-bold text-lg mb-1">Click to upload images</span>
+                  <span className="text-sm text-gray-600">PNG, JPG up to 10MB</span>
                 </label>
               </div>
               {errors[`service-${service.id}-images`] && (
-                <p className="text-red-500 text-sm mt-1">{errors[`service-${service.id}-images`]}</p>
+                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-images`]}</p>
               )}
 
               {/* Image Preview */}
               {service.imagePreviews.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                   {service.imagePreviews.map((img, imgIndex) => (
-                    <div key={imgIndex} className="relative group">
+                    <div key={imgIndex} className="relative group border-2 border-black rounded-lg overflow-hidden">
                       <img
                         src={img}
                         alt={`Upload ${imgIndex + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
+                        className="w-full h-40 object-cover"
                       />
                       <button
                         type="button"
                         onClick={() => handleRemoveImage(service.id, imgIndex)}
-                        className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 bg-black text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all border-2 border-white"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   ))}
@@ -553,18 +561,17 @@ const BecomeProvider = () => {
         <button
           type="button"
           onClick={addNewService}
-          className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all flex items-center justify-center gap-2"
+          className="w-full py-4 border-2 border-dashed border-black rounded-xl text-black font-bold text-lg hover:bg-black hover:text-white transition-all flex items-center justify-center gap-3 group"
         >
-          <Plus size={20} />
+          <Plus size={24} className="group-hover:rotate-90 transition-transform" />
           Add Another Service
         </button>
 
         {/* Submit Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-end mt-8">
           <button
-            type="submit" // Changed to type="submit"
-            // onClick handler removed
-            className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+            type="submit"
+            className="px-6 py-3 bg-black text-white font-bold text-lg rounded-xl hover:bg-gray-800 transition-all shadow-xl hover:shadow-2xl  tracking-wide"
           >
             Submit Registration
           </button>
