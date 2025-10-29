@@ -268,7 +268,7 @@ const getProviderDashboardStats = async (req, res) => {
     try {
         // Find all provider profiles and populate their associated user and service offerings
         const providers = await ProviderProfile.find()
-            .populate('user', 'name profileImage') // Get user's public info (name, profile image)
+            .populate('user', 'name profileImage phoneNumber') // Get user's public info (name, profile image, phone number)
             .populate('serviceOfferings'); // Get all their service offerings (with images, categories, etc.)
         
         return res.status(200).json({
@@ -289,7 +289,7 @@ const getProviderDashboardStats = async (req, res) => {
 const getProviderById = async (req, res) => {
     try {
         const provider = await ProviderProfile.findById(req.params.id)
-            .populate('user', 'name profileImage') // Get user's public info
+            .populate('user', 'name profileImage phoneNumber') // Get user's public info
             .populate('serviceOfferings'); // Get all their service offerings
 
         if (!provider) {

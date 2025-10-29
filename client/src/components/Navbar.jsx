@@ -48,7 +48,7 @@ const Navbar = () => {
     { to: '/about', text: 'About' },
     { to: '/testimonials', text: 'Testimonials' },
     { to: '/faq', text: 'FAQ' },
-    { to: '/provider', text: 'Providers' },
+    // { to: '/provider', text: 'Providers' },
     { to: '/contact', text: 'Contact' },
     { to: '/service', text: 'Service' },
   ];
@@ -60,7 +60,7 @@ const Navbar = () => {
         {/* Left Side: Logo */}
         <Link
           to="/"
-          className="text-[1.45rem] font-semibold  min-w-[300px] text-white flex items-center gap-0.5"
+          className={`text-[1.45rem] font-semibold ${user ? "min-w-[300px]" : "" }   text-white flex items-center gap-0.5`}
         >
           {user?  `Hi ${user.name},` : "Commun" } 
         </Link>
