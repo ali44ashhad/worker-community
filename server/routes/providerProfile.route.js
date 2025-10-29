@@ -3,11 +3,13 @@ import {
     becomeProvider,
     becomeProviderWithServices,
     updateProviderProfile,
-    addServiceOffering,      // <-- NEW
-    deleteServiceOffering,     // <-- NEW
+    addServiceOffering,
+    updateServiceOffering,
+    deleteServiceOffering,
     getAllProviders,
     getProviderById,
-    getProviderDashboardStats  // <-- You had this, but it needs to be imported
+    getMyProviderProfile,
+    getProviderDashboardStats
 } from "../controllers/providerProfile.controller.js";
 import { protect, isProvider } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
@@ -16,51 +18,30 @@ const router = express.Router();
 
 // --- Public Routes ---
 router.get("/", getAllProviders);
-router.get("/:id", getProviderById); // Renamed from "/get-provider/:id" for simplicity
 
-// --- Private Provider Routes ---
-router.post(
-    "/become-provider",
-    protect,
-    becomeProvider // Does NOT upload images anymore
-);
+// --- Private Provider Routes (must come before /:id to avoid conflicts) ---
+// Get current user's profile
+router.get("/my-profile", protect, isProvider, getMyProviderProfile);
 
-router.post(
-    "/become-provider-multi",
-    protect,
-    upload.any(), // Accept any file fields
-    becomeProviderWithServices
-);
+// Get provider dashboard stats
+router.get("/dashboard/stats", protect, isProvider, getProviderDashboardStats);
 
-router.put(
-    "/", // Renamed from "/update-provider-profile"
-    protect,
-    isProvider,
-    updateProviderProfile // Does NOT upload images anymore
-);
+// Update provider profile
+router.put("/", protect, isProvider, updateProviderProfile);
+
+// Create provider profile
+router.post("/become-provider", protect, becomeProvider);
+
+router.post("/become-provider-multi", protect, upload.any(), becomeProviderWithServices);
 
 // --- Routes for Managing Services ---
-router.post(
-    "/service",
-    protect,
-    isProvider,
-    upload.array("portfolioImages", 10), // Images are for the SERVICE
-    addServiceOffering
-);
+router.post("/service", protect, isProvider, upload.array("portfolioImages", 10), addServiceOffering);
 
-router.delete(
-    "/service/:serviceId",
-    protect,
-    isProvider,
-    deleteServiceOffering
-);
+router.put("/service/:serviceId", protect, isProvider, upload.array("portfolioImages", 10), updateServiceOffering);
 
-// --- Provider Dashboard Route ---
-router.get(
-    "/dashboard/stats", // Changed path to be more clear
-    protect,
-    isProvider,
-    getProviderDashboardStats
-);
+router.delete("/service/:serviceId", protect, isProvider, deleteServiceOffering);
+
+// --- Get provider by ID (must be last to not catch other routes) ---
+router.get("/:id", getProviderById);
 
 export default router;

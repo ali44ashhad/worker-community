@@ -66,14 +66,29 @@ export const updateProviderProfile = createAsyncThunk(
   }
 );
 
+// Get current user's provider profile with services
+export const getMyProviderProfile = createAsyncThunk(
+  "provider/getMyProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/provider-profile/my-profile`);
+      return res.data.provider; // Return { success, provider }
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch profile");
+    }
+  }
+);
+
 
 /* ----------------- SLICE ----------------- */
 
 const initialState = {
   allProviders: [],
   selectedProvider: null,
+  myProviderProfile: null, // Current user's provider profile
   isFetchingAll: false,
   isFetchingSelected: false,
+  isFetchingMyProfile: false,
   isUpdatingProfile: false,
   error: null,
 };
@@ -145,6 +160,20 @@ const providerSlice = createSlice({
       })
       .addCase(updateProviderProfile.rejected, (state, action) => {
         state.isUpdatingProfile = false;
+        state.error = action.payload;
+      })
+
+      // Get My Provider Profile
+      .addCase(getMyProviderProfile.pending, (state) => {
+        state.isFetchingMyProfile = true;
+        state.error = null;
+      })
+      .addCase(getMyProviderProfile.fulfilled, (state, action) => {
+        state.isFetchingMyProfile = false;
+        state.myProviderProfile = action.payload;
+      })
+      .addCase(getMyProviderProfile.rejected, (state, action) => {
+        state.isFetchingMyProfile = false;
         state.error = action.payload;
       })
       

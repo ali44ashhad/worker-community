@@ -311,6 +311,36 @@ const getProviderById = async (req, res) => {
 };
 
 /**
+ * @description Get current user's provider profile with services
+ * @route GET /api/provider-profile/my-profile
+ * @access Private (Provider)
+ */
+const getMyProviderProfile = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        const provider = await ProviderProfile.findOne({ user: userId })
+            .populate('user', 'name email phoneNumber profileImage')
+            .populate('serviceOfferings');
+
+        if (!provider) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Provider profile not found." 
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            provider
+        });
+    } catch (error) {
+        console.error("Error in getMyProviderProfile:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
  * @description Become a provider with multiple services in one submission
  * @route POST /api/provider-profile/become-provider-multi
  * @access Private (Auth User)
@@ -498,14 +528,74 @@ const becomeProviderWithServices = async (req, res) => {
     }
 };
 
+/**
+ * @description Update an existing service offering
+ * @route PUT /api/provider-profile/service/:serviceId
+ * @access Private (Provider)
+ */
+const updateServiceOffering = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { serviceId } = req.params;
+        const { serviceCategory, subCategories, keywords, description, experience } = req.body;
+
+        const profile = await ProviderProfile.findOne({ user: userId });
+        if (!profile) {
+            return res.status(404).json({ success: false, message: "Provider profile not found." });
+        }
+
+        const service = await ServiceOffering.findById(serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+
+        // Verify ownership
+        if (service.provider.toString() !== profile._id.toString()) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "You are not authorized to update this service." 
+            });
+        }
+
+        // Update service fields
+        if (serviceCategory) service.serviceCategory = serviceCategory;
+        if (subCategories) service.subCategories = Array.isArray(subCategories) ? subCategories : [subCategories];
+        if (keywords) service.keywords = Array.isArray(keywords) ? keywords : [keywords];
+        if (description) service.description = description;
+        if (experience !== undefined) service.experience = parseInt(experience);
+
+        // Handle new images if uploaded
+        if (req.files && req.files.length > 0) {
+            const uploadPromises = req.files.map(file => uploadBufferToCloudinary(file.buffer));
+            const newImages = await Promise.all(uploadPromises);
+            
+            // Add new images to existing ones
+            service.portfolioImages = [...service.portfolioImages, ...newImages];
+        }
+
+        await service.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Service updated successfully.",
+            service
+        });
+    } catch (error) {
+        console.error("Error in updateServiceOffering:", error.message);
+        return res.status(400).json({ success: false, message: error.message });
+    }
+};
+
 // --- Export all functions from this file ---
 export {
     becomeProvider,
     becomeProviderWithServices,
     updateProviderProfile,
     addServiceOffering,
+    updateServiceOffering,
     deleteServiceOffering,
     getProviderDashboardStats,
     getAllProviders,
     getProviderById,
+    getMyProviderProfile,
 };

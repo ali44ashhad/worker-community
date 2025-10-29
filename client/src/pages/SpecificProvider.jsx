@@ -237,7 +237,7 @@ const SpecificProvider = () => {
               }}
             >
               {services.map((service) => (
-                <div key={service._id} className='flex-shrink-0 w-80'>
+                <div key={service._id} className='flex-shrink-0 w-80 mt-3'>
                   <ServiceCard service={{ ...service, provider: selectedProvider }} />
                 </div>
               ))}
