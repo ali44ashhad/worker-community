@@ -20,6 +20,7 @@ import UpdateServices from './pages/UpdateServices'
 import Services from './pages/Services'
 import SpecificProvider from './pages/SpecificProvider'
 import SpecificService from './pages/SpecificService'
+import Footer from './components/Footer'
 
 const App = () => {
 
@@ -59,6 +60,9 @@ const App = () => {
         <Route path='/service/:id' element={ <SpecificService></SpecificService> } ></Route>
         <Route path='/provider/:id' element={<SpecificProvider></SpecificProvider>}></Route>
       </Routes>
+
+      <Footer></Footer>
+
     </div>
   )
 }
