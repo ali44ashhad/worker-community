@@ -46,7 +46,7 @@ const TopCategory = () => {
     };
 
     return (
-        <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
+        <section className="w-full max-w-[1350px] mx-auto  px-4 py-16">
             <div className="mb-12">
                 <h1 className="text-4xl md:text-5xl font-bold text-black text-center mb-3">
                     Top Categories

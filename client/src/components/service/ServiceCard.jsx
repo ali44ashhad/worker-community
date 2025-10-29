@@ -13,6 +13,8 @@ const ServiceCard = ({ service }) => {
   const truncatedDescription = fullDescription.length > 100
   ? fullDescription.substring(0, 100) + '...'
   : fullDescription;
+
+  console.log(service);
   
   // Get portfolio images
   const portfolioImages = service?.portfolioImages || [];

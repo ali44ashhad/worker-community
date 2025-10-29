@@ -9,6 +9,8 @@ const Services = () => {
   const dispatch = useDispatch();
   const { allProviders, isFetchingAll, error } = useSelector((state) => state.provider);
   
+  console.log(allProviders);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filteredServices, setFilteredServices] = useState([]);

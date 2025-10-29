@@ -7,7 +7,7 @@ const TopCategoryCard = ({ category, data, image }) => {
 //   console.log(image);
 
   return (
-    <div className="bg-white border-2 border-black rounded-xl p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
+    <div className="bg-white border-2 hover:cursor-pointer border-black rounded-xl p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
       {/* Image */}
       <div className="mb-4 flex justify-center">
         <div className="w-full h-48 border-2 border-black rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">

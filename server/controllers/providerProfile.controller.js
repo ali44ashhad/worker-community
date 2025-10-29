@@ -128,13 +128,35 @@ const deleteFromCloudinary = (public_id) => {
         const uploadPromises = req.files.map(file => uploadBufferToCloudinary(file.buffer));
         const portfolioImages = await Promise.all(uploadPromises); 
 
+        // Parse subCategories if it's a JSON string
+        let parsedSubCategories = subCategories;
+        if (subCategories && typeof subCategories === 'string') {
+            try {
+                parsedSubCategories = JSON.parse(subCategories);
+            } catch (e) {
+                // If parsing fails, treat as single value
+                parsedSubCategories = [subCategories];
+            }
+        }
+        
+        // Parse keywords if it's a JSON string
+        let parsedKeywords = keywords;
+        if (keywords && typeof keywords === 'string') {
+            try {
+                parsedKeywords = JSON.parse(keywords);
+            } catch (e) {
+                // If parsing fails, treat as single value
+                parsedKeywords = [keywords];
+            }
+        }
+
         // 2. Create the service offering document
         const newService = new ServiceOffering({
             provider: profile._id,
             serviceCategory,
             // Ensure subCategories and keywords are arrays
-            subCategories: Array.isArray(subCategories) ? subCategories : (subCategories ? [subCategories] : []),
-            keywords: Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []),
+            subCategories: Array.isArray(parsedSubCategories) ? parsedSubCategories : (parsedSubCategories ? [parsedSubCategories] : []),
+            keywords: Array.isArray(parsedKeywords) ? parsedKeywords : (parsedKeywords ? [parsedKeywords] : []),
             description,
             portfolioImages
         });
@@ -559,8 +581,35 @@ const updateServiceOffering = async (req, res) => {
 
         // Update service fields
         if (serviceCategory) service.serviceCategory = serviceCategory;
-        if (subCategories) service.subCategories = Array.isArray(subCategories) ? subCategories : [subCategories];
-        if (keywords) service.keywords = Array.isArray(keywords) ? keywords : [keywords];
+        
+        // Parse subCategories if it's a JSON string
+        if (subCategories) {
+            let parsedSubCategories = subCategories;
+            if (typeof subCategories === 'string') {
+                try {
+                    parsedSubCategories = JSON.parse(subCategories);
+                } catch (e) {
+                    // If parsing fails, treat as single value
+                    parsedSubCategories = [subCategories];
+                }
+            }
+            service.subCategories = Array.isArray(parsedSubCategories) ? parsedSubCategories : [parsedSubCategories];
+        }
+        
+        // Parse keywords if it's a JSON string
+        if (keywords) {
+            let parsedKeywords = keywords;
+            if (typeof keywords === 'string') {
+                try {
+                    parsedKeywords = JSON.parse(keywords);
+                } catch (e) {
+                    // If parsing fails, treat as single value
+                    parsedKeywords = [keywords];
+                }
+            }
+            service.keywords = Array.isArray(parsedKeywords) ? parsedKeywords : [parsedKeywords];
+        }
+        
         if (description) service.description = description;
         if (experience !== undefined) service.experience = parseInt(experience);
 
