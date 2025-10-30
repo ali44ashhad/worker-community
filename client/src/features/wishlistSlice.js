@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -60,13 +61,22 @@ const wishlistSlice = createSlice({
       .addCase(fetchWishlist.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+        if (action.payload) toast.error(action.payload);
       })
 
       .addCase(addToWishlist.fulfilled, (state, action) => {
         state.ids = action.payload || state.ids;
+        toast.success("Added to wishlist");
+      })
+      .addCase(addToWishlist.rejected, (state, action) => {
+        if (action.payload) toast.error(action.payload);
       })
       .addCase(removeFromWishlist.fulfilled, (state, action) => {
         state.ids = action.payload || state.ids;
+        toast.success("Removed from wishlist");
+      })
+      .addCase(removeFromWishlist.rejected, (state, action) => {
+        if (action.payload) toast.error(action.payload);
       });
   },
 });
