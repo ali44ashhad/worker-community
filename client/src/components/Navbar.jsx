@@ -3,19 +3,20 @@ import {
   HiOutlineMenu, 
   HiOutlineX, 
   HiOutlineSearch, 
-  HiOutlineUserCircle
 } from 'react-icons/hi';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
 import { FaCartShopping } from "react-icons/fa6";
+import { FaRegHeart } from "react-icons/fa6";
 
 const Navbar = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const user = useSelector((state) => state.auth.user);
+  const wishlistIds = useSelector((s) => s.wishlist.ids);
 
   // Scroll to top on route change
   useEffect(() => {
@@ -43,13 +44,11 @@ const Navbar = () => {
     }
   };
 
-  // Navigation links
   const navLinks = [
     { to: '/', text: 'Home' },
     { to: '/about', text: 'About' },
     { to: '/testimonials', text: 'Testimonials' },
     { to: '/faq', text: 'FAQ' },
-    // { to: '/provider', text: 'Providers' },
     { to: '/contact', text: 'Contact' },
     { to: '/service', text: 'Service' },
     { to: '/category', text: 'Categories' },
@@ -62,25 +61,27 @@ const Navbar = () => {
         {/* Left Side: Logo */}
         <Link
           to="/"
-          className={`text-[1.45rem] font-semibold ${user ? "min-w-[300px]" : "" }   text-white flex items-center gap-0.5`}
+          className={`text-[1.45rem] font-semibold ${user ? "min-w-[300px]" : "" } text-white flex items-center gap-0.5`}
         >
-          {user?  `Hi ${user.name},` : "Commun" } 
+          {user ? `Hi ${user.name},` : "Commun"}
         </Link>
 
         {/* Centered Nav Links */}
-    {!user &&  <div className="hidden xl:flex flex-1 justify-center  ml-24 items-center text-[0.94rem] space-x-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="text-gray-300 hover:text-white transition-colors duration-200 tracking-wide cursor-pointer"
-            >
-              {link.text}
-            </Link>
-          ))}
-        </div> }
+        {!user && (
+          <div className="hidden xl:flex flex-1 justify-center ml-24 items-center text-[0.94rem] space-x-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="text-gray-300 hover:text-white transition-colors duration-200 tracking-wide cursor-pointer"
+              >
+                {link.text}
+              </Link>
+            ))}
+          </div>
+        )}
 
-        {/* Right Side: Search, Icons & Auth */}
+        {/* Right Side */}
         <div className="hidden xl:flex items-center gap-3">
           {/* Search Input */}
           <div className="relative">
@@ -102,26 +103,31 @@ const Navbar = () => {
             </Link>
           ) : (
             <div className="flex items-center gap-3">
-              { user && user.role!=='provider' &&              <Link to='/become-provider'
-                className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
-              >
-                Become Provider
-              </Link> }
-              { user && user.role==='provider' && <Link to='/update-services'
-                className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
-              >
-                Update Services
-              </Link> }
+              {user && user.role !== 'provider' && (
+                <Link
+                  to="/become-provider"
+                  className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
+                >
+                  Become Provider
+                </Link>
+              )}
+              {user && user.role === 'provider' && (
+                <Link
+                  to="/update-services"
+                  className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
+                >
+                  Update Services
+                </Link>
+              )}
 
-                {user && (
-                  <Link
-                    to={`/update-profile/${user._id}`}
-                    className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
-                  >
-                    Update Profile   
-                  </Link>
-                )}
-
+              {user && (
+                <Link
+                  to={`/update-profile/${user._id}`}
+                  className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
+                >
+                  Update Profile
+                </Link>
+              )}
 
               <button
                 onClick={handleLogout}
@@ -130,19 +136,23 @@ const Navbar = () => {
                 Logout
               </button>
 
-                {user && (
-                  <Link
-                    to={`/cart/${user._id}`}
-                  >
-                    <FaCartShopping size={32} />   
-                  </Link>
-                )}
+              {/* 🖤 Wishlist Icon with Counter */}
+              {user && (
+                <Link to={`/cart/${user._id}`} className="relative">
+                  <FaCartShopping size={30} className="text-white" />
+                  {wishlistIds?.length > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-white text-black text-[0.7rem] font-bold w-5 h-5 flex items-center justify-center rounded-full border border-black">
+                      {wishlistIds.length}
+                    </span>
+                  )}
+                </Link>
+              )}
 
             </div>
           )}
         </div>
 
-        {/* Mobile Toggle Button */}
+        {/* Mobile Menu Button */}
         <button
           className="xl:hidden text-white focus:outline-none z-60"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -150,83 +160,6 @@ const Navbar = () => {
           {isMobileMenuOpen ? <HiOutlineX size={28} /> : <HiOutlineMenu size={28} />}
         </button>
       </nav>
-
-      {/* Mobile Menu Backdrop */}
-      {isMobileMenuOpen && (
-        <div
-          className="xl:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
-          onClick={closeMenu}
-        />
-      )}
-
-      {/* Slide-in Mobile Menu */}
-      <div
-        className={`xl:hidden fixed top-0 right-0 bottom-0 w-[85%] bg-black max-w-sm z-50 transform transition-transform duration-500 ease-in-out ${
-          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-start px-6 py-5 border-gray-200 border-b bg-black ">
-          <Link to="/" onClick={closeMenu} className="text-xl font-bold tracking-tight text-white">
-            Commun
-          </Link>
-        </div>
-
-        {/* Menu Content */}
-        <div className="flex flex-col h-[calc(100%-73px)]  overflow-y-auto">
-          {/* Links */}
-          <div className="flex-1 py-6 px-6 space-y-1 bg-black">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={closeMenu}
-                className="block px-4 py-3 text-white hover:bg-blue-50  rounded-lg transition-all duration-200 font-medium"
-              >
-                {link.text}
-              </Link>
-            ))}
-      { user &&  <Link
-        to="/update-profile"
-        onClick={closeMenu}
-        className="block px-4 py-3 text-white hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
-      >
-        Update Profile
-      </Link>
-            }
-      { user && 
-      <Link
-        to="/become-provider"
-        onClick={closeMenu}
-        className="block px-4 py-3 text-white hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
-      >
-        { user.role==="provider"? "Update Services" : "Become Provider" } 
-      </Link>
-      }
-          </div>
-
-          {/* Action Buttons */}
-          <div className="px-6 py-6 border-t  border-gray-200 bg-black space-y-3">
-            {!user ? (
-              <Link
-                to="/login"
-                onClick={closeMenu}
-                className="block text-center text-black rounded-lg px-3 py-2 bg-white transition-all duration-300 shadow-lg font-medium"
-              >
-                Login
-              </Link>
-            ) : (
-                
-              <button
-                onClick={handleLogout}
-                className="block w-full text-center text-black rounded-lg px-3 py-2 bg-white transition-all duration-300 shadow-lg font-medium"
-              >
-                Logout
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
     </header>
   );
 };
