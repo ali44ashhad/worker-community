@@ -23,6 +23,7 @@ import SpecificService from './pages/SpecificService'
 import Footer from './components/Footer'
 import AllCategory from './pages/AllCategory'
 import SpecificCategory from './pages/SpecificCategory'
+import Cart from './pages/Cart'
 
 const App = () => {
 
@@ -63,6 +64,7 @@ const App = () => {
         <Route path='/provider/:id' element={<SpecificProvider></SpecificProvider>}></Route>
         <Route path='/category' element={<AllCategory></AllCategory>}></Route>
         <Route path='/category/:id' element={<SpecificCategory></SpecificCategory>}></Route>
+        <Route path='/cart/:id' element={<Cart></Cart>}></Route>
       </Routes>
 
       <Footer></Footer>

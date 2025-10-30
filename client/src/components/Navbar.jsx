@@ -134,7 +134,7 @@ const Navbar = () => {
                   <Link
                     to={`/cart/${user._id}`}
                   >
-                    <FaCartShopping size={30} />   
+                    <FaCartShopping size={32} />   
                   </Link>
                 )}
 
