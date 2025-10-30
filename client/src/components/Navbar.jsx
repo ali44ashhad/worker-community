@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  HiOutlineMenu, 
-  HiOutlineX, 
-  HiOutlineSearch, 
+import {
+  HiOutlineMenu,
+  HiOutlineX,
+  HiOutlineSearch,
 } from 'react-icons/hi';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -33,7 +33,6 @@ const Navbar = () => {
 
   const closeMenu = () => setIsMobileMenuOpen(false);
 
-  // Logout handler
   const handleLogout = async () => {
     try {
       await dispatch(logoutUser()).unwrap();
@@ -61,7 +60,7 @@ const Navbar = () => {
         {/* Left Side: Logo */}
         <Link
           to="/"
-          className={`text-[1.45rem] font-semibold ${user ? "min-w-[300px]" : "" } text-white flex items-center gap-0.5`}
+          className={`text-[1.45rem] font-semibold ${user ? "min-w-[300px]" : ""} text-white flex items-center gap-0.5`}
         >
           {user ? `Hi ${user.name},` : "Commun"}
         </Link>
@@ -86,14 +85,13 @@ const Navbar = () => {
           {/* Search Input */}
           <div className="relative">
             <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search services..." 
-              className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg pl-9 py-2 w-56 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+            <input
+              type="text"
+              placeholder="Search services..."
+              className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg pl-9 py-2 w-56 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
-          {/* Auth Buttons */}
           {!user ? (
             <Link
               to="/login"
@@ -136,30 +134,114 @@ const Navbar = () => {
                 Logout
               </button>
 
-              {/* 🖤 Wishlist Icon with Counter */}
+              {/* Wishlist Icon */}
               {user && (
                 <Link to={`/cart/${user._id}`} className="relative">
                   <FaCartShopping size={30} className="text-white" />
-                  {wishlistIds?.length > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-white text-black text-[0.7rem] font-bold w-5 h-5 flex items-center justify-center rounded-full border border-black">
-                      {wishlistIds.length}
-                    </span>
-                  )}
+                  <span className="absolute -top-2 -right-2 bg-white text-black text-[0.7rem] font-bold w-5 h-5 flex items-center justify-center rounded-full border border-black">
+                    {wishlistIds?.length || 0}
+                  </span>
                 </Link>
               )}
 
+            
             </div>
           )}
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          className="xl:hidden text-white focus:outline-none z-60"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <HiOutlineX size={28} /> : <HiOutlineMenu size={28} />}
-        </button>
+        <div className="flex items-center gap-4 xl:hidden">
+          {/* Wishlist icon for mobile */}
+          {user && (
+            <Link to={`/cart/${user._id}`} className="relative right-3">
+              <FaCartShopping size={26} className="text-white" />
+              <span className="absolute -top-2 -right-2 bg-white text-black text-[0.65rem] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-black">
+                {wishlistIds?.length || 0}
+              </span>
+            </Link>
+          )}
+
+          <button
+            className="text-white right-3 relative focus:outline-none z-60"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <HiOutlineX size={28} /> : <HiOutlineMenu size={28} />}
+          </button>
+        </div>
       </nav>
+
+      {/* Mobile Menu Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="xl:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={closeMenu}
+        />
+      )}
+
+      {/* Slide-in Mobile Menu */}
+      <div
+        className={`xl:hidden fixed top-0 right-0 bottom-0 w-[85%] bg-black max-w-sm z-50 transform transition-transform duration-500 ease-in-out ${
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-start px-6 py-5 border-gray-200 border-b bg-black">
+          <Link to="/" onClick={closeMenu} className="text-xl font-bold tracking-tight text-white">
+            Commun
+          </Link>
+        </div>
+
+        <div className="flex flex-col h-[calc(100%-73px)] overflow-y-auto">
+          <div className="flex-1 py-6 px-6 space-y-1 bg-black">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={closeMenu}
+                className="block px-4 py-3 text-white hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
+              >
+                {link.text}
+              </Link>
+            ))}
+            {user && (
+              <Link
+                to="/update-profile"
+                onClick={closeMenu}
+                className="block px-4 py-3 text-white hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
+              >
+                Update Profile
+              </Link>
+            )}
+            {user && (
+              <Link
+                to="/become-provider"
+                onClick={closeMenu}
+                className="block px-4 py-3 text-white hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
+              >
+                {user.role === "provider" ? "Update Services" : "Become Provider"}
+              </Link>
+            )}
+          </div>
+
+          <div className="px-6 py-6 border-t border-gray-200 bg-black space-y-3">
+            {!user ? (
+              <Link
+                to="/login"
+                onClick={closeMenu}
+                className="block text-center text-black rounded-lg px-3 py-2 bg-white transition-all duration-300 shadow-lg font-medium"
+              >
+                Login
+              </Link>
+            ) : (
+              <button
+                onClick={handleLogout}
+                className="block w-full text-center text-black rounded-lg px-3 py-2 bg-white transition-all duration-300 shadow-lg font-medium"
+              >
+                Logout
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </header>
   );
 };
