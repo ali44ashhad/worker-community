@@ -177,10 +177,10 @@ const providerSlice = createSlice({
         state.error = action.payload;
       })
       
-      // Global matcher for showing toasts on any failed thunk
+      // Show toasts only for provider-related rejected actions
       .addMatcher(isRejectedWithValue(), (state, action) => {
-        if (action.payload) {
-            toast.error(action.payload);
+        if (action.payload && typeof action.type === 'string' && action.type.startsWith('provider/')) {
+          toast.error(action.payload);
         }
       });
   },
