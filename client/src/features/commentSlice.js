@@ -18,10 +18,23 @@ export const fetchCommentsByService = createAsyncThunk(
 
 export const createServiceComment = createAsyncThunk(
   "comments/create",
-  async ({ serviceId, comment }, { rejectWithValue }) => {
+  async ({ serviceId, comment }, { rejectWithValue, getState }) => {
     try {
       const res = await axios.post(`${API_URL}/api/comments/create-comment/${serviceId}`, { comment });
-      return { serviceId, comment: res.data.comment };
+      const state = getState();
+      const currentUser = state?.auth?.user;
+      // Enrich the returned comment with current user's info for immediate UI display
+      const enriched = {
+        ...res.data.comment,
+        customer: res.data.comment?.customer && typeof res.data.comment.customer === 'object'
+          ? res.data.comment.customer
+          : {
+              _id: currentUser?._id,
+              name: currentUser?.name,
+              profileImage: currentUser?.profileImage,
+            },
+      };
+      return { serviceId, comment: enriched };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to post comment");
     }
@@ -30,10 +43,24 @@ export const createServiceComment = createAsyncThunk(
 
 export const updateServiceComment = createAsyncThunk(
   "comments/update",
-  async ({ commentId, comment }, { rejectWithValue }) => {
+  async ({ commentId, comment }, { rejectWithValue, getState }) => {
     try {
       const res = await axios.put(`${API_URL}/api/comments/update-comment/${commentId}`, { comment });
-      return res.data.comment;
+      const state = getState();
+      const currentUser = state?.auth?.user;
+      const updated = res.data.comment || {};
+      // Ensure customer object is present for immediate UI display
+      const enriched = {
+        ...updated,
+        customer: updated?.customer && typeof updated.customer === 'object'
+          ? updated.customer
+          : {
+              _id: currentUser?._id,
+              name: currentUser?.name,
+              profileImage: currentUser?.profileImage,
+            },
+      };
+      return enriched;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to update comment");
     }
