@@ -11,6 +11,8 @@ import "dotenv/config"
 
 const app = express();
 
+app.use(cookieParser()); 
+
 // 1. Allow CORS for ALL routes and ALL methods:
 app.use(cors({
   origin: true,
