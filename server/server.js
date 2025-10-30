@@ -15,7 +15,7 @@ const app = express();
 app.use(cors({ origin: true, credentials: true })); 
 
 // 2. Explicitly handle preflight OPTIONS for ALL paths:
-app.options(/^.*$/, cors({ origin: true, credentials: true })); // [2]
+// app.options(/^.*$/, cors({ origin: true, credentials: true })); // [2]
 
 
 app.use(express.json());
