@@ -9,6 +9,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
+import { FaCartShopping } from "react-icons/fa6";
 
 const Navbar = () => {
   const location = useLocation();
@@ -67,7 +68,7 @@ const Navbar = () => {
         </Link>
 
         {/* Centered Nav Links */}
-    {!user &&  <div className="hidden md:flex flex-1 justify-center  ml-24 items-center text-[0.94rem] space-x-8">
+    {!user &&  <div className="hidden xl:flex flex-1 justify-center  ml-24 items-center text-[0.94rem] space-x-8">
           {navLinks.map((link) => (
             <Link
               key={link.to}
@@ -80,7 +81,7 @@ const Navbar = () => {
         </div> }
 
         {/* Right Side: Search, Icons & Auth */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden xl:flex items-center gap-3">
           {/* Search Input */}
           <div className="relative">
             <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -121,19 +122,29 @@ const Navbar = () => {
                   </Link>
                 )}
 
+
               <button
                 onClick={handleLogout}
                 className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
               >
                 Logout
               </button>
+
+                {user && (
+                  <Link
+                    to={`/cart/${user._id}`}
+                  >
+                    <FaCartShopping size={30} />   
+                  </Link>
+                )}
+
             </div>
           )}
         </div>
 
         {/* Mobile Toggle Button */}
         <button
-          className="md:hidden text-white focus:outline-none z-60"
+          className="xl:hidden text-white focus:outline-none z-60"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <HiOutlineX size={28} /> : <HiOutlineMenu size={28} />}
@@ -143,14 +154,14 @@ const Navbar = () => {
       {/* Mobile Menu Backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+          className="xl:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
           onClick={closeMenu}
         />
       )}
 
       {/* Slide-in Mobile Menu */}
       <div
-        className={`md:hidden fixed top-0 right-0 bottom-0 w-[85%] bg-black max-w-sm z-50 transform transition-transform duration-500 ease-in-out ${
+        className={`xl:hidden fixed top-0 right-0 bottom-0 w-[85%] bg-black max-w-sm z-50 transform transition-transform duration-500 ease-in-out ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -175,6 +186,23 @@ const Navbar = () => {
                 {link.text}
               </Link>
             ))}
+      { user &&  <Link
+        to="/update-profile"
+        onClick={closeMenu}
+        className="block px-4 py-3 text-white hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
+      >
+        Update Profile
+      </Link>
+            }
+      { user && 
+      <Link
+        to="/become-provider"
+        onClick={closeMenu}
+        className="block px-4 py-3 text-white hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
+      >
+        { user.role==="provider"? "Update Services" : "Become Provider" } 
+      </Link>
+      }
           </div>
 
           {/* Action Buttons */}
@@ -188,6 +216,7 @@ const Navbar = () => {
                 Login
               </Link>
             ) : (
+                
               <button
                 onClick={handleLogout}
                 className="block w-full text-center text-black rounded-lg px-3 py-2 bg-white transition-all duration-300 shadow-lg font-medium"

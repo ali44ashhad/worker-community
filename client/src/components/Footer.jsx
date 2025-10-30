@@ -51,10 +51,14 @@ const Footer = () => {
         </div>
 
         <div className="footer-column">
-          <h3 className="text-lg font-medium mb-5">Global citizenship</h3>
+          <h3 className="text-lg font-medium mb-5">Top Services</h3>
           <ul className="list-none p-0">
-            <li className="mb-4"><Link to="/" className="text-sm hover:underline">Safety</Link></li>
-            <li className="mb-4"><Link to="/" className="text-sm hover:underline">Sustainability</Link></li>
+            <li className="mb-4"><Link to="service/69008b20842b1760024a9496" className="text-sm hover:underline">Workshops</Link></li>
+            <li className="mb-4"><Link to="/service/6900943b842b1760024a94af" className="text-sm hover:underline">Photography</Link></li>
+            <li className="mb-4"><Link to="/service/6900943c842b1760024a94b7" className="text-sm hover:underline">Technology</Link></li>
+            <li className="mb-4"><Link to="/service/6900943f842b1760024a94bc" className="text-sm hover:underline">Music</Link></li>
+            <li className="mb-4"><Link to="/service/6900958d842b1760024a94c9" className="text-sm hover:underline">Home Baker</Link></li>
+            <li className="mb-4"><Link to="/service/69009593842b1760024a94cf" className="text-sm hover:underline">Consulting</Link></li>
           </ul>
         </div>
 
