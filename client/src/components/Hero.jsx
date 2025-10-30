@@ -7,15 +7,15 @@ const Hero = () => {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   const categories = [
-    { name: "Home Cooking", icon: "cookingIcon1.png" },
-    { name: "Academics", icon: "academicsIcon.png" },
-    { name: "Fitness & Sports", icon: "fitnessIcon.png" },
-    { name: "Dance", icon: "danceIcon.png" },
-    { name: "Art & Craft", icon: "artIcon.png" },
-    { name: "Groceries", icon: "groceryIcon.png" },
-    { name: "Photography", icon: "photographyIcon.png" },
-    { name: "Event Planner", icon: "eventPlannerIcon.png" },
-    { name: "Music", icon: "musicIcon.png" },
+    { name: "Home Cooking", icon: "cookingIcon1.png" , url:"/category/Home%20Cooking" },
+    { name: "Academics", icon: "academicsIcon.png" , url:"/category/Academics" },
+    { name: "Fitness & Sports", icon: "fitnessIcon.png" , url : "category/Fitness%20%26%20Sports" },
+    { name: "Dance", icon: "danceIcon.png" , url:"/category/Dance" },
+    { name: "Art & Craft", icon: "artIcon.png" , url:"/category/Art%20%26%20Craft" },
+    { name: "Groceries", icon: "groceryIcon.png" , url:"category/Groceries" },
+    { name: "Photography", icon: "photographyIcon.png" , url:"category/Photography" },
+    { name: "Event Planner", icon: "eventPlannerIcon.png" , url:"category/Event%20/Planner" },
+    { name: "Music", icon: "musicIcon.png" , url:"/category/Music" },
   ];
 
   const carouselImages = [
@@ -159,7 +159,8 @@ const Hero = () => {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {categories.map((category, index) => (
-                <div
+                <Link
+                to={`${category.url}`}
                   key={index}
                   className="flex flex-col items-center justify-center p-3 sm:p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer text-center border border-gray-200"
                 >
@@ -171,7 +172,7 @@ const Hero = () => {
                   <p className="text-xs sm:text-sm text-gray-700 font-medium leading-tight">
                     {category.name}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

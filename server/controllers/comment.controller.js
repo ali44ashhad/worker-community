@@ -1,16 +1,17 @@
 import Comment from "../models/comment.model.js";
 import User from "../models/user.model.js";
 import ProviderProfile from "../models/providerProfile.model.js";
+import ServiceOffering from "../models/serviceOffering.model.js";
 
 /**
- * @description Create a new comment for a provider
- * @route POST /api/comments/create-comment/:providerId (This ID is the ProviderProfile ID)
+ * @description Create a new comment for a service offering
+ * @route POST /api/comments/create-comment/:serviceId (This ID is the ServiceOffering ID)
  * @access Private (Any logged-in user)
  */
 const createComment = async (req, res) => {
     try {
-        // This ID is the provider's PROFILE ID
-        const { providerId } = req.params; 
+        // This ID is the SERVICE OFFERING ID
+        const { serviceId } = req.params; 
         const { comment } = req.body;
         const customerId = req.user._id; // This is the customer's USER ID
 
@@ -18,21 +19,22 @@ const createComment = async (req, res) => {
             return res.status(400).json({ success: false, message: "Comment text is required." });
         }
 
-        // 1. Check if the provider's PROFILE exists
-        const providerProfile = await ProviderProfile.findById(providerId);
-
-        if (!providerProfile) {
-            return res.status(404).json({ success: false, message: "Provider profile not found." });
-        }
-        
-        // 2. Prevent a user from commenting on their own profile
-        if (providerProfile.user.toString() === customerId.toString()) {
-            return res.status(400).json({ success: false, message: "You cannot comment on your own profile." });
+        // 1. Verify the service offering exists
+        const serviceOffering = await ServiceOffering.findById(serviceId);
+        if (!serviceOffering) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
         }
 
-        // 3. Create the new comment
+        // 2. Prevent a user from commenting on their own service (via owning provider profile)
+        const owningProviderProfile = await ProviderProfile.findById(serviceOffering.provider);
+        if (owningProviderProfile && owningProviderProfile.user.toString() === customerId.toString()) {
+            return res.status(400).json({ success: false, message: "You cannot comment on your own service." });
+        }
+
+        // 3. Create the new comment associated with the service offering
         const newComment = await Comment.create({
-            provider: providerId, // <-- CORRECTED: Save the ProviderProfile ID
+            serviceOffering: serviceId,
+            provider: serviceOffering.provider, // optional legacy linkage
             customer: customerId,
             comment
         });
@@ -53,18 +55,18 @@ const createComment = async (req, res) => {
 };
 
 /**
- * @description Get all comments for a specific provider
- * @route GET /api/comments/get-comments/:providerId (This ID is the ProviderProfile ID)
+ * @description Get all comments for a specific service offering
+ * @route GET /api/comments/get-comments/:serviceId (This ID is the ServiceOffering ID)
  * @access Public
  */
 
-const getCommentsForProvider = async (req, res) => {
+const getCommentsForService = async (req, res) => {
     try {
-        // This ID is the provider's PROFILE ID
-        const { providerId } = req.params; 
+        // This ID is the SERVICE OFFERING ID
+        const { serviceId } = req.params; 
 
-        // 1. Find all comments where 'provider' matches the ProviderProfile ID
-        const comments = await Comment.find({ provider: providerId }) // <-- CORRECTED
+        // 1. Find all comments where 'serviceOffering' matches the ServiceOffering ID
+        const comments = await Comment.find({ serviceOffering: serviceId })
             .populate('customer', 'name profileImage') // Get commenter's name and image
             .sort({ createdAt: -1 }); // Show newest comments first
 
@@ -157,7 +159,7 @@ const deleteComment = async (req,res) => {
 
 export {
     createComment,
-    getCommentsForProvider,
+    getCommentsForService,
     updateComment,
     deleteComment
 };

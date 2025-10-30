@@ -27,6 +27,9 @@ const Footer = () => {
               <Link to="/service" className="text-sm hover:underline">Services</Link>
             </li>
             <li className="mb-4">
+              <Link to="/category" className="text-sm hover:underline">Categories</Link>
+            </li>
+            <li className="mb-4">
               <Link to="/contact" className="text-sm hover:underline">Contact Us</Link>
             </li>
             <li className="mb-4">
@@ -38,12 +41,12 @@ const Footer = () => {
         <div className="footer-column">
           <h3 className="text-lg font-medium mb-5">Popular Categories</h3>
           <ul className="list-none p-0">
-            <li className="mb-4"><Link to="/academics" className="text-sm hover:underline">Academics</Link></li>
-            <li className="mb-4"><Link to="/music" className="text-sm hover:underline">Music</Link></li>
-            <li className="mb-4"><Link to="/dance" className="text-sm hover:underline">Dance</Link></li>
-            <li className="mb-4"><Link to="/fitness" className="text-sm hover:underline">Fitness & Sports</Link></li>
-            <li className="mb-4"><Link to="/home-baker" className="text-sm hover:underline">Home Baker</Link></li>
-            <li className="mb-4"><Link to="/technology" className="text-sm hover:underline">Technology</Link></li>
+            <li className="mb-4"><Link to="/category/Academics" className="text-sm hover:underline">Academics</Link></li>
+            <li className="mb-4"><Link to="/category/Music" className="text-sm hover:underline">Music</Link></li>
+            <li className="mb-4"><Link to="/category/Dance" className="text-sm hover:underline">Dance</Link></li>
+            <li className="mb-4"><Link to="/category/Fitness%20%26%20Sports" className="text-sm hover:underline">Fitness & Sports</Link></li>
+            <li className="mb-4"><Link to="/category/Home%20Cooking" className="text-sm hover:underline">Home Baker</Link></li>
+            <li className="mb-4"><Link to="/category/Technology" className="text-sm hover:underline">Technology</Link></li>
           </ul>
         </div>
 

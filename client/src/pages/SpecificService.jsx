@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getAllProviders } from '../features/providerSlice';
 import { HiOutlinePhotograph, HiArrowRight } from 'react-icons/hi';
+import Comment from '../components/Comment';
 
 const SpecificService = () => {
   const { id } = useParams();
@@ -252,6 +253,8 @@ const SpecificService = () => {
         </div>
 
       </div>
+
+      <Comment serviceId={id} />
     </div>
   );
 };
