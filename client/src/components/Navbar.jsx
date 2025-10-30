@@ -51,6 +51,7 @@ const Navbar = () => {
     // { to: '/provider', text: 'Providers' },
     { to: '/contact', text: 'Contact' },
     { to: '/service', text: 'Service' },
+    { to: '/category', text: 'Categories' },
   ];
 
   return (

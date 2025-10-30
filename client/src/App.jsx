@@ -21,6 +21,8 @@ import Services from './pages/Services'
 import SpecificProvider from './pages/SpecificProvider'
 import SpecificService from './pages/SpecificService'
 import Footer from './components/Footer'
+import AllCategory from './pages/AllCategory'
+import SpecificCategory from './pages/SpecificCategory'
 
 const App = () => {
 
@@ -59,6 +61,8 @@ const App = () => {
         <Route path='/service' element={ <Services></Services> } ></Route>
         <Route path='/service/:id' element={ <SpecificService></SpecificService> } ></Route>
         <Route path='/provider/:id' element={<SpecificProvider></SpecificProvider>}></Route>
+        <Route path='/category' element={<AllCategory></AllCategory>}></Route>
+        <Route path='/category/:id' element={<SpecificCategory></SpecificCategory>}></Route>
       </Routes>
 
       <Footer></Footer>

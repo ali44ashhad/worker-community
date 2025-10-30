@@ -1,13 +1,20 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const TopCategoryCard = ({ category, data, image }) => {
+  const navigate = useNavigate();
   // Get first 5 keywords
   const displayedKeywords = data.keywords.slice(0, 5);
 
-//   console.log(image);
+  const handleClick = () => {
+    navigate(`/category/${encodeURIComponent(category)}`);
+  };
 
   return (
-    <div className="bg-white border-2 hover:cursor-pointer border-black rounded-xl p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
+    <div 
+      onClick={handleClick}
+      className="bg-white border-2 hover:cursor-pointer border-black rounded-xl p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group"
+    >
       {/* Image */}
       <div className="mb-4 flex justify-center">
         <div className="w-full h-48 border-2 border-black rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
