@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   HiOutlineMenu, 
   HiOutlineX, 
@@ -150,27 +150,27 @@ const Navbar = () => {
 
       {/* Slide-in Mobile Menu */}
       <div
-        className={`md:hidden fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-white z-50 transform transition-transform duration-500 ease-in-out ${
+        className={`md:hidden fixed top-0 right-0 bottom-0 w-[85%] bg-black max-w-sm z-50 transform transition-transform duration-500 ease-in-out ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-start px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
-          <Link to="/" onClick={closeMenu} className="text-xl font-bold tracking-tight text-gray-700">
-            SOCIETY
+        <div className="flex items-center justify-start px-6 py-5 border-gray-200 border-b bg-black ">
+          <Link to="/" onClick={closeMenu} className="text-xl font-bold tracking-tight text-white">
+            Commun
           </Link>
         </div>
 
         {/* Menu Content */}
-        <div className="flex flex-col h-[calc(100%-73px)] overflow-y-auto">
+        <div className="flex flex-col h-[calc(100%-73px)]  overflow-y-auto">
           {/* Links */}
-          <div className="flex-1 py-6 px-6 space-y-1">
+          <div className="flex-1 py-6 px-6 space-y-1 bg-black">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
                 onClick={closeMenu}
-                className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all duration-200 font-medium"
+                className="block px-4 py-3 text-white hover:bg-blue-50  rounded-lg transition-all duration-200 font-medium"
               >
                 {link.text}
               </Link>
@@ -178,19 +178,19 @@ const Navbar = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="px-6 py-6 border-t border-gray-200 bg-gray-50 space-y-3">
+          <div className="px-6 py-6 border-t  border-gray-200 bg-black space-y-3">
             {!user ? (
               <Link
                 to="/login"
                 onClick={closeMenu}
-                className="block w-full text-center text-white rounded-lg px-4 py-3 bg-blue-500 transition-all duration-300 shadow-lg font-medium"
+                className="block text-center text-black rounded-lg px-3 py-2 bg-white transition-all duration-300 shadow-lg font-medium"
               >
                 Login
               </Link>
             ) : (
               <button
                 onClick={handleLogout}
-                className="block w-full text-center text-white rounded-lg px-4 py-3 bg-blue-500 transition-all duration-300 shadow-lg font-medium"
+                className="block w-full text-center text-black rounded-lg px-3 py-2 bg-white transition-all duration-300 shadow-lg font-medium"
               >
                 Logout
               </button>
