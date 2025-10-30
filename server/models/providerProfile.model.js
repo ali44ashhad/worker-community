@@ -15,12 +15,7 @@ const providerProfileSchema = new Schema({
         required: [true, "A bio is required"],
         maxlength: [500, "Bio cannot be more than 500 characters"]
     },
-    experience: {
-        type: Number, // Represents years of experience
-        required: [true, "Experience is required"],
-        min: [0, "Experience cannot be negative"],
-        default: 0
-    }
+    // experience REMOVED
     // All other fields (serviceCategories, portfolioImages, ratings)
     // have been moved to the ServiceOffering model or removed per your requests.
 

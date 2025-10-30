@@ -39,26 +39,19 @@ const deleteFromCloudinary = (public_id) => {
  const becomeProvider = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { bio, experience } = req.body;
-
-        if (!bio || experience === undefined) {
-            return res.status(400).json({ success: false, message: "Bio and experience are required." });
+        const { bio } = req.body; // only take bio
+        if (!bio) {
+            return res.status(400).json({ success: false, message: "Bio is required." });
         }
-
         const existingProfile = await ProviderProfile.findOne({ user: userId });
         if (existingProfile) {
             return res.status(400).json({ success: false, message: "You are already a provider." });
         }
-
         const newProfile = await ProviderProfile.create({
             user: userId,
-            bio,
-            experience
+            bio
         });
-
-        // Update the user's role to 'provider'
         await User.findByIdAndUpdate(userId, { role: "provider" });
-
         return res.status(201).json({
             success: true,
             message: "Congratulations! You are now a provider. Proceed to add your services.",
@@ -78,18 +71,15 @@ const deleteFromCloudinary = (public_id) => {
  const updateProviderProfile = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { bio, experience } = req.body;
-
+        const { bio } = req.body; // no experience
         const profile = await ProviderProfile.findOneAndUpdate(
             { user: userId },
-            { bio, experience },
+            { bio },
             { new: true, runValidators: true }
         );
-
         if (!profile) {
             return res.status(404).json({ success: false, message: "Provider profile not found." });
         }
-
         return res.status(200).json({
             success: true,
             message: "Profile updated successfully.",
@@ -97,7 +87,6 @@ const deleteFromCloudinary = (public_id) => {
         });
     } catch (error) {
         console.error("Error in updateProviderProfile:", error.message);
-        // Mongoose validation errors will be caught here
         return res.status(400).json({ success: false, message: error.message });
     }
 };

@@ -98,6 +98,8 @@ const SpecificService = () => {
     navigate(`/provider/${service.provider._id}`);
   };
 
+  console.log(service);
+
   return (
     <div className='mt-20 max-w-[1350px] mx-auto px-4 py-6'>
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
@@ -165,6 +167,13 @@ const SpecificService = () => {
             <h1 className='text-3xl font-bold text-black mb-2'>
               {serviceCategory}
             </h1>
+            {/* Show service-level experience (years) if present */}
+            {service.experience !== undefined && service.experience !== null && service.experience !== '' && (
+              <div className="mb-2 text-black font-medium text-base">
+                {service.experience} year{(Number(service.experience) === 1 ? '' : 's')} of experience
+              </div>
+            )}
+            
             {subCategories.length > 0 && (
               <div className='flex flex-wrap gap-2 mb-2'>
                 {subCategories.map((cat, idx) => (
@@ -233,9 +242,9 @@ const SpecificService = () => {
                 <h3 className='text-xl font-bold text-black truncate'>
                   {providerName}
                 </h3>
-                {service?.provider?.experience && (
+                {service?.experience && (
                   <p className='text-gray-600 text-xs mt-0.5'>
-                    {service.provider.experience} years of experience
+                    {service.experience} years of experience
                   </p>
                 )}
               </div>

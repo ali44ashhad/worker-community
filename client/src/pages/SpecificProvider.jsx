@@ -191,11 +191,7 @@ const SpecificProvider = () => {
                 <h2 className='text-xl font-bold text-black'>
                   {providerName}
                 </h2>
-                {selectedProvider.experience && (
-                  <p className='text-sm text-gray-600'>
-                    {selectedProvider.experience} years of experience
-                  </p>
-                )}
+                {/* remove experience display here */}
               </div>
             </div>
           </div>

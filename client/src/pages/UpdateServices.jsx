@@ -362,7 +362,7 @@ const UpdateServices = () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       
-      // First, update the provider bio
+      // First, update the provider bio WITHOUT experience
       if (myProviderProfile) {
         await fetch(`${API_URL}/api/provider-profile/`, {
           method: 'PUT',
@@ -371,8 +371,7 @@ const UpdateServices = () => {
           },
           credentials: 'include',
           body: JSON.stringify({
-            bio: providerBio,
-            experience: myProviderProfile.experience // Keep existing experience
+            bio: providerBio
           })
         });
       }
