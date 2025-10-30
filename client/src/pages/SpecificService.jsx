@@ -4,12 +4,16 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getAllProviders } from '../features/providerSlice';
 import { HiOutlinePhotograph, HiArrowRight } from 'react-icons/hi';
 import Comment from '../components/Comment';
+// import { useSelector, useDispatch } from 'react-redux';
+import { addToWishlist, removeFromWishlist, fetchWishlist } from '../features/wishlistSlice';
 
 const SpecificService = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { allProviders } = useSelector((state) => state.provider);
+  const user = useSelector((s) => s.auth.user);
+  const wishlistIds = useSelector((s) => s.wishlist.ids);
   
   const [service, setService] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -21,6 +25,10 @@ const SpecificService = () => {
       dispatch(getAllProviders());
     }
   }, [dispatch, allProviders.length]);
+
+  useEffect(() => {
+    if (user) dispatch(fetchWishlist());
+  }, [dispatch, user]);
 
   // Find the service from allProviders
   useEffect(() => {
@@ -96,6 +104,19 @@ const SpecificService = () => {
   const handleContactNow = () => {
     // Navigate to provider profile or contact
     navigate(`/provider/${service.provider._id}`);
+  };
+
+  const isInWishlist = wishlistIds?.includes(id);
+  const onToggleWishlist = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (isInWishlist) {
+      await dispatch(removeFromWishlist(id));
+    } else {
+      await dispatch(addToWishlist(id));
+    }
   };
 
   console.log(service);
@@ -251,13 +272,20 @@ const SpecificService = () => {
             </div>
           </div>
 
-          {/* Contact Now Button */}
+          {/* Wishlist + Contact Buttons */}
           <button
             onClick={handleContactNow}
             className='w-full bg-white text-black py-3 px-6 rounded-xl font-bold text-lg hover:bg-black hover:text-white border-4 border-black transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:scale-105'
           >
             Contact Now
             <HiArrowRight className='w-5 h-5' />
+          </button>
+
+          <button
+            onClick={onToggleWishlist}
+            className='w-full bg-black text-white py-3 px-6 rounded-xl font-bold text-lg hover:bg-white hover:text-black border-4 border-black transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:scale-105'
+          >
+            {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
           </button>
         </div>
 

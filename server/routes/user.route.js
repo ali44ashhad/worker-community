@@ -4,7 +4,9 @@ import {
     login, 
     logout, 
     register, 
-    updateUserProfile 
+    updateUserProfile, 
+    addServiceToWishlist, 
+    removeServiceFromWishlist 
 } from '../controllers/user.controller.js'; // Remove admin controllers
 import { protect } from '../middlewares/user.middleware.js'; // Remove isAdmin
 import upload from '../middlewares/multer.js';
@@ -23,6 +25,11 @@ userRouter.put(
     upload.single("profileImage"), 
     updateUserProfile
 );
+
+// Add service to wishlist
+userRouter.post('/wishlist/:serviceId', protect, addServiceToWishlist);
+// Remove service from wishlist
+userRouter.delete('/wishlist/:serviceId', protect, removeServiceFromWishlist);
 
 // ADMIN ROUTES REMOVED FROM HERE
 

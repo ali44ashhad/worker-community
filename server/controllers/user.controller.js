@@ -5,6 +5,7 @@ import User from "../models/user.model.js";
 import cloudinary from "../config/cloudinary.js";
 import streamifier from "streamifier";
 import Booking from "../models/booking.model.js";
+import ServiceOffering from '../models/serviceOffering.model.js';
 
 // Helper function to generate a token and set the cookie.
 const generateToken = (userId, res) => {
@@ -288,6 +289,42 @@ const getAllBookings = async (req, res) => {
         console.error("Error in getAllBookings controller:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
+};
+
+// Add service to wishlist
+export const addServiceToWishlist = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+    const userId = req.user._id;
+    // Validate service exists
+    const service = await ServiceOffering.findById(serviceId);
+    if (!service) return res.status(404).json({success: false, message: 'Service not found'});
+    // Add (no dupes)
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $addToSet: { wishlist: service._id } },
+      { new: true }
+    ).populate('wishlist');
+    return res.status(200).json({ success: true, wishlist: updatedUser.wishlist });
+  } catch(err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Remove service from wishlist
+export const removeServiceFromWishlist = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+    const userId = req.user._id;
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { wishlist: serviceId } },
+      { new: true }
+    ).populate('wishlist');
+    return res.status(200).json({ success: true, wishlist: updatedUser.wishlist });
+  } catch(err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 };
 
 // --- Single Export Block ---

@@ -32,7 +32,9 @@ const userSchema = new Schema({
     profileImage: {
         type: String,
         default: ""
-    }
+    },
+    // Wishlist: array of serviceOffering IDs
+    wishlist: [{ type: Schema.Types.ObjectId, ref: 'ServiceOffering', default: [] }]
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);

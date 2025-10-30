@@ -1,8 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { FaRegHeart } from "react-icons/fa6";
+import { IoIosHeart } from "react-icons/io";
+import { addToWishlist, removeFromWishlist } from '../../features/wishlistSlice';
 
 const TopServiceCard = ({ service }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector((s) => s.auth.user);
+  const wishlistIds = useSelector((s) => s.wishlist.ids);
 
   const image = service?.portfolioImages?.[0]?.url;
   const title = service?.serviceCategory || 'Service';
@@ -12,17 +19,42 @@ const TopServiceCard = ({ service }) => {
 
   const goToService = () => navigate(`/service/${service._id}`);
 
+  const isInWishlist = wishlistIds?.includes(service._id);
+  const onToggleWishlist = (e) => {
+    e.stopPropagation();
+    if (!user) return; // optionally navigate to login
+    if (isInWishlist) {
+      dispatch(removeFromWishlist(service._id));
+    } else {
+      dispatch(addToWishlist(service._id));
+    }
+  };
+
   return (
     <div
       onClick={goToService}
-      className="bg-white border-2 border-black rounded-xl p-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer group"
+      className="relative bg-white border-2 border-black rounded-xl p-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer group"
     >
+      {/* ❤️ Heart icon always visible */}
+      <button
+        onClick={onToggleWishlist}
+        className="absolute right-6 top-6 w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-black shadow hover:scale-110 transition-all duration-200"
+      >
+        {isInWishlist ? (
+          <IoIosHeart className="text-red-600" size={22} />
+        ) : (
+          <FaRegHeart className="text-red-600" size={20} />
+        )}
+      </button>
+
       <div className="mb-4">
         <div className="w-full h-48 border-2 border-black rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
           {image ? (
             <img src={image} alt={title} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-black font-bold">No Image</div>
+            <div className="w-full h-full flex items-center justify-center text-black font-bold">
+              No Image
+            </div>
           )}
         </div>
       </div>
@@ -54,5 +86,3 @@ const TopServiceCard = ({ service }) => {
 };
 
 export default TopServiceCard;
-
-
