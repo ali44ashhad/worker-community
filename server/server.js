@@ -12,15 +12,17 @@ import "dotenv/config"
 const app = express();
 
 // 1. Allow CORS for ALL routes and ALL methods:
-app.use(cors({ origin: true, credentials: true })); 
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
 
 // 2. Explicitly handle preflight OPTIONS for ALL paths:
-// app.options(/^.*$/, cors({ origin: true, credentials: true })); // [2]
+app.options(/^.*$/, cors({ origin: true, credentials: true })); // [2]
 
-
-app.use(express.json());
-app.use(cookieParser());
-app.use(express.urlencoded({ extended: true }));
+// Increase payload limits for JSON and urlencoded bodies
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 // ✅ API routes
 app.use('/api/user', userRouter);
