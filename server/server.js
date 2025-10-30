@@ -11,18 +11,12 @@ import "dotenv/config"
 
 const app = express();
 
-// ✅ CORS configuration
-app.use(
-  cors({
-    origin: true, // Reflects the request origin
-    credentials: true, // Allows cookies / auth headers
-  })
-);
+// 1. Allow CORS for ALL routes and ALL methods:
+app.use(cors({ origin: true, credentials: true })); 
 
-app.options('*', cors({
-  origin: true,
-  credentials: true,
-}));
+// 2. Explicitly handle preflight OPTIONS for ALL paths:
+app.options(/^.*$/, cors({ origin: true, credentials: true })); // [2]
+
 
 app.use(express.json());
 app.use(cookieParser());
