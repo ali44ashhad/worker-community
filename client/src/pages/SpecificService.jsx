@@ -62,7 +62,7 @@ const SpecificService = () => {
     return (
       <div className='mt-20 max-w-[1350px] mx-auto px-4 flex items-center justify-center min-h-screen'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto mb-4'></div>
           <p className='text-xl font-semibold'>Loading...</p>
         </div>
       </div>
@@ -128,7 +128,7 @@ const SpecificService = () => {
         {/* LEFT SIDE - Image Gallery */}
         <div className='space-y-4'>
           {/* Main Image */}
-          <div className='relative bg-white border-4 border-black rounded-xl overflow-hidden h-[380px]'>
+          <div className='relative bg-white border border-gray-300 rounded-xl overflow-hidden h-[380px]'>
             {currentImage && !imageError ? (
               <img
                 src={currentImage}
@@ -153,10 +153,10 @@ const SpecificService = () => {
                     setSelectedImageIndex(index);
                     setImageError(false);
                   }}
-                  className={`flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all ${
+                  className={`flex-shrink-0 border rounded-lg overflow-hidden transition-all ${
                     selectedImageIndex === index
-                      ? 'border-black ring-4 ring-black ring-opacity-20'
-                      : 'border-gray-300 hover:border-black'
+                      ? 'border-gray-400 ring-2 ring-gray-300 ring-opacity-50'
+                      : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
                   <div className='w-16 h-16 bg-white'>
@@ -174,7 +174,7 @@ const SpecificService = () => {
           {/* Order Now Button */}
           <button
             onClick={handleOrderNow}
-            className='w-full bg-black text-white py-3 px-6 rounded-xl font-bold text-lg hover:bg-white hover:text-black border-4 border-black transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:scale-105'
+            className='w-full bg-gray-800 text-white py-3 px-6 rounded-xl font-bold text-lg hover:bg-gray-700 hover:text-white border border-gray-300 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105'
           >
             Order Now
             <HiArrowRight className='w-5 h-5' />
@@ -200,7 +200,7 @@ const SpecificService = () => {
                 {subCategories.map((cat, idx) => (
                   <span
                     key={idx}
-                    className='bg-black text-white px-3 py-1 rounded-full text-xs font-semibold'
+                    className='bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold border border-gray-300'
                   >
                     {cat}
                   </span>
@@ -215,7 +215,7 @@ const SpecificService = () => {
               {keywords.map((keyword, idx) => (
                 <span
                   key={idx}
-                  className='bg-white border-2 border-black text-black px-2 py-1 rounded-full text-xs font-medium'
+                  className='bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded-full text-xs font-medium'
                 >
                   {keyword}
                 </span>
@@ -224,7 +224,7 @@ const SpecificService = () => {
           )}
 
           {/* Bio/Description */}
-          <div className='bg-white border-4 border-black rounded-xl p-4'>
+          <div className='bg-white border border-gray-300 rounded-xl p-4'>
             <h2 className='text-xl font-bold text-black mb-2'>About This Service</h2>
             <p className='text-gray-700 leading-relaxed text-sm whitespace-pre-wrap line-clamp-4'>
               {serviceDescription}
@@ -232,7 +232,7 @@ const SpecificService = () => {
           </div>
 
           {/* Provider Info */}
-          <div className='bg-white border-4 border-black rounded-xl p-4'>
+          <div className='bg-white border border-gray-300 rounded-xl p-4'>
             <h2 className='text-xl font-bold text-black mb-3'>Provider</h2>
             <div className='flex items-center gap-3'>
               {/* Provider Image */}
@@ -241,7 +241,7 @@ const SpecificService = () => {
                   <img
                     src={profileImage}
                     alt={providerName}
-                    className='w-16 h-16 rounded-full border-4 border-black object-cover'
+                    className='w-16 h-16 rounded-full border border-gray-300 object-cover'
                     onError={(e) => {
                       e.target.style.display = 'none';
                       if (e.target.nextSibling) {
@@ -251,7 +251,7 @@ const SpecificService = () => {
                   />
                 ) : null}
                 <div
-                  className='w-16 h-16 rounded-full border-4 border-black bg-black text-white flex items-center justify-center font-bold text-2xl'
+                  className='w-16 h-16 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold text-2xl'
                   style={{ display: profileImage ? 'none' : 'flex' }}
                 >
                   {providerName.charAt(0).toUpperCase()}
@@ -275,7 +275,7 @@ const SpecificService = () => {
           {/* Wishlist + Contact Buttons */}
           <button
             onClick={handleContactNow}
-            className='w-full bg-white text-black py-3 px-6 rounded-xl font-bold text-lg hover:bg-black hover:text-white border-4 border-black transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:scale-105'
+            className='w-full bg-white text-gray-700 py-3 px-6 rounded-xl font-bold text-lg hover:bg-gray-100 hover:text-gray-900 border border-gray-300 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105'
           >
             Contact Now
             <HiArrowRight className='w-5 h-5' />
@@ -283,7 +283,7 @@ const SpecificService = () => {
 
           <button
             onClick={onToggleWishlist}
-            className='w-full bg-black text-white py-3 px-6 rounded-xl font-bold text-lg hover:bg-white hover:text-black border-4 border-black transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:scale-105'
+            className='w-full bg-gray-800 text-white py-3 px-6 rounded-xl font-bold text-lg hover:bg-gray-700 hover:text-white border border-gray-300 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105'
           >
             {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
           </button>

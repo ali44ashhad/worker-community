@@ -56,15 +56,15 @@ const Comment = ({ serviceId }) => {
 
   return (
     <div className='mt-10'>
-      <div className='bg-white border-4 border-black rounded-2xl p-5'>
+      <div className='bg-white border border-gray-300 rounded-2xl p-5'>
         <h2 className='text-2xl font-bold text-black mb-4'>Comments</h2>
 
         {/* Form at top */}
-        <div className='pb-4 border-b-2 border-black'>
+        <div className='pb-4 border-b border-gray-300'>
           {user ? (
             <form onSubmit={onSubmit} className='flex flex-col gap-3'>
               <textarea
-                className='w-full border-2 border-black rounded-xl p-3 focus:outline-none focus:ring-0 bg-white text-black'
+                className='w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-white text-black'
                 rows={3}
                 placeholder='Write your comment...'
                 value={text}
@@ -72,7 +72,7 @@ const Comment = ({ serviceId }) => {
               />
               <button
                 type='submit'
-                className='self-end px-5 py-2 bg-black text-white rounded-xl border-2 border-black hover:bg-white hover:text-black transition-all'
+                className='self-end px-5 py-2 bg-gray-800 text-white rounded-xl border border-gray-300 hover:bg-gray-700 hover:text-white transition-all'
               >
                 Post Comment
               </button>
@@ -94,14 +94,14 @@ const Comment = ({ serviceId }) => {
 
           <ul className='space-y-4'>
             {comments.map((c) => (
-              <li key={c._id} className='border-2 border-black rounded-xl p-4 bg-white'>
+              <li key={c._id} className='border border-gray-300 rounded-xl p-4 bg-white'>
                 <div className='flex items-start justify-between gap-3'>
                   <div className='flex items-center gap-3'>
                     {c.customer?.profileImage ? (
                       <img
                         src={c.customer.profileImage}
                         alt={c.customer?.name || 'User'}
-                        className='w-10 h-10 rounded-full border-2 border-black object-cover'
+                        className='w-10 h-10 rounded-full border border-gray-300 object-cover'
                         onError={(e) => {
                           e.target.style.display = 'none';
                           if (e.target.nextSibling) {
@@ -111,7 +111,7 @@ const Comment = ({ serviceId }) => {
                       />
                     ) : null}
                     <div
-                      className='w-10 h-10 rounded-full border-2 border-black bg-black text-white flex items-center justify-center font-bold'
+                      className='w-10 h-10 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold'
                       style={{ display: c.customer?.profileImage ? 'none' : 'flex' }}
                     >
                       {(c.customer?.name || 'U').charAt(0).toUpperCase()}
@@ -132,13 +132,13 @@ const Comment = ({ serviceId }) => {
                         <>
                           <button
                             onClick={onSaveEdit}
-                            className='px-3 py-1 bg-black text-white rounded-lg border-2 border-black hover:bg-white hover:text-black'
+                            className='px-3 py-1 bg-gray-800 text-white rounded-lg border border-gray-300 hover:bg-gray-700 hover:text-white'
                           >
                             Save
                           </button>
                           <button
                             onClick={onCancelEdit}
-                            className='px-3 py-1 bg-white text-black rounded-lg border-2 border-black hover:bg-black hover:text-white'
+                            className='px-3 py-1 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
                           >
                             Cancel
                           </button>
@@ -147,13 +147,13 @@ const Comment = ({ serviceId }) => {
                         <>
                           <button
                             onClick={() => onStartEdit(c)}
-                            className='px-3 py-1 bg-white text-black rounded-lg border-2 border-black hover:bg-black hover:text-white'
+                            className='px-3 py-1 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => onDelete(c._id)}
-                            className='px-3 py-1 bg-white text-black rounded-lg border-2 border-black hover:bg-black hover:text-white'
+                            className='px-3 py-1 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
                           >
                             Delete
                           </button>
@@ -166,7 +166,7 @@ const Comment = ({ serviceId }) => {
                 <div className='mt-3 text-gray-800'>
                   {editingId === c._id ? (
                     <textarea
-                      className='w-full border-2 border-black rounded-xl p-3 focus:outline-none focus:ring-0 bg-white text-black'
+                      className='w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-white text-black'
                       rows={3}
                       value={editingText}
                       onChange={(e) => setEditingText(e.target.value)}

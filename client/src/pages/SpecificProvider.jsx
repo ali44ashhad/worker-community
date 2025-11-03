@@ -38,7 +38,7 @@ const SpecificProvider = () => {
     return (
       <div className='mt-20 max-w-[1350px] mx-auto px-4 flex items-center justify-center min-h-screen'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto mb-4'></div>
           <p className='text-xl font-semibold'>Loading...</p>
         </div>
       </div>
@@ -103,7 +103,7 @@ const SpecificProvider = () => {
     <div className='mt-20 max-w-[1350px] mx-auto px-4 py-6'>
       {/* Carousel Section */}
       <div className='relative mb-6 group'>
-        <div className='h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg relative bg-white border-4 border-black'>
+        <div className='h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg relative bg-white border border-gray-300'>
           {/* Carousel Images */}
           {allCarouselImages.length > 0 ? (
             <div className='h-full relative'>
@@ -129,14 +129,14 @@ const SpecificProvider = () => {
             <>
               <button
                 onClick={goToPrevious}
-                className='absolute left-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black text-white p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 border-2 border-white'
+                className='absolute left-4 top-1/2 -translate-y-1/2 bg-gray-800/80 hover:bg-gray-800 text-white p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 border border-white'
               >
                 <HiArrowLeft className='w-6 h-6' />
               </button>
 
               <button
                 onClick={goToNext}
-                className='absolute right-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black text-white p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 border-2 border-white'
+                className='absolute right-4 top-1/2 -translate-y-1/2 bg-gray-800/80 hover:bg-gray-800 text-white p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 border border-white'
               >
                 <HiArrowRight className='w-6 h-6' />
               </button>
@@ -161,7 +161,7 @@ const SpecificProvider = () => {
           )}
 
           {/* Provider Info Overlay - Left Side */}
-          <div className='absolute left-6 top-6 bg-white/95 backdrop-blur-sm px-6 py-4 rounded-xl border-4 border-black shadow-lg'>
+          <div className='absolute left-6 top-6 bg-white/95 backdrop-blur-sm px-6 py-4 rounded-xl border border-gray-300 shadow-lg'>
             <div className='flex items-center gap-4'>
               {/* Provider Image */}
               <div className='flex-shrink-0'>
@@ -169,7 +169,7 @@ const SpecificProvider = () => {
                   <img
                     src={profileImage}
                     alt={providerName}
-                    className='w-16 h-16 rounded-full border-4 border-black object-cover'
+                    className='w-16 h-16 rounded-full border border-gray-300 object-cover'
                     onError={(e) => {
                       e.target.style.display = 'none';
                       if (e.target.nextSibling) {
@@ -179,7 +179,7 @@ const SpecificProvider = () => {
                   />
                 ) : null}
                 <div
-                  className='w-16 h-16 rounded-full border-4 border-black bg-black text-white flex items-center justify-center font-bold text-2xl'
+                  className='w-16 h-16 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold text-2xl'
                   style={{ display: profileImage ? 'none' : 'flex' }}
                 >
                   {providerName.charAt(0).toUpperCase()}
@@ -200,7 +200,7 @@ const SpecificProvider = () => {
 
       {/* Bio Section */}
       {bio && (
-        <div className='mb-6 bg-white border-4 border-black rounded-xl p-6'>
+        <div className='mb-6 bg-white border border-gray-300 rounded-xl p-6'>
           <h2 className='text-2xl font-bold text-black mb-3'>About</h2>
           <p className='text-gray-700 leading-relaxed'>
             {bio}
@@ -217,7 +217,7 @@ const SpecificProvider = () => {
             {services.length > 2 && (
               <button
                 onClick={scrollLeft}
-                className='absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black text-white p-3 rounded-full shadow-lg hover:bg-white hover:text-black border-4 border-black transition-all opacity-90 hover:opacity-100'
+                className='absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 hover:text-white border border-gray-300 transition-all opacity-90 hover:opacity-100'
               >
                 <HiArrowLeft className='w-6 h-6' />
               </button>
@@ -243,7 +243,7 @@ const SpecificProvider = () => {
             {services.length > 2 && (
               <button
                 onClick={scrollRight}
-                className='absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black text-white p-3 rounded-full shadow-lg hover:bg-white hover:text-black border-4 border-black transition-all opacity-90 hover:opacity-100'
+                className='absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 hover:text-white border border-gray-300 transition-all opacity-90 hover:opacity-100'
               >
                 <HiArrowRight className='w-6 h-6' />
               </button>
@@ -255,7 +255,7 @@ const SpecificProvider = () => {
       {/* Contact Now Button */}
       <button
         onClick={handleContactNow}
-        className='w-full max-w-md mx-auto block bg-white text-black py-4 px-6 rounded-xl font-bold text-lg hover:bg-black hover:text-white border-4 border-black transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:scale-105'
+        className='w-full max-w-md mx-auto block bg-white text-gray-700 py-4 px-6 rounded-xl font-bold text-lg hover:bg-gray-100 hover:text-gray-900 border border-gray-300 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105'
       >
         Contact Now
         <HiArrowRight className='w-6 h-6' />
