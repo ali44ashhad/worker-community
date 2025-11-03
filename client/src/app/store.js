@@ -3,6 +3,7 @@ import authReducer from '../features/authSlice.js';
 import providerReducer from '../features/providerSlice.js';
 import commentReducer from '../features/commentSlice.js';
 import wishlistReducer from '../features/wishlistSlice.js';
+import adminReducer from '../features/adminSlice.js';
 
 export const store = configureStore({
     reducer: {
@@ -11,5 +12,6 @@ export const store = configureStore({
         provider: providerReducer,
         comments: commentReducer,
         wishlist: wishlistReducer,
+        admin: adminReducer,
     },
 });

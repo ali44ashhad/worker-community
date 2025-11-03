@@ -1,6 +1,6 @@
 import React from 'react'
 import Navbar from './components/Navbar'
-import { Routes,Route } from 'react-router-dom'
+import { Routes,Route, useLocation, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import About from './pages/About'
 import Testimonial from './pages/Testimonial'
@@ -25,6 +25,11 @@ import AllCategory from './pages/AllCategory'
 import SpecificCategory from './pages/SpecificCategory'
 import Cart from './pages/Cart'
 import { fetchWishlist } from './features/wishlistSlice'
+import AdminLayout from './layouts/AdminLayout'
+import AdminProtectedRoute from './components/AdminProtectedRoute'
+import Dashboard from './pages/admin/Dashboard'
+import UpdateProviders from './pages/admin/UpdateProviders'
+import AdminServices from './pages/admin/AdminServices'
 
 const App = () => {
 
@@ -50,12 +55,15 @@ const App = () => {
     return < HomePageLoader></HomePageLoader>;
   }
 
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   return (
     <div className=''>
 
       <Toaster></Toaster>
 
-      <Navbar></Navbar>
+      {!isAdminRoute && <Navbar></Navbar>}
       <Routes>
         <Route path='/' element={<Home></Home>}></Route>
         <Route path='/about' element={<About></About>}></Route>
@@ -74,9 +82,24 @@ const App = () => {
         <Route path='/category' element={<AllCategory></AllCategory>}></Route>
         <Route path='/category/:id' element={<SpecificCategory></SpecificCategory>}></Route>
         <Route path='/cart/:id' element={<Cart></Cart>}></Route>
+        
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <AdminProtectedRoute>
+              <AdminLayout />
+            </AdminProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="providers" element={<UpdateProviders />} />
+          <Route path="services" element={<AdminServices />} />
+        </Route>
       </Routes>
 
-      <Footer></Footer>
+      {!isAdminRoute && <Footer></Footer>}
 
     </div>
   )

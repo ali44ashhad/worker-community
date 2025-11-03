@@ -9,7 +9,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
 import { FaCartShopping } from "react-icons/fa6";
-import { FaRegHeart } from "react-icons/fa6";
+// import { FaRegHeart } from "react-icons/fa6";
 import SearchDropdown from './SearchDropdown';
 
 const Navbar = () => {
@@ -112,7 +112,7 @@ const Navbar = () => {
             </Link>
           ) : (
             <div className="flex items-center gap-3">
-              {user && user.role !== 'provider' && (
+              {user && user.role === 'customer' && (
                 <Link
                   to="/become-provider"
                   className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
@@ -126,6 +126,14 @@ const Navbar = () => {
                   className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
                 >
                   Update Services
+                </Link>
+              )}
+              {user && user.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  className="text-black text-[0.94rem] bg-white cursor-pointer rounded-lg px-4 py-2 transition-all duration-300 shadow-lg font-medium"
+                >
+                  Admin Dashboard
                 </Link>
               )}
 
