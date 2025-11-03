@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getAllProviders } from '../features/providerSlice';
 import { HiOutlineSearch } from 'react-icons/hi';
+import { FiTrendingUp } from 'react-icons/fi'; // Added this icon
 
 // SERVICE_RULES from AllCategory component
 const SERVICE_RULES = {
@@ -138,35 +139,35 @@ const SERVICE_RULES = {
   }
 };
 
-// Map categories to their images
-const categoryImages = {
-  "Academics": "/AcademicsCategoryImage.png",
-  "Music": "/MusicCategoryImage.png",
-  "Dance": "/DanceCategoryImage.png",
-  "Fitness & Sports": "/fitnessCategoryImage1.png",
-  "Home Baker": "/HomeBakerCategoryImage.png",
-  "Technology": "/TechnologyCategoryImage.png",
-  "Home Cooking": "/cooking.png",
-  "Home Catering": "/cookingIcon.png",
-  "Catering": "/cookingIcon1.png",
-  "Professional Baker": "/HomeBakerCategoryImage.png",
-  "Workshops": "/tutor.png",
-  "Photography": "/photographyIcon.png",
-  "Consulting": "/eventPlannerIcon.png",
-  "Finance": "/eventPlannerIcon.png",
-  "Groceries": "/groceryIcon.png",
-  "Home Products": "/art.png",
-  "Apparels & Footwear": "/art.png",
-  "Law": "/eventPlannerIcon.png",
-  "Medical": "/eventPlannerIcon.png",
-  "Art & Craft": "/artIcon.png",
-  "Home Interiors": "/art.png",
-  "Construction": "/art.png",
-  "Real Estate": "/eventPlannerIcon.png",
-  "Event Planner": "/eventPlannerIcon.png",
-  "Gifting": "/eventPlannerIcon.png",
-  "Other": "/eventPlannerIcon.png"
-};
+// Map categories to their images (No longer used in the 'showCategories' block, but kept for your reference)
+// const categoryImages = {
+//   "Academics": "/AcademicsCategoryImage.png",
+//   "Music": "/MusicCategoryImage.png",
+//   "Dance": "/DanceCategoryImage.png",
+//   "Fitness & Sports": "/fitnessCategoryImage1.png",
+//   "Home Baker": "/HomeBakerCategoryImage.png",
+//   "Technology": "/TechnologyCategoryImage.png",
+//   "Home Cooking": "/cooking.png",
+//   "Home Catering": "/cookingIcon.png",
+//   "Catering": "/cookingIcon1.png",
+//   "Professional Baker": "/HomeBakerCategoryImage.png",
+//   "Workshops": "/tutor.png",
+//   "Photography": "/photographyIcon.png",
+//   "Consulting": "/eventPlannerIcon.png",
+//   "Finance": "/eventPlannerIcon.png",
+//   "Groceries": "/groceryIcon.png",
+//   "Home Products": "/art.png",
+//   "Apparels & Footwear": "/art.png",
+//   "Law": "/eventPlannerIcon.png",
+//   "Medical": "/eventPlannerIcon.png",
+//   "Art & Craft": "/artIcon.png",
+//   "Home Interiors": "/art.png",
+//   "Construction": "/art.png",
+//   "Real Estate": "/eventPlannerIcon.png",
+//   "Event Planner": "/eventPlannerIcon.png",
+//   "Gifting": "/eventPlannerIcon.png",
+//   "Other": "/eventPlannerIcon.png"
+// };
 
 const SearchDropdown = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -274,7 +275,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
           <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search services..."
+            placeholder="Search for services" // Updated placeholder
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-gray-50 border border-gray-300 text-black text-sm rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -285,57 +286,39 @@ const SearchDropdown = ({ isOpen, onClose }) => {
 
       {/* Content */}
       <div className="overflow-y-auto flex-1">
+        
+        {/* ====================================================== */}
+        {/* MODIFIED CATEGORIES BLOCK - START */}
+        {/* ====================================================== */}
         {showCategories && (
           <div className="p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
-              All Categories
+            <h3 className="text-base font-semibold text-gray-800 mb-4">
+              Trending searches
             </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {categories.map(([categoryName, categoryData]) => {
-                const imagePath = categoryImages[categoryName];
-                
+            <div className="flex flex-wrap gap-3">
+              {categories.map(([categoryName]) => {
                 return (
                   <div
                     key={categoryName}
                     onClick={() => handleCategoryClick(categoryName)}
-                    className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer group"
+                    className="flex items-center gap-2 border border-gray-300 rounded-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-all"
                   >
-                    {/* Image */}
-                    <div className="mb-2 flex justify-center">
-                      <div className="w-full h-20 border border-gray-300 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
-                        {imagePath ? (
-                          <img
-                            src={imagePath}
-                            alt={categoryName}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              if (e.target.nextSibling) {
-                                e.target.nextSibling.style.display = 'flex';
-                              }
-                            }}
-                          />
-                        ) : null}
-                        <div
-                          className="w-full h-full flex items-center justify-center text-gray-600 font-bold text-sm"
-                          style={{ display: imagePath ? 'none' : 'flex' }}
-                        >
-                          {categoryName.charAt(0).toUpperCase()}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Category Name */}
-                    <h4 className="text-sm font-semibold text-black text-center group-hover:text-gray-700 transition-colors line-clamp-1">
-                      {categoryName}
-                    </h4>
+                    <FiTrendingUp className="text-gray-500" size={16} />
+                    <span className="font-medium">{categoryName}</span>
                   </div>
                 );
               })}
             </div>
           </div>
         )}
+        {/* ====================================================== */}
+        {/* MODIFIED CATEGORIES BLOCK - END */}
+        {/* ====================================================== */}
 
+
+        {/* ====================================================== */}
+        {/* UNCHANGED SERVICES BLOCK - START */}
+        {/* ====================================================== */}
         {showServices && (
           <div className="p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
@@ -398,10 +381,12 @@ const SearchDropdown = ({ isOpen, onClose }) => {
             )}
           </div>
         )}
+        {/* ====================================================== */}
+        {/* UNCHANGED SERVICES BLOCK - END */}
+        {/* ====================================================== */}
       </div>
     </div>
   );
 };
 
 export default SearchDropdown;
-
