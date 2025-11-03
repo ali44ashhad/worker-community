@@ -197,11 +197,11 @@ const AllCategory = () => {
               <div
                 key={categoryName}
                 onClick={() => handleCategoryClick(categoryName)}
-                className='bg-white border-2 border-black rounded-xl p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group cursor-pointer'
+                className='bg-white border border-gray-300 rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group cursor-pointer'
               >
                 {/* Image */}
                 <div className='mb-4 flex justify-center'>
-                  <div className='w-full h-48 border-2 border-black rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center'>
+                  <div className='w-full h-48 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center'>
                     {imagePath ? (
                       <img
                         src={imagePath}
@@ -241,13 +241,13 @@ const AllCategory = () => {
                   {displayedKeywords.map((keyword, index) => (
                     <span
                       key={index}
-                      className='px-3 py-1 bg-black text-white text-xs font-semibold rounded-full border border-black hover:bg-white hover:text-black transition-all'
+                      className='px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full border border-gray-300 hover:bg-gray-200 hover:border-gray-400 transition-all'
                     >
                       {keyword}
                     </span>
                   ))}
                   {categoryData.keywords.length > 5 && (
-                    <span className='px-3 py-1 bg-white text-black text-xs font-semibold rounded-full border-2 border-black hover:bg-black hover:text-white transition-all'>
+                    <span className='px-3 py-1 bg-white text-gray-700 text-xs font-semibold rounded-full border border-gray-300 hover:bg-gray-100 hover:border-gray-400 transition-all'>
                       +{categoryData.keywords.length - 5} more
                     </span>
                   )}
@@ -265,7 +265,7 @@ const AllCategory = () => {
 
         {/* Footer Info */}
         <div className='mt-12 text-center'>
-          <div className='bg-white border-2 border-black rounded-xl p-6 max-w-2xl mx-auto'>
+          <div className='bg-white border border-gray-300 rounded-xl p-6 max-w-2xl mx-auto'>
             <p className='text-gray-600 text-sm'>
               Can't find what you're looking for? Try browsing by{' '}
               <button
