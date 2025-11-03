@@ -24,18 +24,27 @@ import Footer from './components/Footer'
 import AllCategory from './pages/AllCategory'
 import SpecificCategory from './pages/SpecificCategory'
 import Cart from './pages/Cart'
+import { fetchWishlist } from './features/wishlistSlice'
 
 const App = () => {
 
   const dispatch=useDispatch();
 
   const isCheckingAuth = useSelector((state) => state.auth.isCheckingAuth);
+  const user = useSelector((state) => state.auth.user);
 
   // const isCheckingAuth = true; 
 
   useEffect(() => {
     dispatch(checkAuth())
   }, [dispatch])
+
+  // Fetch wishlist when user is authenticated
+  useEffect(() => {
+    if (!isCheckingAuth && user) {
+      dispatch(fetchWishlist());
+    }
+  }, [dispatch, user, isCheckingAuth])
 
   if(isCheckingAuth){
     return < HomePageLoader></HomePageLoader>;

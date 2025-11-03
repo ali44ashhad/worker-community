@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { logoutUser } from "./authSlice";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -77,6 +78,10 @@ const wishlistSlice = createSlice({
       })
       .addCase(removeFromWishlist.rejected, (state, action) => {
         if (action.payload) toast.error(action.payload);
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.ids = [];
+        state.error = null;
       });
   },
 });
