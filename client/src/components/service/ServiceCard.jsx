@@ -39,7 +39,7 @@ const ServiceCard = ({ service }) => {
 
   return (
     <div 
-      className="bg-white border-2 border-black rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2  group"
+      className="bg-white border border-gray-300 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2  group"
     >
       {/* Portfolio Image */}
       <div className="relative h-48 bg-gray-100 overflow-hidden">
@@ -74,7 +74,7 @@ const ServiceCard = ({ service }) => {
               <img
                 src={profileImage}
                 alt={providerName}
-                className="w-12 h-12 rounded-full border-2 border-black object-cover"
+                className="w-12 h-12 rounded-full border border-gray-300 object-cover"
                 onError={(e) => {
                   e.target.style.display = 'none';
                   if (e.target.nextSibling) {
@@ -84,7 +84,7 @@ const ServiceCard = ({ service }) => {
               />
             ) : null}
             <div
-              className="w-12 h-12 rounded-full border-2 border-black bg-black text-white flex items-center justify-center font-bold text-lg"
+              className="w-12 h-12 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold text-lg"
               style={{ display: profileImage ? 'none' : 'flex' }}
             >
               {providerName.charAt(0).toUpperCase()}
@@ -103,7 +103,7 @@ const ServiceCard = ({ service }) => {
 
         <button 
                   onClick={() => navigate(`/service/${service._id}`)}
-                  className="w-full mt-7 bg-black text-white py-3 px-4 rounded-lg font-semibold hover:bg-white hover:text-black border-2 border-black hover:cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-lg"
+                  className="w-full mt-7 bg-gray-800 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-700 hover:text-white border border-gray-300 hover:cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-lg"
                 >
                   Order Now
                   <HiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

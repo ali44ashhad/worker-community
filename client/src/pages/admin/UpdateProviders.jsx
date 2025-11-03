@@ -101,7 +101,7 @@ const UpdateProviders = () => {
             return (
               <div
                 key={provider._id}
-                className="bg-white border-2 border-black rounded-xl p-6 hover:shadow-lg transition-shadow"
+                className="bg-white border border-gray-300 rounded-xl p-6 hover:shadow-lg transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-4">
@@ -167,7 +167,7 @@ const UpdateProviders = () => {
                           type="text"
                           value={editForm.name}
                           onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                         />
                       ) : (
                         <p className="text-gray-900">{provider.user?.name || 'N/A'}</p>
@@ -182,7 +182,7 @@ const UpdateProviders = () => {
                           type="email"
                           value={editForm.email}
                           onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                         />
                       ) : (
                         <p className="text-gray-900">{provider.user?.email || 'N/A'}</p>
@@ -199,7 +199,7 @@ const UpdateProviders = () => {
                           onChange={(e) =>
                             setEditForm({ ...editForm, phoneNumber: e.target.value })
                           }
-                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                         />
                       ) : (
                         <p className="text-gray-900">{provider.user?.phoneNumber || 'N/A'}</p>
@@ -216,7 +216,7 @@ const UpdateProviders = () => {
                         onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                         rows="4"
                         maxLength={500}
-                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                         placeholder="Provider bio..."
                       />
                     ) : (
@@ -255,7 +255,7 @@ const UpdateProviders = () => {
           })}
         </div>
       ) : (
-        <div className="bg-white border-2 border-black rounded-xl p-12 text-center">
+        <div className="bg-white border border-gray-300 rounded-xl p-12 text-center">
           <p className="text-gray-600 text-lg">No providers found</p>
         </div>
       )}

@@ -33,12 +33,12 @@ const TopServiceCard = ({ service }) => {
   return (
     <div
       onClick={goToService}
-      className="relative bg-white border-2 border-black rounded-xl p-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer group"
+      className="relative bg-white border border-gray-300 rounded-xl p-4 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer group"
     >
       {/* ❤️ Heart icon always visible */}
       <button
         onClick={onToggleWishlist}
-        className="absolute right-6 top-6 w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-black shadow hover:scale-110 transition-all duration-200"
+        className="absolute right-6 top-6 w-10 h-10 rounded-full flex items-center justify-center bg-white border border-gray-300 shadow hover:scale-110 transition-all duration-200"
       >
         {isInWishlist ? (
           <IoIosHeart className="text-red-600" size={22} />
@@ -48,7 +48,7 @@ const TopServiceCard = ({ service }) => {
       </button>
 
       <div className="mb-4">
-        <div className="w-full h-48 border-2 border-black rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+        <div className="w-full h-48 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
           {image ? (
             <img src={image} alt={title} className="w-full h-full object-cover" />
           ) : (
@@ -70,13 +70,13 @@ const TopServiceCard = ({ service }) => {
         {keywords.map((k, idx) => (
           <span
             key={idx}
-            className="px-3 py-1 bg-black text-white text-xs font-semibold rounded-full border border-black hover:bg-white hover:text-black transition-all"
+            className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full border border-gray-300 hover:bg-gray-200 hover:border-gray-400 transition-all"
           >
             {k}
           </span>
         ))}
         {Array.isArray(service?.keywords) && service.keywords.length > 4 && (
-          <span className="px-3 py-1 bg-white text-black text-xs font-semibold rounded-full border-2 border-black hover:bg-black hover:text-white transition-all">
+          <span className="px-3 py-1 bg-white text-gray-700 text-xs font-semibold rounded-full border border-gray-300 hover:bg-gray-100 hover:border-gray-400 transition-all">
             +{service.keywords.length - 4} more
           </span>
         )}

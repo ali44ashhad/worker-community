@@ -8,9 +8,9 @@ const makeTestimonial = (service, providerName) => {
 };
 
 const TestimonialCard = ({ card }) => (
-  <div className="p-3 sm:p-4 rounded-lg mx-2 sm:mx-4 shadow hover:shadow-lg transition-all duration-200 w-72 sm:w-80 shrink-0 bg-white border-2 border-black">
+  <div className="p-3 sm:p-4 rounded-lg mx-2 sm:mx-4 shadow hover:shadow-lg transition-all duration-200 w-72 sm:w-80 shrink-0 bg-white border border-gray-300">
     <div className="flex gap-2 items-center">
-      <img className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-black bg-gray-100 object-cover" src={card.image} alt={card.providerName} />
+      <img className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-gray-300 bg-gray-50 object-cover" src={card.image} alt={card.providerName} />
       <div className="flex flex-col">
         <div className="font-medium text-base text-black leading-5">{card.providerName}</div>
         <div className="text-xs text-gray-500">{card.serviceCategory}</div>

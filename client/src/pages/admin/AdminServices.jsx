@@ -259,7 +259,7 @@ const AdminServices = () => {
             return (
               <div
                 key={service._id}
-                className="bg-white border-2 border-black rounded-xl p-6 hover:shadow-lg transition-shadow"
+                className="bg-white border border-gray-300 rounded-xl p-6 hover:shadow-lg transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -306,7 +306,7 @@ const AdminServices = () => {
                       <select
                         value={editForm.serviceCategory}
                         onChange={(e) => setEditForm({ ...editForm, serviceCategory: e.target.value, subCategories: [], keywords: [] })}
-                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                       >
                         <option value="">Select Category</option>
                         {Object.keys(SERVICE_RULES).map((cat) => (
@@ -422,7 +422,7 @@ const AdminServices = () => {
                         value={editForm.description}
                         onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                         rows="4"
-                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                         placeholder="Service description..."
                       />
                     ) : (
@@ -441,7 +441,7 @@ const AdminServices = () => {
                         value={editForm.experience}
                         onChange={(e) => setEditForm({ ...editForm, experience: parseInt(e.target.value) || 0 })}
                         min="0"
-                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                       />
                     ) : (
                       <p className="text-gray-900">{service.experience || 0} years</p>
@@ -461,7 +461,7 @@ const AdminServices = () => {
                               <img
                                 src={img.url}
                                 alt={`Portfolio ${idx + 1}`}
-                                className="w-full h-32 object-cover rounded-lg border-2 border-gray-300"
+                                className="w-full h-32 object-cover rounded-lg border border-gray-300"
                               />
                               <button
                                 onClick={() => handleDeleteImage(service._id, img.public_id)}
@@ -477,7 +477,7 @@ const AdminServices = () => {
                           multiple
                           accept="image/*"
                           onChange={handleImageChange}
-                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                         />
                         <p className="text-xs text-gray-500 mt-1">Select new images to add</p>
                       </div>
@@ -489,7 +489,7 @@ const AdminServices = () => {
                               key={idx}
                               src={img.url}
                               alt={`Portfolio ${idx + 1}`}
-                              className="w-full h-32 object-cover rounded-lg border-2 border-gray-300"
+                              className="w-full h-32 object-cover rounded-lg border border-gray-300"
                             />
                           ))
                         ) : (
@@ -504,7 +504,7 @@ const AdminServices = () => {
           })}
         </div>
       ) : (
-        <div className="bg-white border-2 border-black rounded-xl p-12 text-center">
+        <div className="bg-white border border-gray-300 rounded-xl p-12 text-center">
           <p className="text-gray-600 text-lg">No services found</p>
         </div>
       )}

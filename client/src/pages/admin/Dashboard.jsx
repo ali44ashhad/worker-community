@@ -73,7 +73,7 @@ const Dashboard = () => {
           return (
             <div
               key={stat.label}
-              className="bg-white border-2 border-black rounded-xl p-6 hover:shadow-lg transition-shadow"
+              className="bg-white border border-gray-300 rounded-xl p-6 hover:shadow-lg transition-shadow"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -90,7 +90,7 @@ const Dashboard = () => {
       </div>
 
       {/* Role Breakdown */}
-      <div className="bg-white border-2 border-black rounded-xl p-6 mb-8">
+      <div className="bg-white border border-gray-300 rounded-xl p-6 mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-4">User Role Breakdown</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-gray-50 rounded-lg">
@@ -115,7 +115,7 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Providers */}
-      <div className="bg-white border-2 border-black rounded-xl p-6">
+      <div className="bg-white border border-gray-300 rounded-xl p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Providers</h2>
         {dashboardStats?.recentProviders && dashboardStats.recentProviders.length > 0 ? (
           <div className="space-y-4">
