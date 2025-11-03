@@ -10,17 +10,20 @@ import { logoutUser } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
 import { FaCartShopping } from "react-icons/fa6";
 import { FaRegHeart } from "react-icons/fa6";
+import SearchDropdown from './SearchDropdown';
 
 const Navbar = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const user = useSelector((state) => state.auth.user);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
 
   // Scroll to top on route change
   useEffect(() => {
     window.scrollTo(0, 0);
+    setIsSearchOpen(false); // Close search dropdown on route change
   }, [location.pathname]);
 
   // Prevent body scroll when mobile menu is open
@@ -88,8 +91,16 @@ const Navbar = () => {
             <input
               type="text"
               placeholder="Search services..."
-              className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg pl-9 py-2 w-56 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              onClick={() => setIsSearchOpen(true)}
+              className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg pl-9 py-2 w-56 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              readOnly
             />
+            {isSearchOpen && (
+              <SearchDropdown 
+                isOpen={isSearchOpen} 
+                onClose={() => setIsSearchOpen(false)} 
+              />
+            )}
           </div>
 
           {!user ? (
