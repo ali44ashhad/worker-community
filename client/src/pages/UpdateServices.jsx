@@ -20,6 +20,9 @@ const UpdateServices = () => {
   // New state to hold validation errors
   const [errors, setErrors] = useState({});
 
+  // Loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const SERVICE_RULES = {
     "Academics": {
       subCategories: ["Home Tuitions", "Tuition Center", "School", "College"],
@@ -359,6 +362,8 @@ const UpdateServices = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       
@@ -411,12 +416,15 @@ const UpdateServices = () => {
       }
 
       toast.success('Services updated successfully!');
-      // Refresh the profile data
-      dispatch(getMyProviderProfile());
+      setIsSubmitting(false);
+      
+      // Redirect to home page after a short delay
+        navigate('/');
       
     } catch (error) {
       console.error('Error updating services:', error);
       toast.error('An error occurred while updating services.');
+      setIsSubmitting(false);
     }
   };
 
@@ -693,9 +701,24 @@ const UpdateServices = () => {
         <div className="flex justify-end mt-8">
           <button
             type="submit"
-            className="px-6 py-3 bg-black text-white font-bold text-lg rounded-xl hover:bg-gray-800 transition-all shadow-xl hover:shadow-2xl tracking-wide"
+            disabled={isSubmitting}
+            className={`px-6 py-3 bg-black text-white font-bold text-lg rounded-xl transition-all shadow-xl tracking-wide ${
+              isSubmitting 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'hover:bg-gray-800 hover:shadow-2xl'
+            }`}
           >
-            Update Services
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Updating...
+              </span>
+            ) : (
+              'Update Services'
+            )}
           </button>
         </div>
       </form>
