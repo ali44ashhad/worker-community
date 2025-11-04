@@ -27,6 +27,8 @@ import Cart from './pages/Cart'
 import { fetchWishlist } from './features/wishlistSlice'
 import AdminLayout from './layouts/AdminLayout'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
+import UserProtectedRoute from './components/UserProtectedRoute'
+import ProviderProtectedRoute from './components/ProviderProtectedRoute'
 import Dashboard from './pages/admin/Dashboard'
 import UpdateProviders from './pages/admin/UpdateProviders'
 import AdminServices from './pages/admin/AdminServices'
@@ -72,11 +74,25 @@ const App = () => {
         <Route path='/faq' element={<FAQ></FAQ>}></Route>
         <Route path='/provider' element={<Providers></Providers>}></Route>
         <Route path='/login' element={<Login></Login>}></Route>
-        <Route path='/become-provider' element={<BecomeProvider></BecomeProvider>}></Route>
+        <Route 
+          path='/become-provider' 
+          element={
+            <UserProtectedRoute>
+              <BecomeProvider></BecomeProvider>
+            </UserProtectedRoute>
+          }
+        ></Route>
         <Route path='/contact' element={<Contact></Contact>}></Route>
         <Route path='/update-profile' element={<UpdateProfile></UpdateProfile>}></Route>
         <Route path='/update-profile/:id' element={<UpdateProfile></UpdateProfile>}></Route>
-        <Route path='/update-services' element={<UpdateServices></UpdateServices>}></Route>
+        <Route 
+          path='/update-services' 
+          element={
+            <ProviderProtectedRoute>
+              <UpdateServices></UpdateServices>
+            </ProviderProtectedRoute>
+          }
+        ></Route>
         <Route path='/service' element={ <Services></Services> } ></Route>
         <Route path='/service/:id' element={ <SpecificService></SpecificService> } ></Route>
         <Route path='/provider/:id' element={<SpecificProvider></SpecificProvider>}></Route>
