@@ -132,8 +132,11 @@ const Hero = () => {
             <Link to='/service' className="px-6 py-2.5 bg-black text-white text-sm font-medium rounded-lg shadow-sm hover:cursor-pointer hover:bg-gray-900 transition-colors">
               Explore Services
             </Link>
-            {user && user.role!=="provider" && <Link to='/become-provider' className="px-6 py-2.5 border border-black text-black text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors">
+            {user && user.role==="customer" && <Link to='/become-provider' className="px-6 py-2.5 border border-black text-black text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors">
               Become a Provider
+            </Link> } 
+            {user && user.role==="admin" && <Link to='/admin' className="px-6 py-2.5 border border-black text-black text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors">
+              Admin Dashboard
             </Link> } 
           </div>
         </div>
