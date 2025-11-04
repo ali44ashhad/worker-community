@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { 
   getAllServicesAdmin, 
   updateServiceDetails,
@@ -116,6 +117,7 @@ const SERVICE_RULES = {
 
 const AdminServices = () => {
   const dispatch = useDispatch();
+  const location = useLocation();
   const { services, isLoading, error } = useSelector((state) => state.admin);
   const [editingService, setEditingService] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -126,6 +128,7 @@ const AdminServices = () => {
     experience: 0,
     newImages: []
   });
+  const serviceRefs = useRef({});
 
   useEffect(() => {
     dispatch(getAllServicesAdmin());
@@ -223,6 +226,31 @@ const AdminServices = () => {
     });
   };
 
+  // Auto-open service if navigated from provider page
+  useEffect(() => {
+    if (location.state?.serviceId && services && services.length > 0) {
+      const serviceId = location.state.serviceId;
+      const service = services.find(s => s._id === serviceId);
+      
+      if (service) {
+        // Set editing state
+        handleEdit(service);
+        
+        // Scroll to the service after a short delay
+        setTimeout(() => {
+          const element = serviceRefs.current[serviceId];
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
+        
+        // Clear the location state
+        window.history.replaceState({}, document.title);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, services]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -259,6 +287,7 @@ const AdminServices = () => {
             return (
               <div
                 key={service._id}
+                ref={(el) => (serviceRefs.current[service._id] = el)}
                 className="bg-white border border-gray-300 rounded-xl p-6 hover:shadow-lg transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
