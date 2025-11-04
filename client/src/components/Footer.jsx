@@ -63,11 +63,11 @@ const Footer = () => {
         </div>
 
         <div className="footer-column">
-          <h3 className="text-lg font-medium mb-5">Travel</h3>
+          <h3 className="text-lg font-medium mb-5">Top Providers</h3>
           <ul className="list-none p-0">
-            <li className="mb-4"><Link to="/" className="text-sm hover:underline">Reserve</Link></li>
-            <li className="mb-4"><Link to="/" className="text-sm hover:underline">Airports</Link></li>
-            <li className="mb-4"><Link to="/" className="text-sm hover:underline">Cities</Link></li>
+            <li className="mb-4"><Link to="/provider/69008b1c842b1760024a9494" className="text-sm hover:underline">Keshav Sharma</Link></li>
+            <li className="mb-4"><Link to="/provider/69009437842b1760024a94ad" className="text-sm hover:underline">Suryansh Sharma</Link></li>
+            <li className="mb-4"><Link to="/service/69009593842b1760024a94cf" className="text-sm hover:underline">Rohit Sharma</Link></li>
           </ul>
         </div>
       </div>
