@@ -393,7 +393,7 @@ const BecomeProvider = () => {
       {/* Changed to a <form> element */}
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Provider Bio Section */}
-        <div className="bg-white rounded-xl shadow-lg border-2 border-black p-8 mb-8 hover:shadow-xl transition-shadow">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-300 p-8 mb-8 hover:shadow-xl transition-shadow">
           <h2 className="text-3xl font-bold text-black mb-6">
             About You
           </h2>
@@ -412,8 +412,8 @@ const BecomeProvider = () => {
               }}
               placeholder="Tell us about yourself and your background..."
               rows="4"
-              className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
-                errors['providerBio'] ? 'border-red-500 focus:ring-red-500' : 'border-black focus:ring-black'
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
+                errors['providerBio'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
               }`}
             />
             {errors['providerBio'] && (
@@ -424,12 +424,12 @@ const BecomeProvider = () => {
 
         {/* Services Section */}
         {services.map((service, index) => (
-          <div key={service.id} className="bg-white rounded-xl shadow-lg border-2 border-black p-8 relative hover:shadow-xl transition-shadow">
+          <div key={service.id} className="bg-white rounded-xl shadow-lg border border-gray-300 p-8 relative hover:shadow-xl transition-shadow">
             {services.length > 1 && (
               <button
                 type="button"
                 onClick={() => removeService(service.id)}
-                className="absolute top-4 right-4 text-white bg-black hover:bg-gray-800 transition-all rounded-full p-2 border-2 border-black"
+                className="absolute top-4 right-4 text-white bg-black hover:bg-gray-800 transition-all rounded-full p-2 border border-gray-300"
               >
                 <X size={20} />
               </button>
@@ -452,8 +452,8 @@ const BecomeProvider = () => {
               <select
                 value={service.category}
                 onChange={(e) => handleCategoryChange(service.id, e.target.value)}
-                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
-                  errors[`service-${service.id}-category`] ? 'border-red-500 focus:ring-red-500' : 'border-black focus:ring-black'
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
+                  errors[`service-${service.id}-category`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
                 }`}
               >
                 <option value="">Choose a category</option>
@@ -478,10 +478,10 @@ const BecomeProvider = () => {
                       key={subCat}
                       type="button"
                       onClick={() => handleSubCategoryToggle(service.id, subCat)}
-                      className={`px-5 py-2.5 rounded-lg border-2 font-semibold transition-all ${
+                      className={`px-5 py-2.5 rounded-lg border font-semibold transition-all ${
                         service.subCategories.includes(subCat)
-                          ? 'bg-black text-white border-black shadow-md'
-                          : 'bg-white text-black border-black hover:bg-black hover:text-white hover:shadow-md'
+                          ? 'bg-gray-800 text-white border-gray-300 shadow-md'
+                          : 'bg-white text-black border-gray-300 hover:bg-gray-800 hover:text-white hover:shadow-md'
                       }`}
                     >
                       {subCat}
@@ -506,10 +506,10 @@ const BecomeProvider = () => {
                       key={keyword}
                       type="button"
                       onClick={() => handleKeywordToggle(service.id, keyword)}
-                      className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                      className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
                         service.keywords.includes(keyword)
-                          ? 'bg-black text-white border-black shadow-md'
-                          : 'bg-white text-black border-black hover:bg-gray-900 hover:text-white hover:shadow-md'
+                          ? 'bg-gray-800 text-white border-gray-300 shadow-md'
+                          : 'bg-white text-black border-gray-300 hover:bg-gray-800 hover:text-white hover:shadow-md'
                       }`}
                     >
                       {keyword}
@@ -532,8 +532,8 @@ const BecomeProvider = () => {
                 onChange={(e) => handleInputChange(service.id, 'bio', e.target.value)}
                 placeholder="Tell us about your service..."
                 rows="4"
-                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
-                  errors[`service-${service.id}-bio`] ? 'border-red-500 focus:ring-red-500' : 'border-black focus:ring-black'
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
+                  errors[`service-${service.id}-bio`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
                 }`}
               />
               {errors[`service-${service.id}-bio`] && (
@@ -552,8 +552,8 @@ const BecomeProvider = () => {
                 onChange={(e) => handleInputChange(service.id, 'experience', e.target.value)}
                 placeholder="e.g., 5"
                 min="0"
-                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
-                  errors[`service-${service.id}-experience`] ? 'border-red-500 focus:ring-red-500' : 'border-black focus:ring-black'
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
+                  errors[`service-${service.id}-experience`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
                 }`}
               />
               {errors[`service-${service.id}-experience`] && (
@@ -566,8 +566,8 @@ const BecomeProvider = () => {
               <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                 Upload Work Images *
               </label>
-              <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
-                  errors[`service-${service.id}-images`] ? 'border-red-500 bg-red-50' : 'border-black hover:bg-gray-50'
+              <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
+                  errors[`service-${service.id}-images`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
                 }`}>
                 <input
                   type="file"
@@ -594,7 +594,7 @@ const BecomeProvider = () => {
               {service.imagePreviews.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                   {service.imagePreviews.map((img, imgIndex) => (
-                    <div key={imgIndex} className="relative group border-2 border-black rounded-lg overflow-hidden">
+                    <div key={imgIndex} className="relative group border border-gray-300 rounded-lg overflow-hidden">
                       <img
                         src={img}
                         alt={`Upload ${imgIndex + 1}`}
@@ -619,7 +619,7 @@ const BecomeProvider = () => {
         <button
           type="button"
           onClick={addNewService}
-          className="w-full py-4 border-2 border-dashed border-black rounded-xl text-black font-bold text-lg hover:bg-black hover:text-white transition-all flex items-center justify-center gap-3 group"
+          className="w-full py-4 border border-dashed border-gray-300 rounded-xl text-black font-bold text-lg hover:bg-gray-800 hover:text-white transition-all flex items-center justify-center gap-3 group"
         >
           <Plus size={24} className="group-hover:rotate-90 transition-transform" />
           Add Another Service
