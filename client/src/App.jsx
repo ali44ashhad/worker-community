@@ -34,6 +34,7 @@ import AdminServices from './pages/admin/AdminServices'
 const App = () => {
 
   const dispatch=useDispatch();
+  const location = useLocation();
 
   const isCheckingAuth = useSelector((state) => state.auth.isCheckingAuth);
   const user = useSelector((state) => state.auth.user);
@@ -55,7 +56,7 @@ const App = () => {
     return < HomePageLoader></HomePageLoader>;
   }
 
-  const location = useLocation();
+  
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (

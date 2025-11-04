@@ -624,6 +624,62 @@ const updateServiceOffering = async (req, res) => {
     }
 };
 
+/**
+ * @description Increment service offering click count
+ * @route POST /api/service-offering/:id/increment-count
+ * @access Public
+ */
+const incrementServiceOfferingCount = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const service = await ServiceOffering.findById(id);
+        
+        if (!service) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+        
+        service.serviceOfferingCount = (service.serviceOfferingCount || 0) + 1;
+        await service.save();
+        
+        return res.status(200).json({
+            success: true,
+            message: "Count incremented successfully.",
+            count: service.serviceOfferingCount
+        });
+    } catch (error) {
+        console.error("Error in incrementServiceOfferingCount:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Increment provider profile click count
+ * @route POST /api/provider-profile/:id/increment-count
+ * @access Public
+ */
+const incrementProviderProfileCount = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const provider = await ProviderProfile.findById(id);
+        
+        if (!provider) {
+            return res.status(404).json({ success: false, message: "Provider profile not found." });
+        }
+        
+        provider.providerProfileCount = (provider.providerProfileCount || 0) + 1;
+        await provider.save();
+        
+        return res.status(200).json({
+            success: true,
+            message: "Count incremented successfully.",
+            count: provider.providerProfileCount
+        });
+    } catch (error) {
+        console.error("Error in incrementProviderProfileCount:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 // --- Export all functions from this file ---
 export {
     becomeProvider,
@@ -636,4 +692,6 @@ export {
     getAllProviders,
     getProviderById,
     getMyProviderProfile,
+    incrementServiceOfferingCount,
+    incrementProviderProfileCount,
 };

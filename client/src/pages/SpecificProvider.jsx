@@ -4,6 +4,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getProviderById, clearSelectedProvider } from '../features/providerSlice';
 import { HiOutlinePhotograph, HiArrowRight, HiArrowLeft } from 'react-icons/hi';
 import ServiceCard from '../components/service/ServiceCard';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+axios.defaults.withCredentials = true;
 
 const SpecificProvider = () => {
   const { id } = useParams();
@@ -88,7 +92,15 @@ const SpecificProvider = () => {
     }
   };
 
-  const handleContactNow = () => {
+  const handleContactNow = async () => {
+    // Increment provider profile count
+    try {
+      await axios.post(`${API_URL}/api/provider-profile/${id}/increment-count`);
+    } catch (error) {
+      console.error('Failed to increment provider profile count:', error);
+      // Continue even if increment fails
+    }
+
     if (providerPhoneNumber) {
       const cleanPhoneNumber = providerPhoneNumber.replace(/\D/g, '');
       const message = `Hi ${providerName}! I'd like to know more about your services. Could you please provide more details?`;

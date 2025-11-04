@@ -9,7 +9,8 @@ import {
     getAllProviders,
     getProviderById,
     getMyProviderProfile,
-    getProviderDashboardStats
+    getProviderDashboardStats,
+    incrementProviderProfileCount
 } from "../controllers/providerProfile.controller.js";
 import { protect, isProvider } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
@@ -18,6 +19,9 @@ const router = express.Router();
 
 // --- Public Routes ---
 router.get("/", getAllProviders);
+
+// Public route to increment provider profile click count (must be before /:id)
+router.post("/:id/increment-count", incrementProviderProfileCount);
 
 // --- Private Provider Routes (must come before /:id to avoid conflicts) ---
 // Get current user's profile

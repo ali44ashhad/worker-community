@@ -141,6 +141,11 @@ const serviceOfferingSchema = new Schema({
         required: true,
         min: [0, "Experience cannot be negative"],
         default: 0
+    },
+    serviceOfferingCount: {
+        type: Number,
+        default: 0,
+        min: [0, "Count cannot be negative"]
     }
 }, { timestamps: true });
 

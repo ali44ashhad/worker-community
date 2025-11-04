@@ -67,7 +67,46 @@ const getAdminDashboardStats = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(5);
 
-        // 5. Send the final response
+        // 5. Get top categories (based on serviceOfferingCount aggregated by category)
+        const topCategoriesData = await ServiceOffering.aggregate([
+            {
+                $group: {
+                    _id: "$serviceCategory",
+                    totalClicks: { $sum: "$serviceOfferingCount" },
+                    serviceCount: { $sum: 1 }
+                }
+            },
+            { $sort: { totalClicks: -1 } },
+            { $limit: 10 }
+        ]);
+
+        const topCategories = topCategoriesData.map(cat => ({
+            category: cat._id,
+            totalClicks: cat.totalClicks || 0,
+            serviceCount: cat.serviceCount || 0
+        }));
+
+        // 6. Get top services (based on serviceOfferingCount)
+        const topServices = await ServiceOffering.find({})
+            .populate({
+                path: 'provider',
+                populate: {
+                    path: 'user',
+                    select: 'name profileImage'
+                }
+            })
+            .sort({ serviceOfferingCount: -1 })
+            .limit(10)
+            .select('serviceCategory serviceOfferingCount description portfolioImages provider');
+
+        // 7. Get top providers (based on providerProfileCount)
+        const topProviders = await ProviderProfile.find({})
+            .populate('user', 'name profileImage email phoneNumber')
+            .sort({ providerProfileCount: -1 })
+            .limit(10)
+            .select('providerProfileCount bio user');
+
+        // 8. Send the final response
         return res.status(200).json({
             success: true,
             data: {
@@ -75,7 +114,10 @@ const getAdminDashboardStats = async (req, res) => {
                 roleCounts,
                 totalProviders,
                 totalServices,
-                recentProviders
+                recentProviders,
+                topCategories,
+                topServices,
+                topProviders
             }
         });
 

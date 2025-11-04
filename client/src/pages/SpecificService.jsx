@@ -6,6 +6,10 @@ import { HiOutlinePhotograph, HiArrowRight } from 'react-icons/hi';
 import Comment from '../components/Comment';
 // import { useSelector, useDispatch } from 'react-redux';
 import { addToWishlist, removeFromWishlist, fetchWishlist } from '../features/wishlistSlice';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+axios.defaults.withCredentials = true;
 
 const SpecificService = () => {
   const { id } = useParams();
@@ -83,7 +87,15 @@ const SpecificService = () => {
     setImageError(true);
   };
 
-  const handleOrderNow = () => {
+  const handleOrderNow = async () => {
+    // Increment service offering count
+    try {
+      await axios.post(`${API_URL}/api/service-offering/${id}/increment-count`);
+    } catch (error) {
+      console.error('Failed to increment service offering count:', error);
+      // Continue even if increment fails
+    }
+
     // Redirect to WhatsApp with provider's phone number
     if (providerPhoneNumber) {
       // Clean the phone number - remove spaces, +, and special characters
