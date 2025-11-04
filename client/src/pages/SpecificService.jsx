@@ -6,6 +6,7 @@ import { HiOutlinePhotograph, HiArrowRight } from 'react-icons/hi';
 import Comment from '../components/Comment';
 // import { useSelector, useDispatch } from 'react-redux';
 import { addToWishlist, removeFromWishlist, fetchWishlist } from '../features/wishlistSlice';
+import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -88,6 +89,13 @@ const SpecificService = () => {
   };
 
   const handleOrderNow = async () => {
+    // Check if user is logged in
+    if (!user) {
+      toast.error('Please login to continue with your order');
+      navigate('/login');
+      return;
+    }
+
     // Increment service offering count
     try {
       await axios.post(`${API_URL}/api/service-offering/${id}/increment-count`);
@@ -121,6 +129,7 @@ const SpecificService = () => {
   const isInWishlist = wishlistIds?.includes(id);
   const onToggleWishlist = async () => {
     if (!user) {
+      toast.error('Please login to add services to your wishlist');
       navigate('/login');
       return;
     }

@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { FaRegHeart } from "react-icons/fa6";
 import { IoIosHeart } from "react-icons/io";
 import { addToWishlist, removeFromWishlist } from '../../features/wishlistSlice';
+import { toast } from 'react-hot-toast';
 
 const TopServiceCard = ({ service }) => {
   const navigate = useNavigate();
@@ -22,7 +23,11 @@ const TopServiceCard = ({ service }) => {
   const isInWishlist = wishlistIds?.includes(service._id);
   const onToggleWishlist = (e) => {
     e.stopPropagation();
-    if (!user) return; // optionally navigate to login
+    if (!user) {
+      toast.error('Please login to add services to your wishlist');
+      navigate('/login');
+      return;
+    }
     if (isInWishlist) {
       dispatch(removeFromWishlist(service._id));
     } else {
