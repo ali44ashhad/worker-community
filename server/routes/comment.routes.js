@@ -3,7 +3,10 @@ import {
     createComment,
     getCommentsForService,
     updateComment,
-    deleteComment
+    deleteComment,
+    addReply,
+    updateReply,
+    deleteReply
 } from "../controllers/comment.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 
@@ -42,6 +45,33 @@ commentRouter.delete(
     "/delete/:commentId",
     protect, // The controller checks if user is author or admin
     deleteComment
+);
+
+// @route   POST /api/comments/reply/:commentId
+// @desc    Add a reply to a comment
+// @access  Private (Provider of the service)
+commentRouter.post(
+    "/reply/:commentId",
+    protect,
+    addReply
+);
+
+// @route   PUT /api/comments/reply/:commentId
+// @desc    Update a reply to a comment
+// @access  Private (Provider of the service)
+commentRouter.put(
+    "/reply/:commentId",
+    protect,
+    updateReply
+);
+
+// @route   DELETE /api/comments/reply/:commentId
+// @desc    Delete a reply to a comment
+// @access  Private (Provider of the service)
+commentRouter.delete(
+    "/reply/:commentId",
+    protect,
+    deleteReply
 );
 
 export default commentRouter;

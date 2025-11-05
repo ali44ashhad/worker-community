@@ -12,11 +12,15 @@ const createComment = async (req, res) => {
     try {
         // This ID is the SERVICE OFFERING ID
         const { serviceId } = req.params; 
-        const { comment } = req.body;
+        const { comment, rating } = req.body;
         const customerId = req.user._id; // This is the customer's USER ID
 
         if (!comment) {
             return res.status(400).json({ success: false, message: "Comment text is required." });
+        }
+
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: "Rating is required and must be between 1 and 5." });
         }
 
         // 1. Verify the service offering exists
@@ -31,12 +35,22 @@ const createComment = async (req, res) => {
             return res.status(400).json({ success: false, message: "You cannot comment on your own service." });
         }
 
-        // 3. Create the new comment associated with the service offering
+        // 3. Check if the customer has already commented on this service
+        const existingComment = await Comment.findOne({
+            serviceOffering: serviceId,
+            customer: customerId
+        });
+        if (existingComment) {
+            return res.status(400).json({ success: false, message: "You have already reviewed this service. You can only leave one review per service." });
+        }
+
+        // 4. Create the new comment associated with the service offering
         const newComment = await Comment.create({
             serviceOffering: serviceId,
             provider: serviceOffering.provider, // optional legacy linkage
             customer: customerId,
-            comment
+            comment,
+            rating: parseInt(rating)
         });
 
         return res.status(201).json({
@@ -68,11 +82,32 @@ const getCommentsForService = async (req, res) => {
         // 1. Find all comments where 'serviceOffering' matches the ServiceOffering ID
         const comments = await Comment.find({ serviceOffering: serviceId })
             .populate('customer', 'name profileImage') // Get commenter's name and image
+            .populate('provider', 'user') // Get provider info for ownership checking
+            .populate({
+                path: 'replyBy',
+                select: 'user',
+                populate: {
+                    path: 'user',
+                    select: 'name profileImage'
+                }
+            }) // Get reply author's info
             .sort({ createdAt: -1 }); // Show newest comments first
+
+        // Also get the service offering to include provider info
+        const serviceOffering = await ServiceOffering.findById(serviceId)
+            .populate({
+                path: 'provider',
+                select: 'user',
+                populate: {
+                    path: 'user',
+                    select: 'name profileImage _id'
+                }
+            });
 
         return res.status(200).json({
             success: true,
-            comments
+            comments,
+            serviceProvider: serviceOffering?.provider || null
         });
 
     } catch (error) {
@@ -89,11 +124,15 @@ const getCommentsForService = async (req, res) => {
 const updateComment = async (req, res) => {
     try {
         const { commentId } = req.params;
-        const { comment } = req.body;
+        const { comment, rating } = req.body;
         const customerId = req.user._id;
 
         if (!comment) {
             return res.status(400).json({ success: false, message: "Comment text is required." });
+        }
+
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: "Rating is required and must be between 1 and 5." });
         }
 
         const existingComment = await Comment.findById(commentId);
@@ -107,7 +146,20 @@ const updateComment = async (req, res) => {
         }
         
         existingComment.comment = comment;
+        existingComment.rating = parseInt(rating);
         const updatedComment = await existingComment.save();
+
+        // Populate all necessary fields for response
+        await updatedComment.populate('customer', 'name profileImage');
+        await updatedComment.populate('provider', 'user');
+        await updatedComment.populate({
+            path: 'replyBy',
+            select: 'user',
+            populate: {
+                path: 'user',
+                select: 'name profileImage'
+            }
+        });
 
         return res.status(200).json({
             success: true,
@@ -157,9 +209,208 @@ const deleteComment = async (req,res) => {
     }
 };
 
+/**
+ * @description Add a reply to a comment (Provider only)
+ * @route POST /api/comments/reply/:commentId
+ * @access Private (Provider of the service)
+ */
+const addReply = async (req, res) => {
+    try {
+        const { commentId } = req.params;
+        const { reply } = req.body;
+        const userId = req.user._id;
+
+        if (!reply || !reply.trim()) {
+            return res.status(400).json({ success: false, message: "Reply text is required." });
+        }
+
+        const comment = await Comment.findById(commentId);
+        if (!comment) {
+            return res.status(404).json({ success: false, message: "Comment not found." });
+        }
+
+        // Get the service offering to find the provider
+        const serviceOffering = await ServiceOffering.findById(comment.serviceOffering);
+        if (!serviceOffering) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+
+        // Get the provider profile
+        const providerProfile = await ProviderProfile.findById(serviceOffering.provider);
+        if (!providerProfile) {
+            return res.status(404).json({ success: false, message: "Provider profile not found." });
+        }
+
+        // Check if the logged-in user is the provider of this service
+        if (providerProfile.user.toString() !== userId.toString()) {
+            return res.status(403).json({ success: false, message: "Only the provider of this service can reply to comments." });
+        }
+
+        // Check if reply already exists
+        if (comment.reply) {
+            return res.status(400).json({ success: false, message: "A reply already exists for this comment. Please update it instead." });
+        }
+
+        // Add the reply
+        comment.reply = reply.trim();
+        comment.replyBy = providerProfile._id;
+        comment.replyCreatedAt = new Date();
+        await comment.save();
+
+        // Populate all necessary fields for response
+        await comment.populate('customer', 'name profileImage');
+        await comment.populate({
+            path: 'replyBy',
+            select: 'user',
+            populate: {
+                path: 'user',
+                select: 'name profileImage'
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Reply added successfully.",
+            comment
+        });
+
+    } catch (error) {
+        console.error("Error in addReply controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Update a reply to a comment (Provider only)
+ * @route PUT /api/comments/reply/:commentId
+ * @access Private (Provider of the service)
+ */
+const updateReply = async (req, res) => {
+    try {
+        const { commentId } = req.params;
+        const { reply } = req.body;
+        const userId = req.user._id;
+
+        if (!reply || !reply.trim()) {
+            return res.status(400).json({ success: false, message: "Reply text is required." });
+        }
+
+        const comment = await Comment.findById(commentId);
+        if (!comment) {
+            return res.status(404).json({ success: false, message: "Comment not found." });
+        }
+
+        if (!comment.reply) {
+            return res.status(400).json({ success: false, message: "No reply exists for this comment." });
+        }
+
+        // Get the service offering to find the provider
+        const serviceOffering = await ServiceOffering.findById(comment.serviceOffering);
+        if (!serviceOffering) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+
+        // Get the provider profile
+        const providerProfile = await ProviderProfile.findById(serviceOffering.provider);
+        if (!providerProfile) {
+            return res.status(404).json({ success: false, message: "Provider profile not found." });
+        }
+
+        // Check if the logged-in user is the provider of this service
+        if (providerProfile.user.toString() !== userId.toString()) {
+            return res.status(403).json({ success: false, message: "Only the provider of this service can update replies." });
+        }
+
+        // Update the reply
+        comment.reply = reply.trim();
+        await comment.save();
+
+        // Populate all necessary fields for response
+        await comment.populate('customer', 'name profileImage');
+        await comment.populate({
+            path: 'replyBy',
+            select: 'user',
+            populate: {
+                path: 'user',
+                select: 'name profileImage'
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Reply updated successfully.",
+            comment
+        });
+
+    } catch (error) {
+        console.error("Error in updateReply controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Delete a reply to a comment (Provider only)
+ * @route DELETE /api/comments/reply/:commentId
+ * @access Private (Provider of the service)
+ */
+const deleteReply = async (req, res) => {
+    try {
+        const { commentId } = req.params;
+        const userId = req.user._id;
+
+        const comment = await Comment.findById(commentId);
+        if (!comment) {
+            return res.status(404).json({ success: false, message: "Comment not found." });
+        }
+
+        if (!comment.reply) {
+            return res.status(400).json({ success: false, message: "No reply exists for this comment." });
+        }
+
+        // Get the service offering to find the provider
+        const serviceOffering = await ServiceOffering.findById(comment.serviceOffering);
+        if (!serviceOffering) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+
+        // Get the provider profile
+        const providerProfile = await ProviderProfile.findById(serviceOffering.provider);
+        if (!providerProfile) {
+            return res.status(404).json({ success: false, message: "Provider profile not found." });
+        }
+
+        // Check if the logged-in user is the provider of this service
+        if (providerProfile.user.toString() !== userId.toString()) {
+            return res.status(403).json({ success: false, message: "Only the provider of this service can delete replies." });
+        }
+
+        // Delete the reply
+        comment.reply = undefined;
+        comment.replyBy = undefined;
+        comment.replyCreatedAt = undefined;
+        await comment.save();
+
+        // Populate customer field for response
+        await comment.populate('customer', 'name profileImage');
+
+        return res.status(200).json({
+            success: true,
+            message: "Reply deleted successfully.",
+            comment
+        });
+
+    } catch (error) {
+        console.error("Error in deleteReply controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 export {
     createComment,
     getCommentsForService,
     updateComment,
-    deleteComment
+    deleteComment,
+    addReply,
+    updateReply,
+    deleteReply
 };

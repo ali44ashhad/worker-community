@@ -25,6 +25,25 @@ const commentSchema = new Schema({
     comment: {
         type: String,
         required: true
+    },
+    rating: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 5
+    },
+    reply: {
+        type: String,
+        required: false
+    },
+    replyBy: {
+        type: Schema.Types.ObjectId,
+        ref: "ProviderProfile",
+        required: false
+    },
+    replyCreatedAt: {
+        type: Date,
+        required: false
     }
 }, { timestamps: true });
 

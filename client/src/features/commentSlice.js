@@ -9,7 +9,11 @@ export const fetchCommentsByService = createAsyncThunk(
   async (serviceId, { rejectWithValue }) => {
     try {
       const res = await axios.get(`${API_URL}/api/comments/get-comments/${serviceId}`);
-      return { serviceId, comments: res.data.comments };
+      return { 
+        serviceId, 
+        comments: res.data.comments,
+        serviceProvider: res.data.serviceProvider || null
+      };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to load comments");
     }
@@ -18,9 +22,9 @@ export const fetchCommentsByService = createAsyncThunk(
 
 export const createServiceComment = createAsyncThunk(
   "comments/create",
-  async ({ serviceId, comment }, { rejectWithValue, getState }) => {
+  async ({ serviceId, comment, rating }, { rejectWithValue, getState }) => {
     try {
-      const res = await axios.post(`${API_URL}/api/comments/create-comment/${serviceId}`, { comment });
+      const res = await axios.post(`${API_URL}/api/comments/create-comment/${serviceId}`, { comment, rating });
       const state = getState();
       const currentUser = state?.auth?.user;
       // Enrich the returned comment with current user's info for immediate UI display
@@ -43,9 +47,9 @@ export const createServiceComment = createAsyncThunk(
 
 export const updateServiceComment = createAsyncThunk(
   "comments/update",
-  async ({ commentId, comment }, { rejectWithValue, getState }) => {
+  async ({ commentId, comment, rating }, { rejectWithValue, getState }) => {
     try {
-      const res = await axios.put(`${API_URL}/api/comments/update-comment/${commentId}`, { comment });
+      const res = await axios.put(`${API_URL}/api/comments/update-comment/${commentId}`, { comment, rating });
       const state = getState();
       const currentUser = state?.auth?.user;
       const updated = res.data.comment || {};
@@ -79,8 +83,45 @@ export const deleteServiceComment = createAsyncThunk(
   }
 );
 
+export const addReplyToComment = createAsyncThunk(
+  "comments/addReply",
+  async ({ commentId, reply }, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/comments/reply/${commentId}`, { reply });
+      return res.data.comment;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to add reply");
+    }
+  }
+);
+
+export const updateReplyToComment = createAsyncThunk(
+  "comments/updateReply",
+  async ({ commentId, reply }, { rejectWithValue }) => {
+    try {
+      const res = await axios.put(`${API_URL}/api/comments/reply/${commentId}`, { reply });
+      return res.data.comment;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to update reply");
+    }
+  }
+);
+
+export const deleteReplyToComment = createAsyncThunk(
+  "comments/deleteReply",
+  async ({ commentId }, { rejectWithValue }) => {
+    try {
+      const res = await axios.delete(`${API_URL}/api/comments/reply/${commentId}`);
+      return res.data.comment;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to delete reply");
+    }
+  }
+);
+
 const initialState = {
   byServiceId: {},
+  serviceProviders: {}, // Store service provider info by serviceId
   isLoading: false,
   error: null,
 };
@@ -97,8 +138,11 @@ const commentSlice = createSlice({
       })
       .addCase(fetchCommentsByService.fulfilled, (state, action) => {
         state.isLoading = false;
-        const { serviceId, comments } = action.payload;
+        const { serviceId, comments, serviceProvider } = action.payload;
         state.byServiceId[serviceId] = comments;
+        if (serviceProvider) {
+          state.serviceProviders[serviceId] = serviceProvider;
+        }
       })
       .addCase(fetchCommentsByService.rejected, (state, action) => {
         state.isLoading = false;
@@ -132,6 +176,36 @@ const commentSlice = createSlice({
         const id = action.payload;
         for (const key of Object.keys(state.byServiceId)) {
           state.byServiceId[key] = state.byServiceId[key]?.filter(c => c._id !== id) || [];
+        }
+      })
+
+      .addCase(addReplyToComment.fulfilled, (state, action) => {
+        const updated = action.payload;
+        for (const key of Object.keys(state.byServiceId)) {
+          const idx = state.byServiceId[key]?.findIndex(c => c._id === updated._id);
+          if (idx !== -1) {
+            state.byServiceId[key][idx] = updated;
+          }
+        }
+      })
+
+      .addCase(updateReplyToComment.fulfilled, (state, action) => {
+        const updated = action.payload;
+        for (const key of Object.keys(state.byServiceId)) {
+          const idx = state.byServiceId[key]?.findIndex(c => c._id === updated._id);
+          if (idx !== -1) {
+            state.byServiceId[key][idx] = updated;
+          }
+        }
+      })
+
+      .addCase(deleteReplyToComment.fulfilled, (state, action) => {
+        const updated = action.payload;
+        for (const key of Object.keys(state.byServiceId)) {
+          const idx = state.byServiceId[key]?.findIndex(c => c._id === updated._id);
+          if (idx !== -1) {
+            state.byServiceId[key][idx] = updated;
+          }
         }
       });
   },
