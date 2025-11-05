@@ -13,7 +13,7 @@ const TopCategoryCard = ({ category, data, image }) => {
   return (
     <div 
       onClick={handleClick}
-      className="bg-white border hover:cursor-pointer border-gray-300 rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group"
+      className="bg-white border shadow-md hover:bg-gray-100 hover:cursor-pointer border-gray-300 rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group"
     >
       {/* Image */}
       <div className="mb-4 flex justify-center">

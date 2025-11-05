@@ -112,10 +112,10 @@ const SpecificProvider = () => {
   };
 
   return (
-    <div className='mt-20 max-w-[1350px] mx-auto px-4 py-6'>
+    <div className='mt-20 max-w-[1200px] mx-auto px-6 py-8'>
       {/* Carousel Section */}
-      <div className='relative mb-6 group'>
-        <div className='h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg relative bg-white border border-gray-300'>
+      <div className='relative mb-8 group'>
+        <div className='h-72 md:h-80 rounded-xl overflow-hidden shadow-sm relative bg-white border border-gray-200'>
           {/* Carousel Images */}
           {allCarouselImages.length > 0 ? (
             <div className='h-full relative'>
@@ -173,15 +173,15 @@ const SpecificProvider = () => {
           )}
 
           {/* Provider Info Overlay - Left Side */}
-          <div className='absolute left-6 top-6 bg-white/95 backdrop-blur-sm px-6 py-4 rounded-xl border border-gray-300 shadow-lg'>
-            <div className='flex items-center gap-4'>
+          <div className='absolute left-4 top-4 bg-white/95 backdrop-blur-sm px-4 py-3 rounded-lg border border-gray-200 shadow-sm'>
+            <div className='flex items-center gap-3'>
               {/* Provider Image */}
               <div className='flex-shrink-0'>
                 {profileImage ? (
                   <img
                     src={profileImage}
                     alt={providerName}
-                    className='w-16 h-16 rounded-full border border-gray-300 object-cover'
+                    className='w-12 h-12 rounded-full border border-gray-200 object-cover'
                     onError={(e) => {
                       e.target.style.display = 'none';
                       if (e.target.nextSibling) {
@@ -191,7 +191,7 @@ const SpecificProvider = () => {
                   />
                 ) : null}
                 <div
-                  className='w-16 h-16 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold text-2xl'
+                  className='w-12 h-12 rounded-full border border-gray-200 bg-gray-700 text-white flex items-center justify-center font-semibold text-lg'
                   style={{ display: profileImage ? 'none' : 'flex' }}
                 >
                   {providerName.charAt(0).toUpperCase()}
@@ -200,10 +200,9 @@ const SpecificProvider = () => {
 
               {/* Provider Name */}
               <div>
-                <h2 className='text-xl font-bold text-black'>
+                <h2 className='text-base font-semibold text-gray-900'>
                   {providerName}
                 </h2>
-                {/* remove experience display here */}
               </div>
             </div>
           </div>
@@ -212,9 +211,9 @@ const SpecificProvider = () => {
 
       {/* Bio Section */}
       {bio && (
-        <div className='mb-6 bg-white border border-gray-300 rounded-xl p-6'>
-          <h2 className='text-2xl font-bold text-black mb-3'>About</h2>
-          <p className='text-gray-700 leading-relaxed'>
+        <div className='mb-8 bg-white border border-gray-200 rounded-xl p-5 shadow-sm'>
+          <h2 className='text-lg font-semibold text-gray-900 mb-3'>About</h2>
+          <p className='text-sm text-gray-600 leading-relaxed'>
             {bio}
           </p>
         </div>
@@ -222,16 +221,16 @@ const SpecificProvider = () => {
 
       {/* Services Section */}
       {services.length > 0 && (
-        <div className='mb-6'>
-          <h2 className='text-2xl font-bold text-black mb-4'>Services Offered</h2>
+        <div className='mb-8'>
+          <h2 className='text-lg font-semibold text-gray-900 mb-4'>Services Offered</h2>
           <div className='relative'>
             {/* Scroll Left Button */}
             {services.length > 2 && (
               <button
                 onClick={scrollLeft}
-                className='absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 hover:text-white border border-gray-300 transition-all opacity-90 hover:opacity-100'
+                className='absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-50 border border-gray-200 transition-all'
               >
-                <HiArrowLeft className='w-6 h-6' />
+                <HiArrowLeft className='w-4 h-4' />
               </button>
             )}
 
@@ -245,7 +244,7 @@ const SpecificProvider = () => {
               }}
             >
               {services.map((service) => (
-                <div key={service._id} className='flex-shrink-0 w-80 mt-3'>
+                <div key={service._id} className='flex-shrink-0 w-72'>
                   <ServiceCard service={{ ...service, provider: selectedProvider }} />
                 </div>
               ))}
@@ -255,9 +254,9 @@ const SpecificProvider = () => {
             {services.length > 2 && (
               <button
                 onClick={scrollRight}
-                className='absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 hover:text-white border border-gray-300 transition-all opacity-90 hover:opacity-100'
+                className='absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-50 border border-gray-200 transition-all'
               >
-                <HiArrowRight className='w-6 h-6' />
+                <HiArrowRight className='w-4 h-4' />
               </button>
             )}
           </div>
@@ -267,10 +266,10 @@ const SpecificProvider = () => {
       {/* Contact Now Button */}
       <button
         onClick={handleContactNow}
-        className='w-full max-w-md mx-auto block bg-white text-gray-700 py-4 px-6 rounded-xl font-bold text-lg hover:bg-gray-100 hover:text-gray-900 border border-gray-300 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105'
+        className='w-full max-w-sm mx-auto block bg-gray-900 text-white py-3 px-6 rounded-lg font-medium text-sm hover:bg-gray-800 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm'
       >
         Contact Now
-        <HiArrowRight className='w-6 h-6' />
+        <HiArrowRight className='w-4 h-4' />
       </button>
     </div>
   );
