@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginUser, signupUser } from "../features/authSlice";
 import { toast} from "react-hot-toast";
+import { motion } from "framer-motion";
 
 const Login = () => {
   const [mode, setMode] = useState("login");
@@ -63,29 +64,38 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-45px)] flex mt-11 items-center justify-center p-4 bg-gray-50">
-      {/* Toast container */}
-
-      <div className="bg-white flex w-full max-w-4xl rounded-lg shadow-2xl overflow-hidden">
+    <div className="min-h-[calc(100vh-80px)] flex mt-20 items-center justify-center p-6 bg-gray-50">
+      <motion.div 
+        className="bg-white flex w-full max-w-5xl rounded-2xl shadow-xl overflow-hidden border border-gray-100"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         {/* Left Image */}
-        <div className="hidden md:block md:w-1/2">
-          <img
+        <div className="hidden md:block md:w-1/2 relative overflow-hidden">
+          <motion.img
             className="h-full w-full object-cover"
             src="login.png"
             alt="leftSideImage"
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.6 }}
           />
         </div>
 
         {/* Form Section */}
         <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-8 md:p-12">
-          <form
+          <motion.form
             className="w-full max-w-md flex flex-col items-center justify-center"
             onSubmit={handleSubmit}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <h2 className="text-3xl font-bold text-gray-900 self-start">
+            <h2 className="text-4xl font-bold text-gray-900 self-start mb-2 tracking-tight">
               {mode === "login" ? "Sign in" : "Sign up"}
             </h2>
-            <p className="text-sm text-gray-500/90 mt-2 self-start">
+            <p className="text-base text-gray-600 mb-8 self-start">
               {mode === "login"
                 ? "Welcome back! Please sign in to continue"
                 : "Create your account to get started"}
@@ -94,26 +104,26 @@ const Login = () => {
             {/* Signup-only fields */}
             {mode === "signup" && (
               <>
-                <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-lg px-4 gap-3 focus-within:border-indigo-500">
+                <div className="w-full mb-4">
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Full Name"
-                    className="bg-transparent text-gray-700 placeholder-gray-500/80 outline-none text-sm w-full h-full"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
                     required
                   />
                 </div>
 
-                <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-lg px-4 gap-3 focus-within:border-indigo-500">
+                <div className="w-full mb-4">
                   <input
                     type="tel"
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleChange}
                     placeholder="Phone Number"
-                    className="bg-transparent text-gray-700 placeholder-gray-500/80 outline-none text-sm w-full h-full"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
                     required
                   />
                 </div>
@@ -121,20 +131,20 @@ const Login = () => {
             )}
 
             {/* Email Input */}
-            <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-lg px-4 gap-3 focus-within:border-indigo-500">
+            <div className="w-full mb-4">
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Email id"
-                className="bg-transparent text-gray-700 placeholder-gray-500/80 outline-none text-sm w-full h-full"
+                placeholder="Email"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
 
             {/* Password Input */}
-            <div className="flex items-center mt-4 w-full border border-gray-300/60 h-12 rounded-lg px-4 focus-within:border-indigo-500">
+            <div className="w-full mb-6">
               <input
                 ref={passwordRef}
                 type="password"
@@ -142,42 +152,46 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Password"
-                className="bg-transparent text-gray-700 placeholder-gray-500/80 outline-none text-sm w-full h-full"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
                 autoComplete="current-password"
                 required
               />
             </div>
 
             {/* Submit Button */}
-            <button
+            <motion.button
               type="submit"
-              className="mt-8 w-full h-12 rounded-lg text-white font-semibold bg-black flex items-center justify-center hover:bg-gray-900 hover:cursor-pointer transition-colors"
+              className="w-full py-3.5 rounded-xl text-white font-semibold bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-all duration-300 shadow-lg"
               disabled={loading}
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
             >
               {loading
                 ? "Please wait..."
                 : mode === "login"
-                ? "Login"
+                ? "Sign In"
                 : "Sign Up"}
-            </button>
+            </motion.button>
 
             {/* Switch mode link */}
-            <p className="text-gray-500/90 text-sm mt-6">
+            <p className="text-gray-600 text-sm mt-6">
               {mode === "login"
                 ? "Don't have an account? "
                 : "Already have an account? "}
-              <span
-                className="text-indigo-500 font-semibold hover:underline cursor-pointer"
+              <motion.span
+                className="text-gray-900 font-semibold hover:underline cursor-pointer"
                 onClick={() =>
                   setMode(mode === "login" ? "signup" : "login")
                 }
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {mode === "login" ? "Sign up" : "Login"}
-              </span>
+                {mode === "login" ? "Sign up" : "Sign in"}
+              </motion.span>
             </p>
-          </form>
+          </motion.form>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

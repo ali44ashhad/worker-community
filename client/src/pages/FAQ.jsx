@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { HiOutlineChevronDown, HiOutlineChevronUp } from 'react-icons/hi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(null);
@@ -60,70 +62,99 @@ const FAQ = () => {
   ];
 
   return (
-    <div className='min-h-screen bg-gray-50 pb-16'>
-      <div className='max-w-[1350px] mx-auto px-4 pt-24'>
+    <div className='min-h-screen bg-white pb-16'>
+      <div className='max-w-[1350px] mx-auto px-6 pt-28'>
         {/* Header */}
-        <div className='text-center mb-16'>
-          <h1 className='text-4xl md:text-6xl font-bold text-black mb-6'>
+        <motion.div 
+          className='text-center mb-16'
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className='text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 tracking-tight'>
             Frequently Asked Questions
           </h1>
-          <p className='text-gray-600 text-lg md:text-xl max-w-3xl mx-auto'>
+          <p className='text-gray-600 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed'>
             Find answers to common questions about Commun and how our platform works.
           </p>
-        </div>
+        </motion.div>
 
         {/* FAQ List */}
         <div className='max-w-4xl mx-auto space-y-4 mb-16'>
           {faqs.map((faq, index) => (
-            <div
+            <motion.div
               key={index}
-              className='bg-white border-2 border-black rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300'
+              className='bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300'
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
+              whileHover={{ scale: 1.01 }}
             >
-              <button
+              <motion.button
                 onClick={() => toggleFAQ(index)}
-                className='w-full p-6 text-left flex items-center justify-between focus:outline-none hover:bg-gray-50 transition-colors'
+                className='w-full p-6 text-left flex items-center justify-between focus:outline-none hover:bg-gray-50 transition-colors duration-300'
+                whileTap={{ scale: 0.98 }}
               >
-                <h3 className='text-lg md:text-xl font-bold text-black pr-4'>
+                <h3 className='text-lg md:text-xl font-semibold text-gray-900 pr-4 tracking-tight'>
                   {faq.question}
                 </h3>
-                <div className='flex-shrink-0 text-black'>
-                  {openIndex === index ? (
-                    <HiOutlineChevronUp className='w-6 h-6' />
-                  ) : (
-                    <HiOutlineChevronDown className='w-6 h-6' />
-                  )}
-                </div>
-              </button>
-              {openIndex === index && (
-                <div className='px-6 pb-6 pt-0'>
-                  <div className='border-t-2 border-gray-200 pt-6'>
-                    <p className='text-gray-700 leading-relaxed'>
-                      {faq.answer}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+                <motion.div 
+                  className='flex-shrink-0 text-gray-600'
+                  animate={{ rotate: openIndex === index ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <HiOutlineChevronDown className='w-6 h-6' />
+                </motion.div>
+              </motion.button>
+              <AnimatePresence>
+                {openIndex === index && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className='overflow-hidden'
+                  >
+                    <div className='px-6 pb-6 pt-0'>
+                      <div className='border-t border-gray-200 pt-6'>
+                        <p className='text-gray-600 leading-relaxed'>
+                          {faq.answer}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           ))}
         </div>
 
         {/* Still Have Questions Section */}
-        <div className='max-w-3xl mx-auto'>
-          <div className='bg-white border-2 border-black rounded-xl p-8 md:p-12 text-center'>
-            <h2 className='text-2xl md:text-3xl font-bold text-black mb-4'>
+        <motion.div 
+          className='max-w-3xl mx-auto'
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className='bg-gray-50 border border-gray-200 rounded-2xl p-8 md:p-12 text-center shadow-lg'>
+            <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight'>
               Still Have Questions?
             </h2>
-            <p className='text-gray-600 mb-8'>
+            <p className='text-gray-600 mb-8 leading-relaxed'>
               Can't find what you're looking for? Feel free to reach out to us through our contact page.
             </p>
-            <a
-              href='/contact'
-              className='inline-block px-8 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors'
-            >
-              Contact Us
-            </a>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                to='/contact'
+                className='inline-block px-8 py-3.5 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-all duration-300 shadow-lg'
+              >
+                Contact Us
+              </Link>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ const TopServiceCard = ({ service }) => {
   return (
     <div
       onClick={goToService}
-      className="relative bg-white border border-gray-300 rounded-xl p-4 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer group"
+      className="relative bg-white hover:bg-gray-100 border border-gray-300 rounded-xl p-4 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer group"
     >
       {/* ❤️ Heart icon always visible */}
       <button

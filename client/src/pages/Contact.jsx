@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { HiOutlineMail, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineClock } from 'react-icons/hi';
 import { toast } from 'react-hot-toast';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -128,79 +130,101 @@ const Contact = () => {
   ];
 
   return (
-    <div className='min-h-screen bg-gray-50 pb-16'>
-      <div className='max-w-[1350px] mx-auto px-4 pt-24'>
+    <div className='min-h-screen bg-white pb-16'>
+      <div className='max-w-[1350px] mx-auto px-6 pt-28'>
         {/* Header */}
-        <div className='text-center mb-16'>
-          <h1 className='text-4xl md:text-6xl font-bold text-black mb-6'>
+        <motion.div 
+          className='text-center mb-16'
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className='text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 tracking-tight'>
             Contact Us
           </h1>
-          <p className='text-gray-600 text-lg md:text-xl max-w-3xl mx-auto'>
+          <p className='text-gray-600 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed'>
             Have a question or need help? We're here to assist you. Reach out to us through the form below or use our contact information.
           </p>
-        </div>
+        </motion.div>
 
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-12'>
           {/* Contact Information */}
-          <div>
-            <h2 className='text-2xl md:text-3xl font-bold text-black mb-8'>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-8 tracking-tight'>
               Get in Touch
             </h2>
-            <p className='text-gray-700 mb-8 leading-relaxed'>
+            <p className='text-gray-600 mb-8 leading-relaxed'>
               We'd love to hear from you. Whether you have a question about our services, need help with your account, or want to provide feedback, our team is ready to help.
             </p>
             
             <div className='space-y-6 mb-8'>
               {contactInfo.map((info, index) => (
-                <div
+                <motion.div
                   key={index}
-                  className='bg-white border-2 border-black rounded-xl p-6 hover:shadow-lg transition-all duration-300'
+                  className='bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300'
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -4 }}
                 >
                   <div className='flex items-start gap-4'>
-                    <div className='text-black flex-shrink-0'>
+                    <div className='text-gray-700 flex-shrink-0'>
                       {info.icon}
                     </div>
                     <div>
-                      <h3 className='text-lg font-bold text-black mb-1'>
+                      <h3 className='text-lg font-semibold text-gray-900 mb-1'>
                         {info.title}
                       </h3>
-                      <p className='text-gray-800 font-semibold mb-1'>
+                      <p className='text-gray-700 font-semibold mb-1'>
                         {info.content}
                       </p>
-                      <p className='text-gray-600 text-sm'>
+                      <p className='text-gray-500 text-sm'>
                         {info.description}
                       </p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
 
             {/* Additional Info */}
-            <div className='bg-white border-2 border-black rounded-xl p-6'>
-              <h3 className='text-xl font-bold text-black mb-3'>
+            <motion.div 
+              className='bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-lg'
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <h3 className='text-xl font-bold text-gray-900 mb-3 tracking-tight'>
                 Need Immediate Help?
               </h3>
-              <p className='text-gray-700 mb-4'>
+              <p className='text-gray-600 mb-4 leading-relaxed'>
                 For urgent matters, please use the contact form and mark your message as urgent. We prioritize urgent requests and will respond as quickly as possible.
               </p>
-              <p className='text-gray-600 text-sm'>
-                You can also browse our <a href='/faq' className='text-black font-semibold underline hover:text-gray-700'>FAQ page</a> for quick answers to common questions.
+              <p className='text-gray-500 text-sm'>
+                You can also browse our <Link to='/faq' className='text-gray-900 font-semibold hover:underline'>FAQ page</Link> for quick answers to common questions.
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Contact Form */}
-          <div>
-            <div className='bg-white border-2 border-black rounded-xl p-8'>
-              <h2 className='text-2xl md:text-3xl font-bold text-black mb-6'>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className='bg-white border border-gray-200 rounded-2xl p-8 shadow-lg'>
+              <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-8 tracking-tight'>
                 Send us a Message
               </h2>
               
               <form onSubmit={handleSubmit} className='space-y-6'>
                 {/* Name */}
                 <div>
-                  <label htmlFor='name' className='block text-sm font-semibold text-black mb-2'>
+                  <label htmlFor='name' className='block text-sm font-semibold text-gray-700 mb-2'>
                     Name <span className='text-red-500'>*</span>
                   </label>
                   <input
@@ -209,19 +233,25 @@ const Contact = () => {
                     name='name'
                     value={formData.name}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${
-                      errors.name ? 'border-red-500' : 'border-black'
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 ${
+                      errors.name ? 'border-red-300 focus:ring-red-400 bg-red-50' : 'border-gray-200'
                     }`}
                     placeholder='Enter your full name'
                   />
                   {errors.name && (
-                    <p className='text-red-500 text-sm mt-1'>{errors.name}</p>
+                    <motion.p 
+                      className='text-red-500 text-sm mt-1'
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {errors.name}
+                    </motion.p>
                   )}
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label htmlFor='email' className='block text-sm font-semibold text-black mb-2'>
+                  <label htmlFor='email' className='block text-sm font-semibold text-gray-700 mb-2'>
                     Email <span className='text-red-500'>*</span>
                   </label>
                   <input
@@ -230,19 +260,25 @@ const Contact = () => {
                     name='email'
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${
-                      errors.email ? 'border-red-500' : 'border-black'
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 ${
+                      errors.email ? 'border-red-300 focus:ring-red-400 bg-red-50' : 'border-gray-200'
                     }`}
                     placeholder='Enter your email address'
                   />
                   {errors.email && (
-                    <p className='text-red-500 text-sm mt-1'>{errors.email}</p>
+                    <motion.p 
+                      className='text-red-500 text-sm mt-1'
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {errors.email}
+                    </motion.p>
                   )}
                 </div>
 
                 {/* Phone (Optional) */}
                 <div>
-                  <label htmlFor='phone' className='block text-sm font-semibold text-black mb-2'>
+                  <label htmlFor='phone' className='block text-sm font-semibold text-gray-700 mb-2'>
                     Phone Number <span className='text-gray-500 text-xs'>(Optional)</span>
                   </label>
                   <input
@@ -251,14 +287,14 @@ const Contact = () => {
                     name='phone'
                     value={formData.phone}
                     onChange={handleChange}
-                    className='w-full px-4 py-3 border-2 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all'
+                    className='w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300'
                     placeholder='Enter your phone number'
                   />
                 </div>
 
                 {/* Subject */}
                 <div>
-                  <label htmlFor='subject' className='block text-sm font-semibold text-black mb-2'>
+                  <label htmlFor='subject' className='block text-sm font-semibold text-gray-700 mb-2'>
                     Subject <span className='text-red-500'>*</span>
                   </label>
                   <input
@@ -267,19 +303,25 @@ const Contact = () => {
                     name='subject'
                     value={formData.subject}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${
-                      errors.subject ? 'border-red-500' : 'border-black'
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 ${
+                      errors.subject ? 'border-red-300 focus:ring-red-400 bg-red-50' : 'border-gray-200'
                     }`}
                     placeholder='What is this regarding?'
                   />
                   {errors.subject && (
-                    <p className='text-red-500 text-sm mt-1'>{errors.subject}</p>
+                    <motion.p 
+                      className='text-red-500 text-sm mt-1'
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {errors.subject}
+                    </motion.p>
                   )}
                 </div>
 
                 {/* Message */}
                 <div>
-                  <label htmlFor='message' className='block text-sm font-semibold text-black mb-2'>
+                  <label htmlFor='message' className='block text-sm font-semibold text-gray-700 mb-2'>
                     Message <span className='text-red-500'>*</span>
                   </label>
                   <textarea
@@ -288,13 +330,19 @@ const Contact = () => {
                     value={formData.message}
                     onChange={handleChange}
                     rows={6}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all resize-none ${
-                      errors.message ? 'border-red-500' : 'border-black'
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 resize-none ${
+                      errors.message ? 'border-red-300 focus:ring-red-400 bg-red-50' : 'border-gray-200'
                     }`}
                     placeholder='Tell us more about your question or concern...'
                   />
                   {errors.message && (
-                    <p className='text-red-500 text-sm mt-1'>{errors.message}</p>
+                    <motion.p 
+                      className='text-red-500 text-sm mt-1'
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {errors.message}
+                    </motion.p>
                   )}
                   <p className='text-gray-500 text-xs mt-1'>
                     {formData.message.length} characters (minimum 10)
@@ -302,43 +350,53 @@ const Contact = () => {
                 </div>
 
                 {/* Submit Button */}
-                <button
+                <motion.button
                   type='submit'
                   disabled={isSubmitting}
-                  className={`w-full py-3 px-6 bg-black text-white font-semibold rounded-lg transition-all ${
+                  className={`w-full py-3.5 px-6 bg-gray-900 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg ${
                     isSubmitting
                       ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-gray-800 hover:shadow-lg'
+                      : 'hover:bg-gray-800 hover:shadow-xl'
                   }`}
+                  whileHover={!isSubmitting ? { scale: 1.02 } : {}}
+                  whileTap={!isSubmitting ? { scale: 0.98 } : {}}
                 >
                   {isSubmitting ? 'Sending...' : 'Send Message'}
-                </button>
+                </motion.button>
 
-                <p className='text-gray-600 text-sm text-center'>
+                <p className='text-gray-500 text-sm text-center'>
                   By submitting this form, you agree to our terms of service and privacy policy.
                 </p>
               </form>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* FAQ Link */}
-        <div className='mt-16 text-center'>
-          <div className='bg-white border-2 border-black rounded-xl p-8 max-w-3xl mx-auto'>
-            <h3 className='text-2xl font-bold text-black mb-4'>
+        <motion.div 
+          className='mt-16 text-center'
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className='bg-gray-50 border border-gray-200 rounded-2xl p-8 max-w-3xl mx-auto shadow-lg'>
+            <h3 className='text-2xl font-bold text-gray-900 mb-4 tracking-tight'>
               Before You Contact Us
             </h3>
-            <p className='text-gray-700 mb-6'>
+            <p className='text-gray-600 mb-6 leading-relaxed'>
               Many questions are already answered in our Frequently Asked Questions section. Check there first for quick solutions!
             </p>
-            <a
-              href='/faq'
-              className='inline-block px-8 py-3 border-2 border-black text-black font-semibold rounded-lg hover:bg-black hover:text-white transition-colors'
-            >
-              Visit FAQ Page
-            </a>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                to='/faq'
+                className='inline-block px-8 py-3.5 border-2 border-gray-200 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition-all duration-300'
+              >
+                Visit FAQ Page
+              </Link>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

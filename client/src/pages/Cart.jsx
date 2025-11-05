@@ -40,7 +40,7 @@ const Cart = () => {
   }
 
   return (
-    <div className='mt-20 mx-auto max-w-[1350px] px-4'>
+    <div className='mt-24 mx-auto max-w-[1350px] px-4'>
       <h1 className='text-3xl font-bold mb-6'>Your Wishlist</h1>
       {isFetchingAll ? (
         <p className='text-gray-700'>Loading...</p>

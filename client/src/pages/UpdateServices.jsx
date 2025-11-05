@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyProviderProfile } from '../features/providerSlice';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const UpdateServices = () => {
   const dispatch = useDispatch();
@@ -430,44 +431,74 @@ const UpdateServices = () => {
 
   if (isFetchingMyProfile) {
     return (
-      <div className='mt-20 max-w-[1350px] mx-auto px-4 flex items-center justify-center min-h-screen'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto mb-4'></div>
-          <p className='text-xl font-semibold'>Loading...</p>
-        </div>
+      <div className='mt-20 max-w-[1350px] mx-auto px-6 flex items-center justify-center min-h-screen'>
+        <motion.div 
+          className='text-center'
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <motion.div 
+            className='animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-gray-900 mx-auto mb-4'
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <p className='text-xl font-semibold text-gray-700'>Loading...</p>
+        </motion.div>
       </div>
     );
   }
 
   if (!user || user.role !== 'provider') {
     return (
-      <div className='mt-20 max-w-[1350px] mx-auto px-4 py-12'>
+      <motion.div 
+        className='mt-20 max-w-[1350px] mx-auto px-6 py-12'
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         <div className='text-center'>
-          <h2 className='text-3xl font-bold mb-4'>Access Denied</h2>
-          <p className='text-gray-600 mb-6'>You need to be a provider to access this page.</p>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <p className="text-gray-500 text-lg">You need to be a provider to access this page.</p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className='max-w-[1350px] mx-auto mt-20 px-4 pb-12'>
-      <div className="mb-5">
-        <h1 className="text-4xl md:text-5xl font-bold text-black leading-tight">
+    <motion.div 
+      className='max-w-[1350px] mx-auto mt-24 px-6 pb-20'
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div 
+        className="mb-12"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-4 tracking-tight">
           Update Services
         </h1>
-        <p className="text-gray-600">Edit your profile and services</p>
-      </div>
+        <p className="text-gray-500 text-lg">Edit your profile and services</p>
+      </motion.div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Provider Bio Section */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-300 p-8 mb-8 hover:shadow-xl transition-shadow">
-          <h2 className="text-3xl font-bold text-black mb-6">
+        <motion.div 
+          className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-6 hover:shadow-xl transition-all duration-300"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          whileHover={{ scale: 1.01 }}
+        >
+          <h2 className="text-3xl font-bold text-gray-900 mb-6 tracking-tight">
             About You
           </h2>
           
           <div className="mb-6">
-            <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+            <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
               Provider Bio *
             </label>
             <textarea
@@ -480,48 +511,69 @@ const UpdateServices = () => {
               }}
               placeholder="Tell us about yourself and your background..."
               rows="4"
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
-                errors['providerBio'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all duration-300 ${
+                errors['providerBio'] 
+                  ? 'border-red-300 focus:ring-red-400 bg-red-50' 
+                  : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
               }`}
             />
             {errors['providerBio'] && (
-              <p className="text-red-600 text-sm mt-2 font-medium">{errors['providerBio']}</p>
+              <motion.p 
+                className="text-red-500 text-sm mt-2 font-medium"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                {errors['providerBio']}
+              </motion.p>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Services Section */}
-        {services.map((service, index) => (
-          <div key={service.id} className="bg-white rounded-xl shadow-lg border border-gray-300 p-8 relative hover:shadow-xl transition-shadow">
-            {services.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeService(service.id)}
-                className="absolute top-4 right-4 text-white bg-black hover:bg-gray-800 transition-all rounded-full p-2 border border-gray-300"
-              >
-                <X size={20} />
-              </button>
-            )}
+        <AnimatePresence>
+          {services.map((service, index) => (
+            <motion.div 
+              key={service.id} 
+              className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 relative hover:shadow-xl transition-all duration-300 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              whileHover={{ scale: 1.01 }}
+            >
+              {services.length > 1 && (
+                <motion.button
+                  type="button"
+                  onClick={() => removeService(service.id)}
+                  className="absolute top-6 right-6 text-gray-400 bg-gray-50 hover:bg-red-50 hover:text-red-500 transition-all duration-300 rounded-full p-2 border border-gray-200 hover:border-red-200"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <X size={20} />
+                </motion.button>
+              )}
 
-            <div className="flex items-center gap-3 mb-8">
-              <div className="bg-black text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg">
-                {index + 1}
+              <div className="flex items-center gap-4 mb-8">
+                <div className="bg-gray-900 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg shadow-lg">
+                  {index + 1}
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
+                  Service {service._id ? '(Existing)' : '(New)'}
+                </h2>
               </div>
-              <h2 className="text-3xl font-bold text-black">
-                Service {service._id ? '(Existing)' : '(New)'}
-              </h2>
-            </div>
 
             {/* Category Selection */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+              <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                 Select Category *
               </label>
               <select
                 value={service.category}
                 onChange={(e) => handleCategoryChange(service.id, e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
-                  errors[`service-${service.id}-category`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
+                  errors[`service-${service.id}-category`] 
+                    ? 'border-red-300 focus:ring-red-400 bg-red-50' 
+                    : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
                 }`}
               >
                 <option value="">Choose a category</option>
@@ -530,34 +582,48 @@ const UpdateServices = () => {
                 ))}
               </select>
               {errors[`service-${service.id}-category`] && (
-                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-category`]}</p>
+                <motion.p 
+                  className="text-red-500 text-sm mt-2 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {errors[`service-${service.id}-category`]}
+                </motion.p>
               )}
             </div>
 
             {/* Sub-categories */}
             {service.category && (
               <div className="mb-6">
-                <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+                <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                   Select Sub-Categories *
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {SERVICE_RULES[service.category].subCategories.map(subCat => (
-                    <button
+                    <motion.button
                       key={subCat}
                       type="button"
                       onClick={() => handleSubCategoryToggle(service.id, subCat)}
-                      className={`px-5 py-2.5 rounded-lg border font-semibold transition-all ${
+                      className={`px-5 py-2.5 rounded-xl border font-semibold transition-all duration-300 ${
                         service.subCategories.includes(subCat)
-                          ? 'bg-gray-800 text-white border-gray-300 shadow-md'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-800 hover:text-white hover:shadow-md'
+                          ? 'bg-gray-900 text-white border-gray-900 shadow-lg'
+                          : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                       }`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       {subCat}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
                 {errors[`service-${service.id}-subCategories`] && (
-                  <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-subCategories`]}</p>
+                  <motion.p 
+                    className="text-red-500 text-sm mt-2 font-medium"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    {errors[`service-${service.id}-subCategories`]}
+                  </motion.p>
                 )}
               </div>
             )}
@@ -565,34 +631,42 @@ const UpdateServices = () => {
             {/* Keywords */}
             {service.category && SERVICE_RULES[service.category].keywords.length > 0 && (
               <div className="mb-6">
-                <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+                <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                   Select Keywords/Specializations *
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {SERVICE_RULES[service.category].keywords.map(keyword => (
-                    <button
+                    <motion.button
                       key={keyword}
                       type="button"
                       onClick={() => handleKeywordToggle(service.id, keyword)}
-                      className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                      className={`px-4 py-2 rounded-full border text-sm font-medium transition-all duration-300 ${
                         service.keywords.includes(keyword)
-                          ? 'bg-gray-800 text-white border-gray-300 shadow-md'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-800 hover:text-white hover:shadow-md'
+                          ? 'bg-gray-900 text-white border-gray-900 shadow-md'
+                          : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                       }`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       {keyword}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
                 {errors[`service-${service.id}-keywords`] && (
-                  <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-keywords`]}</p>
+                  <motion.p 
+                    className="text-red-500 text-sm mt-2 font-medium"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    {errors[`service-${service.id}-keywords`]}
+                  </motion.p>
                 )}
               </div>
             )}
 
             {/* Bio */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+              <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                 Bio/Description *
               </label>
               <textarea
@@ -600,18 +674,26 @@ const UpdateServices = () => {
                 onChange={(e) => handleInputChange(service.id, 'bio', e.target.value)}
                 placeholder="Tell us about your service..."
                 rows="4"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
-                  errors[`service-${service.id}-bio`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all duration-300 ${
+                  errors[`service-${service.id}-bio`] 
+                    ? 'border-red-300 focus:ring-red-400 bg-red-50' 
+                    : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
                 }`}
               />
               {errors[`service-${service.id}-bio`] && (
-                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-bio`]}</p>
+                <motion.p 
+                  className="text-red-500 text-sm mt-2 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {errors[`service-${service.id}-bio`]}
+                </motion.p>
               )}
             </div>
 
             {/* Experience */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+              <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                 Experience (in years) *
               </label>
               <input
@@ -620,23 +702,36 @@ const UpdateServices = () => {
                 onChange={(e) => handleInputChange(service.id, 'experience', e.target.value)}
                 placeholder="e.g., 5"
                 min="0"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
-                  errors[`service-${service.id}-experience`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
+                  errors[`service-${service.id}-experience`] 
+                    ? 'border-red-300 focus:ring-red-400 bg-red-50' 
+                    : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
                 }`}
               />
               {errors[`service-${service.id}-experience`] && (
-                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-experience`]}</p>
+                <motion.p 
+                  className="text-red-500 text-sm mt-2 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {errors[`service-${service.id}-experience`]}
+                </motion.p>
               )}
             </div>
 
             {/* Image Upload */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+              <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                 Upload Work Images *
               </label>
-              <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
-                  errors[`service-${service.id}-images`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
-                }`}>
+              <motion.div 
+                className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
+                  errors[`service-${service.id}-images`] 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+                whileHover={{ scale: 1.01 }}
+              >
                 <input
                   type="file"
                   id={`images-${service.id}`}
@@ -649,64 +744,102 @@ const UpdateServices = () => {
                   htmlFor={`images-${service.id}`}
                   className="cursor-pointer flex flex-col items-center"
                 >
-                  <Upload className="text-black mb-3" size={48} />
-                  <span className="text-black font-bold text-lg mb-1">Click to upload images</span>
-                  <span className="text-sm text-gray-600">PNG, JPG up to 10MB</span>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <Upload className="text-gray-400 mb-4" size={48} />
+                  </motion.div>
+                  <span className="text-gray-900 font-semibold text-lg mb-2">Click to upload images</span>
+                  <span className="text-sm text-gray-500">PNG, JPG up to 10MB</span>
                 </label>
-              </div>
+              </motion.div>
               {errors[`service-${service.id}-images`] && (
-                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-images`]}</p>
+                <motion.p 
+                  className="text-red-500 text-sm mt-2 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {errors[`service-${service.id}-images`]}
+                </motion.p>
               )}
 
               {/* Image Preview */}
               {((service.existingImages && service.existingImages.length > 0) || (service.imagePreviews && service.imagePreviews.length > 0)) && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <motion.div 
+                  className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
                   {/* Show all images together - existing first, then new */}
                   {[
                     ...(service.existingImages || []).map((img, idx) => ({ ...img, isExisting: true, index: idx })),
                     ...(service.imagePreviews || []).map((img, idx) => ({ url: img, isExisting: false, index: idx }))
                   ].map((imgObj, displayIndex) => (
-                    <div key={`img-${displayIndex}`} className="relative group border border-gray-300 rounded-lg overflow-hidden">
+                    <motion.div 
+                      key={`img-${displayIndex}`} 
+                      className="relative group border border-gray-200 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: displayIndex * 0.05 }}
+                      whileHover={{ scale: 1.05 }}
+                    >
                       <img
                         src={imgObj.url}
                         alt={`Image ${displayIndex + 1}`}
                         className="w-full h-40 object-cover"
                       />
-                      <button
+                      <motion.button
                         type="button"
                         onClick={() => handleRemoveImage(service.id, imgObj.index, imgObj.isExisting)}
-                        className="absolute top-2 right-2 bg-black text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all border-2 border-white"
+                        className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                       >
                         <Trash2 size={18} />
-                      </button>
-                    </div>
+                      </motion.button>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               )}
             </div>
-          </div>
-        ))}
+          </motion.div>
+          ))}
+        </AnimatePresence>
 
         {/* Add Another Service Button */}
-        <button
+        <motion.button
           type="button"
           onClick={addNewService}
-          className="w-full py-4 border border-dashed border-gray-300 rounded-xl text-black font-bold text-lg hover:bg-gray-800 hover:text-white transition-all flex items-center justify-center gap-3 group"
+          className="w-full py-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-700 font-semibold text-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 flex items-center justify-center gap-3 group"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <Plus size={24} className="group-hover:rotate-90 transition-transform" />
+          <motion.div
+            animate={{ rotate: 0 }}
+            whileHover={{ rotate: 90 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Plus size={24} />
+          </motion.div>
           Add Another Service
-        </button>
+        </motion.button>
 
         {/* Submit Button */}
-        <div className="flex justify-end mt-8">
-          <button
+        <motion.div 
+          className="flex justify-end mt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <motion.button
             type="submit"
             disabled={isSubmitting}
-            className={`px-6 py-3 bg-black text-white font-bold text-lg rounded-xl transition-all shadow-xl tracking-wide ${
+            className={`px-8 py-4 bg-gray-900 text-white font-semibold text-lg rounded-xl transition-all duration-300 shadow-lg tracking-wide ${
               isSubmitting 
                 ? 'opacity-50 cursor-not-allowed' 
-                : 'hover:bg-gray-800 hover:shadow-2xl'
+                : 'hover:bg-gray-800 hover:shadow-xl'
             }`}
+            whileHover={!isSubmitting ? { scale: 1.02 } : {}}
+            whileTap={!isSubmitting ? { scale: 0.98 } : {}}
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">
@@ -719,10 +852,10 @@ const UpdateServices = () => {
             ) : (
               'Update Services'
             )}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </form>
-    </div>
+    </motion.div>
   );
 };
 

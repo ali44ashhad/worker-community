@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getAllProviders } from '../features/providerSlice';
-import { HiOutlinePhotograph, HiArrowRight } from 'react-icons/hi';
+import { HiOutlinePhotograph, HiArrowRight, HiHeart, HiOutlineHeart } from 'react-icons/hi';
 import Comment from '../components/Comment';
-// import { useSelector, useDispatch } from 'react-redux';
 import { addToWishlist, removeFromWishlist, fetchWishlist } from '../features/wishlistSlice';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import { motion } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -65,11 +65,19 @@ const SpecificService = () => {
 
   if (!service) {
     return (
-      <div className='mt-20 max-w-[1350px] mx-auto px-4 flex items-center justify-center min-h-screen'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto mb-4'></div>
-          <p className='text-xl font-semibold'>Loading...</p>
-        </div>
+      <div className='mt-20 max-w-[1350px] mx-auto px-6 flex items-center justify-center min-h-screen'>
+        <motion.div 
+          className='text-center'
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div 
+            className='animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-gray-900 mx-auto mb-4'
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <p className='text-xl font-semibold text-gray-700'>Loading...</p>
+        </motion.div>
       </div>
     );
   }
@@ -140,91 +148,115 @@ const SpecificService = () => {
     }
   };
 
-  console.log(service);
-
   return (
-    <div className='mt-20 max-w-[1350px] mx-auto px-4 py-6'>
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+    <motion.div 
+      className='mt-24 max-w-[1350px] mx-auto px-6 py-8'
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
         
         {/* LEFT SIDE - Image Gallery */}
-        <div className='space-y-4'>
+        <motion.div 
+          className='space-y-6'
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           {/* Main Image */}
-          <div className='relative bg-white border border-gray-300 rounded-xl overflow-hidden h-[380px]'>
+          <div className='relative bg-white border border-gray-200 rounded-2xl overflow-hidden h-[400px] shadow-lg'>
             {currentImage && !imageError ? (
-              <img
+              <motion.img
                 src={currentImage}
                 alt={`Service portfolio ${selectedImageIndex + 1}`}
                 className='w-full h-full object-cover'
                 onError={handleImageError}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
               />
             ) : (
-              <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200'>
-                <HiOutlinePhotograph className='w-24 h-24 text-gray-400' />
+              <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100'>
+                <HiOutlinePhotograph className='w-24 h-24 text-gray-300' />
               </div>
             )}
           </div>
 
           {/* Thumbnail Gallery */}
           {portfolioImages.length > 1 && (
-            <div className='flex gap-3 overflow-x-auto pb-2'>
+            <div className='flex gap-3 overflow-x-auto pb-2 scrollbar-hide'>
               {portfolioImages.map((img, index) => (
-                <button
+                <motion.button
                   key={index}
                   onClick={() => {
                     setSelectedImageIndex(index);
                     setImageError(false);
                   }}
-                  className={`flex-shrink-0 border rounded-lg overflow-hidden transition-all ${
+                  className={`flex-shrink-0 border-2 rounded-xl overflow-hidden transition-all duration-300 ${
                     selectedImageIndex === index
-                      ? 'border-gray-400 ring-2 ring-gray-300 ring-opacity-50'
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-gray-900 ring-2 ring-gray-400 ring-opacity-50'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <div className='w-16 h-16 bg-white'>
+                  <div className='w-20 h-20 bg-white'>
                     <img
                       src={img.url}
                       alt={`Thumbnail ${index + 1}`}
                       className='w-full h-full object-cover'
                     />
                   </div>
-                </button>
+                </motion.button>
               ))}
             </div>
           )}
 
           {/* Order Now Button */}
-          <button
+          <motion.button
             onClick={handleOrderNow}
-            className='w-full bg-gray-800 text-white py-3 px-6 rounded-xl font-bold text-lg hover:bg-gray-700 hover:text-white border border-gray-300 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105'
+            className='w-full bg-gray-900 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:bg-gray-800 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg'
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             Order Now
             <HiArrowRight className='w-5 h-5' />
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
         {/* RIGHT SIDE - Service Details */}
-        <div className='space-y-4'>
+        <motion.div 
+          className='space-y-6'
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
           {/* Service Name */}
           <div>
-            <h1 className='text-3xl font-bold text-black mb-2'>
+            <h1 className='text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight'>
               {serviceCategory}
             </h1>
             {/* Show service-level experience (years) if present */}
             {service.experience !== undefined && service.experience !== null && service.experience !== '' && (
-              <div className="mb-2 text-black font-medium text-base">
+              <div className="mb-4 text-gray-600 font-medium text-base">
                 {service.experience} year{(Number(service.experience) === 1 ? '' : 's')} of experience
               </div>
             )}
             
             {subCategories.length > 0 && (
-              <div className='flex flex-wrap gap-2 mb-2'>
+              <div className='flex flex-wrap gap-2 mb-4'>
                 {subCategories.map((cat, idx) => (
-                  <span
+                  <motion.span
                     key={idx}
-                    className='bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold border border-gray-300'
+                    className='bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm font-medium border border-gray-200'
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4 + idx * 0.05 }}
+                    whileHover={{ scale: 1.05 }}
                   >
                     {cat}
-                  </span>
+                  </motion.span>
                 ))}
               </div>
             )}
@@ -234,35 +266,49 @@ const SpecificService = () => {
           {keywords.length > 0 && (
             <div className='flex flex-wrap gap-2'>
               {keywords.map((keyword, idx) => (
-                <span
+                <motion.span
                   key={idx}
-                  className='bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded-full text-xs font-medium'
+                  className='bg-gray-50 text-gray-700 px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200'
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5 + idx * 0.03 }}
+                  whileHover={{ scale: 1.05 }}
                 >
                   {keyword}
-                </span>
+                </motion.span>
               ))}
             </div>
           )}
 
           {/* Bio/Description */}
-          <div className='bg-white border border-gray-300 rounded-xl p-4'>
-            <h2 className='text-xl font-bold text-black mb-2'>About This Service</h2>
-            <p className='text-gray-700 leading-relaxed text-sm whitespace-pre-wrap line-clamp-4'>
+          <motion.div 
+            className='bg-white border border-gray-200 rounded-2xl p-6 shadow-lg'
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <h2 className='text-2xl font-bold text-gray-900 mb-4 tracking-tight'>About This Service</h2>
+            <p className='text-gray-600 leading-relaxed whitespace-pre-wrap'>
               {serviceDescription}
             </p>
-          </div>
+          </motion.div>
 
           {/* Provider Info */}
-          <div className='bg-white border border-gray-300 rounded-xl p-4'>
-            <h2 className='text-xl font-bold text-black mb-3'>Provider</h2>
-            <div className='flex items-center gap-3'>
+          <motion.div 
+            className='bg-white border border-gray-200 rounded-2xl p-6 shadow-lg'
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <h2 className='text-2xl font-bold text-gray-900 mb-4 tracking-tight'>Provider</h2>
+            <div className='flex items-center gap-4'>
               {/* Provider Image */}
               <div className='flex-shrink-0'>
                 {profileImage ? (
                   <img
                     src={profileImage}
                     alt={providerName}
-                    className='w-16 h-16 rounded-full border border-gray-300 object-cover'
+                    className='w-16 h-16 rounded-full border-2 border-gray-200 object-cover'
                     onError={(e) => {
                       e.target.style.display = 'none';
                       if (e.target.nextSibling) {
@@ -272,7 +318,7 @@ const SpecificService = () => {
                   />
                 ) : null}
                 <div
-                  className='w-16 h-16 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold text-2xl'
+                  className='w-16 h-16 rounded-full border-2 border-gray-200 bg-gray-900 text-white flex items-center justify-center font-semibold text-xl'
                   style={{ display: profileImage ? 'none' : 'flex' }}
                 >
                   {providerName.charAt(0).toUpperCase()}
@@ -281,39 +327,55 @@ const SpecificService = () => {
 
               {/* Provider Name */}
               <div className='flex-1 min-w-0'>
-                <h3 className='text-xl font-bold text-black truncate'>
+                <h3 className='text-xl font-semibold text-gray-900 truncate mb-1'>
                   {providerName}
                 </h3>
-                {service?.experience && (
-                  <p className='text-gray-600 text-xs mt-0.5'>
-                    {service.experience} years of experience
+                {service?.provider?.experience && (
+                  <p className='text-gray-600 text-sm'>
+                    {service.provider.experience} years of experience
                   </p>
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Wishlist + Contact Buttons */}
-          <button
-            onClick={handleContactNow}
-            className='w-full bg-white text-gray-700 py-3 px-6 rounded-xl font-bold text-lg hover:bg-gray-100 hover:text-gray-900 border border-gray-300 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105'
-          >
-            Contact Now
-            <HiArrowRight className='w-5 h-5' />
-          </button>
+          <div className='space-y-3'>
+            <motion.button
+              onClick={handleContactNow}
+              className='w-full bg-white text-gray-900 py-3.5 px-6 rounded-xl font-semibold text-base hover:bg-gray-50 border-2 border-gray-200 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg'
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Contact Now
+              <HiArrowRight className='w-5 h-5' />
+            </motion.button>
 
-          <button
-            onClick={onToggleWishlist}
-            className='w-full bg-gray-800 text-white py-3 px-6 rounded-xl font-bold text-lg hover:bg-gray-700 hover:text-white border border-gray-300 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105'
-          >
-            {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
-          </button>
-        </div>
+            <motion.button
+              onClick={onToggleWishlist}
+              className='w-full bg-gray-900 text-white py-3.5 px-6 rounded-xl font-semibold text-base hover:bg-gray-800 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg'
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isInWishlist ? (
+                <>
+                  <HiHeart className='w-5 h-5' />
+                  Remove from Wishlist
+                </>
+              ) : (
+                <>
+                  <HiOutlineHeart className='w-5 h-5' />
+                  Add to Wishlist
+                </>
+              )}
+            </motion.button>
+          </div>
+        </motion.div>
 
       </div>
 
       <Comment serviceId={id} />
-    </div>
+    </motion.div>
   );
 };
 

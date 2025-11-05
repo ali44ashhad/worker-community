@@ -10,6 +10,7 @@ import {
   HiOutlineSparkles,
   HiOutlineStar
 } from 'react-icons/hi';
+import { motion } from 'framer-motion';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -22,7 +23,18 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl">Loading dashboard...</div>
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div 
+            className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-gray-900 mx-auto mb-4"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <p className="text-xl font-semibold text-gray-700">Loading dashboard...</p>
+        </motion.div>
       </div>
     );
   }
@@ -30,7 +42,13 @@ const Dashboard = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600 text-xl">Error: {error}</div>
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <p className="text-red-500 text-xl font-semibold">Error: {error}</p>
+        </motion.div>
       </div>
     );
   }
@@ -63,79 +81,105 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">Overview of your platform</p>
-      </div>
+    <motion.div 
+      className="max-w-[1350px] mx-auto px-6 py-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div 
+        className="mb-12"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-5xl font-bold text-gray-900 mb-3 tracking-tight">Admin Dashboard</h1>
+        <p className="text-gray-600 text-lg">Overview of your platform</p>
+      </motion.div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => {
+        {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div
+            <motion.div
               key={stat.label}
-              className="bg-white border border-gray-300 rounded-xl p-6 hover:shadow-lg transition-shadow"
+              className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              whileHover={{ scale: 1.02, y: -4 }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                  <p className="text-gray-600 text-sm font-medium mb-2">{stat.label}</p>
+                  <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
                 </div>
-                <div className={`${stat.color} p-3 rounded-lg`}>
+                <div className={`${stat.color} p-3 rounded-xl shadow-lg`}>
                   <Icon className="text-white" size={28} />
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
       {/* Role Breakdown */}
-      <div className="bg-white border border-gray-300 rounded-xl p-6 mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">User Role Breakdown</h2>
+      <motion.div 
+        className="bg-white border border-gray-200 rounded-2xl p-8 mb-8 shadow-lg"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 tracking-tight">User Role Breakdown</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600">Customers</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
+          <div className="p-6 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-600 font-medium mb-2">Customers</p>
+            <p className="text-3xl font-bold text-gray-900">
               {dashboardStats?.roleCounts?.customer || 0}
             </p>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600">Providers</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
+          <div className="p-6 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-600 font-medium mb-2">Providers</p>
+            <p className="text-3xl font-bold text-gray-900">
               {dashboardStats?.roleCounts?.provider || 0}
             </p>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600">Admins</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
+          <div className="p-6 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-600 font-medium mb-2">Admins</p>
+            <p className="text-3xl font-bold text-gray-900">
               {dashboardStats?.roleCounts?.admin || 0}
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Top Categories */}
-        <div className="bg-white border border-gray-300 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-blue-500 p-2 rounded-lg">
+        <motion.div 
+          className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          whileHover={{ scale: 1.01 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-blue-500 p-3 rounded-xl shadow-lg">
               <HiOutlineChartBar className="text-white" size={24} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Top Categories</h2>
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">Top Categories</h2>
           </div>
           {dashboardStats?.topCategories && dashboardStats.topCategories.length > 0 ? (
             <div className="space-y-3">
               {dashboardStats.topCategories.slice(0, 5).map((cat, index) => (
-                <div
+                <motion.div
                   key={cat.category}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-100"
+                  whileHover={{ scale: 1.02, x: 4 }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-600">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-600">
                       {index + 1}
                     </div>
                     <div>
@@ -147,30 +191,37 @@ const Dashboard = () => {
                     <p className="font-bold text-gray-900">{cat.totalClicks}</p>
                     <p className="text-xs text-gray-600">clicks</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : (
             <p className="text-gray-600 text-center py-8">No data available</p>
           )}
-        </div>
+        </motion.div>
 
         {/* Top Services */}
-        <div className="bg-white border border-gray-300 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-purple-500 p-2 rounded-lg">
+        <motion.div 
+          className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          whileHover={{ scale: 1.01 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-purple-500 p-3 rounded-xl shadow-lg">
               <HiOutlineSparkles className="text-white" size={24} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Top Services</h2>
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">Top Services</h2>
           </div>
           {dashboardStats?.topServices && dashboardStats.topServices.length > 0 ? (
             <div className="space-y-3">
               {dashboardStats.topServices.slice(0, 5).map((service, index) => (
-                <div
+                <motion.div
                   key={service._id}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-100"
+                  whileHover={{ scale: 1.02, x: 4 }}
                 >
-                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center font-bold text-purple-600 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center font-bold text-purple-600 flex-shrink-0">
                     {index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -183,33 +234,40 @@ const Dashboard = () => {
                     <p className="font-bold text-gray-900">{service.serviceOfferingCount || 0}</p>
                     <p className="text-xs text-gray-600">clicks</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : (
             <p className="text-gray-600 text-center py-8">No data available</p>
           )}
-        </div>
+        </motion.div>
 
         {/* Top Providers */}
-        <div className="bg-white border border-gray-300 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-green-500 p-2 rounded-lg">
+        <motion.div 
+          className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+          whileHover={{ scale: 1.01 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-green-500 p-3 rounded-xl shadow-lg">
               <HiOutlineStar className="text-white" size={24} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Top Providers</h2>
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">Top Providers</h2>
           </div>
           {dashboardStats?.topProviders && dashboardStats.topProviders.length > 0 ? (
             <div className="space-y-3">
               {dashboardStats.topProviders.slice(0, 5).map((provider, index) => (
-                <div
+                <motion.div
                   key={provider._id}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-100"
+                  whileHover={{ scale: 1.02, x: 4 }}
                 >
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-600 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-600 flex-shrink-0">
                     {index + 1}
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {provider.user?.profileImage ? (
                       <img
                         src={provider.user.profileImage}
@@ -230,26 +288,32 @@ const Dashboard = () => {
                     <p className="font-bold text-gray-900">{provider.providerProfileCount || 0}</p>
                     <p className="text-xs text-gray-600">clicks</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : (
             <p className="text-gray-600 text-center py-8">No data available</p>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* Recent Providers */}
-      <div className="bg-white border border-gray-300 rounded-xl p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Providers</h2>
+      <motion.div 
+        className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.8 }}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 tracking-tight">Recent Providers</h2>
         {dashboardStats?.recentProviders && dashboardStats.recentProviders.length > 0 ? (
           <div className="space-y-4">
             {dashboardStats.recentProviders.map((provider) => (
-              <div
+              <motion.div
                 key={provider._id}
-                className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-100"
+                whileHover={{ scale: 1.01, x: 4 }}
               >
-                <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                <div className="w-12 h-12 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden">
                   {provider.user?.profileImage ? (
                     <img
                       src={provider.user.profileImage}
@@ -266,17 +330,17 @@ const Dashboard = () => {
                   <p className="font-semibold text-gray-900">{provider.user?.name || 'Unknown'}</p>
                   <p className="text-sm text-gray-600">{provider.user?.email || ''}</p>
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 font-medium">
                   {new Date(provider.createdAt).toLocaleDateString()}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         ) : (
           <p className="text-gray-600 text-center py-8">No providers yet</p>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
