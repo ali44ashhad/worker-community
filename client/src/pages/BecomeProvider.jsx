@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { X, Plus, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { checkAuth } from '../features/authSlice';
 
 const BecomeProvider = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [services, setServices] = useState([{
     id: Date.now(),
     category: '',
@@ -13,7 +16,8 @@ const BecomeProvider = () => {
     images: [], // Will store File objects for upload
     imagePreviews: [], // Will store blob URLs for preview
     bio: '',
-    experience: ''
+    experience: '',
+    price: ''
   }]);
 
   // State for provider bio
@@ -234,7 +238,8 @@ const BecomeProvider = () => {
       images: [],
       imagePreviews: [],
       bio: '',
-      experience: ''
+      experience: '',
+      price: ''
     }]);
   };
 
@@ -297,7 +302,16 @@ const BecomeProvider = () => {
         hasErrors = true;
       }
 
-      // 6. Images
+      // 6. Price
+      if (service.price === '' || service.price === null || service.price === undefined) {
+        newErrors[`service-${serviceId}-price`] = "Price is required.";
+        hasErrors = true;
+      } else if (parseFloat(service.price) < 0) {
+        newErrors[`service-${serviceId}-price`] = "Price cannot be negative.";
+        hasErrors = true;
+      }
+
+      // 7. Images
       if (service.images.length === 0) {
         newErrors[`service-${serviceId}-images`] = "Please upload at least one work image.";
         hasErrors = true;
@@ -362,14 +376,18 @@ const BecomeProvider = () => {
           images: [],
           imagePreviews: [],
           bio: '',
-          experience: ''
+          experience: '',
+          price: ''
         }]);
         setProviderBio('');
         setErrors({});
         setIsSubmitting(false);
         
-        // Redirect to login page after a short delay
-          navigate('/');
+        // Refresh auth state to update user role from 'customer' to 'provider'
+        await dispatch(checkAuth());
+        
+        // Redirect to home page after auth state is refreshed
+        navigate('/');
       } else {
         toast.error(data.message || 'Failed to submit provider registration.');
         setIsSubmitting(false);
@@ -558,6 +576,27 @@ const BecomeProvider = () => {
               />
               {errors[`service-${service.id}-experience`] && (
                 <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-experience`]}</p>
+              )}
+            </div>
+
+            {/* Price */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+                Price (in ₹) *
+              </label>
+              <input
+                type="number"
+                value={service.price}
+                onChange={(e) => handleInputChange(service.id, 'price', e.target.value)}
+                placeholder="e.g., 500"
+                min="0"
+                step="0.01"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
+                  errors[`service-${service.id}-price`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
+                }`}
+              />
+              {errors[`service-${service.id}-price`] && (
+                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-price`]}</p>
               )}
             </div>
 

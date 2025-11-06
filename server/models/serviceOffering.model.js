@@ -142,6 +142,12 @@ const serviceOfferingSchema = new Schema({
         min: [0, "Experience cannot be negative"],
         default: 0
     },
+    price: {
+        type: Number,
+        required: true,
+        min: [0, "Price cannot be negative"],
+        default: 0
+    },
     serviceOfferingCount: {
         type: Number,
         default: 0,

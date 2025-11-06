@@ -133,6 +133,7 @@ const UpdateProviders = () => {
     keywords: [],
     description: '',
     experience: 0,
+    price: 0,
     newImages: []
   });
 
@@ -160,6 +161,7 @@ const UpdateProviders = () => {
       keywords: Array.isArray(service.keywords) ? service.keywords : [],
       description: service.description || '',
       experience: service.experience || 0,
+      price: service.price || 0,
       newImages: []
     });
   };
@@ -172,6 +174,7 @@ const UpdateProviders = () => {
       keywords: [],
       description: '',
       experience: 0,
+      price: 0,
       newImages: []
     });
   };
@@ -190,6 +193,7 @@ const UpdateProviders = () => {
     }
     if (serviceEditForm.description !== undefined) formData.append('description', serviceEditForm.description);
     if (serviceEditForm.experience !== undefined) formData.append('experience', serviceEditForm.experience.toString());
+    if (serviceEditForm.price !== undefined) formData.append('price', serviceEditForm.price.toString());
 
     // Add new images
     serviceEditForm.newImages.forEach((file) => {
@@ -660,6 +664,21 @@ const UpdateProviders = () => {
                   value={serviceEditForm.experience}
                   onChange={(e) => setServiceEditForm({ ...serviceEditForm, experience: parseInt(e.target.value) || 0 })}
                   min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                />
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Price (₹)
+                </label>
+                <input
+                  type="number"
+                  value={serviceEditForm.price}
+                  onChange={(e) => setServiceEditForm({ ...serviceEditForm, price: parseFloat(e.target.value) || 0 })}
+                  min="0"
+                  step="0.01"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                 />
               </div>

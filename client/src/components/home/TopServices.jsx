@@ -1,30 +1,42 @@
-import React, { useEffect, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { getAllProviders } from '../../features/providerSlice';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import TopServiceCard from '../service/TopServiceCard';
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+axios.defaults.withCredentials = true;
+
 const TopServices = () => {
-  const dispatch = useDispatch();
-  const { allProviders, isFetchingAll } = useSelector((state) => state.provider);
+  const [topServices, setTopServices] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!allProviders || allProviders.length === 0) {
-      dispatch(getAllProviders());
-    }
-  }, [dispatch, allProviders]);
-
-  const topSixServices = useMemo(() => {
-    const services = [];
-    for (const provider of allProviders || []) {
-      const offerings = provider?.serviceOfferings || [];
-      for (const offering of offerings) {
-        services.push({ ...offering, provider });
+    const fetchTopServices = async () => {
+      try {
+        setIsLoading(true);
+        const res = await axios.get(`${API_URL}/api/comments/top-services?limit=6`);
+        if (res.data.success) {
+          // Transform services to match the expected format with provider info
+          const transformedServices = res.data.services.map(service => ({
+            ...service,
+            provider: {
+              ...service.provider,
+              user: service.provider?.user || {}
+            }
+          }));
+          setTopServices(transformedServices);
+        }
+      } catch (error) {
+        console.error('Failed to fetch top services:', error);
+        setTopServices([]);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    return services.slice(0, 6);
-  }, [allProviders]);
+    };
 
-  if (isFetchingAll && (!allProviders || allProviders.length === 0)) {
+    fetchTopServices();
+  }, []);
+
+  if (isLoading) {
     return (
       <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
         <div className="text-center">
@@ -35,7 +47,7 @@ const TopServices = () => {
     );
   }
 
-  if (topSixServices.length === 0) return null;
+  if (topServices.length === 0) return null;
 
   return (
     <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
@@ -47,7 +59,7 @@ const TopServices = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {topSixServices.map((service) => (
+        {topServices.map((service) => (
           <TopServiceCard key={service._id} service={service} />
         ))}
       </div>

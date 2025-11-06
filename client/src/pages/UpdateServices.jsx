@@ -152,6 +152,7 @@ const UpdateServices = () => {
         keywords: service.keywords || [],
         bio: service.description || '',
         experience: service.experience || '',
+        price: service.price || '',
         // For existing images from database
         existingImages: service.portfolioImages || [],
         // For new images to be uploaded
@@ -167,7 +168,8 @@ const UpdateServices = () => {
         images: [],
         imagePreviews: [],
         bio: '',
-        experience: ''
+        experience: '',
+        price: ''
       }]);
     }
   }, [myProviderProfile]);
@@ -343,6 +345,14 @@ const UpdateServices = () => {
         hasErrors = true;
       }
 
+      if (service.price === '' || service.price === null || service.price === undefined) {
+        newErrors[`service-${serviceId}-price`] = "Price is required.";
+        hasErrors = true;
+      } else if (parseFloat(service.price) < 0) {
+        newErrors[`service-${serviceId}-price`] = "Price cannot be negative.";
+        hasErrors = true;
+      }
+
       // For existing services, at least one image must exist (either existing or new)
       const totalImages = (service.existingImages?.length || 0) + (service.imagePreviews?.length || 0);
       if (totalImages === 0) {
@@ -391,6 +401,7 @@ const UpdateServices = () => {
         formData.append('keywords', JSON.stringify(service.keywords));
         formData.append('description', service.bio);
         formData.append('experience', service.experience);
+        formData.append('price', service.price);
         
         // Add new images if any
         service.images.forEach((file) => {
@@ -715,6 +726,35 @@ const UpdateServices = () => {
                   animate={{ opacity: 1 }}
                 >
                   {errors[`service-${service.id}-experience`]}
+                </motion.p>
+              )}
+            </div>
+
+            {/* Price */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
+                Price (in ₹) *
+              </label>
+              <input
+                type="number"
+                value={service.price}
+                onChange={(e) => handleInputChange(service.id, 'price', e.target.value)}
+                placeholder="e.g., 500"
+                min="0"
+                step="0.01"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
+                  errors[`service-${service.id}-price`] 
+                    ? 'border-red-300 focus:ring-red-400 bg-red-50' 
+                    : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
+                }`}
+              />
+              {errors[`service-${service.id}-price`] && (
+                <motion.p 
+                  className="text-red-500 text-sm mt-2 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {errors[`service-${service.id}-price`]}
                 </motion.p>
               )}
             </div>

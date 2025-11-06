@@ -101,7 +101,7 @@ const deleteFromCloudinary = (public_id) => {
  const addServiceOffering = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { serviceCategory, subCategories, keywords, description } = req.body;
+        const { serviceCategory, subCategories, keywords, description, price } = req.body;
 
         // Ensure images are provided if this is a new service offering
         if (!req.files || req.files.length === 0) {
@@ -147,7 +147,8 @@ const deleteFromCloudinary = (public_id) => {
             subCategories: Array.isArray(parsedSubCategories) ? parsedSubCategories : (parsedSubCategories ? [parsedSubCategories] : []),
             keywords: Array.isArray(parsedKeywords) ? parsedKeywords : (parsedKeywords ? [parsedKeywords] : []),
             description,
-            portfolioImages
+            portfolioImages,
+            price: parseFloat(price) || 0
         });
         
         // 3. Save the new service offering (triggers pre-save validation)
@@ -418,6 +419,18 @@ const becomeProviderWithServices = async (req, res) => {
                     message: `Service ${i + 1}: Experience is required.` 
                 });
             }
+            if (service.price === undefined || service.price === '' || service.price === null) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Service ${i + 1}: Price is required.` 
+                });
+            }
+            if (parseFloat(service.price) < 0) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Service ${i + 1}: Price cannot be negative.` 
+                });
+            }
         }
 
         // For multi-service, we'll need to handle images differently
@@ -494,7 +507,8 @@ const becomeProviderWithServices = async (req, res) => {
                         : [service.keywords],
                     description: service.bio,
                     portfolioImages: portfolioImages,
-                    experience: parseInt(service.experience)
+                    experience: parseInt(service.experience),
+                    price: parseFloat(service.price) || 0
                 });
 
                 await newServiceOffering.save();
@@ -548,7 +562,7 @@ const updateServiceOffering = async (req, res) => {
     try {
         const userId = req.user._id;
         const { serviceId } = req.params;
-        const { serviceCategory, subCategories, keywords, description, experience } = req.body;
+        const { serviceCategory, subCategories, keywords, description, experience, price } = req.body;
 
         const profile = await ProviderProfile.findOne({ user: userId });
         if (!profile) {
@@ -601,6 +615,7 @@ const updateServiceOffering = async (req, res) => {
         
         if (description) service.description = description;
         if (experience !== undefined) service.experience = parseInt(experience);
+        if (price !== undefined) service.price = parseFloat(price);
 
         // Handle new images if uploaded
         if (req.files && req.files.length > 0) {

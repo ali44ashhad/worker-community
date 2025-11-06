@@ -177,9 +177,14 @@ const providerSlice = createSlice({
         state.error = action.payload;
       })
       
-      // Show toasts only for provider-related rejected actions
+      // Show toasts only for provider-related rejected actions, but only if we don't have cached data
       .addMatcher(isRejectedWithValue(), (state, action) => {
         if (action.payload && typeof action.type === 'string' && action.type.startsWith('provider/')) {
+          // Only show error toast if we don't have cached data (to avoid spam on refresh failures)
+          if (action.type === 'provider/getAll/rejected' && state.allProviders.length > 0) {
+            // Don't show error if we already have providers cached
+            return;
+          }
           toast.error(action.payload);
         }
       });

@@ -6,7 +6,9 @@ import {
     deleteComment,
     addReply,
     updateReply,
-    deleteReply
+    deleteReply,
+    getTopServices,
+    getTopCategories
 } from "../controllers/comment.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 
@@ -72,6 +74,22 @@ commentRouter.delete(
     "/reply/:commentId",
     protect,
     deleteReply
+);
+
+// @route   GET /api/comments/top-services
+// @desc    Get top services based on ratings and review counts
+// @access  Public
+commentRouter.get(
+    "/top-services",
+    getTopServices
+);
+
+// @route   GET /api/comments/top-categories
+// @desc    Get top categories based on average ratings and review counts
+// @access  Public
+commentRouter.get(
+    "/top-categories",
+    getTopCategories
 );
 
 export default commentRouter;

@@ -30,7 +30,7 @@ const Testimonial = () => {
     if (!allProviders || allProviders.length === 0) {
       dispatch(getAllProviders());
     }
-  }, [dispatch, allProviders]);
+  }, [dispatch, allProviders.length]);
 
   const testimonialCards = useMemo(() => {
     const services = [];

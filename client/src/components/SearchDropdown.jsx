@@ -182,7 +182,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
     if (isOpen && (!allProviders || allProviders.length === 0)) {
       dispatch(getAllProviders());
     }
-  }, [isOpen, allProviders, dispatch]);
+  }, [isOpen, allProviders.length, dispatch]);
 
   // Reset search query when dropdown closes
   useEffect(() => {

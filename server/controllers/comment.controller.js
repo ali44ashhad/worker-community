@@ -405,6 +405,143 @@ const deleteReply = async (req, res) => {
     }
 };
 
+/**
+ * @description Get top services based on ratings and review counts
+ * @route GET /api/comments/top-services
+ * @access Public
+ */
+const getTopServices = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 6;
+
+        // Aggregate comments to calculate average rating and review count per service
+        const topServices = await Comment.aggregate([
+            {
+                $group: {
+                    _id: "$serviceOffering",
+                    averageRating: { $avg: "$rating" },
+                    reviewCount: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { 
+                    averageRating: -1,  // Sort by average rating first
+                    reviewCount: -1      // Then by review count
+                }
+            },
+            {
+                $limit: limit
+            }
+        ]);
+
+        // Get service offering IDs
+        const serviceIds = topServices.map(s => s._id);
+
+        // Fetch full service offering details with provider info
+        const services = await ServiceOffering.find({ _id: { $in: serviceIds } })
+            .populate({
+                path: 'provider',
+                select: 'user',
+                populate: {
+                    path: 'user',
+                    select: 'name profileImage'
+                }
+            })
+            .select('serviceCategory description portfolioImages provider experience keywords subCategories');
+
+        // Combine with rating data and maintain sort order
+        const servicesWithRatings = services.map(service => {
+            const ratingData = topServices.find(s => s._id.toString() === service._id.toString());
+            return {
+                ...service.toObject(),
+                averageRating: ratingData?.averageRating || 0,
+                reviewCount: ratingData?.reviewCount || 0
+            };
+        });
+
+        // Re-sort to maintain order (in case populate changes order)
+        servicesWithRatings.sort((a, b) => {
+            if (b.averageRating !== a.averageRating) {
+                return b.averageRating - a.averageRating;
+            }
+            return b.reviewCount - a.reviewCount;
+        });
+
+        return res.status(200).json({
+            success: true,
+            services: servicesWithRatings
+        });
+
+    } catch (error) {
+        console.error("Error in getTopServices controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Get top categories based on average ratings and review counts
+ * @route GET /api/comments/top-categories
+ * @access Public
+ */
+const getTopCategories = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 6;
+
+        // Use aggregation to join comments with service offerings and calculate category stats
+        const categoryStats = await Comment.aggregate([
+            {
+                $lookup: {
+                    from: 'serviceofferings',
+                    localField: 'serviceOffering',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$service',
+                    preserveNullAndEmptyArrays: false
+                }
+            },
+            {
+                $group: {
+                    _id: '$service.serviceCategory',
+                    totalRating: { $sum: '$rating' },
+                    reviewCount: { $sum: 1 },
+                    serviceCount: { $addToSet: '$serviceOffering' }
+                }
+            },
+            {
+                $project: {
+                    category: '$_id',
+                    averageRating: { $divide: ['$totalRating', '$reviewCount'] },
+                    reviewCount: 1,
+                    serviceCount: { $size: '$serviceCount' },
+                    _id: 0
+                }
+            },
+            {
+                $sort: { 
+                    averageRating: -1,
+                    reviewCount: -1
+                }
+            },
+            {
+                $limit: limit
+            }
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            categories: categoryStats
+        });
+
+    } catch (error) {
+        console.error("Error in getTopCategories controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 export {
     createComment,
     getCommentsForService,
@@ -412,5 +549,7 @@ export {
     deleteComment,
     addReply,
     updateReply,
-    deleteReply
+    deleteReply,
+    getTopServices,
+    getTopCategories
 };
