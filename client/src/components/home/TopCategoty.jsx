@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import TopCategoryCard from "./TopCategoryCard";
+import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -8,6 +9,7 @@ axios.defaults.withCredentials = true;
 const TopCategory = () => {
     const [topCategories, setTopCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const scrollContainerRef = useRef(null);
 
     // Service metadata for descriptions and keywords (from SERVICE_RULES)
     const SERVICE_METADATA = {
@@ -216,26 +218,64 @@ const TopCategory = () => {
 
     if (topCategories.length === 0) return null;
 
+    const scrollLeft = () => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollBy({ left: -400, behavior: 'smooth' });
+        }
+    };
+
+    const scrollRight = () => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollBy({ left: 400, behavior: 'smooth' });
+        }
+    };
+
     return (
         <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
-            <div className="mb-12">
-                <h1 className="text-4xl md:text-5xl font-bold text-black text-center mb-3">
+            {/* Header */}
+            <div className="mb-3">
+                <h1 className="text-4xl md:text-5xl font-bold text-black mb-3">
                     Top Categories
                 </h1>
-                <p className="text-gray-600 text-center max-w-2xl mx-auto">
-                    Discover the diverse talents within our community! Explore some of the most popular services offered by your skilled neighbors, ready to lend a hand.
-                </p>
+                <div className="flex items-start justify-between gap-4">
+                    <p className="text-gray-600 max-w-2xl flex-1">
+                        Discover the diverse talents within our community! Explore some of the most popular services offered by your skilled neighbors, ready to lend a hand.
+                    </p>
+                    
+                    {/* Carousel Navigation Buttons - Top Right */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                            onClick={scrollLeft}
+                            className="w-10 h-10 rounded-full border border-gray-300 bg-white hover:bg-gray-100 flex items-center justify-center transition-all shadow-sm hover:shadow-md"
+                            aria-label="Scroll left"
+                        >
+                            <HiChevronLeft className="w-6 h-6 text-gray-700" />
+                        </button>
+                        <button
+                            onClick={scrollRight}
+                            className="w-10 h-10 rounded-full border border-gray-300 bg-white hover:bg-gray-100 flex items-center justify-center transition-all shadow-sm hover:shadow-md"
+                            aria-label="Scroll right"
+                        >
+                            <HiChevronRight className="w-6 h-6 text-gray-700" />
+                        </button>
+                    </div>
+                </div>
             </div>
             
-            {/* Categories Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Scrollable Categories Container */}
+            <div 
+                ref={scrollContainerRef}
+                className="flex gap-8 overflow-x-auto scrollbar-hide pb-4"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
                 {topCategories.map((categoryData) => (
-                    <TopCategoryCard
-                        key={categoryData.category}
-                        category={categoryData.category}
-                        data={categoryData}
-                        image={categoryData.image}
-                    />
+                    <div key={categoryData.category} className="flex-shrink-0 w-full sm:w-80 lg:w-96">
+                        <TopCategoryCard
+                            category={categoryData.category}
+                            data={categoryData}
+                            image={categoryData.image}
+                        />
+                    </div>
                 ))}
             </div>
         </section>
