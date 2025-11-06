@@ -7,6 +7,9 @@ import { addToWishlist, removeFromWishlist } from '../../features/wishlistSlice'
 import { toast } from 'react-hot-toast';
 
 const TopServiceCard = ({ service }) => {
+
+  
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
@@ -17,6 +20,8 @@ const TopServiceCard = ({ service }) => {
   const description = service?.description || '';
   const keywords = Array.isArray(service?.keywords) ? service.keywords.slice(0, 4) : [];
   const providerName = service?.provider?.user?.name || 'Unknown Provider';
+  const price = service?.price;
+  console.log("service : ",service);
 
   const goToService = () => navigate(`/service/${service._id}`);
 
@@ -66,6 +71,16 @@ const TopServiceCard = ({ service }) => {
 
       <h3 className="text-2xl font-bold text-black mb-1">{title}</h3>
       <p className="text-sm text-gray-700 mb-2 line-clamp-2">{description}</p>
+
+      {/* Price Display */}
+
+      {price !== undefined && price !== null && (
+        <div className="mb-2">
+          <span className="text-xl font-bold text-gray-900">
+            ₹{typeof price === 'number' ? price.toFixed(2) : price}
+          </span>
+        </div>
+      )}
 
       <div className="flex items-center justify-between mb-3">
         <div className="text-xs text-gray-600">By {providerName}</div>

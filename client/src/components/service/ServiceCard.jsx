@@ -14,6 +14,9 @@ const ServiceCard = ({ service }) => {
   ? fullDescription.substring(0, 100) + '...'
   : fullDescription;
 
+  // Get price
+  const price = service?.price;
+
   console.log(service);
   
   // Get portfolio images
@@ -65,6 +68,15 @@ const ServiceCard = ({ service }) => {
             {truncatedDescription}
           </p>
         </div>
+
+        {/* Price Display */}
+        {price !== undefined && price !== null && (
+          <div className="mb-4">
+            <span className="text-2xl font-bold text-gray-900">
+              ₹{typeof price === 'number' ? price.toFixed(2) : price}
+            </span>
+          </div>
+        )}
 
         {/* Provider Info */}
         <div className="flex items-center gap-3">
