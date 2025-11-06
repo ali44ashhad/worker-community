@@ -154,11 +154,21 @@ const Services = () => {
     const newRange = [...priceRange];
     
     if (index === 0) {
-      // Min slider - ensure it doesn't exceed max
-      newRange[0] = Math.min(numValue, priceRange[1]);
+      // Min slider - ensure it doesn't exceed max and stays within bounds
+      const constrainedValue = Math.max(minPrice, Math.min(numValue, priceRange[1]));
+      newRange[0] = constrainedValue;
+      // If min exceeds max, adjust max
+      if (constrainedValue >= priceRange[1] && priceRange[1] < maxPrice) {
+        newRange[1] = Math.min(maxPrice, constrainedValue + 1);
+      }
     } else {
-      // Max slider - ensure it doesn't go below min
-      newRange[1] = Math.max(numValue, priceRange[0]);
+      // Max slider - ensure it doesn't go below min and stays within bounds
+      const constrainedValue = Math.min(maxPrice, Math.max(numValue, priceRange[0]));
+      newRange[1] = constrainedValue;
+      // If max goes below min, adjust min
+      if (constrainedValue <= priceRange[0] && priceRange[0] > minPrice) {
+        newRange[0] = Math.max(minPrice, constrainedValue - 1);
+      }
     }
     
     setPriceRange(newRange);
@@ -287,12 +297,12 @@ const Services = () => {
                   </div>
 
                   {/* Dual Range Slider */}
-                  <div className='relative pt-3 pb-1'>
-                    <div className='relative h-1.5 bg-gray-200 rounded-lg'>
+                  <div className='relative pt-4 pb-2'>
+                    <div className='relative h-2 bg-gray-200 rounded-lg'>
                       {/* Active range track */}
                       {maxPrice > minPrice && (
                         <div
-                          className='absolute h-1.5 bg-gray-600 rounded-lg'
+                          className='absolute h-2 bg-gray-600 rounded-lg top-0'
                           style={{
                             left: `${((priceRange[0] - minPrice) / (maxPrice - minPrice)) * 100}%`,
                             width: `${((priceRange[1] - priceRange[0]) / (maxPrice - minPrice)) * 100}%`
@@ -303,25 +313,33 @@ const Services = () => {
                       <input
                         type='range'
                         min={minPrice}
-                        max={priceRange[1]}
+                        max={maxPrice}
                         value={priceRange[0]}
                         onChange={(e) => handlePriceRangeChange(0, e.target.value)}
-                        className='absolute w-full h-1.5 bg-transparent appearance-none cursor-pointer slider'
-                        style={{ zIndex: 10 }}
+                        className='absolute w-full h-2 bg-transparent appearance-none cursor-pointer pointer-events-auto'
+                        style={{ 
+                          zIndex: 2,
+                          WebkitAppearance: 'none',
+                          appearance: 'none'
+                        }}
                       />
                       {/* Max range input */}
                       <input
                         type='range'
-                        min={priceRange[0]}
+                        min={minPrice}
                         max={maxPrice}
                         value={priceRange[1]}
                         onChange={(e) => handlePriceRangeChange(1, e.target.value)}
-                        className='absolute w-full h-1.5 bg-transparent appearance-none cursor-pointer slider'
-                        style={{ zIndex: 20 }}
+                        className='absolute w-full h-2 bg-transparent appearance-none cursor-pointer pointer-events-auto'
+                        style={{ 
+                          zIndex: 3,
+                          WebkitAppearance: 'none',
+                          appearance: 'none'
+                        }}
                       />
                     </div>
                     {/* Price Range Labels */}
-                    <div className='flex justify-between text-[10px] text-gray-600 mt-1'>
+                    <div className='flex justify-between text-[10px] text-gray-600 mt-2'>
                       <span>₹{minPrice.toLocaleString()}</span>
                       <span>₹{maxPrice.toLocaleString()}</span>
                     </div>

@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import ProviderProfile from "../models/providerProfile.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
 import Booking from "../models/booking.model.js"; // <-- You need to import Booking model here for dashboard stats
+import Comment from "../models/comment.model.js";
 import cloudinary from "../config/cloudinary.js";
 import streamifier from "streamifier";
 
@@ -301,20 +302,51 @@ const getProviderDashboardStats = async (req, res) => {
 const getProviderById = async (req, res) => {
     try {
         const provider = await ProviderProfile.findById(req.params.id)
-            .populate('user', 'name profileImage phoneNumber') // Get user's public info
+            .populate('user', 'name profileImage phoneNumber createdAt') // Get user's public info
             .populate('serviceOfferings'); // Get all their service offerings
 
         if (!provider) {
             return res.status(404).json({ success: false, message: "Provider not found." });
         }
         
-        // TODO: You would also fetch and send comments here if they are linked to ProviderProfile
-        // const comments = await Comment.find({ provider: provider._id }).populate('customer').sort({ createdAt: -1 });
+        // Get all service offering IDs for this provider
+        const serviceIds = provider.serviceOfferings.map(service => service._id);
+        
+        // Calculate average rating and total reviews across all services
+        let averageRating = 0;
+        let totalReviews = 0;
+        
+        if (serviceIds.length > 0) {
+            const ratingStats = await Comment.aggregate([
+                {
+                    $match: {
+                        serviceOffering: { $in: serviceIds }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        averageRating: { $avg: "$rating" },
+                        totalReviews: { $sum: 1 }
+                    }
+                }
+            ]);
+            
+            if (ratingStats.length > 0 && ratingStats[0].totalReviews > 0) {
+                averageRating = parseFloat(ratingStats[0].averageRating.toFixed(1));
+                totalReviews = ratingStats[0].totalReviews;
+            }
+        }
         
         return res.status(200).json({
             success: true,
-            provider
-            // comments: comments // Uncomment if you add comment fetching
+            provider: {
+                ...provider.toObject(),
+                stats: {
+                    averageRating,
+                    totalReviews
+                }
+            }
         });
     } catch (error) {
         console.error("Error in getProviderById:", error.message);

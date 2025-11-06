@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getProviderById, clearSelectedProvider } from '../features/providerSlice';
-import { HiOutlinePhotograph, HiArrowRight, HiArrowLeft } from 'react-icons/hi';
+import { HiLocationMarker, HiChatAlt2 } from 'react-icons/hi';
+import { FaStar } from 'react-icons/fa';
 import ServiceCard from '../components/service/ServiceCard';
 import axios from 'axios';
 
@@ -14,10 +15,8 @@ const SpecificProvider = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { selectedProvider, isFetchingSelected } = useSelector((state) => state.provider);
-  const scrollRef = useRef(null);
   
-  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [showFullBio, setShowFullBio] = useState(false);
 
   useEffect(() => {
     dispatch(getProviderById(id));
@@ -26,24 +25,16 @@ const SpecificProvider = () => {
     };
   }, [dispatch, id]);
 
-  useEffect(() => {
-    if (!selectedProvider?.serviceOfferings?.length) return;
-    
-    if (!isAutoPlaying) return;
+  // Extract data safely (hooks must be called before any returns)
+  const services = selectedProvider?.serviceOfferings || [];
 
-    const interval = setInterval(() => {
-      setCurrentCarouselIndex((prev) => (prev + 1) % selectedProvider.serviceOfferings.length);
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, selectedProvider]);
-
+  // Early return after all hooks
   if (isFetchingSelected || !selectedProvider) {
     return (
-      <div className='mt-20 max-w-[1350px] mx-auto px-4 flex items-center justify-center min-h-screen'>
+      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto mb-4'></div>
-          <p className='text-xl font-semibold'>Loading...</p>
+          <div className='animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-gray-900 mx-auto mb-4'></div>
+          <p className='text-xl font-semibold text-gray-700'>Loading...</p>
         </div>
       </div>
     );
@@ -53,44 +44,31 @@ const SpecificProvider = () => {
   const profileImage = selectedProvider?.user?.profileImage;
   const providerPhoneNumber = selectedProvider?.user?.phoneNumber || '';
   const bio = selectedProvider?.bio || '';
-  const services = selectedProvider?.serviceOfferings || [];
+  const stats = selectedProvider?.stats || { averageRating: 0, totalReviews: 0 };
+  const userCreatedAt = selectedProvider?.user?.createdAt;
+  const averageRating = stats.averageRating || 0;
+  const totalReviews = stats.totalReviews || 0;
 
-  // Get all images from all services for carousel
-  const allCarouselImages = [];
+  // Get all unique skills from services
+  const allSkills = new Set();
   services.forEach(service => {
-    if (service?.portfolioImages && Array.isArray(service.portfolioImages)) {
-      service.portfolioImages.forEach(img => {
-        allCarouselImages.push(img.url);
-      });
+    if (service?.keywords && Array.isArray(service.keywords)) {
+      service.keywords.forEach(keyword => allSkills.add(keyword));
+    }
+    if (service?.subCategories && Array.isArray(service.subCategories)) {
+      service.subCategories.forEach(cat => allSkills.add(cat));
     }
   });
+  const skillsArray = Array.from(allSkills).slice(0, 10);
 
-  const goToSlide = (index) => {
-    setCurrentCarouselIndex(index);
-    setIsAutoPlaying(false);
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
   };
 
-  const goToPrevious = () => {
-    setCurrentCarouselIndex((prev) => (prev - 1 + allCarouselImages.length) % allCarouselImages.length);
-    setIsAutoPlaying(false);
-  };
-
-  const goToNext = () => {
-    setCurrentCarouselIndex((prev) => (prev + 1) % allCarouselImages.length);
-    setIsAutoPlaying(false);
-  };
-
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -400, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 400, behavior: 'smooth' });
-    }
-  };
 
   const handleContactNow = async () => {
     // Increment provider profile count
@@ -98,7 +76,6 @@ const SpecificProvider = () => {
       await axios.post(`${API_URL}/api/provider-profile/${id}/increment-count`);
     } catch (error) {
       console.error('Failed to increment provider profile count:', error);
-      // Continue even if increment fails
     }
 
     if (providerPhoneNumber) {
@@ -111,77 +88,189 @@ const SpecificProvider = () => {
     }
   };
 
+  const handleBookConsultation = () => {
+    handleContactNow();
+  };
+
+  // Calculate provider level based on reviews and rating
+  const getProviderLevel = () => {
+    if (totalReviews >= 50 && averageRating >= 4.5) return { level: 2, diamonds: 2 };
+    if (totalReviews >= 20 && averageRating >= 4.0) return { level: 1, diamonds: 1 };
+    return { level: 0, diamonds: 0 };
+  };
+
+  const providerLevel = getProviderLevel();
+  const bioPreview = bio.length > 200 ? bio.substring(0, 200) + '...' : bio;
+  const displayBio = showFullBio ? bio : bioPreview;
+
   return (
-    <div className='mt-20 max-w-[1200px] mx-auto px-6 py-8'>
-      {/* Carousel Section */}
-      <div className='relative mb-8 group'>
-        <div className='h-72 md:h-80 rounded-xl overflow-hidden shadow-sm relative bg-white border border-gray-200'>
-          {/* Carousel Images */}
-          {allCarouselImages.length > 0 ? (
-            <div className='h-full relative'>
-              {allCarouselImages.map((img, index) => (
-                <img
-                  key={index}
-                  src={img}
-                  alt={`Service ${index + 1}`}
-                  className={`absolute inset-0 object-cover w-full h-full transition-opacity duration-700 ${
-                    index === currentCarouselIndex ? 'opacity-100' : 'opacity-0'
+    <div className='min-h-screen bg-gray-50'>
+      <div className='max-w-[1350px] mx-auto px-4 pt-24 pb-12'>
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+          
+          {/* LEFT COLUMN - Main Content */}
+          <div className='lg:col-span-2 space-y-6'>
+            {/* Profile Header */}
+            <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm'>
+              <div className='flex items-start gap-6'>
+                {/* Profile Picture */}
+                <div className='relative flex-shrink-0'>
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt={providerName}
+                      className='w-32 h-32 rounded-full border-4 border-gray-900 object-cover'
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextSibling) {
+                          e.target.nextSibling.style.display = 'flex';
+                        }
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className='w-32 h-32 rounded-full border-4 border-gray-900 bg-gray-900 text-white flex items-center justify-center font-bold text-4xl'
+                    style={{ display: profileImage ? 'none' : 'flex' }}
+                  >
+                    {providerName.charAt(0).toUpperCase()}
+                  </div>
+                </div>
+
+                {/* Provider Info */}
+                <div className='flex-1 min-w-0'>
+                  <div className='flex items-center gap-3 mb-2'>
+                    <h1 className='text-3xl font-bold text-gray-900'>{providerName}</h1>
+                  </div>
+                  
+                  {/* Username/Handle */}
+                  {/* <p className='text-sm text-gray-600 mb-3'>
+                    @{providerName.toLowerCase().replace(/\s+/g, '_')}
+                  </p> */}
+
+                  {/* Rating and Level */}
+                  <div className='flex items-center gap-4 mb-3'>
+                    {averageRating > 0 && (
+                      <div className='flex items-center gap-2'>
+                        <div className='flex items-center gap-1'>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <FaStar
+                              key={star}
+                              className={`text-sm ${
+                                star <= Math.round(averageRating)
+                                  ? 'text-yellow-400'
+                                  : 'text-gray-300'
                   }`}
                 />
               ))}
             </div>
-          ) : (
-            <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200'>
-              <HiOutlinePhotograph className='w-32 h-32 text-gray-400' />
+                        <span className='text-sm font-semibold text-gray-900'>
+                          {averageRating} ({totalReviews} reviews )
+                        </span>
+                      </div>
+                    )}
+                    {providerLevel.level > 0 && (
+                      <div className='flex items-center gap-1'>
+                        <span className='text-sm font-semibold text-gray-900'>Level {providerLevel.level}</span>
+                        {[...Array(providerLevel.diamonds)].map((_, i) => (
+                          <span key={i} className='text-gray-600'>◆</span>
+                        ))}
             </div>
           )}
+                  </div>
 
-          {/* Navigation Buttons */}
-          {allCarouselImages.length > 1 && (
-            <>
-              <button
-                onClick={goToPrevious}
-                className='absolute left-4 top-1/2 -translate-y-1/2 bg-gray-800/80 hover:bg-gray-800 text-white p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 border border-white'
+                  {/* Professional Title */}
+                  <p className='text-base text-gray-700 mb-4'>
+                    Professional service provider
+                  </p>
+
+                  {/* Location and Languages */}
+                  <div className='flex items-center gap-4 text-sm text-gray-600 mb-4'>
+                    <div className='flex items-center gap-1'>
+                      <HiLocationMarker className='w-4 h-4' />
+                      <span>India</span>
+                    </div>
+                    <div className='flex items-center gap-1'>
+                      <HiChatAlt2 className='w-4 h-4' />
+                      <span>English, Hindi</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className='flex gap-3'>
+              {/* <button
+                      onClick={() => navigate('/contact')}
+                      className='px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold text-sm hover:bg-gray-50 border border-gray-300 transition-all'
               >
-                <HiArrowLeft className='w-6 h-6' />
-              </button>
+                      More about me
+              </button> */}
+                  </div>
+                </div>
+              </div>
+            </div>
 
+            {/* About Me Section */}
+            {bio && (
+              <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm'>
+                <h2 className='text-xl font-bold text-gray-900 mb-4'>About me</h2>
+                <p className='text-sm text-gray-700 leading-relaxed whitespace-pre-wrap mb-3'>
+                  {displayBio}
+                </p>
+                {bio.length > 200 && (
               <button
-                onClick={goToNext}
-                className='absolute right-4 top-1/2 -translate-y-1/2 bg-gray-800/80 hover:bg-gray-800 text-white p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 border border-white'
+                    onClick={() => setShowFullBio(!showFullBio)}
+                    className='text-sm text-gray-600 hover:text-gray-900 font-medium'
               >
-                <HiArrowRight className='w-6 h-6' />
+                    {showFullBio ? 'Read less' : 'Read more'}
               </button>
-            </>
-          )}
+                )}
+              </div>
+            )}
 
-          {/* Indicators */}
-          {allCarouselImages.length > 1 && (
-            <div className='absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2'>
-              {allCarouselImages.map((_, index) => (
-                <button
+            {/* Skills Section */}
+            {skillsArray.length > 0 && (
+              <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm'>
+                <h2 className='text-xl font-bold text-gray-900 mb-4'>Skills</h2>
+                <div className='flex flex-wrap gap-2'>
+                  {skillsArray.map((skill, index) => (
+                    <span
                   key={index}
-                  onClick={() => goToSlide(index)}
-                  className={`h-2 rounded-full transition-all ${
-                    index === currentCarouselIndex
-                      ? 'w-8 bg-white'
-                      : 'w-2 bg-white/50 hover:bg-white/75'
-                  }`}
-                />
-              ))}
+                      className='px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-200 transition-colors cursor-pointer'
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                  {allSkills.size > 10 && (
+                    <span className='px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium border border-gray-200'>
+                      +{allSkills.size - 10}
+                    </span>
+                  )}
+                </div>
             </div>
           )}
 
-          {/* Provider Info Overlay - Left Side */}
-          <div className='absolute left-4 top-4 bg-white/95 backdrop-blur-sm px-4 py-3 rounded-lg border border-gray-200 shadow-sm'>
-            <div className='flex items-center gap-3'>
-              {/* Provider Image */}
-              <div className='flex-shrink-0'>
+            {/* Services Section */}
+            {services.length > 0 && (
+              <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm'>
+                <h2 className='text-xl font-bold text-gray-900 mb-6'>Services Offered</h2>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  {services.map((service) => (
+                    <ServiceCard key={service._id} service={{ ...service, provider: selectedProvider }} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN - Contact/Action Box */}
+          <div className='lg:col-span-1'>
+            <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm sticky top-24'>
+              {/* Mini Profile */}
+              <div className='flex items-center gap-3 mb-6 pb-6 border-b border-gray-200'>
                 {profileImage ? (
                   <img
                     src={profileImage}
                     alt={providerName}
-                    className='w-12 h-12 rounded-full border border-gray-200 object-cover'
+                    className='w-12 h-12 rounded-full border-2 border-gray-900 object-cover'
                     onError={(e) => {
                       e.target.style.display = 'none';
                       if (e.target.nextSibling) {
@@ -191,86 +280,59 @@ const SpecificProvider = () => {
                   />
                 ) : null}
                 <div
-                  className='w-12 h-12 rounded-full border border-gray-200 bg-gray-700 text-white flex items-center justify-center font-semibold text-lg'
+                  className='w-12 h-12 rounded-full border-2 border-gray-900 bg-gray-900 text-white flex items-center justify-center font-bold text-lg'
                   style={{ display: profileImage ? 'none' : 'flex' }}
                 >
                   {providerName.charAt(0).toUpperCase()}
                 </div>
+                <div className='flex-1 min-w-0'>
+                  <h3 className='text-base font-bold text-gray-900 truncate'>{providerName}</h3>
+                </div>
               </div>
 
-              {/* Provider Name */}
-              <div>
-                <h2 className='text-base font-semibold text-gray-900'>
-                  {providerName}
-                </h2>
-              </div>
+              {/* Contact Button */}
+              <button
+                onClick={handleContactNow}
+                className='w-full bg-gray-900 text-white py-3 px-4 rounded-lg font-semibold text-sm hover:bg-gray-800 transition-all mb-3 flex items-center justify-center gap-2'
+              >
+                <HiChatAlt2 className='w-5 h-5' />
+                Contact me
+              </button>
+
+              {/* Consultation Button */}
+              <button
+                onClick={handleBookConsultation}
+                className='w-full bg-white text-gray-900 py-3 px-4 rounded-lg font-semibold text-sm hover:bg-gray-50 border border-gray-300 transition-all mb-6 flex items-center justify-center gap-2'
+              >
+                <HiChatAlt2 className='w-5 h-5' />
+                Book a consultation
+              </button>
+
+              {/* Additional Info */}
+              {userCreatedAt && (
+                <div className='mt-6 pt-6 border-t border-gray-200 space-y-2 text-sm'>
+                  <div className='flex justify-between'>
+                    <span className='text-gray-600'>Member since:</span>
+                    <span className='text-gray-900 font-medium'>{formatDate(userCreatedAt)}</span>
+                  </div>
+                  {services.length > 0 && (
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Services:</span>
+                      <span className='text-gray-900 font-medium'>{services.length}</span>
+                    </div>
+                  )}
+                  {totalReviews > 0 && (
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Total reviews:</span>
+                      <span className='text-gray-900 font-medium'>{totalReviews}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Bio Section */}
-      {bio && (
-        <div className='mb-8 bg-white border border-gray-200 rounded-xl p-5 shadow-sm'>
-          <h2 className='text-lg font-semibold text-gray-900 mb-3'>About</h2>
-          <p className='text-sm text-gray-600 leading-relaxed'>
-            {bio}
-          </p>
-        </div>
-      )}
-
-      {/* Services Section */}
-      {services.length > 0 && (
-        <div className='mb-8'>
-          <h2 className='text-lg font-semibold text-gray-900 mb-4'>Services Offered</h2>
-          <div className='relative'>
-            {/* Scroll Left Button */}
-            {services.length > 2 && (
-              <button
-                onClick={scrollLeft}
-                className='absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-50 border border-gray-200 transition-all'
-              >
-                <HiArrowLeft className='w-4 h-4' />
-              </button>
-            )}
-
-            {/* Services Grid */}
-            <div
-              ref={scrollRef}
-              className='flex gap-4 overflow-x-auto scrollbar-hide pb-4'
-              style={{
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-              }}
-            >
-              {services.map((service) => (
-                <div key={service._id} className='flex-shrink-0 w-72'>
-                  <ServiceCard service={{ ...service, provider: selectedProvider }} />
-                </div>
-              ))}
-            </div>
-
-            {/* Scroll Right Button */}
-            {services.length > 2 && (
-              <button
-                onClick={scrollRight}
-                className='absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-50 border border-gray-200 transition-all'
-              >
-                <HiArrowRight className='w-4 h-4' />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Contact Now Button */}
-      <button
-        onClick={handleContactNow}
-        className='w-full max-w-sm mx-auto block bg-gray-900 text-white py-3 px-6 rounded-lg font-medium text-sm hover:bg-gray-800 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm'
-      >
-        Contact Now
-        <HiArrowRight className='w-4 h-4' />
-      </button>
     </div>
   );
 };

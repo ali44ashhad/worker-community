@@ -24,9 +24,25 @@ const TopCategoryCard = ({ category, data, image }) => {
       {/* Image */}
       <div className="mb-4 flex justify-center">
         <div className="w-full h-48 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
-          <span className="text-black font-bold text-sm uppercase  text-center">
-            <img src={image} alt="" />
-          </span>
+          {image && image !== "DefaultCategoryImage" ? (
+            <img 
+              src={image} 
+              alt={category} 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                if (e.target.nextSibling) {
+                  e.target.nextSibling.style.display = 'flex';
+                }
+              }}
+            />
+          ) : null}
+          <div 
+            className="w-full h-full flex items-center justify-center text-gray-400"
+            style={{ display: (image && image !== "DefaultCategoryImage") ? 'none' : 'flex' }}
+          >
+            <span className="text-xs font-medium text-gray-500">{category}</span>
+          </div>
         </div>
       </div>
 

@@ -147,12 +147,13 @@ const TopCategory = () => {
 
     // Map categories to their images
     const categoryImages = {
-        "Academics": "AcademicsCategoryImage.png",
-        "Music": "MusicCategoryImage.png",
-        "Dance": "DanceCategoryImage.png",
-        "Fitness & Sports": "fitnessCategoryImage1.png",
-        "Home Baker": "HomeBakerCategoryImage.png",
-        "Technology": "TechnologyCategoryImage.png"
+        "Academics": "/AcademicsCategoryImage.png",
+        "Music": "/MusicCategoryImage.png",
+        "Dance": "/DanceCategoryImage.png",
+        "Fitness & Sports": "/fitnessCategoryImage1.png",
+        "Home Baker": "/HomeBakerCategoryImage.png",
+        "Technology": "/TechnologyCategoryImage.png",
+        "Workshops": "/tutor.png" // Using tutor.png for workshops
     };
 
     useEffect(() => {
@@ -169,7 +170,7 @@ const TopCategory = () => {
                             description: metadata.description || '',
                             subCategories: metadata.subCategories || [],
                             keywords: metadata.keywords || [],
-                            image: categoryImages[cat.category] || "DefaultCategoryImage"
+                            image: categoryImages[cat.category] || "/tutor.png"
                         };
                     });
                     setTopCategories(categoriesWithMetadata);
@@ -178,7 +179,7 @@ const TopCategory = () => {
                     const fallbackCategories = Object.entries(SERVICE_METADATA).slice(0, 6).map(([category, data]) => ({
                         category,
                         ...data,
-                        image: categoryImages[category] || "DefaultCategoryImage",
+                        image: categoryImages[category] || "/tutor.png",
                         averageRating: 0,
                         reviewCount: 0,
                         serviceCount: 0
