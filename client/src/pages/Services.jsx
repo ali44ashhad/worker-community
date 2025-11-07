@@ -58,6 +58,14 @@ const Services = () => {
     return [Math.floor(min), Math.ceil(max)];
   };
 
+  // Calculate min and max price - memoized
+  const [minPrice, maxPrice] = useMemo(() => {
+    if (allServices.length > 0) {
+      return getPriceRange();
+    }
+    return [0, 100000];
+  }, [allServices]);
+
   // Initialize price range when services are loaded
   useEffect(() => {
     if (allServices.length > 0) {
@@ -174,13 +182,6 @@ const Services = () => {
     setPriceRange(newRange);
   };
 
-  const [minPrice, maxPrice] = useMemo(() => {
-    if (allServices.length > 0) {
-      return getPriceRange();
-    }
-    return [0, 100000];
-  }, [allServices]);
-
   return (
     <div className='min-h-screen bg-gray-50 pb-16'>
       <div className='max-w-[1350px] mx-auto px-4 pt-24'>
@@ -290,19 +291,19 @@ const Services = () => {
                   </div>
 
                   {/* Price Range Display */}
-                  <div className='text-center'>
+                  <div className='text-center mb-2'>
                     <span className='text-xs font-bold text-black'>
                       ₹{priceRange[0].toLocaleString()} - ₹{priceRange[1].toLocaleString()}
                     </span>
                   </div>
 
                   {/* Dual Range Slider */}
-                  <div className='relative pt-4 pb-2'>
-                    <div className='relative h-2 bg-gray-200 rounded-lg'>
+                  <div className='relative pt-3 pb-1'>
+                    <div className='relative h-1.5 bg-gray-200 rounded-lg'>
                       {/* Active range track */}
                       {maxPrice > minPrice && (
                         <div
-                          className='absolute h-2 bg-gray-600 rounded-lg top-0'
+                          className='absolute h-1.5 bg-gray-600 rounded-lg top-0'
                           style={{
                             left: `${((priceRange[0] - minPrice) / (maxPrice - minPrice)) * 100}%`,
                             width: `${((priceRange[1] - priceRange[0]) / (maxPrice - minPrice)) * 100}%`
@@ -316,11 +317,10 @@ const Services = () => {
                         max={maxPrice}
                         value={priceRange[0]}
                         onChange={(e) => handlePriceRangeChange(0, e.target.value)}
-                        className='absolute w-full h-2 bg-transparent appearance-none cursor-pointer pointer-events-auto'
+                        onInput={(e) => handlePriceRangeChange(0, e.target.value)}
+                        className='absolute w-full h-1.5 bg-transparent appearance-none cursor-pointer slider'
                         style={{ 
-                          zIndex: 2,
-                          WebkitAppearance: 'none',
-                          appearance: 'none'
+                          zIndex: priceRange[0] > priceRange[1] - (maxPrice - minPrice) * 0.05 ? 20 : 10
                         }}
                       />
                       {/* Max range input */}
@@ -330,16 +330,15 @@ const Services = () => {
                         max={maxPrice}
                         value={priceRange[1]}
                         onChange={(e) => handlePriceRangeChange(1, e.target.value)}
-                        className='absolute w-full h-2 bg-transparent appearance-none cursor-pointer pointer-events-auto'
+                        onInput={(e) => handlePriceRangeChange(1, e.target.value)}
+                        className='absolute w-full h-1.5 bg-transparent appearance-none cursor-pointer slider'
                         style={{ 
-                          zIndex: 3,
-                          WebkitAppearance: 'none',
-                          appearance: 'none'
+                          zIndex: priceRange[1] < priceRange[0] + (maxPrice - minPrice) * 0.05 ? 20 : 10
                         }}
                       />
                     </div>
                     {/* Price Range Labels */}
-                    <div className='flex justify-between text-[10px] text-gray-600 mt-2'>
+                    <div className='flex justify-between text-[10px] text-gray-600 mt-1'>
                       <span>₹{minPrice.toLocaleString()}</span>
                       <span>₹{maxPrice.toLocaleString()}</span>
                     </div>
