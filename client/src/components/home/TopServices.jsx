@@ -97,10 +97,10 @@ const TopServices = () => {
       <div 
         ref={scrollContainerRef}
         className="flex gap-8 overflow-x-auto scrollbar-hide pb-4"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflowY: 'visible' }}
       >
         {topServices.map((service) => (
-          <div key={service._id} className="flex-shrink-0 w-full sm:w-80 lg:w-96">
+          <div key={service._id} className="flex-shrink-0 w-full sm:w-80 lg:w-96 pt-3">
             <TopServiceCard service={service} />
           </div>
         ))}

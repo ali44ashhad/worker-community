@@ -267,10 +267,10 @@ const TopCategory = () => {
             <div 
                 ref={scrollContainerRef}
                 className="flex gap-8 overflow-x-auto scrollbar-hide pb-4"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflowY: 'visible' }}
             >
                 {topCategories.map((categoryData) => (
-                    <div key={categoryData.category} className="flex-shrink-0 w-full sm:w-80 lg:w-96">
+                    <div key={categoryData.category} className="flex-shrink-0 w-full sm:w-80 lg:w-96 pt-3">
                         <TopCategoryCard
                             category={categoryData.category}
                             data={categoryData}
