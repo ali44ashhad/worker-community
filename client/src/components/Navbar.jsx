@@ -56,8 +56,6 @@ const Navbar = () => {
     { to: '/category', text: 'Categories' },
   ];
 
-  console.log(motion);
-
   return (
     // FIX 1: Wrap entire component in a React Fragment
     <>

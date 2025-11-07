@@ -1,12 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+axios.defaults.withCredentials = true;
 
 const Footer = () => {
+  const [topServices, setTopServices] = useState([]);
+  const [isLoadingTopServices, setIsLoadingTopServices] = useState(true);
 
-  console.log(motion);
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTopServices = async () => {
+      try {
+        setIsLoadingTopServices(true);
+        const res = await axios.get(`${API_URL}/api/comments/top-services?limit=6`);
+        if (!isMounted) return;
+
+        if (res.data?.success && Array.isArray(res.data.services)) {
+          const deduped = res.data.services.filter((service) => service?._id);
+          setTopServices(deduped.slice(0, 6));
+        } else {
+          setTopServices([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch top services for footer:', error);
+        if (isMounted) {
+          setTopServices([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingTopServices(false);
+        }
+      }
+    };
+
+    fetchTopServices();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const topServiceLinks = !isLoadingTopServices && topServices.length > 0
+    ? topServices
+    : [];
+
   return (
-    <footer className="bg-gray-50 border-t border-gray-200 mt-20 py-16 lg:py-20">
+    <footer className="bg-gray-50 border-t border-gray-200 py-16 lg:py-20">
         <div className='max-w-[1350px] mx-auto px-6' >
             <motion.div 
               className="mb-12"
@@ -69,12 +112,25 @@ const Footer = () => {
         <div className="footer-column">
           <h3 className="text-base font-semibold text-gray-900 mb-6 tracking-tight">Top Services</h3>
           <ul className="list-none p-0 space-y-3">
-            <li><Link to="service/69008b20842b1760024a9496" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Workshops</Link></li>
-            <li><Link to="/service/6900943b842b1760024a94af" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Photography</Link></li>
-            <li><Link to="/service/6900943c842b1760024a94b7" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Technology</Link></li>
-            <li><Link to="/service/6900943f842b1760024a94bc" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Music</Link></li>
-            <li><Link to="/service/6900958d842b1760024a94c9" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Home Baker</Link></li>
-            <li><Link to="/service/69009593842b1760024a94cf" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Consulting</Link></li>
+            {isLoadingTopServices && (
+              <li className="text-gray-500 text-sm font-medium">Loading top services...</li>
+            )}
+            {!isLoadingTopServices && topServiceLinks.length === 0 && (
+              <li className="text-gray-500 text-sm font-medium">No top services available right now.</li>
+            )}
+            {topServiceLinks.map((service) => {
+              const label = service?.serviceCategory || service?.title || service?.name || 'View Service';
+              return (
+                <li key={service._id}>
+                  <Link
+                    to={`/service/${service._id}`}
+                    className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
 

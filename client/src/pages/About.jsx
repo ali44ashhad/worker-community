@@ -4,9 +4,6 @@ import { HiOutlineUsers, HiOutlineHeart, HiOutlineSparkles, HiOutlineShieldCheck
 import { motion } from 'framer-motion';
 
 const About = () => {
-
-  console.log(motion);
-
   const values = [
     {
       icon: <HiOutlineUsers className="w-12 h-12" />,

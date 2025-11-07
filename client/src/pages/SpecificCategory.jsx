@@ -284,29 +284,26 @@ const SpecificCategory = () => {
     }
   };
 
-  const handlePriceRangeChange = (index, value) => {
-    const numValue = parseInt(value) || 0;
-    const newRange = [...priceRange];
-    
-    if (index === 0) {
-      // Min slider - ensure it doesn't exceed max and is within bounds
-      const constrainedValue = Math.max(minPrice, Math.min(numValue, priceRange[1]));
-      newRange[0] = constrainedValue;
-    } else {
-      // Max slider - ensure it doesn't go below min and is within bounds
-      const constrainedValue = Math.min(maxPrice, Math.max(numValue, priceRange[0]));
-      newRange[1] = constrainedValue;
-    }
-    
-    setPriceRange(newRange);
-  };
-
   const [minPrice, maxPrice] = useMemo(() => {
     if (allServices.length > 0) {
       return getPriceRange();
     }
     return [0, 100000];
   }, [allServices]);
+
+  const handleMinChange = (value) => {
+    const numValue = parseInt(value) || minPrice;
+    if (numValue < priceRange[1]) {
+      setPriceRange([Math.max(minPrice, numValue), priceRange[1]]);
+    }
+  };
+
+  const handleMaxChange = (value) => {
+    const numValue = parseInt(value) || maxPrice;
+    if (numValue > priceRange[0]) {
+      setPriceRange([priceRange[0], Math.min(maxPrice, numValue)]);
+    }
+  };
 
   if (!categoryData) {
     return (
@@ -493,11 +490,11 @@ const SpecificCategory = () => {
 
                 {/* Dual Range Slider */}
                 <div className='relative pt-3 pb-1'>
-                  <div className='relative h-1.5 bg-gray-200 rounded-lg'>
+                  <div className='relative h-2 bg-gray-200 rounded-lg'>
                     {/* Active range track */}
                     {maxPrice > minPrice && (
                       <div
-                        className='absolute h-1.5 bg-gray-600 rounded-lg'
+                        className='absolute h-2 bg-gray-600 rounded-lg top-0 pointer-events-none'
                         style={{
                           left: `${((priceRange[0] - minPrice) / (maxPrice - minPrice)) * 100}%`,
                           width: `${((priceRange[1] - priceRange[0]) / (maxPrice - minPrice)) * 100}%`
@@ -510,10 +507,9 @@ const SpecificCategory = () => {
                       min={minPrice}
                       max={maxPrice}
                       value={priceRange[0]}
-                      onChange={(e) => handlePriceRangeChange(0, e.target.value)}
-                      onInput={(e) => handlePriceRangeChange(0, e.target.value)}
-                      className='absolute w-full h-1.5 bg-transparent appearance-none cursor-pointer slider'
-                      style={{ zIndex: priceRange[0] > priceRange[1] - (maxPrice - minPrice) * 0.05 ? 20 : 10 }}
+                      onChange={(e) => handleMinChange(e.target.value)}
+                      className='absolute w-full h-2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gray-600 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer'
+                      style={{ top: 0, zIndex: priceRange[0] > maxPrice - (maxPrice - minPrice) * 0.1 ? 5 : 3 }}
                     />
                     {/* Max range input */}
                     <input
@@ -521,10 +517,9 @@ const SpecificCategory = () => {
                       min={minPrice}
                       max={maxPrice}
                       value={priceRange[1]}
-                      onChange={(e) => handlePriceRangeChange(1, e.target.value)}
-                      onInput={(e) => handlePriceRangeChange(1, e.target.value)}
-                      className='absolute w-full h-1.5 bg-transparent appearance-none cursor-pointer slider'
-                      style={{ zIndex: priceRange[1] < priceRange[0] + (maxPrice - minPrice) * 0.05 ? 20 : 10 }}
+                      onChange={(e) => handleMaxChange(e.target.value)}
+                      className='absolute w-full h-2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gray-600 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer'
+                      style={{ top: 0, zIndex: 4 }}
                     />
                   </div>
                   {/* Price Range Labels */}
@@ -543,7 +538,7 @@ const SpecificCategory = () => {
                       min={minPrice}
                       max={maxPrice}
                       value={priceRange[0]}
-                      onChange={(e) => handlePriceRangeChange(0, e.target.value)}
+                      onChange={(e) => handleMinChange(e.target.value)}
                       className='w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400'
                     />
                   </div>
@@ -554,7 +549,7 @@ const SpecificCategory = () => {
                       min={minPrice}
                       max={maxPrice}
                       value={priceRange[1]}
-                      onChange={(e) => handlePriceRangeChange(1, e.target.value)}
+                      onChange={(e) => handleMaxChange(e.target.value)}
                       className='w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400'
                     />
                   </div>

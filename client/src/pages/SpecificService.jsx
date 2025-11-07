@@ -15,7 +15,6 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 axios.defaults.withCredentials = true;
 
 const SpecificService = () => {
-  console.log(motion);
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
