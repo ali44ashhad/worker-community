@@ -235,7 +235,7 @@ const TopCategory = () => {
         <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
             {/* Header */}
             <div className="mb-3">
-                <h1 className="text-4xl md:text-5xl font-bold text-black mb-3">
+                <h1 className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500 md:text-5xl font-bold text-black mb-3">
                     Top Categories
                 </h1>
                 <div className="flex items-start justify-between gap-4">

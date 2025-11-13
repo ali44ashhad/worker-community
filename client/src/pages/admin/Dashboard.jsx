@@ -213,9 +213,7 @@ const Dashboard = () => {
                   className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-300"
                   whileHover={{ x: 4 }}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center font-bold text-black flex-shrink-0">
-                    {index + 1}
-                  </div>
+                  
                   <div className="w-10 h-10 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {provider.user?.profileImage ? (
                       <img
