@@ -6,12 +6,13 @@ import {
   HiOutlineCog,
   HiOutlineUser,
   HiOutlineLogout,
+  HiOutlineX,
 } from 'react-icons/hi';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { motion } from 'framer-motion';
 
-const ProviderSidebar = () => {
+const ProviderSidebar = ({ isOpen = true, onClose }) => {
   const location = useLocation();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
@@ -43,16 +44,38 @@ const ProviderSidebar = () => {
     dispatch(logoutUser());
   };
 
+  const handleNavClick = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  };
+
   return (
-    <div className="w-64 bg-white border-r border-gray-300 min-h-screen fixed left-0 top-0 flex flex-col shadow-lg z-40">
+    <div
+      className={`w-64 bg-white border-r border-gray-300 min-h-screen fixed left-0 top-0 flex flex-col shadow-lg z-40 transform transition-transform duration-300 lg:translate-x-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}
+    >
       <motion.div
-        className="p-6 border-b border-gray-300"
+        className="p-6 border-b border-gray-300 flex items-center justify-between gap-3"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h1 className="text-2xl font-bold text-black tracking-tight">Provider Hub</h1>
-        {user && <p className="text-sm text-gray-600 mt-2">Hello, {user.name}</p>}
+        <div>
+          <h1 className="text-2xl font-bold text-black tracking-tight">Provider Hub</h1>
+          {user && <p className="text-sm text-gray-600 mt-2">Hello, {user.name}</p>}
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            className="lg:hidden p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-black hover:bg-gray-50 transition-all"
+            onClick={onClose}
+            aria-label="Close sidebar"
+          >
+            <HiOutlineX size={18} />
+          </button>
+        )}
       </motion.div>
 
       <nav className="flex-1 p-4 overflow-y-auto">
@@ -70,6 +93,7 @@ const ProviderSidebar = () => {
               >
                 <Link
                   to={item.path}
+                  onClick={handleNavClick}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
                     isActive
                       ? 'bg-black text-white font-semibold shadow-md'
@@ -95,7 +119,10 @@ const ProviderSidebar = () => {
         transition={{ duration: 0.3, delay: 0.3 }}
       >
         <button
-          onClick={handleLogout}
+          onClick={() => {
+            handleLogout();
+            handleNavClick();
+          }}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 hover:text-black transition-all duration-300 font-medium border border-gray-300 hover:border-gray-400"
         >
           <HiOutlineLogout size={20} />

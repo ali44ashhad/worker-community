@@ -444,32 +444,49 @@ const Hero = () => {
             </div>
 
             {/* Category grid compact - glassy cards with crisp outlines */}
-            <motion.div className="mt-8 rounded-2xl p-5 bg-white/60 backdrop-blur-md border border-gray-200 shadow-md">
+            {/*
+            <motion.div className="mt-8 rounded-2xl p-5 bg-white/70 backdrop-blur-md border border-gray-200 shadow-md overflow-hidden">
               <h3 className="text-sm font-semibold text-gray-700 mb-4">Quick categories</h3>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-fr">
                 {categories.slice(0, 8).map((cat, idx) => (
                   <Link
                     key={idx}
                     to={cat.url}
-                    className="flex flex-col items-center gap-2 p-2 rounded-lg transition text-center border border-gray-100 bg-white"
+                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-center border border-gray-100 bg-white shadow-sm hover:shadow-md transition focus-visible:ring-2 focus-visible:ring-gray-200 h-full overflow-hidden"
                   >
-                    <div className="h-10 w-10 rounded-lg bg-gray-50 flex items-center justify-center ring-1 ring-white/70">
-                      <img src={cat.icon} alt={cat.name} className="h-6 w-6 object-contain" />
+                    <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center ring-1 ring-gray-100 overflow-hidden">
+                      <img src={cat.icon} alt={cat.name} className="max-h-7 max-w-7 object-contain" loading="lazy" />
                     </div>
-                    <p className="text-xs text-gray-700">{cat.name}</p>
+                    <p className="text-xs sm:text-sm text-gray-700 font-medium leading-tight whitespace-normal break-words">
+                      {cat.name}
+                    </p>
                   </Link>
                 ))}
-                <Link to="/category" className="flex items-center justify-center p-2 rounded-lg border border-dashed text-xs text-gray-600 hover:bg-gray-50">
+                <Link
+                  to="/category"
+                  className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-gray-300 text-xs sm:text-sm text-gray-600 hover:bg-gray-50 transition h-full"
+                >
                   View all
                 </Link>
               </div>
             </motion.div>
+            */}
 
             {/* Trust row */}
             <div className="mt-6 flex items-center gap-4">
-              <div className="flex -space-x-3">
-                {["/avatars/a1.jpg", "/avatars/a2.jpg", "/avatars/a3.jpg", "/avatars/a4.jpg"].map((src, i) => (
-                  <img key={i} src={src} alt={`u${i}`} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
+              <div className="flex -space-x-2 sm:-space-x-3">
+                {["testimonial1.png", "testimonial2.jpg", "testimonial3.jpg", "testimonial4.jpg"].map((src, i) => (
+                  <div
+                    key={i}
+                    className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-white shadow-sm bg-gray-100 overflow-hidden flex items-center justify-center"
+                  >
+                    <img
+                      src={src}
+                      alt={`u${i}`}
+                      className="w-full h-full object-cover object-center scale-[1.1]"
+                      loading="lazy"
+                    />
+                  </div>
                 ))}
               </div>
               <div>
@@ -490,7 +507,7 @@ const Hero = () => {
             className="relative"
           >
             <div className="rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm">
-              <div className="relative h-64 md:h-96 bg-gray-50">
+              <div className="relative w-full bg-gray-50 overflow-hidden aspect-[4/3] md:aspect-[16/9]">
                 <AnimatePresence mode="wait">
                   {carouselImages.map((slide, idx) => (
                     idx === currentSlide && (
@@ -502,7 +519,7 @@ const Hero = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.98 }}
                         transition={{ duration: 0.6 }}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover object-center"
                       />
                     )
                   ))}
@@ -533,10 +550,14 @@ const Hero = () => {
               </div>
 
               {/* Thumbnail grid */}
-              <div className="p-4 grid grid-cols-3 gap-3">
+              <div className="p-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
                 {carouselImages.map((s, i) => (
-                  <button key={i} onClick={() => goToSlide(i)} className={`rounded-lg overflow-hidden border ${i === currentSlide ? 'ring-1 ring-indigo-300' : 'border-transparent'} shadow-sm`}>
-                    <img src={s.src} alt={s.title} className="w-full h-20 object-cover" />
+                  <button
+                    key={i}
+                    onClick={() => goToSlide(i)}
+                    className={`rounded-lg overflow-hidden border ${i === currentSlide ? 'ring-1 ring-indigo-300' : 'border-transparent'} shadow-sm aspect-[4/3]`}
+                  >
+                    <img src={s.src} alt={s.title} className="w-full h-full object-cover object-center" />
                   </button>
                 ))}
               </div>
