@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { loginUser, signupUser } from "../features/authSlice";
 import { toast} from "react-hot-toast";
 import { motion } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [mode, setMode] = useState("login");
@@ -14,6 +15,7 @@ const Login = () => {
     phoneNumber: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -144,18 +146,30 @@ const Login = () => {
             </div>
 
             {/* Password Input */}
-            <div className="w-full mb-6">
+            <div className="w-full mb-6 relative">
               <input
                 ref={passwordRef}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Password"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
                 autoComplete="current-password"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200 focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <Eye size={20} />
+                ) : (
+                  <EyeOff size={20} />
+                )}
+              </button>
             </div>
 
             {/* Submit Button */}
