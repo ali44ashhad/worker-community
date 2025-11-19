@@ -8,6 +8,9 @@ import {
   HiOutlineBadgeCheck,
   HiOutlineXCircle,
   HiOutlineUser,
+  HiOutlineBriefcase,
+  HiOutlineStar,
+  HiOutlineCalendar,
 } from 'react-icons/hi';
 import { getProviderDashboardStats } from '../../features/providerSlice';
 
@@ -52,7 +55,17 @@ const ProviderDashboard = () => {
 
   const totalBookings = dashboardStats?.totalBookings || 0;
   const recentBookings = dashboardStats?.recentBookings || [];
+  const upcomingBookings = dashboardStats?.upcomingBookings || [];
   const statusCounts = dashboardStats?.statusCounts || {};
+  const totalServices = dashboardStats?.totalServices || 0;
+  const averageRating = dashboardStats?.averageRating || 0;
+  const totalReviews = dashboardStats?.totalReviews || 0;
+  const profileViews = dashboardStats?.profileViews || 0;
+
+  const formatDate = (dateString, options) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
 
   const statusData = useMemo(() => {
     return Object.keys(statusStyles).map((key) => {
@@ -102,25 +115,41 @@ const ProviderDashboard = () => {
       icon: HiOutlineClipboardList,
     },
     {
+      label: 'Active Services',
+      value: totalServices,
+      icon: HiOutlineBriefcase,
+    },
+    {
+      label: 'Avg. Rating',
+      value: averageRating ? averageRating.toFixed(1) : '0.0',
+      subValue: `${totalReviews} reviews`,
+      icon: HiOutlineStar,
+    },
+    {
       label: 'Pending Requests',
       value: statusCounts.pending || 0,
       icon: HiOutlineClock,
     },
     {
-      label: 'Accepted Jobs',
-      value: statusCounts.accepted || 0,
-      icon: HiOutlineCheckCircle,
+      label: 'Profile Clicks',
+      value: profileViews,
+      icon: HiOutlineUser,
     },
-    {
-      label: 'Completed Jobs',
-      value: statusCounts.completed || 0,
-      icon: HiOutlineBadgeCheck,
-    },
-    {
-      label: 'Cancelled',
-      value: statusCounts.cancelled || 0,
-      icon: HiOutlineXCircle,
-    },
+    // {
+    //   label: 'Accepted Jobs',
+    //   value: statusCounts.accepted || 0,
+    //   icon: HiOutlineCheckCircle,
+    // },
+    // {
+    //   label: 'Completed Jobs',
+    //   value: statusCounts.completed || 0,
+    //   icon: HiOutlineBadgeCheck,
+    // },
+    // {
+    //   label: 'Cancelled',
+    //   value: statusCounts.cancelled || 0,
+    //   icon: HiOutlineXCircle,
+    // },
   ];
 
   return (
@@ -145,7 +174,7 @@ const ProviderDashboard = () => {
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5 mb-8">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -162,6 +191,9 @@ const ProviderDashboard = () => {
                     {stat.label}
                   </p>
                   <p className="text-3xl font-bold text-black mt-2">{stat.value}</p>
+                  {stat.subValue && (
+                    <p className="text-xs text-gray-500 mt-1 font-medium">{stat.subValue}</p>
+                  )}
                 </div>
                 <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
                   <Icon className="text-gray-900" size={26} />
@@ -172,7 +204,7 @@ const ProviderDashboard = () => {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
         <motion.div
           className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
@@ -231,12 +263,8 @@ const ProviderDashboard = () => {
                       .slice(0, 2)
                       .toUpperCase()
                   : 'NA';
-                const scheduledDate = booking.scheduledDate
-                  ? new Date(booking.scheduledDate).toLocaleDateString()
-                  : 'N/A';
-                const createdAt = booking.createdAt
-                  ? new Date(booking.createdAt).toLocaleDateString()
-                  : 'N/A';
+                const scheduledDate = formatDate(booking.scheduledDate);
+                const createdAt = formatDate(booking.createdAt);
                 const style = statusStyles[booking.status] || statusStyles.pending;
 
                 return (
@@ -264,6 +292,77 @@ const ProviderDashboard = () => {
                         {booking.serviceCategory} • Scheduled {scheduledDate}
                       </p>
                       <p className="text-xs text-gray-400">Booked on {createdAt}</p>
+                    </div>
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${style.badge}`}>
+                      {style.label}
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </motion.div>
+
+        <motion.div
+          className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+              <HiOutlineCalendar className="text-gray-900" size={24} />
+            </div>
+            <h2 className="text-xl font-bold text-black tracking-tight">Upcoming Jobs</h2>
+          </div>
+          {upcomingBookings.length === 0 ? (
+            <p className="text-gray-500 text-center py-10">No upcoming bookings.</p>
+          ) : (
+            <div className="space-y-4">
+              {upcomingBookings.map((booking, index) => {
+                const customer = booking.customer || {};
+                const initials = customer.name
+                  ? customer.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()
+                  : 'NA';
+                const scheduledDate = booking.scheduledDate
+                  ? new Date(booking.scheduledDate).toLocaleString([], {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })
+                  : 'To be decided';
+                const style = statusStyles[booking.status] || statusStyles.pending;
+
+                return (
+                  <motion.div
+                    key={booking._id || index}
+                    className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200"
+                    whileHover={{ x: 4 }}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {customer.profileImage ? (
+                        <img
+                          src={customer.profileImage}
+                          alt={customer.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-gray-700 font-semibold">{initials}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-black truncate">
+                        {customer.name || 'Unknown Customer'}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">
+                        {booking.serviceCategory} • {scheduledDate}
+                      </p>
                     </div>
                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${style.badge}`}>
                       {style.label}
