@@ -7,7 +7,18 @@ import {
   updateServiceDetails,
   deleteServiceImage
 } from '../../features/adminSlice';
-import { HiOutlinePencil, HiOutlineCheck, HiOutlineX, HiOutlineBriefcase, HiOutlineTrash } from 'react-icons/hi';
+import { 
+  HiOutlinePencil, 
+  HiOutlineCheck, 
+  HiOutlineX, 
+  HiOutlineBriefcase, 
+  HiOutlineTrash,
+  HiOutlineUser,
+  HiOutlineMail,
+  HiOutlinePhone,
+  HiOutlineLocationMarker,
+  HiOutlineDocumentText
+} from 'react-icons/hi';
 import { motion } from 'framer-motion';
 
 const SERVICE_RULES = {
@@ -427,7 +438,8 @@ const UpdateProviders = () => {
                   {/* User Details */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                        <HiOutlineUser className="text-gray-500" size={16} />
                         Name
                       </label>
                       {isEditing ? (
@@ -442,7 +454,8 @@ const UpdateProviders = () => {
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                        <HiOutlineMail className="text-gray-500" size={16} />
                         Email
                       </label>
                       {isEditing ? (
@@ -457,7 +470,8 @@ const UpdateProviders = () => {
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                        <HiOutlinePhone className="text-gray-500" size={16} />
                         Phone Number
                       </label>
                       {isEditing ? (
@@ -474,7 +488,8 @@ const UpdateProviders = () => {
                       )}
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                        <HiOutlineLocationMarker className="text-gray-500" size={16} />
                         Address
                       </label>
                       {isEditing ? (
@@ -495,7 +510,10 @@ const UpdateProviders = () => {
 
                   {/* Bio */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Bio</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <HiOutlineDocumentText className="text-gray-500" size={16} />
+                      Bio
+                    </label>
                     {isEditing ? (
                       <textarea
                         value={editForm.bio}
@@ -517,7 +535,8 @@ const UpdateProviders = () => {
 
                   {/* Service Offerings */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
+                    <label className="block text-sm font-medium text-gray-600 mb-2 flex items-center gap-2">
+                      <HiOutlineBriefcase className="text-gray-500" size={16} />
                       Service Offerings
                     </label>
                     {provider.serviceOfferings && provider.serviceOfferings.length > 0 ? (
