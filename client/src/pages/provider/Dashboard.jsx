@@ -211,7 +211,7 @@ const ProviderDashboard = () => {
         })}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+      {/* <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
         <motion.div
           className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
@@ -380,7 +380,9 @@ const ProviderDashboard = () => {
             </div>
           )}
         </motion.div>
-      </div>
+      </div> */}
+
+    
 
       <motion.div
         className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"

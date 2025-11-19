@@ -25,7 +25,7 @@ const ProviderSidebar = () => {
     {
       icon: HiOutlineCog,
       label: 'Manage Services',
-      path: '/update-services',
+      path: '/provider/manage-services',
     },
     {
       icon: HiOutlineUser,

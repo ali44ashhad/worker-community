@@ -33,6 +33,9 @@ import Dashboard from './pages/admin/Dashboard'
 import UpdateProviders from './pages/admin/UpdateProviders'
 import AdminServices from './pages/admin/AdminServices'
 import ProviderDashboard from './pages/provider/Dashboard'
+import ManageServices from './pages/provider/ManageServices'
+import EditService from './pages/provider/EditService'
+import CreateService from './pages/provider/CreateService'
 import ProviderLayout from './layouts/ProviderLayout'
 
 const App = () => {
@@ -62,7 +65,12 @@ const App = () => {
 
   
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const providerLayoutRoutes = ['/provider/dashboard', '/update-services', '/provider/update-profile'];
+  const providerLayoutRoutes = [
+    '/provider/dashboard',
+    '/provider/manage-services',
+    '/update-services',
+    '/provider/update-profile'
+  ];
   const isProviderLayoutRoute = providerLayoutRoutes.some((path) =>
     location.pathname.startsWith(path)
   );
@@ -98,6 +106,36 @@ const App = () => {
             <ProviderProtectedRoute>
               <ProviderLayout>
                 <UpdateServices></UpdateServices>
+              </ProviderLayout>
+            </ProviderProtectedRoute>
+          }
+        ></Route>
+        <Route
+          path='/provider/manage-services'
+          element={
+            <ProviderProtectedRoute>
+              <ProviderLayout>
+                <ManageServices />
+              </ProviderLayout>
+            </ProviderProtectedRoute>
+          }
+        ></Route>
+        <Route
+          path='/provider/manage-services/new'
+          element={
+            <ProviderProtectedRoute>
+              <ProviderLayout>
+                <CreateService />
+              </ProviderLayout>
+            </ProviderProtectedRoute>
+          }
+        ></Route>
+        <Route
+          path='/provider/manage-services/:serviceId/edit'
+          element={
+            <ProviderProtectedRoute>
+              <ProviderLayout>
+                <EditService />
               </ProviderLayout>
             </ProviderProtectedRoute>
           }

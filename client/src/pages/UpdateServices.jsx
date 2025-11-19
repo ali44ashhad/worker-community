@@ -3,12 +3,14 @@ import { X, Plus, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyProviderProfile } from '../features/providerSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import SERVICE_RULES from '../constants/serviceRules';
 
 const UpdateServices = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { myProviderProfile, isFetchingMyProfile } = useSelector((state) => state.provider);
   const { user } = useSelector((state) => state.auth);
 
@@ -23,113 +25,8 @@ const UpdateServices = () => {
 
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const SERVICE_RULES = {
-    "Academics": {
-      subCategories: ["Home Tuitions", "Tuition Center", "School", "College"],
-      keywords: ["Maths", "Science", "Language", "English", "Hindi", "Sanskrit", "Spanish", "French", "German", "Mandarin", "Italian", "Accounts", "Economics", "Physics", "Chemistry"]
-    },
-    "Music": {
-      subCategories: ["Home Classes", "Academy"],
-      keywords: ["Home Classes", "Guitar", "Academy", "Piano", "Drums", "Violin", "Flute", "Vocals", "Singing", "Saxophone"]
-    },
-    "Dance": {
-      subCategories: ["Home Classes", "Academy"],
-      keywords: ["Zumba", "Bhangra", "Salsa", "Jiving", "Freestyle", "Breakdance"]
-    },
-    "Fitness & Sports": {
-      subCategories: ["Home Classes", "Academy"],
-      keywords: ["Yoga", "Pilates", "Fitness", "Zumba", "Skateboarding", "Skating", "Cricket", "Football", "Pickle Ball", "Badminston", "Tennis", "Table Tennis", "Chess", "Padel", "Gym", "Strength Training", "Core", "Strength", "Weight Training", "Weights", "Sudoku", "Puzzle"]
-    },
-    "Home Cooking": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Food", "Cook", "Italian", "Indian", "Mexican", "Rajasthani", "Gujrati", "Bengali", "Chinese", "Burgers", "Pizza", "Asian", "Sushi", "Dimsums", "Sushi Cake", "Salads", "Ramen", "Pasta", "Biryani"]
-    },
-    "Home Catering": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Food", "Cook", "Italian", "Indian", "Mexican", "Rajasthani", "Gujrati", "Bengali", "Chinese", "Burgers", "Pizza", "Asian", "Sushi", "Dimsums", "Sushi Cake", "Salads", "Ramen", "Pasta", "Biryani"]
-    },
-    "Home Baker": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Cakes", "Pastry", "Brownie", "Muffins", "Tarts", "Eggless", "Quiche", "Fondant", "Chocolate", "Protein Bar", "Granola", "Bread"]
-    },
-    "Catering": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Food", "Cook", "Italian", "Indian", "Mexican", "Rajasthani", "Gujrati", "Bengali", "Chinese", "Burgers", "Pizza", "Asian", "Sushi", "Dimsums", "Sushi Cake", "Salads", "Ramen", "Pasta", "Biryani"]
-    },
-    "Professional Baker": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Cakes", "Pastry", "Brownie", "Muffins", "Tarts", "Eggless", "Quiche", "Fondant"]
-    },
-    "Workshops": {
-      subCategories: ["Home Workshops", "Online Workshops"],
-      keywords: ["Summer", "Winter", "Story Telling", "Book Reading", "Cooking", "Baking", "Workshop"]
-    },
-    "Photography": {
-      subCategories: ["Academy"],
-      keywords: ["Lens", "Camera", "Video", "Wedding", "Birthday"]
-    },
-    "Technology": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["AI", "Python", "Automation", "Coding", "Image Creation", "Digital Marketing", "Designing", "Scratch", "Prompt", "Chat GPT", "LLM", "Java", "Clone", "Video Generaion"]
-    },
-    "Consulting": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Landscaping", "Garden", "Flowers"]
-    },
-    "Finance": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Financial Planning", "Tax Planning", "Accounting", "Investments", "Mutual Finds", "Stocks", "Broker", "Money", "Bonds", "Crypto"]
-    },
-    "Groceries": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Kitchen", "Grocery", "Vegetables", "Fruits", "Sauce", "Milk", "Bread"]
-    },
-    "Home Products": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Candles", "Handicrafts", "Bathroom Products", "Artefacts", "Sculptures", "Show Piece", "Garden", "Furniture", "Flooring", "Marble", "Wooden", "Carpenter", "Electrical", "Plumbing", "Solar", "Gate", "Light", "Paint", "Wall"]
-    },
-    "Apparels & Footwear": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Fashion", "Shoes", "Chappals", "Sandals", "Suits", "Shirts", "Kurti", "Indo western", "Coord Sets"]
-    },
-    "Law": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Tax", "Civil", "Criminal", "Corporate", "Arbitration", "High Court", "Court", "Supreme Court", "District Court", "Judge", "Lawyer", "Advocate", "Bail"]
-    },
-    "Medical": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Doctor", "Nurse", "Medical Equipment"]
-    },
-    "Art & Craft": {
-      subCategories: ["Home Classes", "Academy"],
-      keywords: ["Origami", "Painting", "Drawing", "Colouring"]
-    },
-    "Home Interiors": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Interiros", "Designing"]
-    },
-    "Construction": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["House", "Farm House", "Flat", "Floor", "Marble", "Stone", "Wall"]
-    },
-    "Real Estate": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Real Estate Consultant", "Property", "Buy", "Sell"]
-    },
-    "Event Planner": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Birthday", "Decor", "Wedding", "Anniversary", "Balloon", "Props", "Corporate Event", "Rides"]
-    },
-    "Gifting": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: ["Corporate", "Gift Set"]
-    },
-    "Other": {
-      subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-      keywords: []
-    }
-  };
+  const [highlightServiceId, setHighlightServiceId] = useState(null);
+  const focusServiceId = searchParams.get('serviceId');
 
   // Fetch provider profile on component mount
   useEffect(() => {
@@ -142,9 +39,9 @@ const UpdateServices = () => {
   useEffect(() => {
     if (myProviderProfile) {
       setProviderBio(myProviderProfile.bio || '');
-      
+
       // Convert existing services to the form format
-      const existingServices = (myProviderProfile.serviceOfferings || []).map((service, index) => ({
+      let existingServices = (myProviderProfile.serviceOfferings || []).map((service, index) => ({
         id: service._id || Date.now() + index,
         _id: service._id, // Keep original ID for updates
         category: service.serviceCategory || '',
@@ -159,7 +56,15 @@ const UpdateServices = () => {
         images: [],
         imagePreviews: []
       }));
-      
+
+      if (focusServiceId) {
+        existingServices = existingServices.sort((a, b) => {
+          if (a._id === focusServiceId) return -1;
+          if (b._id === focusServiceId) return 1;
+          return 0;
+        });
+      }
+
       setServices(existingServices.length > 0 ? existingServices : [{
         id: Date.now(),
         category: '',
@@ -172,7 +77,35 @@ const UpdateServices = () => {
         price: ''
       }]);
     }
-  }, [myProviderProfile]);
+  }, [myProviderProfile, focusServiceId]);
+
+  useEffect(() => {
+    if (!focusServiceId) {
+      setHighlightServiceId(null);
+      return;
+    }
+
+    const serviceExists = services.some(
+      (service) => service._id && service._id === focusServiceId
+    );
+
+    if (serviceExists) {
+      setHighlightServiceId(focusServiceId);
+    }
+  }, [focusServiceId, services]);
+
+  useEffect(() => {
+    if (!highlightServiceId) return;
+
+    const timer = setTimeout(() => {
+      const target = document.getElementById(`service-card-${highlightServiceId}`);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [highlightServiceId]);
 
   const handleCategoryChange = (serviceId, category) => {
     setServices(services.map(service =>
@@ -542,10 +475,17 @@ const UpdateServices = () => {
 
         {/* Services Section */}
         <AnimatePresence>
-          {services.map((service, index) => (
+          {services.map((service, index) => {
+            const cardId = service._id || service.id;
+            const isHighlighted = highlightServiceId && service._id === highlightServiceId;
+
+            return (
             <motion.div 
               key={service.id} 
-              className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 relative hover:shadow-xl transition-all duration-300 mb-6"
+              id={`service-card-${cardId}`}
+              className={`bg-white rounded-2xl shadow-lg border p-8 relative hover:shadow-xl transition-all duration-300 mb-6 ${
+                isHighlighted ? 'border-gray-900 ring-2 ring-gray-900 ring-offset-2' : 'border-gray-100'
+              }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -842,7 +782,7 @@ const UpdateServices = () => {
               )}
             </div>
           </motion.div>
-          ))}
+          )})}
         </AnimatePresence>
 
         {/* Add Another Service Button */}
