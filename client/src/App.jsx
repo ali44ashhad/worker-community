@@ -113,6 +113,7 @@ const App = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="providers" element={<UpdateProviders />} />
           <Route path="services" element={<AdminServices />} />
+          <Route path="update-profile" element={<UpdateProfile />} />
         </Route>
       </Routes>
 

@@ -57,7 +57,13 @@ const Login = () => {
 
       if (success) {
         toast.success(message);
-        navigate('/');
+
+        const userRole = data?.user?.role;
+        if (mode === "login" && userRole === "admin") {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
       } else {
         toast.error(message);
       }

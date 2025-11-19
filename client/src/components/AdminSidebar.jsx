@@ -4,6 +4,7 @@ import {
   HiOutlineHome, 
   HiOutlineUserGroup,
   HiOutlineBriefcase,
+  HiOutlineUser,
   HiOutlineLogout 
 } from 'react-icons/hi';
 import { useSelector, useDispatch } from 'react-redux';
@@ -30,6 +31,16 @@ const AdminSidebar = () => {
       icon: HiOutlineBriefcase,
       label: 'Services',
       path: '/admin/services',
+    },
+    {
+      icon: HiOutlineUser,
+      label: 'Update Profile',
+      path: '/admin/update-profile',
+    },
+    {
+      icon: HiOutlineHome,
+      label: 'Home Page',
+      path: '/',
     },
   ];
 
