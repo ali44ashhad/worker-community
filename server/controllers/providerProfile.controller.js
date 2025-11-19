@@ -219,7 +219,7 @@ const getProviderDashboardStats = async (req, res) => {
 
         // 1. Find the provider's profile along with their service offerings
         const providerProfile = await ProviderProfile.findOne({ user: providerUserId })
-            .populate('serviceOfferings', '_id serviceCategory price');
+            .populate('serviceOfferings', '_id serviceCategory price serviceOfferingCount');
 
         if (!providerProfile) {
             return res.status(404).json({ success: false, message: "Provider profile not found." });
@@ -228,9 +228,9 @@ const getProviderDashboardStats = async (req, res) => {
         const providerProfileId = providerProfile._id;
         const serviceIds = providerProfile.serviceOfferings.map((service) => service._id);
 
-        // 2. Gather booking stats, rating stats, and booking lists in parallel
+        // 2. Gather booking stats, rating stats, service engagement, and booking lists in parallel
         const now = new Date();
-        const [bookingStats, recentBookings, upcomingBookings, ratingStats] = await Promise.all([
+        const [bookingStats, recentBookings, upcomingBookings, ratingStats, serviceClickStats] = await Promise.all([
             Booking.aggregate([
                 { $match: { provider: providerProfileId } },
                 { $group: { _id: "$status", count: { $sum: 1 } } }
@@ -258,6 +258,16 @@ const getProviderDashboardStats = async (req, res) => {
                     }
                 ])
                 : []
+            ,
+            ServiceOffering.aggregate([
+                { $match: { provider: providerProfileId } },
+                {
+                    $group: {
+                        _id: null,
+                        totalServiceClicks: { $sum: { $ifNull: ["$serviceOfferingCount", 0] } }
+                    }
+                }
+            ])
         ]);
 
         // 3. Normalize status counts
@@ -286,7 +296,12 @@ const getProviderDashboardStats = async (req, res) => {
             totalReviews = ratingStats[0].totalReviews;
         }
 
-        // 5. Respond with aggregated dashboard data
+        // 5. Calculate profile/service engagement stats
+        const totalServiceClicks = serviceClickStats.length > 0
+            ? serviceClickStats[0].totalServiceClicks || 0
+            : 0;
+
+        // 6. Respond with aggregated dashboard data
         return res.status(200).json({
             success: true,
             data: {
@@ -296,6 +311,13 @@ const getProviderDashboardStats = async (req, res) => {
                 averageRating,
                 totalReviews,
                 profileViews: providerProfile.providerProfileCount || 0,
+                serviceClicks: totalServiceClicks,
+                serviceClickDetails: providerProfile.serviceOfferings.map(service => ({
+                    id: service._id,
+                    serviceCategory: service.serviceCategory,
+                    price: service.price,
+                    clicks: service.serviceOfferingCount || 0
+                })),
                 recentBookings,
                 upcomingBookings,
             }
