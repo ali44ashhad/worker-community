@@ -51,12 +51,13 @@ export const updateProviderDetails = createAsyncThunk(
 // Update provider user details (admin)
 export const updateProviderUserDetails = createAsyncThunk(
   "admin/updateProviderUserDetails",
-  async ({ providerId, name, email, phoneNumber }, { rejectWithValue }) => {
+  async ({ providerId, name, email, phoneNumber, address }, { rejectWithValue }) => {
     try {
       const res = await axios.put(`${API_URL}/api/admin/update-provider-user/${providerId}`, {
         name,
         email,
-        phoneNumber
+        phoneNumber,
+        address
       });
       toast.success("Provider user details updated successfully");
       return res.data.provider;

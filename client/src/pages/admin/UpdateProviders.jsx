@@ -126,6 +126,7 @@ const UpdateProviders = () => {
     name: '',
     email: '',
     phoneNumber: '',
+    address: '',
   });
   const [selectedService, setSelectedService] = useState(null);
   const [serviceEditForm, setServiceEditForm] = useState({
@@ -262,6 +263,7 @@ const UpdateProviders = () => {
       name: provider.user?.name || '',
       email: provider.user?.email || '',
       phoneNumber: provider.user?.phoneNumber || '',
+      address: provider.user?.address || '',
     });
   };
 
@@ -272,6 +274,7 @@ const UpdateProviders = () => {
       name: '',
       email: '',
       phoneNumber: '',
+      address: '',
     });
   };
 
@@ -288,6 +291,7 @@ const UpdateProviders = () => {
         name: editForm.name,
         email: editForm.email,
         phoneNumber: editForm.phoneNumber,
+        address: editForm.address,
       })
     );
 
@@ -297,6 +301,7 @@ const UpdateProviders = () => {
       name: '',
       email: '',
       phoneNumber: '',
+      address: '',
     });
 
     // Refresh providers list
@@ -466,6 +471,24 @@ const UpdateProviders = () => {
                         />
                       ) : (
                         <p className="text-black">{provider.user?.phoneNumber || 'N/A'}</p>
+                      )}
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        Address
+                      </label>
+                      {isEditing ? (
+                        <textarea
+                          value={editForm.address}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, address: e.target.value })
+                          }
+                          rows="2"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          placeholder="Enter address"
+                        />
+                      ) : (
+                        <p className="text-black">{provider.user?.address || 'N/A'}</p>
                       )}
                     </div>
                   </div>

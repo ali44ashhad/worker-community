@@ -15,6 +15,7 @@ const ProviderCard = ({ provider }) => {
   const bio = provider?.bio || 'No bio available.';
   const experience = provider?.experience || 0; 
   const services = provider?.serviceOfferings || [];
+  const address = provider?.user?.address || '';
   
   // Get first service portfolio images
   const firstService = services[0];
@@ -91,6 +92,11 @@ const ProviderCard = ({ provider }) => {
             <p className="text-sm text-gray-600 truncate">
               {bio}
             </p>
+            {address && (
+              <p className="text-xs text-gray-500 truncate mt-1">
+                {address}
+              </p>
+            )}
           </div>
         </div>
 

@@ -43,6 +43,7 @@ const SpecificProvider = () => {
   const providerName = selectedProvider?.user?.name || 'Unknown Provider';
   const profileImage = selectedProvider?.user?.profileImage;
   const providerPhoneNumber = selectedProvider?.user?.phoneNumber || '';
+  const providerAddress = selectedProvider?.user?.address || 'Address not provided';
   const bio = selectedProvider?.bio || '';
   const stats = selectedProvider?.stats || { averageRating: 0, totalReviews: 0 };
   const userCreatedAt = selectedProvider?.user?.createdAt;
@@ -185,10 +186,10 @@ const SpecificProvider = () => {
 
                   {/* Location and Languages */}
                   <div className='flex items-center gap-4 text-sm text-gray-600 mb-4'>
-                    <div className='flex items-center gap-1'>
-                      <HiLocationMarker className='w-4 h-4' />
-                      <span>India</span>
-                    </div>
+                  <div className='flex items-center gap-1'>
+                    <HiLocationMarker className='w-4 h-4' />
+                    <span>{providerAddress}</span>
+                  </div>
                     <div className='flex items-center gap-1'>
                       <HiChatAlt2 className='w-4 h-4' />
                       <span>English, Hindi</span>

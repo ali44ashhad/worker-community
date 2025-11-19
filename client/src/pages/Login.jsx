@@ -13,6 +13,7 @@ const Login = () => {
     email: "",
     password: "",
     phoneNumber: "",
+    address: "",
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -41,6 +42,8 @@ const Login = () => {
         ).unwrap();
       } else {
         data = await dispatch(signupUser(formData)).unwrap();
+        console.log("SIGNUP USER DATA", data);
+        
       }
 
       const success = Boolean(data?.success || data?.user);
@@ -126,6 +129,18 @@ const Login = () => {
                     onChange={handleChange}
                     placeholder="Phone Number"
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
+                    required
+                  />
+                </div>
+
+                <div className="w-full mb-4">
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder="Complete Address"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
+                    rows="2"
                     required
                   />
                 </div>

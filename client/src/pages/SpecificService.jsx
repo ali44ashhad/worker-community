@@ -112,6 +112,7 @@ const SpecificService = () => {
   const providerBio = service?.provider?.bio || '';
   const providerCreatedAt = service?.provider?.user?.createdAt;
   const serviceExperience = service?.experience || 0;
+  const providerAddress = service?.provider?.user?.address || 'Address not provided';
 
   // Format date
   const formatDate = (dateString) => {
@@ -372,7 +373,7 @@ const SpecificService = () => {
               <div className='border-t border-gray-200 pt-4 space-y-2'>
                 <div className='flex justify-between text-sm'>
                   <span className='text-gray-600'>From:</span>
-                  <span className='text-gray-900 font-medium'>India</span>
+                  <span className='text-gray-900 font-medium text-right'>{providerAddress}</span>
                 </div>
                 {providerCreatedAt && (
                   <div className='flex justify-between text-sm'>

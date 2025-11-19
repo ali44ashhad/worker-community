@@ -14,6 +14,7 @@ const UpdateProfile = () => {
   const [formData, setFormData] = useState({
     name: '',
     phoneNumber: '',
+    address: '',
   });
   const [previewImage, setPreviewImage] = useState('');
   const [profileImage, setProfileImage] = useState(null);
@@ -21,9 +22,12 @@ const UpdateProfile = () => {
 
   useEffect(() => {
     if (user) {
+      console.log("UPDATE PROFILE USER", user);
+      
       setFormData({
         name: user.name || '',
         phoneNumber: user.phoneNumber || '',
+        address: user.address || '',
       });
       setPreviewImage(user.profileImage || '');
     }
@@ -77,6 +81,7 @@ const UpdateProfile = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name);
       formDataToSend.append('phoneNumber', formData.phoneNumber);
+      formDataToSend.append('address', formData.address);
       
       if (profileImage) {
         formDataToSend.append('profileImage', profileImage);
@@ -234,6 +239,22 @@ const UpdateProfile = () => {
                   required
                 />
               </div>
+            </div>
+
+            {/* Address Input */}
+            <div className="mb-8">
+              <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
+                Address
+              </label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="Enter your full address"
+                className="w-full px-4 py-3 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                rows="3"
+                required
+              />
             </div>
 
             {/* Submit Button */}
