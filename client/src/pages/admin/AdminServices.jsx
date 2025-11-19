@@ -6,7 +6,18 @@ import {
   updateServiceDetails,
   deleteServiceImage 
 } from '../../features/adminSlice';
-import { HiOutlinePencil, HiOutlineCheck, HiOutlineX, HiOutlineTrash } from 'react-icons/hi';
+import { 
+  HiOutlinePencil, 
+  HiOutlineCheck, 
+  HiOutlineX, 
+  HiOutlineTrash,
+  HiOutlineTag,
+  HiOutlineCollection,
+  HiOutlineKey,
+  HiOutlineDocumentText,
+  HiOutlineClock,
+  HiOutlinePhotograph
+} from 'react-icons/hi';
 
 const SERVICE_RULES = {
   "Academics": {
@@ -328,7 +339,8 @@ const AdminServices = () => {
                 <div className="space-y-4">
                   {/* Service Category */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                      <HiOutlineTag size={18} />
                       Service Category
                     </label>
                     {isEditing ? (
@@ -350,7 +362,8 @@ const AdminServices = () => {
                   {/* Subcategories */}
                   {isEditing && editForm.serviceCategory && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                        <HiOutlineCollection size={18} />
                         Subcategories
                       </label>
                       <div className="flex flex-wrap gap-2">
@@ -374,7 +387,8 @@ const AdminServices = () => {
 
                   {!isEditing && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                        <HiOutlineCollection size={18} />
                         Subcategories
                       </label>
                       <div className="flex flex-wrap gap-2">
@@ -397,7 +411,8 @@ const AdminServices = () => {
                   {/* Keywords */}
                   {isEditing && editForm.serviceCategory && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                        <HiOutlineKey size={18} />
                         Keywords
                       </label>
                       <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
@@ -421,7 +436,8 @@ const AdminServices = () => {
 
                   {!isEditing && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                        <HiOutlineKey size={18} />
                         Keywords
                       </label>
                       <div className="flex flex-wrap gap-2">
@@ -443,7 +459,8 @@ const AdminServices = () => {
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                      <HiOutlineDocumentText size={18} />
                       Description
                     </label>
                     {isEditing ? (
@@ -461,7 +478,8 @@ const AdminServices = () => {
 
                   {/* Experience */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                      <HiOutlineClock size={18} />
                       Experience (Years)
                     </label>
                     {isEditing ? (
@@ -479,7 +497,8 @@ const AdminServices = () => {
 
                   {/* Portfolio Images */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                      <HiOutlinePhotograph size={18} />
                       Portfolio Images
                     </label>
                     {isEditing ? (
