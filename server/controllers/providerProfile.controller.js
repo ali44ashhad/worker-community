@@ -217,20 +217,50 @@ const getProviderDashboardStats = async (req, res) => {
     try {
         const providerUserId = req.user._id;
 
-        // 1. Find the provider's profile
-        const providerProfile = await ProviderProfile.findOne({ user: providerUserId });
+        // 1. Find the provider's profile along with their service offerings
+        const providerProfile = await ProviderProfile.findOne({ user: providerUserId })
+            .populate('serviceOfferings', '_id serviceCategory price');
+
         if (!providerProfile) {
             return res.status(404).json({ success: false, message: "Provider profile not found." });
         }
-        const providerProfileId = providerProfile._id;
 
-        // 2. Get status counts and total bookings in one query
-        const bookingStats = await Booking.aggregate([
-            { $match: { provider: providerProfileId } }, // Match bookings for THIS provider
-            { $group: { _id: "$status", count: { $sum: 1 } } }
+        const providerProfileId = providerProfile._id;
+        const serviceIds = providerProfile.serviceOfferings.map((service) => service._id);
+
+        // 2. Gather booking stats, rating stats, and booking lists in parallel
+        const now = new Date();
+        const [bookingStats, recentBookings, upcomingBookings, ratingStats] = await Promise.all([
+            Booking.aggregate([
+                { $match: { provider: providerProfileId } },
+                { $group: { _id: "$status", count: { $sum: 1 } } }
+            ]),
+            Booking.find({ provider: providerProfileId })
+                .populate('customer', 'name profileImage address')
+                .sort({ createdAt: -1 })
+                .limit(5),
+            Booking.find({
+                provider: providerProfileId,
+                scheduledDate: { $gte: now }
+            })
+                .populate('customer', 'name profileImage address')
+                .sort({ scheduledDate: 1 })
+                .limit(5),
+            serviceIds.length > 0
+                ? Comment.aggregate([
+                    { $match: { serviceOffering: { $in: serviceIds } } },
+                    {
+                        $group: {
+                            _id: null,
+                            averageRating: { $avg: "$rating" },
+                            totalReviews: { $sum: 1 }
+                        }
+                    }
+                ])
+                : []
         ]);
 
-        // Format the stats into a clean object
+        // 3. Normalize status counts
         const statusCounts = {
             pending: 0,
             accepted: 0,
@@ -238,28 +268,36 @@ const getProviderDashboardStats = async (req, res) => {
             completed: 0,
             cancelled: 0
         };
+
         let totalBookings = 0;
-        
-        bookingStats.forEach(stat => {
+        bookingStats.forEach((stat) => {
             if (statusCounts.hasOwnProperty(stat._id)) {
                 statusCounts[stat._id] = stat.count;
             }
             totalBookings += stat.count;
         });
 
-        // 3. Get 5 Recent Bookings for this provider
-        const recentBookings = await Booking.find({ provider: providerProfileId })
-            .populate('customer', 'name profileImage address') // Populate customer details
-            .sort({ createdAt: -1 }) // Sort by newest first
-            .limit(5);
+        // 4. Compile rating stats
+        let averageRating = 0;
+        let totalReviews = 0;
 
-        // 4. Send the final response
+        if (ratingStats.length > 0 && ratingStats[0].totalReviews > 0) {
+            averageRating = parseFloat(ratingStats[0].averageRating.toFixed(1));
+            totalReviews = ratingStats[0].totalReviews;
+        }
+
+        // 5. Respond with aggregated dashboard data
         return res.status(200).json({
             success: true,
             data: {
                 totalBookings,
                 statusCounts,
-                recentBookings
+                totalServices: providerProfile.serviceOfferings.length,
+                averageRating,
+                totalReviews,
+                profileViews: providerProfile.providerProfileCount || 0,
+                recentBookings,
+                upcomingBookings,
             }
         });
 
