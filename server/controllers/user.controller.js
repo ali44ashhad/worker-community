@@ -43,9 +43,9 @@ const uploadBufferToCloudinary = (buffer) => {
 };
 
 const register = async (req, res) => {
-    const { name, email, password, phoneNumber } = req.body;
+    const { name, email, password, phoneNumber, address } = req.body;
     try {
-        if (!name || !email || !password || !phoneNumber) {
+        if (!name || !email || !password || !phoneNumber || !address) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
@@ -67,12 +67,13 @@ const register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-
+        
         const user = await User.create({
             name,
             email,
             password: hashedPassword,
-            phoneNumber
+            phoneNumber,
+            address
         });
 
         generateToken(user._id, res);
@@ -172,7 +173,7 @@ const checkAuth = (req, res) => {
 // --- Controller to Update User Profile ---
 const updateUserProfile = async (req, res) => {
     try {
-        const { name, phoneNumber } = req.body;
+        const { name, phoneNumber, address } = req.body;
         const userId = req.user._id; // From your auth middleware
 
         const user = await User.findById(userId);
@@ -184,6 +185,7 @@ const updateUserProfile = async (req, res) => {
         // Update text fields if they were provided
         if (name) user.name = name;
         if (phoneNumber) user.phoneNumber = phoneNumber;
+        if (address) user.address = address;
 
         // Check for and upload new profile image
         // req.file comes from multer's upload.single('profileImage')
@@ -238,12 +240,12 @@ const getAdminDashboardStats = async (req, res) => {
 
         // 2. Get 5 Recent Bookings from the entire platform
         const recentBookings = await Booking.find({})
-            .populate('customer', 'name profileImage') // Populate the customer
+            .populate('customer', 'name profileImage address') // Populate the customer
             .populate({ // Nested populate for the provider
                 path: 'provider',
                 populate: {
                     path: 'user',
-                    select: 'name profileImage'
+                    select: 'name profileImage address'
                 }
             })
             .sort({ createdAt: -1 })
@@ -269,13 +271,13 @@ const getAllBookings = async (req, res) => {
     try {
         // Find all bookings
         const bookings = await Booking.find({})
-            .populate('customer', 'name profileImage email') // Populate customer details
+            .populate('customer', 'name profileImage email address') // Populate customer details
             .populate({ // Nested populate for the provider
                 path: 'provider',
                 select: 'user serviceCategories', // Select fields from ProviderProfile
                 populate: {
                     path: 'user',
-                    select: 'name profileImage email' // Select fields from User
+                    select: 'name profileImage email address' // Select fields from User
                 }
             })
             .sort({ createdAt: -1 }); // Show newest first

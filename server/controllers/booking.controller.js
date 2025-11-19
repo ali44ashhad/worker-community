@@ -75,7 +75,7 @@ const getCustomerBookings = async (req, res) => {
                 path: 'provider', 
                 populate: {
                     path: 'user', 
-                    select: 'name phoneNumber profileImage' 
+                    select: 'name phoneNumber address profileImage' 
                 }
             })
             .sort({ scheduledDate: -1 });
@@ -105,7 +105,7 @@ const getProviderBookings = async (req, res) => {
         }
 
         const bookings = await Booking.find({ provider: providerProfile._id })
-            .populate('customer', 'name phoneNumber profileImage') 
+            .populate('customer', 'name phoneNumber address profileImage') 
             .sort({ scheduledDate: -1 });
 
         return res.status(200).json({

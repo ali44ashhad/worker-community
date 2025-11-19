@@ -63,7 +63,7 @@ const getAdminDashboardStats = async (req, res) => {
 
         // 4. Get 5 Recent Providers from the platform
         const recentProviders = await ProviderProfile.find({})
-            .populate('user', 'name profileImage email phoneNumber createdAt')
+            .populate('user', 'name profileImage email phoneNumber address createdAt')
             .sort({ createdAt: -1 })
             .limit(5);
 
@@ -101,7 +101,7 @@ const getAdminDashboardStats = async (req, res) => {
 
         // 7. Get top providers (based on providerProfileCount)
         const topProviders = await ProviderProfile.find({})
-            .populate('user', 'name profileImage email phoneNumber')
+            .populate('user', 'name profileImage email phoneNumber address')
             .sort({ providerProfileCount: -1 })
             .limit(10)
             .select('providerProfileCount bio user');
@@ -137,7 +137,7 @@ const getAllProviders = async (req, res) => {
     try {
         // Find all provider profiles with their user and service offerings
         const providers = await ProviderProfile.find({})
-            .populate('user', 'name profileImage email phoneNumber role createdAt')
+            .populate('user', 'name profileImage email phoneNumber address role createdAt')
             .populate('serviceOfferings')
             .sort({ createdAt: -1 }); // Show newest first
 
@@ -177,7 +177,7 @@ const updateProviderDetails = async (req, res) => {
 
         // Populate and return updated provider
         const updatedProvider = await ProviderProfile.findById(providerId)
-            .populate('user', 'name profileImage email phoneNumber role')
+            .populate('user', 'name profileImage email phoneNumber address role')
             .populate('serviceOfferings');
 
         return res.status(200).json({
@@ -201,7 +201,7 @@ const updateProviderDetails = async (req, res) => {
 const updateProviderUserDetails = async (req, res) => {
     try {
         const { providerId } = req.params;
-        const { name, email, phoneNumber } = req.body;
+        const { name, email, phoneNumber, address } = req.body;
 
         // Find the provider profile to get the user ID
         const providerProfile = await ProviderProfile.findById(providerId);
@@ -216,6 +216,7 @@ const updateProviderUserDetails = async (req, res) => {
         if (name !== undefined) updateData.name = name;
         if (email !== undefined) updateData.email = email;
         if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+        if (address !== undefined) updateData.address = address;
 
         if (Object.keys(updateData).length > 0) {
             await User.findByIdAndUpdate(userId, updateData, { new: true, runValidators: true });
@@ -223,7 +224,7 @@ const updateProviderUserDetails = async (req, res) => {
 
         // Populate and return updated provider
         const updatedProvider = await ProviderProfile.findById(providerId)
-            .populate('user', 'name profileImage email phoneNumber role')
+            .populate('user', 'name profileImage email phoneNumber address role')
             .populate('serviceOfferings');
 
         return res.status(200).json({
@@ -253,7 +254,7 @@ const getAllServices = async (req, res) => {
                 path: 'provider',
                 populate: {
                     path: 'user',
-                    select: 'name profileImage email phoneNumber'
+                    select: 'name profileImage email phoneNumber address'
                 }
             })
             .sort({ createdAt: -1 }); // Show newest first
@@ -335,7 +336,7 @@ const updateServiceDetails = async (req, res) => {
                 path: 'provider',
                 populate: {
                     path: 'user',
-                    select: 'name profileImage email phoneNumber'
+                    select: 'name profileImage email phoneNumber address'
                 }
             });
 

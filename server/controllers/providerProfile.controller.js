@@ -249,7 +249,7 @@ const getProviderDashboardStats = async (req, res) => {
 
         // 3. Get 5 Recent Bookings for this provider
         const recentBookings = await Booking.find({ provider: providerProfileId })
-            .populate('customer', 'name profileImage') // Populate customer details
+            .populate('customer', 'name profileImage address') // Populate customer details
             .sort({ createdAt: -1 }) // Sort by newest first
             .limit(5);
 
@@ -281,7 +281,7 @@ const getProviderDashboardStats = async (req, res) => {
     try {
         // Find all provider profiles and populate their associated user and service offerings
         const providers = await ProviderProfile.find()
-            .populate('user', 'name profileImage phoneNumber') // Get user's public info (name, profile image, phone number)
+            .populate('user', 'name profileImage phoneNumber address') // Get user's public info (name, profile image, phone number)
             .populate('serviceOfferings'); // Get all their service offerings (with images, categories, etc.)
         
         return res.status(200).json({
@@ -302,7 +302,7 @@ const getProviderDashboardStats = async (req, res) => {
 const getProviderById = async (req, res) => {
     try {
         const provider = await ProviderProfile.findById(req.params.id)
-            .populate('user', 'name profileImage phoneNumber createdAt') // Get user's public info
+            .populate('user', 'name profileImage phoneNumber address createdAt') // Get user's public info
             .populate('serviceOfferings'); // Get all their service offerings
 
         if (!provider) {
@@ -364,7 +364,7 @@ const getMyProviderProfile = async (req, res) => {
         const userId = req.user._id;
         
         const provider = await ProviderProfile.findOne({ user: userId })
-            .populate('user', 'name email phoneNumber profileImage')
+            .populate('user', 'name email phoneNumber address profileImage')
             .populate('serviceOfferings');
 
         if (!provider) {
