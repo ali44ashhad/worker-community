@@ -61,6 +61,8 @@ const ProviderDashboard = () => {
   const averageRating = dashboardStats?.averageRating || 0;
   const totalReviews = dashboardStats?.totalReviews || 0;
   const profileViews = dashboardStats?.profileViews || 0;
+  const serviceClicks = dashboardStats?.serviceClicks || 0;
+  const serviceClickDetails = dashboardStats?.serviceClickDetails || [];
 
   const formatDate = (dateString, options) => {
     if (!dateString) return 'N/A';
@@ -125,15 +127,20 @@ const ProviderDashboard = () => {
       subValue: `${totalReviews} reviews`,
       icon: HiOutlineStar,
     },
-    {
-      label: 'Pending Requests',
-      value: statusCounts.pending || 0,
-      icon: HiOutlineClock,
-    },
+    // {
+    //   label: 'Pending Requests',
+    //   value: statusCounts.pending || 0,
+    //   icon: HiOutlineClock,
+    // },
     {
       label: 'Profile Clicks',
       value: profileViews,
       icon: HiOutlineUser,
+    },
+    {
+      label: 'Service Clicks',
+      value: serviceClicks,
+      icon: HiOutlineCheckCircle,
     },
     // {
     //   label: 'Accepted Jobs',
@@ -374,6 +381,44 @@ const ProviderDashboard = () => {
           )}
         </motion.div>
       </div>
+
+      <motion.div
+        className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+            <HiOutlineBriefcase className="text-gray-900" size={24} />
+          </div>
+          <h2 className="text-xl font-bold text-black tracking-tight">Service Clicks Overview</h2>
+        </div>
+
+        {serviceClickDetails.length === 0 ? (
+          <p className="text-gray-500 text-center py-6">No services found.</p>
+        ) : (
+          <div className="space-y-3">
+            {serviceClickDetails.map((service) => (
+              <div
+                key={service.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200"
+              >
+                <div>
+                  <p className="font-semibold text-black">{service.serviceCategory}</p>
+                  {service.price !== undefined && (
+                    <p className="text-xs text-gray-500">Price: ₹{service.price}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-black">{service.clicks}</p>
+                  <p className="text-xs text-gray-500">Total Clicks</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </motion.div>
     </motion.div>
   );
 };
