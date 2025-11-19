@@ -79,6 +79,18 @@ export const getMyProviderProfile = createAsyncThunk(
   }
 );
 
+// Get dashboard stats for logged-in provider
+export const getProviderDashboardStats = createAsyncThunk(
+  "provider/getDashboardStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/provider-profile/dashboard/stats`);
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch provider stats");
+    }
+  }
+);
 
 /* ----------------- SLICE ----------------- */
 
@@ -86,9 +98,12 @@ const initialState = {
   allProviders: [],
   selectedProvider: null,
   myProviderProfile: null, // Current user's provider profile
+  dashboardStats: null,
+  dashboardError: null,
   isFetchingAll: false,
   isFetchingSelected: false,
   isFetchingMyProfile: false,
+  isFetchingDashboard: false,
   isUpdatingProfile: false,
   error: null,
 };
@@ -175,6 +190,20 @@ const providerSlice = createSlice({
       .addCase(getMyProviderProfile.rejected, (state, action) => {
         state.isFetchingMyProfile = false;
         state.error = action.payload;
+      })
+      
+      // Get Provider Dashboard Stats
+      .addCase(getProviderDashboardStats.pending, (state) => {
+        state.isFetchingDashboard = true;
+        state.dashboardError = null;
+      })
+      .addCase(getProviderDashboardStats.fulfilled, (state, action) => {
+        state.isFetchingDashboard = false;
+        state.dashboardStats = action.payload;
+      })
+      .addCase(getProviderDashboardStats.rejected, (state, action) => {
+        state.isFetchingDashboard = false;
+        state.dashboardError = action.payload;
       })
       
       // Show toasts only for provider-related rejected actions, but only if we don't have cached data

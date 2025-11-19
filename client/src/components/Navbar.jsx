@@ -570,7 +570,7 @@ const Navbar = () => {
                 )}
                 {user.role === 'provider' && (
                   <motion.div whileHover={{ scale: 1.03 }}>
-                    <Link to="/update-services" className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-semibold">Update Services</Link>
+                    <Link to="/provider/dashboard" className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-semibold">Provider Dashboard</Link>
                   </motion.div>
                 )}
                 {user.role === 'admin' && (
