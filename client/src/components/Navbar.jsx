@@ -668,6 +668,22 @@ const Navbar = () => {
 
             <div className="flex flex-col h-[calc(100%-73px)] overflow-y-auto">
               <div className="py-6 px-6 space-y-2">
+              {user.role === 'admin' && (
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 2) * 0.04 }}>
+                        <Link to="/admin" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Admin Dashboard</Link>
+                      </motion.div>
+                    )}
+                  {user.role === 'provider' && (
+                      <>
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 2) * 0.04 }}>
+                          <Link to="/provider/dashboard" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Provider Dashboard</Link>
+                        </motion.div>
+                        {/* <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 3) * 0.04 }}>
+                          <Link to="/update-services" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Update Services</Link>
+                        </motion.div> */}
+                      </>
+                    )}
+
                 {navLinks.map((link, i) => (
                   <motion.div key={link.to} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
                     <Link to={link.to} onClick={closeMenu} className={`block px-4 py-3 rounded-xl transition-all duration-200 font-medium ${location.pathname === link.to ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'}`}>
@@ -688,17 +704,22 @@ const Navbar = () => {
                       </motion.div>
                     )}
 
-                    {user.role === 'provider' && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 2) * 0.04 }}>
-                        <Link to="/update-services" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Update Services</Link>
-                      </motion.div>
-                    )}
+                    {/* {user.role === 'provider' && (
+                      <>
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 2) * 0.04 }}>
+                          <Link to="/provider/dashboard" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Provider Dashboard</Link>
+                        </motion.div>
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 3) * 0.04 }}>
+                          <Link to="/update-services" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Update Services</Link>
+                        </motion.div>
+                      </>
+                    )} */}
 
-                    {user.role === 'admin' && (
+                    {/* {user.role === 'admin' && (
                       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 2) * 0.04 }}>
                         <Link to="/admin" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Admin Dashboard</Link>
                       </motion.div>
-                    )}
+                    )} */}
                   </>
                 )}
               </div>
