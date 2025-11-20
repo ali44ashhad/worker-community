@@ -478,15 +478,16 @@ const Hero = () => {
                 {["testimonial1.png", "testimonial2.jpg", "testimonial3.jpg", "testimonial4.jpg"].map((src, i) => (
                   <div
                     key={i}
-                    className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-white shadow-sm bg-gray-100 overflow-hidden flex items-center justify-center"
-                  >
-                    <img
-                      src={src}
-                      alt={`u${i}`}
-                      className="w-full h-full object-cover object-center scale-[1.1]"
-                      loading="lazy"
-                    />
-                  </div>
+                    className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-white shadow-sm overflow-hidden bg-cover bg-center"
+                    style={{
+                      backgroundImage: `url(${src})`,
+                      backgroundSize: 'cover',
+                      // backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'center'
+                    }}
+                    role="img"
+                    aria-label={`User ${i + 1}`}
+                  />
                 ))}
               </div>
               <div>
