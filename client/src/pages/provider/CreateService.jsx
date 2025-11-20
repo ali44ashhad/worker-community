@@ -102,11 +102,6 @@ const CreateService = () => {
       invalid = true;
     }
 
-    if (form.experience === '') {
-      validationErrors.experience = 'Experience is required.';
-      invalid = true;
-    }
-
     if (form.price === '' || form.price === null || form.price === undefined) {
       validationErrors.price = 'Price is required.';
       invalid = true;
@@ -208,6 +203,7 @@ const CreateService = () => {
         </button>
         <h1 className="text-4xl font-bold text-black tracking-tight mt-4 mb-2">Add New Service</h1>
         <p className="text-gray-600">Showcase a new offering to potential customers.</p>
+        <p className="text-sm text-gray-500 mt-2">Fields marked with * are mandatory.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -280,22 +276,15 @@ const CreateService = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Experience (years) *
+                Experience (years) <span className="text-gray-400">(optional)</span>
               </label>
               <input
                 type="number"
                 min="0"
                 value={form.experience}
                 onChange={(event) => handleInputChange('experience', event.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
-                  errors.experience
-                    ? 'border-red-300 focus:ring-red-400 bg-red-50'
-                    : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
-                }`}
+                className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium border-gray-200 focus:ring-gray-400 focus:bg-white"
               />
-              {errors.experience && (
-                <p className="text-red-500 text-sm mt-2 font-medium">{errors.experience}</p>
-              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">Price (₹) *</label>
