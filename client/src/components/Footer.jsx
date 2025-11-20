@@ -230,6 +230,8 @@ axios.defaults.withCredentials = true;
 const Footer = () => {
   const [topServices, setTopServices] = useState([]);
   const [isLoadingTopServices, setIsLoadingTopServices] = useState(true);
+  const [topProviders, setTopProviders] = useState([]);
+  const [isLoadingTopProviders, setIsLoadingTopProviders] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -254,11 +256,34 @@ const Footer = () => {
       }
     };
 
+    const fetchTopProviders = async () => {
+      try {
+        setIsLoadingTopProviders(true);
+        const res = await axios.get(`${API_URL}/api/provider-profile/top-providers?limit=3`);
+        if (!isMounted) return;
+
+        if (res.data?.success && Array.isArray(res.data.providers)) {
+          const deduped = res.data.providers.filter((provider) => provider?._id);
+          setTopProviders(deduped);
+        } else {
+          setTopProviders([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch top providers for footer:', error);
+        if (isMounted) setTopProviders([]);
+      } finally {
+        if (isMounted) setIsLoadingTopProviders(false);
+      }
+    };
+
     fetchTopServices();
+    fetchTopProviders();
+
     return () => { isMounted = false; };
   }, []);
 
   const topServiceLinks = !isLoadingTopServices && topServices.length > 0 ? topServices : [];
+  const topProviderLinks = !isLoadingTopProviders && topProviders.length > 0 ? topProviders : [];
 
   return (
     <footer className="relative bg-white/80 border-t border-gray-200 py-16">
@@ -330,9 +355,19 @@ const Footer = () => {
           <div>
             <h3 className="text-base font-semibold text-gray-900 mb-6 tracking-tight">Top Providers</h3>
             <ul className="space-y-3">
-              <li><Link to="/provider/69008b1c842b1760024a9494" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Keshav Sharma</Link></li>
-              <li><Link to="/provider/69009437842b1760024a94ad" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Suryansh Sharma</Link></li>
-              <li><Link to="/service/69009593842b1760024a94cf" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Rohit Sharma</Link></li>
+              {isLoadingTopProviders && <li className="text-gray-500 text-sm font-medium">Loading top providers...</li>}
+              {!isLoadingTopProviders && topProviderLinks.length === 0 && <li className="text-gray-500 text-sm font-medium">No top providers available right now.</li>
+              }
+              {topProviderLinks.map((provider) => {
+                const label = provider?.name || 'View Provider';
+                return (
+                  <li key={provider._id}>
+                    <Link to={`/provider/${provider._id}`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                      {label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </motion.div>

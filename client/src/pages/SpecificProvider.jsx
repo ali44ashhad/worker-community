@@ -149,34 +149,34 @@ const SpecificProvider = () => {
                   </p> */}
 
                   {/* Rating and Level */}
-                  <div className='flex items-center gap-4 mb-3'>
+                  <div className='flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 mb-3'>
                     {averageRating > 0 && (
-                      <div className='flex items-center gap-2'>
+                      <div className='flex flex-wrap items-center gap-2'>
                         <div className='flex items-center gap-1'>
                           {[1, 2, 3, 4, 5].map((star) => (
                             <FaStar
                               key={star}
-                              className={`text-sm ${
+                              className={`text-base ${
                                 star <= Math.round(averageRating)
                                   ? 'text-yellow-400'
                                   : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
+                              }`}
+                            />
+                          ))}
+                        </div>
                         <span className='text-sm font-semibold text-gray-900'>
-                          {averageRating} ({totalReviews} reviews )
+                          {averageRating} ({totalReviews} reviews)
                         </span>
                       </div>
                     )}
                     {providerLevel.level > 0 && (
-                      <div className='flex items-center gap-1'>
-                        <span className='text-sm font-semibold text-gray-900'>Level {providerLevel.level}</span>
+                      <div className='flex items-center gap-1 text-sm font-semibold text-gray-900'>
+                        <span>Level {providerLevel.level}</span>
                         {[...Array(providerLevel.diamonds)].map((_, i) => (
-                          <span key={i} className='text-gray-600'>◆</span>
+                          <span key={i} className='text-gray-600 text-base leading-none'>◆</span>
                         ))}
-            </div>
-          )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Professional Title */}
@@ -185,13 +185,13 @@ const SpecificProvider = () => {
                   </p>
 
                   {/* Location and Languages */}
-                  <div className='flex items-center gap-4 text-sm text-gray-600 mb-4'>
-                  <div className='flex items-center gap-1'>
-                    <HiLocationMarker className='w-4 h-4' />
+                  <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-6 text-sm text-gray-600 mb-4 w-full'>
+                  <div className='flex items-center gap-2'>
+                    <HiLocationMarker className='text-2xl sm:text-lg text-gray-700 flex-shrink-0' />
                     <span>{providerAddress}</span>
                   </div>
-                    <div className='flex items-center gap-1'>
-                      <HiChatAlt2 className='w-4 h-4' />
+                    <div className='flex items-center gap-2'>
+                      <HiChatAlt2 className='text-2xl sm:text-lg text-gray-700 flex-shrink-0' />
                       <span>English, Hindi</span>
                     </div>
                   </div>
