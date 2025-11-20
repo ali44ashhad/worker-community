@@ -70,18 +70,26 @@ const Cart = () => {
         <h1 className='text-2xl font-bold text-gray-900 mb-6'>Your Wishlist ({wishlistServices.length})</h1>
         
       {isFetchingAll ? (
-          <div className='bg-white border border-gray-200 rounded-lg p-8 text-center'>
-            <p className='text-sm text-gray-600'>Loading...</p>
+          <div className='relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-gray-50 to-indigo-50 p-10 text-center shadow-sm'>
+            <div className='pointer-events-none absolute inset-0 opacity-30 blur-3xl bg-gradient-to-r from-indigo-100/80 via-pink-100/60 to-purple-100/80' />
+            <p className='relative text-base font-semibold text-gray-900 tracking-tight'>Curating your wishlist experience...</p>
+            <p className='relative mt-2 text-sm text-gray-600'>Hang tight while we load the best services for you.</p>
           </div>
       ) : wishlistServices.length === 0 ? (
-          <div className='bg-white border border-gray-200 rounded-lg p-12 text-center'>
-            <p className='text-sm text-gray-600 mb-4'>No services in your wishlist yet.</p>
-            <button
-              onClick={() => navigate('/services')}
-              className='text-xs font-medium text-gray-900 hover:text-gray-700 underline'
-            >
-              Browse Services
-            </button>
+          <div className='relative overflow-hidden rounded-2xl border border-gray-200 bg-white/90 p-12 text-center shadow-sm'>
+            <div className='pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-indigo-100 via-pink-100 to-amber-100 opacity-70 blur-3xl' />
+            <div className='pointer-events-none absolute -bottom-12 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-rose-100 via-purple-100 to-indigo-100 opacity-60 blur-3xl' />
+            <div className='relative'>
+              <p className='text-lg font-semibold text-gray-900 mb-2'>Your wishlist is feeling lonely</p>
+              <p className='text-sm text-gray-600 mb-6'>Discover top-rated neighbours and add services you love to keep them handy.</p>
+              <button
+                onClick={() => navigate('/service')}
+                className='inline-flex items-center justify-center gap-2 rounded-full bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800'
+              >
+                Explore Services
+                <HiArrowRight className='w-4 h-4' />
+              </button>
+            </div>
           </div>
         ) : (
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
@@ -198,7 +206,7 @@ const Cart = () => {
                 </div>
 
                 <button
-                  onClick={() => navigate('/services')}
+                  onClick={() => navigate('/service')}
                   className='w-full bg-gray-900 text-white py-2.5 px-4 rounded-lg text-xs font-semibold hover:bg-gray-800 transition-all flex items-center justify-center gap-2'
                 >
                   Continue Shopping
