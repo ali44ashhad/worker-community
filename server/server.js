@@ -16,7 +16,11 @@ app.use(cookieParser());
 
 // 1. Allow CORS for ALL routes and ALL methods:
 app.use(cors({
-  origin: true,
+  origin: [
+    'https://worker-community.vercel.app',
+    'http://localhost:5173', // for local dev
+    'http://localhost:3000'  // for local dev
+  ],
   credentials: true,
 }));
 
