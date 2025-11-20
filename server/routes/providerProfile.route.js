@@ -7,6 +7,7 @@ import {
     updateServiceOffering,
     deleteServiceOffering,
     getAllProviders,
+    getTopProvidersByServiceClicks,
     getProviderById,
     getMyProviderProfile,
     getProviderDashboardStats,
@@ -18,6 +19,7 @@ import upload from "../middlewares/multer.js";
 const router = express.Router();
 
 // --- Public Routes ---
+router.get("/top-providers", getTopProvidersByServiceClicks);
 router.get("/", getAllProviders);
 
 // Public route to increment provider profile click count (must be before /:id)

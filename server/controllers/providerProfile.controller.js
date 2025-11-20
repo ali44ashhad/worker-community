@@ -337,7 +337,7 @@ const getProviderDashboardStats = async (req, res) => {
  * @route GET /api/provider-profile/
  * @access Public
  */
- const getAllProviders = async (req, res) => {
+const getAllProviders = async (req, res) => {
     try {
         // Find all provider profiles and populate their associated user and service offerings
         const providers = await ProviderProfile.find()
@@ -350,6 +350,89 @@ const getProviderDashboardStats = async (req, res) => {
         });
     } catch (error) {
         console.error("Error in getAllProviders:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Get top providers ranked by the sum of serviceOfferingCount across their services
+ * @route GET /api/provider-profile/top-providers?limit=3
+ * @access Public
+ */
+const getTopProvidersByServiceClicks = async (req, res) => {
+    try {
+        const limitParam = parseInt(req.query.limit, 10);
+        const limit = Number.isFinite(limitParam) && limitParam > 0
+            ? Math.min(limitParam, 12)
+            : 3;
+
+        const aggregatedProviders = await ServiceOffering.aggregate([
+            {
+                $group: {
+                    _id: "$provider",
+                    totalServiceClicks: { $sum: { $ifNull: ["$serviceOfferingCount", 0] } },
+                    serviceCount: { $sum: 1 }
+                }
+            },
+            { $sort: { totalServiceClicks: -1, serviceCount: -1 } },
+            { $limit: limit }
+            
+        ]);
+
+        let providersResponse = [];
+
+        if (aggregatedProviders.length > 0) {
+            const providerIds = aggregatedProviders.map((item) => item._id);
+            const providers = await ProviderProfile.find({ _id: { $in: providerIds } })
+                .populate('user', 'name profileImage address')
+                .select('user providerProfileCount');
+
+            const providerMap = new Map(
+                providers.map((provider) => [provider._id.toString(), provider])
+            );
+
+            providersResponse = aggregatedProviders
+                .map((item) => {
+                    const provider = providerMap.get(item._id.toString());
+                    if (!provider || !provider.user) {
+                        return null;
+                    }
+                    return {
+                        _id: provider._id,
+                        name: provider.user.name,
+                        avatar: provider.user.profileImage || "",
+                        totalServiceClicks: item.totalServiceClicks || 0,
+                        serviceCount: item.serviceCount || 0,
+                        providerProfileCount: provider.providerProfileCount || 0
+                    };
+                })
+                .filter(Boolean);
+        } else {
+            // Fallback: use provider profile count ordering if no services have clicks yet
+            const fallbackProviders = await ProviderProfile.find({})
+                .populate('user', 'name profileImage address')
+                .sort({ providerProfileCount: -1 })
+                .limit(limit)
+                .select('user providerProfileCount serviceOfferings');
+
+            providersResponse = fallbackProviders
+                .filter((provider) => provider.user)
+                .map((provider) => ({
+                    _id: provider._id,
+                    name: provider.user.name,
+                    avatar: provider.user.profileImage || "",
+                    totalServiceClicks: 0,
+                    serviceCount: Array.isArray(provider.serviceOfferings) ? provider.serviceOfferings.length : 0,
+                    providerProfileCount: provider.providerProfileCount || 0
+                }));
+        }
+
+        return res.status(200).json({
+            success: true,
+            providers: providersResponse
+        });
+    } catch (error) {
+        console.error("Error in getTopProvidersByServiceClicks:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -797,6 +880,7 @@ export {
     deleteServiceOffering,
     getProviderDashboardStats,
     getAllProviders,
+    getTopProvidersByServiceClicks,
     getProviderById,
     getMyProviderProfile,
     incrementServiceOfferingCount,
