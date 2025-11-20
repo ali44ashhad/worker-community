@@ -39,6 +39,18 @@ app.use('/api/bookings', bookingRouter);
 app.use('/api/comments', commentRouter);
 app.use('/api/admin',adminRouter)
 
+// Global error handler to prevent crashes on unexpected errors
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal server error",
+  });
+});
+
 const port = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
@@ -48,6 +60,15 @@ app.get("/", (req, res) => {
 // ✅ Connect to database
 dbConnect();
 
-app.listen(port, () => {
+const serverInstance = app.listen(port, () => {
   console.log(`Server is listening at port: ${port}`);
+});
+
+// Catch unhandled promise rejections / uncaught exceptions so the server keeps running
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
 });
