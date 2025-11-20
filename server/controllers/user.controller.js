@@ -46,10 +46,10 @@ const uploadBufferToCloudinary = (buffer) => {
 const register = async (req, res) => {
     const { name, email, password, phoneNumber, address } = req.body;
     try {
-        if (!name || !email || !password || !phoneNumber || !address) {
+        if (!name || !email || !password || !phoneNumber) {
             return res.status(400).json({
                 success: false,
-                message: "All fields are required"
+                message: "All required fields must be provided"
             });
         }
         if (password.length < 8) {
@@ -69,13 +69,18 @@ const register = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        const user = await User.create({
+        const userPayload = {
             name,
             email,
             password: hashedPassword,
             phoneNumber,
-            address
-        });
+        };
+
+        if (address) {
+            userPayload.address = address;
+        }
+
+        const user = await User.create(userPayload);
 
         generateToken(user._id, res);
         user.password = undefined;
