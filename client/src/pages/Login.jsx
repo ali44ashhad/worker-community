@@ -83,22 +83,25 @@ const Login = () => {
   return (
     <div className="min-h-[calc(100vh-80px)] flex mt-20 items-center justify-center p-6 bg-gray-50">
       <motion.div 
-        className="bg-white flex w-full max-w-5xl rounded-2xl shadow-xl overflow-hidden border border-gray-100"
+        className="bg-white flex items-stretch w-full max-w-5xl rounded-2xl shadow-xl overflow-hidden border border-gray-100"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         {/* Left Image */}
-        <div className="hidden md:block md:w-1/2 relative overflow-hidden">
-          <motion.img
-            className="h-full w-full object-cover"
-            src="login.png"
-            alt="leftSideImage"
-            initial={{ scale: 1.1 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.6 }}
-          />
-        </div>
+    
+      <div className="hidden md:flex md:w-1/2 relative overflow-hidden self-stretch">
+  <motion.img
+    className="h-full w-full object-cover object-center"
+    src="login.png"
+    alt="leftSideImage"
+    initial={{ scale: 1.05 }}
+    animate={{ scale: 1 }}
+    transition={{ duration: 0.6 }}
+  />
+</div>
+
+
 
         {/* Form Section */}
         <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-8 md:p-12">
