@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { HiOutlinePhotograph, HiArrowRight } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { FaRegHeart } from "react-icons/fa6";
+import { IoIosHeart } from "react-icons/io";
+import { addToWishlist, removeFromWishlist } from '../../features/wishlistSlice';
+import { toast } from 'react-hot-toast';
 
 const ServiceCard = ({ service }) => {
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector((s) => s.auth.user);
+  const wishlistIds = useSelector((s) => s.wishlist.ids);
   const [imageError, setImageError] = useState(false);
 
   // Get service information
@@ -38,12 +46,44 @@ const ServiceCard = ({ service }) => {
 //     }
 //   };
 
+  const handleCardClick = () => {
+    navigate(`/service/${service._id}`);
+  };
+
+  const isInWishlist = wishlistIds?.includes(service._id);
+  const onToggleWishlist = (e) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error('Please login to add services to your wishlist');
+      navigate('/login');
+      return;
+    }
+    if (isInWishlist) {
+      dispatch(removeFromWishlist(service._id));
+    } else {
+      dispatch(addToWishlist(service._id));
+    }
+  };
+
   return (
     <div 
-      className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-200 group"
+      onClick={handleCardClick}
+      className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-200 group cursor-pointer"
     >
       {/* Portfolio Image */}
       <div className="relative h-36 bg-gray-100 overflow-hidden">
+        {/* Heart Icon */}
+        <button
+          onClick={onToggleWishlist}
+          className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center bg-white border border-gray-300 shadow-md hover:scale-110 transition-all duration-200 z-10"
+        >
+          {isInWishlist ? (
+            <IoIosHeart className="text-red-600" size={18} />
+          ) : (
+            <FaRegHeart className="text-red-600" size={16} />
+          )}
+        </button>
+        
         {mainImage && !imageError ? (
           <img
             src={mainImage}
@@ -112,10 +152,13 @@ const ServiceCard = ({ service }) => {
 
         {/* Order Button */}
         <button 
-          onClick={() => navigate(`/service/${service._id}`)}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/service/${service._id}`);
+          }}
           className="w-full mt-3 bg-gray-900 text-white py-2 px-3 rounded-md text-xs font-medium hover:bg-gray-800 transition-all duration-200 flex items-center justify-center gap-1.5"
         >
-          Order Now
+          View Details
           <HiArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>

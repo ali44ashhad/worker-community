@@ -436,11 +436,13 @@ const Hero = () => {
                 <Link to="/login" className="inline-flex items-center px-5 py-3 border border-gray-200 rounded-2xl text-gray-800 hover:bg-gray-50 transition">
                   Login
                 </Link>
-              ) : (
-                <Link to={`/update-profile/${user._id}`} className="inline-flex items-center px-5 py-3 border border-gray-200 rounded-2xl text-gray-800 hover:bg-gray-50 transition">
-                  My Profile
-                </Link>
-              )}
+              ) :" "
+              //  (
+              //   <Link to={`/update-profile/${user._id}`} className="inline-flex items-center px-5 py-3 border border-gray-200 rounded-2xl text-gray-800 hover:bg-gray-50 transition">
+              //     My Profile
+              //   </Link>
+              // )
+              }
             </div>
 
             {/* Category grid compact - glassy cards with crisp outlines */}

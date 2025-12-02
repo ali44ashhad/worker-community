@@ -422,17 +422,23 @@
 // export default Navbar;
  
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   HiOutlineMenu,
   HiOutlineX,
   HiOutlineSearch,
+  HiChevronDown,
+  HiOutlineUserAdd,
+  HiOutlineViewGrid,
+  HiOutlineCog,
+  HiOutlineUserCircle,
+  HiOutlineLogout,
+  HiOutlineHeart,
 } from 'react-icons/hi';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
-import { FaCartShopping } from "react-icons/fa6";
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchDropdown from './SearchDropdown';
 
@@ -441,8 +447,11 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const user = useSelector((state) => state.auth.user);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
+  const desktopDropdownRef = useRef(null);
+  const mobileDropdownRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -454,6 +463,26 @@ const Navbar = () => {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isMobileMenuOpen]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const desktopContains = desktopDropdownRef.current?.contains(event.target);
+      const mobileContains = mobileDropdownRef.current?.contains(event.target);
+      
+      if (!desktopContains && !mobileContains) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+
+    if (isUserDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUserDropdownOpen]);
+
   const closeMenu = () => setIsMobileMenuOpen(false);
 
   const handleLogout = async () => {
@@ -461,9 +490,21 @@ const Navbar = () => {
       await dispatch(logoutUser()).unwrap();
       toast.success('Logged out successfully');
       closeMenu();
+      setIsUserDropdownOpen(false);
     } catch (error) {
       toast.error(error || 'Logout failed');
     }
+  };
+
+  // Get user's first name and initial
+  const getFirstName = (fullName) => {
+    if (!fullName) return '';
+    return fullName.split(' ')[0];
+  };
+
+  const getInitial = (fullName) => {
+    const firstName = getFirstName(fullName);
+    return firstName ? firstName.charAt(0).toUpperCase() : '';
   };
 
   const navLinks = [
@@ -492,7 +533,7 @@ const Navbar = () => {
               to="/"
               className="flex items-center gap-3 min-w-0"
             >
-              {user ? (
+              {/* {user ? (
                 <span className="truncate max-w-[220px] text-2xl font-bold text-gray-900">
                   Hi {user.name},
                 </span>
@@ -504,8 +545,8 @@ const Navbar = () => {
                     className="h-10 w-auto object-contain max-h-[50px]" 
                   />
                   <div className="flex flex-col">
-                    {/* <span className="text-2xl font-bold text-gray-900 tracking-tight">CommuN</span>
-                    <span className="text-xs text-gray-600 leading-tight">Connect. Discover. Thrive Local.</span> */}
+                    <span className="text-2xl font-bold text-gray-900 tracking-tight">CommuN</span>
+                    <span className="text-xs text-gray-600 leading-tight">Connect. Discover. Thrive Local.</span>
                     <span>
                     <img 
                     src="/logo-text.png" 
@@ -515,7 +556,23 @@ const Navbar = () => {
                     </span>
                   </div>
                 </>
-              )}
+              )} */}
+                <>
+                  <img 
+                    src="/logo2.png" 
+                    alt="Commun" 
+                    className="h-10 w-auto object-contain max-h-[50px]" 
+                  />
+                  <div className="flex flex-col">
+                    <span>
+                    <img 
+                    src="/logo-text.png" 
+                    alt="Commun" 
+                    className="h-10 w-auto object-contain max-h-[50px]" 
+                  />
+                    </span>
+                  </div>
+                </>
             </Link>
           </motion.div>
 
@@ -582,49 +639,137 @@ const Navbar = () => {
                 </Link>
               </motion.div>
             ) : (
-              <div className="flex items-center gap-3 min-w-0">
-                {user.role === 'customer' && (
-                  <motion.div whileHover={{ scale: 1.03 }}>
-                    <Link to="/become-provider" className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-semibold">Become Provider</Link>
-                  </motion.div>
-                )}
-                {user.role === 'provider' && (
-                  <motion.div whileHover={{ scale: 1.03 }}>
-                    <Link to="/provider/dashboard" className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-semibold">Provider Dashboard</Link>
-                  </motion.div>
-                )}
-                {user.role === 'admin' && (
-                  <motion.div whileHover={{ scale: 1.03 }}>
-                    <Link to="/admin" className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-semibold">Admin Dashboard</Link>
-                  </motion.div>
-                )}
-
-                <motion.div whileHover={{ scale: 1.03 }}>
-                  <Link to={`/update-profile/${user._id}`} className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-semibold">Update Profile</Link>
-                </motion.div>
-
+              <div className="relative" ref={desktopDropdownRef}>
                 <motion.button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-semibold"
+                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-50 transition-all duration-200"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  Logout
+                  {/* Avatar */}
+                  <div className="relative">
+                    {user.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt={user.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-sm border-2 border-gray-200">
+                        {getInitial(user.name)}
+                      </div>
+                    )}
+                  </div>
+                  <HiChevronDown 
+                    className={`text-gray-600 transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`}
+                    size={18}
+                  />
                 </motion.button>
 
-                <motion.div whileHover={{ scale: 1.05 }}>
-                  <Link to={`/cart/${user._id}`} className="relative">
-                    <FaCartShopping size={22} className="text-gray-700" />
-                    {wishlistIds?.length > 0 && (
-                      <motion.span
-                        className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500 }}
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {isUserDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
+                    >
+                      {/* User Info Section */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar */}
+                          <div className="relative flex-shrink-0">
+                            {user.profileImage ? (
+                              <img
+                                src={user.profileImage}
+                                alt={user.name}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-base border-2 border-gray-200">
+                                {getInitial(user.name)}
+                              </div>
+                            )}
+                          </div>
+                          {/* Name and Email */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {user.name}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Menu Items */}
+                      <div className="py-1.5">
+                      {user.role === 'customer' && (
+                        <Link
+                          to="/become-provider"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineUserAdd size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Become Provider</span>
+                        </Link>
+                      )}
+                      {user.role === 'provider' && (
+                        <Link
+                          to="/provider/dashboard"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineViewGrid size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Provider Dashboard</span>
+                        </Link>
+                      )}
+                      {user.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineCog size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                      )}
+                      <Link
+                        to={`/cart/${user._id}`}
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        {wishlistIds?.length || 0}
-                      </motion.span>
-                    )}
-                  </Link>
-                </motion.div>
+                        <HiOutlineHeart size={18} className="text-gray-500 flex-shrink-0" />
+                        <span>Wishlist</span>
+                        {/* {wishlistIds?.length > 0 && (
+                          <span className="ml-auto bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                            {wishlistIds.length}
+                          </span>
+                        )} */}
+                      </Link>
+                      <Link
+                        to={`/update-profile/${user._id}`}
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <HiOutlineUserCircle size={18} className="text-gray-500 flex-shrink-0" />
+                        <span>Update Profile</span>
+                      </Link>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2.5 w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <HiOutlineLogout size={18} className="text-red-500 flex-shrink-0" />
+                        <span>Logout</span>
+                      </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </div>
@@ -632,16 +777,153 @@ const Navbar = () => {
           {/* Mobile actions (shown on smaller than xl) */}
           <div className="flex items-center gap-4 xl:hidden">
             {user && (
-              <motion.div whileHover={{ scale: 1.05 }}>
-                <Link to={`/cart/${user._id}`} className="relative">
-                  <FaCartShopping size={22} />
-                  {wishlistIds?.length > 0 && (
-                    <motion.span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                      {wishlistIds?.length || 0}
-                    </motion.span>
+              <div className="relative" ref={mobileDropdownRef}>
+                <motion.button
+                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  className="flex items-center gap-2"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {/* Avatar */}
+                  <div className="relative">
+                    {user.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt={user.name}
+                        className="w-9 h-9 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-sm border-2 border-gray-200">
+                        {getInitial(user.name)}
+                      </div>
+                    )}
+                  </div>
+                  <HiChevronDown 
+                    className={`text-gray-600 transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`}
+                    size={18}
+                  />
+                </motion.button>
+
+                {/* Dropdown Menu for Mobile */}
+                <AnimatePresence>
+                  {isUserDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-[90]"
+                    >
+                      {/* User Info Section */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar */}
+                          <div className="relative flex-shrink-0">
+                            {user.profileImage ? (
+                              <img
+                                src={user.profileImage}
+                                alt={user.name}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-base border-2 border-gray-200">
+                                {getInitial(user.name)}
+                              </div>
+                            )}
+                          </div>
+                          {/* Name and Email */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {user.name}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Menu Items */}
+                      <div className="py-1.5">
+                      {user.role === 'customer' && (
+                        <Link
+                          to="/become-provider"
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            closeMenu();
+                          }}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineUserAdd size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Become Provider</span>
+                        </Link>
+                      )}
+                      {user.role === 'provider' && (
+                        <Link
+                          to="/provider/dashboard"
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            closeMenu();
+                          }}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineViewGrid size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Provider Dashboard</span>
+                        </Link>
+                      )}
+                      {user.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            closeMenu();
+                          }}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineCog size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                      )}
+                      <Link
+                        to={`/cart/${user._id}`}
+                        onClick={() => {
+                          setIsUserDropdownOpen(false);
+                          closeMenu();
+                        }}
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <HiOutlineHeart size={18} className="text-gray-500 flex-shrink-0" />
+                        <span>Wishlist</span>
+                        {wishlistIds?.length > 0 && (
+                          <span className="ml-auto bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                            {wishlistIds.length}
+                          </span>
+                        )}
+                      </Link>
+                      <Link
+                        to={`/update-profile/${user._id}`}
+                        onClick={() => {
+                          setIsUserDropdownOpen(false);
+                          closeMenu();
+                        }}
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <HiOutlineUserCircle size={18} className="text-gray-500 flex-shrink-0" />
+                        <span>Update Profile</span>
+                      </Link>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2.5 w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <HiOutlineLogout size={18} className="text-red-500 flex-shrink-0" />
+                        <span>Logout</span>
+                      </button>
+                      </div>
+                    </motion.div>
                   )}
-                </Link>
-              </motion.div>
+                </AnimatePresence>
+              </div>
             )}
 
             <motion.button
