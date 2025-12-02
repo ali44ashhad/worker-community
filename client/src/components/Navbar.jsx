@@ -479,23 +479,43 @@ const Navbar = () => {
   return (
     <>
       <motion.header
-        className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-xl z-[60] h-20 shadow-sm border-b border-gray-100"
+        className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-xl z-[60] h-16 shadow-sm border-b border-gray-100"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
       >
         {/* nav container uses min-w-0 so flex children can shrink without creating overflow */}
-        <nav className="max-w-[1370px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4 min-w-0">
+        <nav className="max-w-[1370px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
           {/* Left: Logo */}
           <motion.div className="flex items-center min-w-0" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <Link
               to="/"
-              className="text-2xl font-bold text-gray-900 flex items-center gap-2 tracking-tight min-w-0"
+              className="flex items-center gap-3 min-w-0"
             >
-              {/* truncate prevents long names from pushing layout */}
-              <span className="truncate max-w-[220px]">
-                {user ? `Hi ${user.name},` : "Commun"}
-              </span>
+              {user ? (
+                <span className="truncate max-w-[220px] text-2xl font-bold text-gray-900">
+                  Hi {user.name},
+                </span>
+              ) : (
+                <>
+                  <img 
+                    src="/logo2.png" 
+                    alt="Commun" 
+                    className="h-10 w-auto object-contain max-h-[50px]" 
+                  />
+                  <div className="flex flex-col">
+                    {/* <span className="text-2xl font-bold text-gray-900 tracking-tight">CommuN</span>
+                    <span className="text-xs text-gray-600 leading-tight">Connect. Discover. Thrive Local.</span> */}
+                    <span>
+                    <img 
+                    src="/logo-text.png" 
+                    alt="Commun" 
+                    className="h-10 w-auto object-contain max-h-[50px]" 
+                  />
+                    </span>
+                  </div>
+                </>
+              )}
             </Link>
           </motion.div>
 
@@ -660,7 +680,42 @@ const Navbar = () => {
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
           >
             <div className="flex items-center justify-between px-6 py-6 border-b">
-              <Link to="/" onClick={closeMenu} className="text-2xl font-bold text-gray-900">Commun</Link>
+              {/* <Link to="/" onClick={closeMenu} className="flex items-center gap-2">
+                <img 
+                  src="/logo2.png" 
+                  alt="Commun" 
+                  className="h-8 w-auto object-contain"
+                />
+                <div className="flex flex-col">
+                  <span className="text-xl font-bold text-gray-900 tracking-tight">CommuN</span>
+                  <span className="text-xs text-gray-600 leading-tight">Connect. Discover. Thrive Local.</span>
+                </div>
+              </Link> */}
+               <Link
+              to="/"
+              className="flex items-center gap-3 min-w-0"
+            >
+          
+                <>
+                  <img 
+                    src="/logo2.png" 
+                    alt="Commun" 
+                    className="h-10 w-auto object-contain max-h-[50px]" 
+                  />
+                  <div className="flex flex-col">
+                    {/* <span className="text-2xl font-bold text-gray-900 tracking-tight">CommuN</span>
+                    <span className="text-xs text-gray-600 leading-tight">Connect. Discover. Thrive Local.</span> */}
+                    <span>
+                    <img 
+                    src="/logo-text.png" 
+                    alt="Commun" 
+                    className="h-10 w-auto object-contain max-h-[50px]" 
+                  />
+                    </span>
+                  </div>
+                </>
+          
+            </Link>
               <motion.button onClick={closeMenu} className="text-gray-600" aria-label="Close menu">
                 <HiOutlineX size={22} />
               </motion.button>
