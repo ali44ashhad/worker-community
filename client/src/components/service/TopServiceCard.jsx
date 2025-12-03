@@ -21,9 +21,13 @@ const TopServiceCard = ({ service }) => {
   const serviceCategory = service?.serviceCategory || 'Service';
   const description = service?.description || '';
   const keywords = Array.isArray(service?.keywords) ? service.keywords.slice(0, 4) : [];
-  const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
+  
+  // Get provider information - match ServiceCard approach exactly
+  const provider = service?.provider || {};
+  const providerUser = provider?.user || {};
+  const providerName = getFullName(providerUser) || 'Unknown Provider';
+  
   const price = service?.price;
-  console.log("service : ",service);
 
   const goToService = () => navigate(`/service/${service._id}`);
 

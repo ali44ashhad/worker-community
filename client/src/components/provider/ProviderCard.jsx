@@ -4,9 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { getFullName, formatAddress, getInitials } from '../../utils/userHelpers';
 
 const ProviderCard = ({ provider }) => {
-
-    console.log(provider);
-
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
   

@@ -20,6 +20,7 @@ import {
   HiOutlineDocumentText
 } from 'react-icons/hi';
 import { motion } from 'framer-motion';
+import { getFullName, getInitials } from '../../utils/userHelpers';
 
 const SERVICE_RULES = {
   "Academics": {
@@ -413,20 +414,18 @@ const UpdateProviders = () => {
                       {provider.user?.profileImage ? (
                         <img
                           src={provider.user.profileImage}
-                          alt={provider.user.name}
+                          alt={getFullName(provider.user)}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <span className="text-gray-600 font-semibold text-xl">
-                          {provider.user?.firstName?.charAt(0)?.toUpperCase() || provider.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                          {getInitials(provider.user)}
                         </span>
                       )}
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-black">
-                        {provider.user?.firstName && provider.user?.lastName 
-                          ? `${provider.user.firstName} ${provider.user.lastName}` 
-                          : provider.user?.name || 'Unknown Provider'}
+                        {getFullName(provider.user) || 'Unknown Provider'}
                       </h3>
                       <p className="text-sm text-gray-600">{provider.user?.email || ''}</p>
                     </div>

@@ -173,7 +173,6 @@ const TopCategory = () => {
                             image: categoryImages[cat.category] || "/tutor.png"
                         };
                     });
-                    console.log("{DEBUG} Categories",categoriesWithMetadata);
                     
                     setTopCategories(categoriesWithMetadata);
                 } else {

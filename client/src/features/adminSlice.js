@@ -39,7 +39,6 @@ export const updateProviderDetails = createAsyncThunk(
   async ({ providerId, bio }, { rejectWithValue }) => {
     try {
       const res = await axios.put(`${API_URL}/api/admin/update-provider/${providerId}`, { bio });
-      toast.success("Provider details updated successfully");
       return res.data.provider;
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update provider");
@@ -51,15 +50,20 @@ export const updateProviderDetails = createAsyncThunk(
 // Update provider user details (admin)
 export const updateProviderUserDetails = createAsyncThunk(
   "admin/updateProviderUserDetails",
-  async ({ providerId, name, email, phoneNumber, address }, { rejectWithValue }) => {
+  async ({ providerId, firstName, lastName, email, phoneNumber, addressLine1, addressLine2, city, state, zip }, { rejectWithValue }) => {
     try {
       const res = await axios.put(`${API_URL}/api/admin/update-provider-user/${providerId}`, {
-        name,
+        firstName,
+        lastName,
         email,
         phoneNumber,
-        address
+        addressLine1,
+        addressLine2,
+        city,
+        state,
+        zip
       });
-      toast.success("Provider user details updated successfully");
+      toast.success("Provider updated successfully");
       return res.data.provider;
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update provider");

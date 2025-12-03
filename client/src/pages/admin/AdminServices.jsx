@@ -19,6 +19,7 @@ import {
   HiOutlinePhotograph,
   HiOutlineCube
 } from 'react-icons/hi';
+import { getFullName } from '../../utils/userHelpers';
 
 const SERVICE_RULES = {
   "Academics": {
@@ -301,7 +302,8 @@ const AdminServices = () => {
         <div className="space-y-6">
           {services.map((service) => {
             const isEditing = editingService === service._id;
-            const providerName = service.provider?.user?.name || 'Unknown Provider';
+            
+            const providerName = getFullName(service.provider?.user) || 'Unknown Provider';
 
             return (
               <div

@@ -42,7 +42,7 @@ const Login = () => {
         ).unwrap();
       } else {
         data = await dispatch(signupUser(formData)).unwrap();
-        console.log("SIGNUP USER DATA", data);
+
         
       }
 

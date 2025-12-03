@@ -11,19 +11,36 @@
 export const getFullName = (user) => {
   if (!user) return 'Unknown User';
   
-  // New structure: firstName and lastName
-  if (user.firstName && user.lastName) {
-    return `${user.firstName} ${user.lastName}`;
+  // Trim whitespace from name fields (handle null/undefined/empty strings)
+  const firstName = (user.firstName && typeof user.firstName === 'string') ? user.firstName.trim() : '';
+  const lastName = (user.lastName && typeof user.lastName === 'string') ? user.lastName.trim() : '';
+  // Check for name field - might be a virtual field that's empty string if firstName/lastName are undefined
+  const name = (user.name && typeof user.name === 'string' && user.name.trim() !== '') ? user.name.trim() : '';
+  
+  // New structure: firstName and lastName (both must be non-empty)
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`;
+  }
+  
+  // If only firstName exists
+  if (firstName) {
+    return firstName;
+  }
+  
+  // If only lastName exists
+  if (lastName) {
+    return lastName;
   }
   
   // Fallback: use name field (for backward compatibility or migrated data)
-  if (user.name) {
-    return user.name;
+  // Only use it if it's not an empty string (which happens when virtual field computes from undefined firstName/lastName)
+  if (name) {
+    return name;
   }
   
-  // Last resort: use firstName only if available
-  if (user.firstName) {
-    return user.firstName;
+  // Last resort: use email if available
+  if (user.email && typeof user.email === 'string' && user.email.trim() !== '') {
+    return user.email.split('@')[0]; // Return part before @
   }
   
   return 'Unknown User';

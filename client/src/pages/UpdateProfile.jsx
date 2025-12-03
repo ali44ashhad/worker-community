@@ -28,8 +28,6 @@ const UpdateProfile = () => {
 
   useEffect(() => {
     if (user) {
-      console.log("UPDATE PROFILE USER", user);
-      
       setFormData({
         firstName: user.firstName || user.name?.split(' ')[0] || '',
         lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',

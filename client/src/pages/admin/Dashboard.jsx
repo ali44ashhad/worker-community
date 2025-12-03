@@ -265,17 +265,17 @@ const Dashboard = () => {
                   {provider.user?.profileImage ? (
                     <img
                       src={provider.user.profileImage}
-                      alt={provider.user.name}
+                      alt={getFullName(provider.user)}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="text-gray-600 font-semibold">
-                      {provider.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                      {getInitials(provider.user)}
                     </span>
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-black">{provider.user?.name || 'Unknown'}</p>
+                  <p className="font-semibold text-black">{getFullName(provider.user) || 'Unknown'}</p>
                   <p className="text-sm text-gray-600">{provider.user?.email || ''}</p>
                 </div>
                 <div className="text-sm text-gray-500 font-medium">

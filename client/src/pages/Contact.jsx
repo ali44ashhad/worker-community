@@ -115,12 +115,12 @@ const Contact = () => {
       content: "+1 (555) 123-4567",
       description: "Mon to Fri, 9am to 6pm"
     },
-    {
-      icon: <HiOutlineLocationMarker className="w-8 h-8" />,
-      title: "Visit Us",
-      content: "Your Community",
-      description: "We're everywhere you are"
-    },
+    // {
+    //   icon: <HiOutlineLocationMarker className="w-8 h-8" />,
+    //   title: "Visit Us",
+    //   content: "Your Community",
+    //   description: "We're everywhere you are"
+    // },
     {
       icon: <HiOutlineClock className="w-8 h-8" />,
       title: "Response Time",
