@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Upload, Trash2 } from 'lucide-react';
+import { X, Plus, Upload, Trash2, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -16,6 +16,8 @@ const BecomeProvider = () => {
     keywords: [],
     images: [], // Will store File objects for upload
     imagePreviews: [], // Will store blob URLs for preview
+    pdfs: [], // Will store PDF File objects for upload
+    pdfPreviews: [], // Will store PDF preview info
     bio: '',
     experience: '',
     price: ''
@@ -206,6 +208,25 @@ const BecomeProvider = () => {
     }
   };
 
+  const handlePDFUpload = (serviceId, e) => {
+    const files = Array.from(e.target.files);
+    const previews = files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) }));
+
+    setServices(services.map(service =>
+      service.id === serviceId
+        ? { 
+            ...service, 
+            pdfs: [...service.pdfs, ...files], // Store File objects
+            pdfPreviews: [...service.pdfPreviews, ...previews] // Store preview info
+          }
+        : service
+    ));
+    // Clear related error when uploading
+    if (errors[`service-${serviceId}-pdfs`]) {
+      setErrors(prev => ({ ...prev, [`service-${serviceId}-pdfs`]: null }));
+    }
+  };
+
   const handleRemoveImage = (serviceId, imageIndex) => {
     setServices(services.map(service =>
       service.id === serviceId
@@ -213,6 +234,18 @@ const BecomeProvider = () => {
             ...service, 
             images: service.images.filter((_, i) => i !== imageIndex),
             imagePreviews: service.imagePreviews.filter((_, i) => i !== imageIndex)
+          }
+        : service
+    ));
+  };
+
+  const handleRemovePDF = (serviceId, pdfIndex) => {
+    setServices(services.map(service =>
+      service.id === serviceId
+        ? { 
+            ...service, 
+            pdfs: service.pdfs.filter((_, i) => i !== pdfIndex),
+            pdfPreviews: service.pdfPreviews.filter((_, i) => i !== pdfIndex)
           }
         : service
     ));
@@ -239,6 +272,8 @@ const BecomeProvider = () => {
       keywords: [],
       images: [],
       imagePreviews: [],
+      pdfs: [],
+      pdfPreviews: [],
       bio: '',
       experience: '',
       price: ''
@@ -319,9 +354,9 @@ const BecomeProvider = () => {
         hasErrors = true;
       }
 
-      // 8. Images
-      if (service.images.length === 0) {
-        newErrors[`service-${serviceId}-images`] = "Please upload at least one work image.";
+      // 8. Images or PDFs (at least one required)
+      if (service.images.length === 0 && (service.pdfs?.length || 0) === 0) {
+        newErrors[`service-${serviceId}-images`] = "Please upload at least one work image or PDF.";
         hasErrors = true;
       }
     });
@@ -359,6 +394,14 @@ const BecomeProvider = () => {
             }
           });
         }
+        // Add PDFs with proper fieldnames
+        if (service.pdfs && service.pdfs.length > 0) {
+          service.pdfs.forEach((file) => {
+            if (file instanceof File) {
+              formData.append(`service_${index}_pdfs`, file);
+            }
+          });
+        }
       });
 
       // Get API URL from environment
@@ -384,6 +427,8 @@ const BecomeProvider = () => {
           keywords: [],
           images: [],
           imagePreviews: [],
+          pdfs: [],
+          pdfPreviews: [],
           bio: '',
           experience: '',
           price: ''
@@ -673,6 +718,57 @@ const BecomeProvider = () => {
                         className="absolute top-2 right-2 bg-black text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all border-2 border-white"
                       >
                         <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* PDF Upload */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+                Upload PDFs <span className="text-gray-500 normal-case">(optional)</span>
+              </label>
+              <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
+                  errors[`service-${service.id}-pdfs`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
+                }`}>
+                <input
+                  type="file"
+                  id={`pdfs-${service.id}`}
+                  multiple
+                  accept="application/pdf"
+                  onChange={(e) => handlePDFUpload(service.id, e)}
+                  className="hidden"
+                />
+                <label
+                  htmlFor={`pdfs-${service.id}`}
+                  className="cursor-pointer flex flex-col items-center"
+                >
+                  <FileText className="text-black mb-3" size={48} />
+                  <span className="text-black font-bold text-lg mb-1">Click to upload PDFs</span>
+                  <span className="text-sm text-gray-600">PDF files up to 10MB</span>
+                </label>
+              </div>
+              {/* {errors[`service-${service.id}-pdfs`] && (
+                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-pdfs`]}</p>
+              )} */}
+
+              {/* PDF Preview */}
+              {service.pdfPreviews && service.pdfPreviews.length > 0 && (
+                <div className="flex flex-wrap gap-4 mt-6">
+                  {service.pdfPreviews.map((pdf, pdfIndex) => (
+                    <div key={pdfIndex} className="relative group border border-gray-300 rounded-lg p-4 bg-gray-50 flex items-center gap-3 min-w-[200px]">
+                      <FileText className="text-red-500" size={24} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{pdf.name}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePDF(service.id, pdfIndex)}
+                        className="bg-black text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}

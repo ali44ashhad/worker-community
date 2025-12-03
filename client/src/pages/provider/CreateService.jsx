@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, Trash2 } from 'lucide-react';
+import { Upload, Trash2, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,6 +16,8 @@ const initialServiceState = {
   price: '',
   images: [],
   imagePreviews: [],
+  pdfs: [],
+  pdfPreviews: [],
 };
 
 const CreateService = () => {
@@ -63,11 +65,32 @@ const CreateService = () => {
     setErrors((prev) => ({ ...prev, images: null }));
   };
 
+  const handlePDFUpload = (event) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    // For PDFs, we'll use the file name as preview
+    const previews = files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) }));
+    setForm((prev) => ({
+      ...prev,
+      pdfs: [...prev.pdfs, ...files],
+      pdfPreviews: [...prev.pdfPreviews, ...previews],
+    }));
+    setErrors((prev) => ({ ...prev, pdfs: null }));
+  };
+
   const handleRemoveImage = (index) => {
     setForm((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
       imagePreviews: prev.imagePreviews.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleRemovePDF = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      pdfs: prev.pdfs.filter((_, i) => i !== index),
+      pdfPreviews: prev.pdfPreviews.filter((_, i) => i !== index),
     }));
   };
 
@@ -116,8 +139,8 @@ const CreateService = () => {
       invalid = true;
     }
 
-    if ((form.imagePreviews?.length || 0) === 0) {
-      validationErrors.images = 'Upload at least one work image.';
+    if ((form.imagePreviews?.length || 0) === 0 && (form.pdfPreviews?.length || 0) === 0) {
+      validationErrors.images = 'Upload at least one work image or PDF.';
       invalid = true;
     }
 
@@ -148,6 +171,12 @@ const CreateService = () => {
       form.images.forEach((file) => {
         if (file instanceof File) {
           formData.append('portfolioImages', file);
+        }
+      });
+
+      form.pdfs.forEach((file) => {
+        if (file instanceof File) {
+          formData.append('portfolioPDFs', file);
         }
       });
 
@@ -375,6 +404,60 @@ const CreateService = () => {
                       className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 shadow-md hover:bg-red-600 transition"
                     >
                       <Trash2 size={16} />
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Upload PDFs <span className="text-gray-400">(optional)</span>
+            </label>
+            <motion.div
+              className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${
+                errors.pdfs ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300'
+              }`}
+              whileHover={{ scale: 1.01 }}
+            >
+              <input
+                id="create-service-pdfs"
+                type="file"
+                multiple
+                accept="application/pdf"
+                onChange={handlePDFUpload}
+                className="hidden"
+              />
+              <label htmlFor="create-service-pdfs" className="cursor-pointer flex flex-col items-center">
+                <FileText className="text-gray-400 mb-3" size={40} />
+                <span className="text-gray-900 font-semibold">Click to upload PDFs</span>
+                <span className="text-xs text-gray-500">PDF files up to 10MB</span>
+              </label>
+            </motion.div>
+            {errors.pdfs && (
+              <p className="text-red-500 text-sm mt-2 font-medium">{errors.pdfs}</p>
+            )}
+
+            {form.pdfPreviews && form.pdfPreviews.length > 0 && (
+              <div className="flex flex-wrap gap-4 mt-6">
+                {form.pdfPreviews.map((preview, index) => (
+                  <motion.div
+                    key={`pdf-preview-${index}`}
+                    className="relative border border-gray-200 rounded-xl p-4 shadow-sm bg-gray-50 flex items-center gap-3 min-w-[200px]"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                  >
+                    <FileText className="text-red-500" size={24} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{preview.name}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePDF(index)}
+                      className="bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition"
+                    >
+                      <Trash2 size={14} />
                     </button>
                   </motion.div>
                 ))}

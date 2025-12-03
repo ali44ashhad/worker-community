@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Upload, Trash2 } from 'lucide-react';
+import { X, Plus, Upload, Trash2, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyProviderProfile } from '../features/providerSlice';
@@ -55,7 +55,12 @@ const UpdateServices = () => {
         existingImages: service.portfolioImages || [],
         // For new images to be uploaded
         images: [],
-        imagePreviews: []
+        imagePreviews: [],
+        // For existing PDFs from database
+        existingPDFs: service.portfolioPDFs || [],
+        // For new PDFs to be uploaded
+        pdfs: [],
+        pdfPreviews: []
       }));
 
       if (focusServiceId) {
@@ -74,6 +79,8 @@ const UpdateServices = () => {
         keywords: [],
         images: [],
         imagePreviews: [],
+        pdfs: [],
+        pdfPreviews: [],
         bio: '',
         experience: '',
         price: ''
@@ -174,6 +181,24 @@ const UpdateServices = () => {
     }
   };
 
+  const handlePDFUpload = (serviceId, e) => {
+    const files = Array.from(e.target.files);
+    const previews = files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) }));
+
+    setServices(services.map(service =>
+      service.id === serviceId
+        ? { 
+            ...service, 
+            pdfs: [...service.pdfs, ...files],
+            pdfPreviews: [...service.pdfPreviews, ...previews]
+          }
+        : service
+    ));
+    if (errors[`service-${serviceId}-pdfs`]) {
+      setErrors(prev => ({ ...prev, [`service-${serviceId}-pdfs`]: null }));
+    }
+  };
+
   const handleRemoveImage = (serviceId, imageIndex, isExisting = false) => {
     if (isExisting) {
       // Remove existing image from database
@@ -204,6 +229,32 @@ const UpdateServices = () => {
     }
   };
 
+  const handleRemovePDF = (serviceId, pdfIndex, isExisting = false) => {
+    if (isExisting) {
+      setServices(services.map(service =>
+        service.id === serviceId
+          ? {
+              ...service,
+              existingPDFs: service.existingPDFs.filter((_, i) => i !== pdfIndex),
+            }
+          : service
+      ));
+    } else {
+      const existingCount = services.find(s => s.id === serviceId)?.existingPDFs?.length || 0;
+      const newIndex = pdfIndex - existingCount;
+      
+      setServices(services.map(service =>
+        service.id === serviceId
+          ? { 
+              ...service, 
+              pdfs: service.pdfs.filter((_, i) => i !== newIndex),
+              pdfPreviews: service.pdfPreviews.filter((_, i) => i !== newIndex)
+            }
+          : service
+      ));
+    }
+  };
+
   const handleInputChange = (serviceId, field, value) => {
     setServices(services.map(service =>
       service.id === serviceId
@@ -219,6 +270,9 @@ const UpdateServices = () => {
     setServices([...services, {
       id: Date.now(),
       servicename: '',
+      existingPDFs: [],
+      pdfs: [],
+      pdfPreviews: [],
       category: '',
       subCategories: [],
       keywords: [],
@@ -295,10 +349,11 @@ const UpdateServices = () => {
         hasErrors = true;
       }
 
-      // For existing services, at least one image must exist (either existing or new)
+      // For existing services, at least one image or PDF must exist
       const totalImages = (service.existingImages?.length || 0) + (service.imagePreviews?.length || 0);
-      if (totalImages === 0) {
-        newErrors[`service-${serviceId}-images`] = "Please upload at least one work image.";
+      const totalPDFs = (service.existingPDFs?.length || 0) + (service.pdfPreviews?.length || 0);
+      if (totalImages === 0 && totalPDFs === 0) {
+        newErrors[`service-${serviceId}-images`] = "Please upload at least one work image or PDF.";
         hasErrors = true;
       }
     });
@@ -350,6 +405,13 @@ const UpdateServices = () => {
         service.images.forEach((file) => {
           if (file instanceof File) {
             formData.append('portfolioImages', file);
+          }
+        });
+
+        // Add new PDFs if any
+        service.pdfs.forEach((file) => {
+          if (file instanceof File) {
+            formData.append('portfolioPDFs', file);
           }
         });
 
@@ -812,6 +874,97 @@ const UpdateServices = () => {
                         whileTap={{ scale: 0.9 }}
                       >
                         <Trash2 size={18} />
+                      </motion.button>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </div>
+
+            {/* PDF Upload */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
+                Upload PDFs <span className="text-gray-400">(optional)</span>
+              </label>
+              <motion.div 
+                className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
+                  errors[`service-${service.id}-pdfs`] 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+                whileHover={{ scale: 1.01 }}
+              >
+                <input
+                  type="file"
+                  id={`pdfs-${service.id}`}
+                  multiple
+                  accept="application/pdf"
+                  onChange={(e) => handlePDFUpload(service.id, e)}
+                  className="hidden"
+                />
+                <label
+                  htmlFor={`pdfs-${service.id}`}
+                  className="cursor-pointer flex flex-col items-center"
+                >
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <FileText className="text-gray-400 mb-4" size={48} />
+                  </motion.div>
+                  <span className="text-gray-900 font-semibold text-lg mb-2">Click to upload PDFs</span>
+                  <span className="text-sm text-gray-500">PDF files up to 10MB</span>
+                </label>
+              </motion.div>
+              {/* {errors[`service-${service.id}-pdfs`] && (
+                <motion.p 
+                  className="text-red-500 text-sm mt-2 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {errors[`service-${service.id}-pdfs`]}
+                </motion.p>
+              )} */}
+
+              {/* PDF Preview */}
+              {((service.existingPDFs && service.existingPDFs.length > 0) || (service.pdfPreviews && service.pdfPreviews.length > 0)) && (
+                <motion.div 
+                  className="flex flex-wrap gap-4 mt-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {[
+                    ...(service.existingPDFs || []).map((pdf, idx) => ({ 
+                      name: pdf.url.split('/').pop() || 'PDF', 
+                      url: pdf.url, 
+                      isExisting: true, 
+                      index: idx 
+                    })),
+                    ...(service.pdfPreviews || []).map((preview, idx) => ({ 
+                      name: preview.name, 
+                      url: preview.url, 
+                      isExisting: false, 
+                      index: idx 
+                    }))
+                  ].map((pdfObj, displayIndex) => (
+                    <motion.div 
+                      key={`pdf-${displayIndex}`} 
+                      className="relative group border border-gray-200 rounded-xl p-4 bg-gray-50 flex items-center gap-3 min-w-[200px] shadow-md hover:shadow-lg transition-all duration-300"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: displayIndex * 0.05 }}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <FileText className="text-red-500" size={24} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{pdfObj.name}</p>
+                      </div>
+                      <motion.button
+                        type="button"
+                        onClick={() => handleRemovePDF(service.id, pdfObj.index, pdfObj.isExisting)}
+                        className="bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Trash2 size={14} />
                       </motion.button>
                     </motion.div>
                   ))}
