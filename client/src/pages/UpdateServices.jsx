@@ -44,6 +44,7 @@ const UpdateServices = () => {
       let existingServices = (myProviderProfile.serviceOfferings || []).map((service, index) => ({
         id: service._id || Date.now() + index,
         _id: service._id, // Keep original ID for updates
+        servicename: service.servicename || '',
         category: service.serviceCategory || '',
         subCategories: service.subCategories || [],
         keywords: service.keywords || [],
@@ -67,6 +68,7 @@ const UpdateServices = () => {
 
       setServices(existingServices.length > 0 ? existingServices : [{
         id: Date.now(),
+        servicename: '',
         category: '',
         subCategories: [],
         keywords: [],
@@ -216,13 +218,15 @@ const UpdateServices = () => {
   const addNewService = () => {
     setServices([...services, {
       id: Date.now(),
+      servicename: '',
       category: '',
       subCategories: [],
       keywords: [],
       images: [],
       imagePreviews: [],
       bio: '',
-      experience: ''
+      experience: '',
+      price: ''
     }]);
   };
 
@@ -252,6 +256,11 @@ const UpdateServices = () => {
 
     services.forEach((service) => {
       const serviceId = service.id;
+
+      if (!service.servicename || !service.servicename.trim()) {
+        newErrors[`service-${serviceId}-servicename`] = "Service name is required.";
+        hasErrors = true;
+      }
 
       if (!service.category) {
         newErrors[`service-${serviceId}-category`] = "Please select a category.";
@@ -329,6 +338,7 @@ const UpdateServices = () => {
       for (const service of services) {
         const formData = new FormData();
         
+        formData.append('servicename', service.servicename);
         formData.append('serviceCategory', service.category);
         formData.append('subCategories', JSON.stringify(service.subCategories));
         formData.append('keywords', JSON.stringify(service.keywords));
@@ -512,6 +522,33 @@ const UpdateServices = () => {
                   Service {service._id ? '(Existing)' : '(New)'}
                 </h2>
               </div>
+
+            {/* Service Name */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
+                Service Name *
+              </label>
+              <input
+                type="text"
+                value={service.servicename || ''}
+                onChange={(e) => handleInputChange(service.id, 'servicename', e.target.value)}
+                placeholder="Enter a name for your service"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
+                  errors[`service-${service.id}-servicename`] 
+                    ? 'border-red-300 focus:ring-red-400 bg-red-50' 
+                    : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
+                }`}
+              />
+              {errors[`service-${service.id}-servicename`] && (
+                <motion.p 
+                  className="text-red-500 text-sm mt-2 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {errors[`service-${service.id}-servicename`]}
+                </motion.p>
+              )}
+            </div>
 
             {/* Category Selection */}
             <div className="mb-6">

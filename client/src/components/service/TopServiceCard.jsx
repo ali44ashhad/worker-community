@@ -16,7 +16,8 @@ const TopServiceCard = ({ service }) => {
   const wishlistIds = useSelector((s) => s.wishlist.ids);
 
   const image = service?.portfolioImages?.[0]?.url;
-  const title = service?.serviceCategory || 'Service';
+  const serviceName = service?.servicename || '';
+  const serviceCategory = service?.serviceCategory || 'Service';
   const description = service?.description || '';
   const keywords = Array.isArray(service?.keywords) ? service.keywords.slice(0, 4) : [];
   const providerName = service?.provider?.user?.name || 'Unknown Provider';
@@ -60,7 +61,7 @@ const TopServiceCard = ({ service }) => {
       <div className="mb-4">
         <div className="w-full h-48 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
           {image ? (
-            <img src={image} alt={title} className="w-full h-full object-cover" />
+            <img src={image} alt={serviceName || serviceCategory} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-black font-bold">
               No Image
@@ -69,7 +70,8 @@ const TopServiceCard = ({ service }) => {
         </div>
       </div>
 
-      <h3 className="text-2xl font-bold text-black mb-1">{title}</h3>
+      {/* Service Name */}
+      <h3 className="text-xl font-bold text-black mb-1">{serviceName || 'Service'}</h3>
       <p className="text-sm text-gray-700 mb-2 line-clamp-2">{description}</p>
 
       {/* Price Display */}

@@ -156,17 +156,17 @@ const ManageServices = () => {
 
               <div className="p-6 flex-1 flex flex-col">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {service.serviceCategory || 'Uncategorized'}
-                  </span>
+                  <h3 className="text-2xl font-bold text-black">
+                    {service.servicename || service.serviceCategory || 'Service'}
+                  </h3>
                   {service.price !== undefined && (
                     <span className="text-lg font-bold text-black">₹{service.price}</span>
                   )}
                 </div>
 
-                <h3 className="text-2xl font-bold text-black mt-3 mb-2">
-                  {service.title || service.serviceCategory}
-                </h3>
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-2 mb-2">
+                  {service.serviceCategory || 'Uncategorized'}
+                </span>
                 <p className="text-gray-600 text-sm line-clamp-3">
                   {service.description || 'No description provided.'}
                 </p>

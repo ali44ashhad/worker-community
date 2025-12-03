@@ -552,9 +552,16 @@ const UpdateProviders = () => {
                                 <div className="bg-gray-200 border border-gray-300 group-hover:bg-gray-300 p-2 rounded-xl">
                                   <HiOutlineBriefcase className="text-black group-hover:text-black" size={20} />
                                 </div>
-                                <h4 className="font-bold text-lg text-black">
-                                  {service.serviceCategory}
-                                </h4>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-bold text-lg text-black">
+                                    {service.servicename || service.serviceCategory || 'Service'}
+                                  </h4>
+                                  {service.servicename && service.serviceCategory && (
+                                    <p className="text-sm text-gray-600 mt-0.5">
+                                      {service.serviceCategory}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                               <HiOutlinePencil className="text-gray-500 group-hover:text-black" size={18} />
                             </div>

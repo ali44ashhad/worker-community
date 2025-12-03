@@ -16,6 +16,7 @@ const ServiceCard = ({ service }) => {
   const [imageError, setImageError] = useState(false);
 
   // Get service information
+  const serviceName = service?.servicename || '';
   const fullDescription = service?.description || 'No description available.';
 
   const truncatedDescription = fullDescription.length > 80
@@ -100,6 +101,13 @@ const ServiceCard = ({ service }) => {
 
       {/* Content */}
       <div className="p-4">
+        {/* Service Name */}
+        <div className="mb-2">
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">
+            {serviceName || service?.serviceCategory || 'Service'}
+          </h3>
+        </div>
+
         {/* Service Description */}
         <div className="mb-3">
           <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">

@@ -97,7 +97,7 @@ const Cart = () => {
             <div className='lg:col-span-2 space-y-4'>
               {wishlistServices.map((service) => {
                 const image = service?.portfolioImages?.[0]?.url;
-                const title = service?.serviceCategory || 'Service';
+                const title = service?.servicename || service?.serviceCategory || 'Service';
                 const description = service?.description || '';
                 const price = service?.price;
                 const providerName = service?.provider?.user?.name || 'Unknown Provider';

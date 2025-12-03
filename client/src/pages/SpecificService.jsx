@@ -198,8 +198,13 @@ const SpecificService = () => {
         {/* Service Title Header */}
         <div className='mb-6'>
           <h1 className='text-2xl md:text-3xl font-bold text-gray-900 mb-2'>
-            {serviceCategory}
+            {service?.servicename || serviceCategory || 'Service'}
           </h1>
+          {service?.servicename && serviceCategory && (
+            <p className='text-lg text-gray-600 mb-2'>
+              {serviceCategory}
+            </p>
+          )}
           {subCategories.length > 0 && (
             <div className='flex flex-wrap gap-2'>
               {subCategories.map((cat, idx) => (

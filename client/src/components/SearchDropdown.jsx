@@ -219,13 +219,15 @@ const SearchDropdown = ({ isOpen, onClose }) => {
     
     const query = searchQuery.toLowerCase();
     return allServices.filter(service => {
+      const servicename = service?.servicename?.toLowerCase() || '';
       const category = service?.serviceCategory?.toLowerCase() || '';
       const description = service?.description?.toLowerCase() || '';
       const keywords = (service?.keywords || []).map(k => k?.toLowerCase()).join(' ');
       const subCategories = (service?.subCategories || []).map(s => s?.toLowerCase()).join(' ');
       const providerName = service?.provider?.user?.name?.toLowerCase() || '';
       
-      return category.includes(query) || 
+      return servicename.includes(query) ||
+             category.includes(query) || 
              description.includes(query) || 
              keywords.includes(query) ||
              subCategories.includes(query) ||
@@ -363,12 +365,15 @@ const SearchDropdown = ({ isOpen, onClose }) => {
                       {/* Service Info */}
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-semibold text-black group-hover:text-gray-700 transition-colors line-clamp-1">
-                          {truncatedDescription}
+                          {service?.servicename || service?.serviceCategory || 'Service'}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                          {truncatedDescription}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
                           By {providerName}
                         </p>
-                        {service?.serviceCategory && (
+                        {service?.serviceCategory && service?.servicename && (
                           <span className="inline-block mt-1 px-2 py-0.5 bg-black text-white text-xs rounded-full">
                             {service.serviceCategory}
                           </span>

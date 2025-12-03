@@ -668,6 +668,7 @@ const Services = () => {
     // Apply search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(service => {
+        const servicename = service?.servicename?.toLowerCase() || '';
         const category = service?.serviceCategory?.toLowerCase() || '';
         const description = service?.description?.toLowerCase() || '';
         const keywords = (service?.keywords || []).map(k => k?.toLowerCase()).join(' ');
@@ -675,7 +676,8 @@ const Services = () => {
         const providerName = service?.provider?.user?.name?.toLowerCase() || '';
         
         const query = searchQuery.toLowerCase();
-        return category.includes(query) || 
+        return servicename.includes(query) ||
+               category.includes(query) || 
                description.includes(query) || 
                keywords.includes(query) ||
                subCategories.includes(query) ||

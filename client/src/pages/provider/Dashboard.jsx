@@ -407,7 +407,10 @@ const ProviderDashboard = () => {
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200"
               >
                 <div>
-                  <p className="font-semibold text-black">{service.serviceCategory}</p>
+                  <p className="font-semibold text-black">{service.servicename || service.serviceCategory || 'Service'}</p>
+                  {service.servicename && service.serviceCategory && (
+                    <p className="text-xs text-gray-500">{service.serviceCategory}</p>
+                  )}
                   {service.price !== undefined && (
                     <p className="text-xs text-gray-500">Price: ₹{service.price}</p>
                   )}

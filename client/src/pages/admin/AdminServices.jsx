@@ -16,7 +16,8 @@ import {
   HiOutlineKey,
   HiOutlineDocumentText,
   HiOutlineClock,
-  HiOutlinePhotograph
+  HiOutlinePhotograph,
+  HiOutlineCube
 } from 'react-icons/hi';
 
 const SERVICE_RULES = {
@@ -132,6 +133,7 @@ const AdminServices = () => {
   const { services, isLoading, error } = useSelector((state) => state.admin);
   const [editingService, setEditingService] = useState(null);
   const [editForm, setEditForm] = useState({
+    servicename: '',
     serviceCategory: '',
     subCategories: [],
     keywords: [],
@@ -148,6 +150,7 @@ const AdminServices = () => {
   const handleEdit = (service) => {
     setEditingService(service._id);
     setEditForm({
+      servicename: service.servicename || '',
       serviceCategory: service.serviceCategory || '',
       subCategories: Array.isArray(service.subCategories) ? service.subCategories : [],
       keywords: Array.isArray(service.keywords) ? service.keywords : [],
@@ -160,6 +163,7 @@ const AdminServices = () => {
   const handleCancel = () => {
     setEditingService(null);
     setEditForm({
+      servicename: '',
       serviceCategory: '',
       subCategories: [],
       keywords: [],
@@ -172,6 +176,10 @@ const AdminServices = () => {
   const handleSave = async (serviceId) => {
     const formData = new FormData();
     
+    // Always send servicename if it exists in the form (even if empty string)
+    if (editForm.servicename !== undefined && editForm.servicename !== null) {
+      formData.append('servicename', editForm.servicename);
+    }
     if (editForm.serviceCategory) formData.append('serviceCategory', editForm.serviceCategory);
     if (editForm.subCategories.length > 0) {
       formData.append('subCategories', JSON.stringify(editForm.subCategories));
@@ -303,7 +311,8 @@ const AdminServices = () => {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">{service.serviceCategory}</h3>
+                    <h3 className="text-xl font-bold text-gray-900">{service.servicename || 'N/A'}</h3>
+                    {/* <p className="text-sm text-gray-600">{service.serviceCategory || 'N/A'}</p> */}
                     <p className="text-sm text-gray-600">Provider: {providerName}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -337,6 +346,25 @@ const AdminServices = () => {
                 </div>
 
                 <div className="space-y-4">
+                  {/* Service Name */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                      <HiOutlineCube size={18} />
+                      Service Name
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editForm.servicename}
+                        onChange={(e) => setEditForm({ ...editForm, servicename: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                        placeholder="Enter service name"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{service.servicename || 'N/A'}</p>
+                    )}
+                  </div>
+
                   {/* Service Category */}
                   <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">

@@ -11,6 +11,7 @@ import SERVICE_RULES from '../../constants/serviceRules';
 const buildServiceState = (service) => ({
   id: service?._id || Date.now(),
   _id: service?._id,
+  servicename: service?.servicename || '',
   category: service?.serviceCategory || '',
   subCategories: service?.subCategories || [],
   keywords: service?.keywords || [],
@@ -103,6 +104,11 @@ const EditService = () => {
     const newErrors = {};
     let hasErrors = false;
 
+    if (!serviceForm?.servicename || !serviceForm.servicename.trim()) {
+      newErrors.servicename = 'Service name is required.';
+      hasErrors = true;
+    }
+
     if (!serviceForm?.category) {
       newErrors.category = 'Select a category.';
       hasErrors = true;
@@ -167,6 +173,7 @@ const EditService = () => {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       const formData = new FormData();
 
+      formData.append('servicename', serviceForm.servicename);
       formData.append('serviceCategory', serviceForm.category);
       formData.append('subCategories', JSON.stringify(serviceForm.subCategories));
       formData.append('keywords', JSON.stringify(serviceForm.keywords));
@@ -284,6 +291,24 @@ const EditService = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Service Name *</label>
+            <input
+              type="text"
+              value={serviceForm?.servicename || ''}
+              onChange={(event) => handleInputChange('servicename', event.target.value)}
+              placeholder="Enter a name for your service"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
+                errors.servicename
+                  ? 'border-red-300 focus:ring-red-400 bg-red-50'
+                  : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
+              }`}
+            />
+            {errors.servicename && (
+              <p className="text-red-500 text-sm mt-2 font-medium">{errors.servicename}</p>
+            )}
+          </div>
+
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-3">Category *</label>
             <select

@@ -10,6 +10,7 @@ const BecomeProvider = () => {
   const dispatch = useDispatch();
   const [services, setServices] = useState([{
     id: Date.now(),
+    servicename: '',
     category: '',
     subCategories: [],
     keywords: [],
@@ -232,6 +233,7 @@ const BecomeProvider = () => {
   const addNewService = () => {
     setServices([...services, {
       id: Date.now(),
+      servicename: '',
       category: '',
       subCategories: [],
       keywords: [],
@@ -272,37 +274,43 @@ const BecomeProvider = () => {
     services.forEach((service) => {
       const serviceId = service.id;
 
-      // 1. Category
+      // 1. Service Name
+      if (!service.servicename || !service.servicename.trim()) {
+        newErrors[`service-${serviceId}-servicename`] = "Service name is required.";
+        hasErrors = true;
+      }
+
+      // 2. Category
       if (!service.category) {
         newErrors[`service-${serviceId}-category`] = "Please select a category.";
         hasErrors = true;
       }
 
-      // 2. Sub-Categories (only if category is selected and subcategories exist)
+      // 3. Sub-Categories (only if category is selected and subcategories exist)
       if (service.category && SERVICE_RULES[service.category].subCategories.length > 0 && service.subCategories.length === 0) {
         newErrors[`service-${serviceId}-subCategories`] = "Please select at least one sub-category.";
         hasErrors = true;
       }
 
-      // 3. Keywords (only if category is selected AND keywords exist for it)
+      // 4. Keywords (only if category is selected AND keywords exist for it)
       if (service.category && SERVICE_RULES[service.category].keywords.length > 0 && service.keywords.length === 0) {
         newErrors[`service-${serviceId}-keywords`] = "Please select at least one keyword.";
         hasErrors = true;
       }
 
-      // 4. Bio
+      // 5. Bio
       if (!service.bio.trim()) {
         newErrors[`service-${serviceId}-bio`] = "Bio/Description is required.";
         hasErrors = true;
       }
 
-      // 5. Experience
+      // 6. Experience
       if (service.experience === '') { // Check for empty string, allowing "0"
         newErrors[`service-${serviceId}-experience`] = "Experience is required.";
         hasErrors = true;
       }
 
-      // 6. Price
+      // 7. Price
       if (service.price === '' || service.price === null || service.price === undefined) {
         newErrors[`service-${serviceId}-price`] = "Price is required.";
         hasErrors = true;
@@ -311,7 +319,7 @@ const BecomeProvider = () => {
         hasErrors = true;
       }
 
-      // 7. Images
+      // 8. Images
       if (service.images.length === 0) {
         newErrors[`service-${serviceId}-images`] = "Please upload at least one work image.";
         hasErrors = true;
@@ -370,6 +378,7 @@ const BecomeProvider = () => {
         // Reset form
         setServices([{
           id: Date.now(),
+          servicename: '',
           category: '',
           subCategories: [],
           keywords: [],
@@ -462,6 +471,25 @@ const BecomeProvider = () => {
               </h2>
             </div>
 
+            {/* Service Name */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+                Service Name *
+              </label>
+              <input
+                type="text"
+                value={service.servicename}
+                onChange={(e) => handleInputChange(service.id, 'servicename', e.target.value)}
+                placeholder="Enter a name for your service"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
+                  errors[`service-${service.id}-servicename`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
+                }`}
+              />
+              {errors[`service-${service.id}-servicename`] && (
+                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-servicename`]}</p>
+              )}
+            </div>
+
             {/* Category Selection */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
@@ -543,7 +571,7 @@ const BecomeProvider = () => {
             {/* Bio */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
-                Bio/Description *
+                Service Description *
               </label>
               <textarea
                 value={service.bio}

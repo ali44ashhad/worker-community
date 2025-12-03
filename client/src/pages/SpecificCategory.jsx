@@ -215,13 +215,15 @@ const SpecificCategory = () => {
     // Apply search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(service => {
+        const servicename = service?.servicename?.toLowerCase() || '';
         const description = service?.description?.toLowerCase() || '';
         const keywords = (service?.keywords || []).map(k => k?.toLowerCase()).join(' ');
         const subCategories = (service?.subCategories || []).map(s => s?.toLowerCase()).join(' ');
         const providerName = service?.provider?.user?.name?.toLowerCase() || '';
         
         const query = searchQuery.toLowerCase();
-        return description.includes(query) || 
+        return servicename.includes(query) ||
+               description.includes(query) || 
                keywords.includes(query) ||
                subCategories.includes(query) ||
                providerName.includes(query);
