@@ -9,7 +9,8 @@ import { Eye, EyeOff } from "lucide-react";
 const Login = () => {
   const [mode, setMode] = useState("login");
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     phoneNumber: "",
@@ -123,13 +124,22 @@ const Login = () => {
             {/* Signup-only fields */}
             {mode === "signup" && (
               <>
-                <div className="w-full mb-4">
+                <div className="w-full mb-4 grid grid-cols-2 gap-3">
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="firstName"
+                    value={formData.firstName}
                     onChange={handleChange}
-                    placeholder="Full Name"
+                    placeholder="First Name"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
+                    required
+                  />
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Last Name"
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
                     required
                   />

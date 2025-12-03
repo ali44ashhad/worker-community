@@ -6,6 +6,7 @@ import { FaRegHeart } from "react-icons/fa6";
 import { IoIosHeart } from "react-icons/io";
 import { addToWishlist, removeFromWishlist } from '../../features/wishlistSlice';
 import { toast } from 'react-hot-toast';
+import { getFullName, getInitials } from '../../utils/userHelpers';
 
 const ServiceCard = ({ service }) => {
 
@@ -33,7 +34,7 @@ const ServiceCard = ({ service }) => {
   // Get provider information
   const provider = service?.provider || {};
   const providerUser = provider?.user || {};
-  const providerName = providerUser?.name || 'Unknown Provider';
+  const providerName = getFullName(providerUser) || 'Unknown Provider';
   const profileImage = providerUser?.profileImage;
 //   const providerId = provider?._id;
 
@@ -145,7 +146,7 @@ const ServiceCard = ({ service }) => {
                 className="w-7 h-7 rounded-full border border-gray-200 bg-gray-700 text-white flex items-center justify-center font-semibold text-xs"
                 style={{ display: profileImage ? 'none' : 'flex' }}
               >
-                {providerName.charAt(0).toUpperCase()}
+                {getInitials(providerUser)}
               </div>
             </div>
 

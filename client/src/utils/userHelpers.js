@@ -1,0 +1,109 @@
+/**
+ * Helper functions for working with user data
+ * Handles both new field structure (firstName, lastName) and old structure (name) for backward compatibility
+ */
+
+/**
+ * Get the full name of a user
+ * @param {Object} user - User object
+ * @returns {string} Full name or fallback
+ */
+export const getFullName = (user) => {
+  if (!user) return 'Unknown User';
+  
+  // New structure: firstName and lastName
+  if (user.firstName && user.lastName) {
+    return `${user.firstName} ${user.lastName}`;
+  }
+  
+  // Fallback: use name field (for backward compatibility or migrated data)
+  if (user.name) {
+    return user.name;
+  }
+  
+  // Last resort: use firstName only if available
+  if (user.firstName) {
+    return user.firstName;
+  }
+  
+  return 'Unknown User';
+};
+
+/**
+ * Get the first name of a user
+ * @param {Object} user - User object
+ * @returns {string} First name or fallback
+ */
+export const getFirstName = (user) => {
+  if (!user) return '';
+  
+  // New structure: firstName
+  if (user.firstName) {
+    return user.firstName;
+  }
+  
+  // Fallback: extract first word from name field
+  if (user.name) {
+    return user.name.split(' ')[0] || '';
+  }
+  
+  return '';
+};
+
+/**
+ * Format address fields into a display string
+ * @param {Object} user - User object
+ * @returns {string} Formatted address or fallback
+ */
+export const formatAddress = (user) => {
+  if (!user) return '';
+  
+  // New structure: address fields
+  const parts = [];
+  if (user.addressLine1) parts.push(user.addressLine1);
+  if (user.addressLine2) parts.push(user.addressLine2);
+  if (user.city) parts.push(user.city);
+  if (user.state) parts.push(user.state);
+  if (user.zip) parts.push(user.zip);
+  
+  if (parts.length > 0) {
+    return parts.join(', ');
+  }
+  
+  // Fallback: use old address field
+  if (user.address) {
+    return user.address;
+  }
+  
+  return '';
+};
+
+/**
+ * Get initials from a user's name
+ * @param {Object} user - User object
+ * @returns {string} Initials (e.g., "JD" for John Doe)
+ */
+export const getInitials = (user) => {
+  if (!user) return 'U';
+  
+  // New structure: firstName and lastName
+  if (user.firstName && user.lastName) {
+    return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+  }
+  
+  // Fallback: use name field
+  if (user.name) {
+    const parts = user.name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return parts[0].charAt(0).toUpperCase();
+  }
+  
+  // Last resort: use firstName only
+  if (user.firstName) {
+    return user.firstName.charAt(0).toUpperCase();
+  }
+  
+  return 'U';
+};

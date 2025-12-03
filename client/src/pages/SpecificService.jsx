@@ -10,6 +10,7 @@ import { fetchCommentsByService } from '../features/commentSlice';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { getFullName, getInitials, formatAddress } from '../utils/userHelpers';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -101,7 +102,7 @@ const SpecificService = () => {
   
   const portfolioImages = service?.portfolioImages || [];
   const currentImage = portfolioImages[selectedImageIndex]?.url;
-  const providerName = service?.provider?.user?.name || 'Unknown Provider';
+  const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
   const profileImage = service?.provider?.user?.profileImage;
   const providerPhoneNumber = service?.provider?.user?.phoneNumber || '';
   const serviceDescription = service?.description || 'No description available.';
@@ -112,7 +113,7 @@ const SpecificService = () => {
   const providerBio = service?.provider?.bio || '';
   const providerCreatedAt = service?.provider?.user?.createdAt;
   const serviceExperience = service?.experience || 0;
-  const providerAddress = service?.provider?.user?.address || 'Address not provided';
+  const providerAddress = formatAddress(service?.provider?.user) || 'Address not provided';
 
   // Format date
   const formatDate = (dateString) => {
@@ -317,7 +318,7 @@ const SpecificService = () => {
                     className='w-24 h-24 rounded-full border-4 border-gray-900 bg-gray-900 text-white flex items-center justify-center font-bold text-2xl'
                     style={{ display: profileImage ? 'none' : 'flex' }}
                   >
-                    {providerName.charAt(0).toUpperCase()}
+                    {getInitials(service?.provider?.user)}
                   </div>
                   {/* Online Badge */}
                   <div className='absolute bottom-0 right-0 w-6 h-6 bg-gray-600 border-2 border-white rounded-full'></div>

@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getAllProviders } from '../features/providerSlice';
 import { HiOutlineSearch } from 'react-icons/hi';
 import { FiTrendingUp } from 'react-icons/fi'; // Added this icon
+import { getFullName, getInitials } from '../utils/userHelpers';
 
 // SERVICE_RULES from AllCategory component
 const SERVICE_RULES = {
@@ -224,7 +225,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
       const description = service?.description?.toLowerCase() || '';
       const keywords = (service?.keywords || []).map(k => k?.toLowerCase()).join(' ');
       const subCategories = (service?.subCategories || []).map(s => s?.toLowerCase()).join(' ');
-      const providerName = service?.provider?.user?.name?.toLowerCase() || '';
+      const providerName = getFullName(service?.provider?.user)?.toLowerCase() || '';
       
       return servicename.includes(query) ||
              category.includes(query) || 
@@ -335,7 +336,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
                 {filteredServices.map((service) => {
                   const portfolioImages = service?.portfolioImages || [];
                   const mainImage = portfolioImages[0]?.url;
-                  const providerName = service?.provider?.user?.name || 'Unknown Provider';
+                  const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
                   const description = service?.description || 'No description available.';
                   const truncatedDescription = description.length > 80
                     ? description.substring(0, 80) + '...'

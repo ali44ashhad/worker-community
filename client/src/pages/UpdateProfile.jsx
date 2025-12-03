@@ -12,9 +12,14 @@ const UpdateProfile = () => {
   const isLoading = useSelector((state) => state.auth.isLoading);
   
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     phoneNumber: '',
-    address: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    zip: '',
   });
   const [previewImage, setPreviewImage] = useState('');
   const [profileImage, setProfileImage] = useState(null);
@@ -26,9 +31,14 @@ const UpdateProfile = () => {
       console.log("UPDATE PROFILE USER", user);
       
       setFormData({
-        name: user.name || '',
+        firstName: user.firstName || user.name?.split(' ')[0] || '',
+        lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',
         phoneNumber: user.phoneNumber || '',
-        address: user.address || '',
+        addressLine1: user.addressLine1 || '',
+        addressLine2: user.addressLine2 || '',
+        city: user.city || '',
+        state: user.state || '',
+        zip: user.zip || '',
       });
       setPreviewImage(user.profileImage || '');
       setRemoveProfileImage(false);
@@ -98,9 +108,14 @@ const UpdateProfile = () => {
     
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
+      formDataToSend.append('firstName', formData.firstName);
+      formDataToSend.append('lastName', formData.lastName);
       formDataToSend.append('phoneNumber', formData.phoneNumber);
-      formDataToSend.append('address', formData.address);
+      formDataToSend.append('addressLine1', formData.addressLine1);
+      formDataToSend.append('addressLine2', formData.addressLine2);
+      formDataToSend.append('city', formData.city);
+      formDataToSend.append('state', formData.state);
+      formDataToSend.append('zip', formData.zip);
       
       if (removeProfileImage) {
         formDataToSend.append('removeProfileImage', 'true');
@@ -209,19 +224,38 @@ const UpdateProfile = () => {
 
           {/* Form Section */}
           <form onSubmit={handleSubmit} className="p-8">
-            {/* Name Input */}
+            {/* First Name Input */}
             <div className="mb-6">
               <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                Full Name
+                First Name
               </label>
               <div className="relative">
                 <HiOutlineUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="firstName"
+                  value={formData.firstName}
                   onChange={handleChange}
-                  placeholder="Enter your full name"
+                  placeholder="Enter your first name"
+                  className="w-full h-14 pl-12 pr-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Last Name Input */}
+            <div className="mb-6">
+              <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
+                Last Name
+              </label>
+              <div className="relative">
+                <HiOutlineUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Enter your last name"
                   className="w-full h-14 pl-12 pr-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
                   required
                 />
@@ -264,20 +298,60 @@ const UpdateProfile = () => {
               </div>
             </div>
 
-            {/* Address Input */}
+            {/* Address Inputs */}
             <div className="mb-8">
               <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
                 Address <span className="text-gray-400 font-bold normal-case">(optional)</span>
-              </label> 
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Enter your full address"
-                className="w-full px-4 py-3 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
-                rows="3"
-                // required
-              />
+              </label>
+              
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  name="addressLine1"
+                  value={formData.addressLine1}
+                  onChange={handleChange}
+                  placeholder="Address Line 1"
+                  className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                />
+                
+                <input
+                  type="text"
+                  name="addressLine2"
+                  value={formData.addressLine2}
+                  onChange={handleChange}
+                  placeholder="Address Line 2 (optional)"
+                  className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                />
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="City"
+                    className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                  />
+                  
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    placeholder="State"
+                    className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                  />
+                  
+                  <input
+                    type="text"
+                    name="zip"
+                    value={formData.zip}
+                    onChange={handleChange}
+                    placeholder="ZIP Code"
+                    className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Submit Button */}

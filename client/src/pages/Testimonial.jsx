@@ -105,6 +105,7 @@ import React, { useMemo, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { getAllProviders } from '../features/providerSlice';
 import { motion } from 'framer-motion';
+import { getFullName } from '../utils/userHelpers';
 
 const makeTestimonial = (service, providerName) =>
   `"I had a wonderful experience with the ${service?.serviceCategory || 'service'} by ${providerName}. Highly professional and exceeded my expectations!"`;
@@ -145,7 +146,7 @@ const Testimonial = () => {
     }
 
     return services.slice(0, 6).map((service) => {
-      const providerName = service?.provider?.user?.name || 'Service Provider';
+      const providerName = getFullName(service?.provider?.user) || 'Service Provider';
       const testimonial = makeTestimonial(service, providerName);
       let image = service?.portfolioImages?.[0]?.url;
       if (!image) image = service?.provider?.user?.profileImage;

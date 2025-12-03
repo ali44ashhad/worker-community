@@ -34,7 +34,9 @@ export const createServiceComment = createAsyncThunk(
           ? res.data.comment.customer
           : {
               _id: currentUser?._id,
-              name: currentUser?.name,
+              name: currentUser?.firstName && currentUser?.lastName 
+                ? `${currentUser.firstName} ${currentUser.lastName}` 
+                : currentUser?.name || '',
               profileImage: currentUser?.profileImage,
             },
       };
@@ -60,7 +62,9 @@ export const updateServiceComment = createAsyncThunk(
           ? updated.customer
           : {
               _id: currentUser?._id,
-              name: currentUser?.name,
+              name: currentUser?.firstName && currentUser?.lastName 
+                ? `${currentUser.firstName} ${currentUser.lastName}` 
+                : currentUser?.name || '',
               profileImage: currentUser?.profileImage,
             },
       };

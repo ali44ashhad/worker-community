@@ -13,6 +13,7 @@ import {
   HiOutlineCalendar,
 } from 'react-icons/hi';
 import { getProviderDashboardStats } from '../../features/providerSlice';
+import { getFullName, getFirstName, getInitials } from '../../utils/userHelpers';
 
 const statusStyles = {
   pending: {
@@ -173,7 +174,7 @@ const ProviderDashboard = () => {
         transition={{ duration: 0.5 }}
       >
         <p className="text-sm uppercase tracking-wide text-gray-500 mb-1">
-          Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+          Welcome back{user ? `, ${getFirstName(user)}` : ''}
         </p>
         <h1 className="text-4xl font-bold text-black tracking-tight">Provider Dashboard</h1>
         <p className="text-gray-600 mt-2">
@@ -262,14 +263,7 @@ const ProviderDashboard = () => {
             <div className="space-y-4">
               {recentBookings.map((booking, index) => {
                 const customer = booking.customer || {};
-                const initials = customer.name
-                  ? customer.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase()
-                  : 'NA';
+                const initials = getInitials(customer);
                 const scheduledDate = formatDate(booking.scheduledDate);
                 const createdAt = formatDate(booking.createdAt);
                 const style = statusStyles[booking.status] || statusStyles.pending;
@@ -284,7 +278,7 @@ const ProviderDashboard = () => {
                       {customer.profileImage ? (
                         <img
                           src={customer.profileImage}
-                          alt={customer.name}
+                          alt={getFullName(customer)}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -293,7 +287,7 @@ const ProviderDashboard = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-black truncate">
-                        {customer.name || 'Unknown Customer'}
+                        {getFullName(customer) || 'Unknown Customer'}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
                         {booking.serviceCategory} • Scheduled {scheduledDate}
@@ -328,14 +322,7 @@ const ProviderDashboard = () => {
             <div className="space-y-4">
               {upcomingBookings.map((booking, index) => {
                 const customer = booking.customer || {};
-                const initials = customer.name
-                  ? customer.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase()
-                  : 'NA';
+                const initials = getInitials(customer);
                 const scheduledDate = booking.scheduledDate
                   ? new Date(booking.scheduledDate).toLocaleString([], {
                       month: 'short',
@@ -356,7 +343,7 @@ const ProviderDashboard = () => {
                       {customer.profileImage ? (
                         <img
                           src={customer.profileImage}
-                          alt={customer.name}
+                          alt={getFullName(customer)}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -365,7 +352,7 @@ const ProviderDashboard = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-black truncate">
-                        {customer.name || 'Unknown Customer'}
+                        {getFullName(customer) || 'Unknown Customer'}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
                         {booking.serviceCategory} • {scheduledDate}

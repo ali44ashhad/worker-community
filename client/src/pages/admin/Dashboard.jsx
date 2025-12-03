@@ -10,6 +10,7 @@ import {
   HiOutlineStar
 } from 'react-icons/hi';
 import { motion } from 'framer-motion';
+import { getFullName, getInitials } from '../../utils/userHelpers';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -218,17 +219,17 @@ const Dashboard = () => {
                     {provider.user?.profileImage ? (
                       <img
                         src={provider.user.profileImage}
-                        alt={provider.user.name}
+                        alt={getFullName(provider.user)}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <span className="text-gray-600 font-semibold text-sm">
-                        {provider.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                        {getInitials(provider.user)}
                       </span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-black truncate">{provider.user?.name || 'Unknown'}</p>
+                    <p className="font-semibold text-black truncate">{getFullName(provider.user) || 'Unknown'}</p>
                     <p className="text-xs text-gray-600 truncate">{provider.user?.email || ''}</p>
                   </div>
                   <div className="text-right flex-shrink-0">

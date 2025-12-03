@@ -85,7 +85,7 @@
 //         const description = service?.description?.toLowerCase() || '';
 //         const keywords = (service?.keywords || []).map(k => k?.toLowerCase()).join(' ');
 //         const subCategories = (service?.subCategories || []).map(s => s?.toLowerCase()).join(' ');
-//         const providerName = service?.provider?.user?.name?.toLowerCase() || '';
+//         const providerName = getFullName(service?.provider?.user)?.toLowerCase() || '';
         
 //         const query = searchQuery.toLowerCase();
 //         return category.includes(query) || 
@@ -591,6 +591,7 @@ import { getAllProviders } from '../features/providerSlice';
 import ServiceCard from '../components/service/ServiceCard';
 import HomePageLoader from '../components/loaders/HomePageLoader';
 import { HiOutlineSearch, HiOutlineRefresh } from 'react-icons/hi';
+import { getFullName } from '../utils/userHelpers';
 
 const Services = () => {
   const dispatch = useDispatch();
@@ -673,7 +674,7 @@ const Services = () => {
         const description = service?.description?.toLowerCase() || '';
         const keywords = (service?.keywords || []).map(k => k?.toLowerCase()).join(' ');
         const subCategories = (service?.subCategories || []).map(s => s?.toLowerCase()).join(' ');
-        const providerName = service?.provider?.user?.name?.toLowerCase() || '';
+        const providerName = getFullName(service?.provider?.user)?.toLowerCase() || '';
         
         const query = searchQuery.toLowerCase();
         return servicename.includes(query) ||

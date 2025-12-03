@@ -134,10 +134,15 @@ const UpdateProviders = () => {
   const [editingProvider, setEditingProvider] = useState(null);
   const [editForm, setEditForm] = useState({
     bio: '',
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phoneNumber: '',
-    address: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    zip: '',
   });
   const [selectedService, setSelectedService] = useState(null);
   const [serviceEditForm, setServiceEditForm] = useState({
@@ -271,10 +276,15 @@ const UpdateProviders = () => {
     setEditingProvider(provider._id);
     setEditForm({
       bio: provider.bio || '',
-      name: provider.user?.name || '',
+      firstName: provider.user?.firstName || provider.user?.name?.split(' ')[0] || '',
+      lastName: provider.user?.lastName || provider.user?.name?.split(' ').slice(1).join(' ') || '',
       email: provider.user?.email || '',
       phoneNumber: provider.user?.phoneNumber || '',
-      address: provider.user?.address || '',
+      addressLine1: provider.user?.addressLine1 || '',
+      addressLine2: provider.user?.addressLine2 || '',
+      city: provider.user?.city || '',
+      state: provider.user?.state || '',
+      zip: provider.user?.zip || '',
     });
   };
 
@@ -282,10 +292,15 @@ const UpdateProviders = () => {
     setEditingProvider(null);
     setEditForm({
       bio: '',
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       phoneNumber: '',
-      address: '',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      zip: '',
     });
   };
 
@@ -299,20 +314,30 @@ const UpdateProviders = () => {
     await dispatch(
       updateProviderUserDetails({
         providerId,
-        name: editForm.name,
+        firstName: editForm.firstName,
+        lastName: editForm.lastName,
         email: editForm.email,
         phoneNumber: editForm.phoneNumber,
-        address: editForm.address,
+        addressLine1: editForm.addressLine1,
+        addressLine2: editForm.addressLine2,
+        city: editForm.city,
+        state: editForm.state,
+        zip: editForm.zip,
       })
     );
 
     setEditingProvider(null);
     setEditForm({
       bio: '',
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       phoneNumber: '',
-      address: '',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      zip: '',
     });
 
     // Refresh providers list
@@ -393,13 +418,15 @@ const UpdateProviders = () => {
                         />
                       ) : (
                         <span className="text-gray-600 font-semibold text-xl">
-                          {provider.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                          {provider.user?.firstName?.charAt(0)?.toUpperCase() || provider.user?.name?.charAt(0)?.toUpperCase() || 'U'}
                         </span>
                       )}
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-black">
-                        {provider.user?.name || 'Unknown Provider'}
+                        {provider.user?.firstName && provider.user?.lastName 
+                          ? `${provider.user.firstName} ${provider.user.lastName}` 
+                          : provider.user?.name || 'Unknown Provider'}
                       </h3>
                       <p className="text-sm text-gray-600">{provider.user?.email || ''}</p>
                     </div>
@@ -440,17 +467,33 @@ const UpdateProviders = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
                         <HiOutlineUser className="text-gray-500" size={16} />
-                        Name
+                        First Name
                       </label>
                       {isEditing ? (
                         <input
                           type="text"
-                          value={editForm.name}
-                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          value={editForm.firstName}
+                          onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.name || 'N/A'}</p>
+                        <p className="text-black">{provider.user?.firstName || provider.user?.name?.split(' ')[0] || 'N/A'}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                        <HiOutlineUser className="text-gray-500" size={16} />
+                        Last Name
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm.lastName}
+                          onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                        />
+                      ) : (
+                        <p className="text-black">{provider.user?.lastName || provider.user?.name?.split(' ').slice(1).join(' ') || 'N/A'}</p>
                       )}
                     </div>
                     <div>
@@ -490,20 +533,96 @@ const UpdateProviders = () => {
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
                         <HiOutlineLocationMarker className="text-gray-500" size={16} />
-                        Address
+                        Address Line 1
                       </label>
                       {isEditing ? (
-                        <textarea
-                          value={editForm.address}
+                        <input
+                          type="text"
+                          value={editForm.addressLine1}
                           onChange={(e) =>
-                            setEditForm({ ...editForm, address: e.target.value })
+                            setEditForm({ ...editForm, addressLine1: e.target.value })
                           }
-                          rows="2"
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
-                          placeholder="Enter address"
+                          placeholder="Address Line 1"
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.address || 'N/A'}</p>
+                        <p className="text-black">{provider.user?.addressLine1 || 'N/A'}</p>
+                      )}
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                        <HiOutlineLocationMarker className="text-gray-500" size={16} />
+                        Address Line 2
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm.addressLine2}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, addressLine2: e.target.value })
+                          }
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          placeholder="Address Line 2 (optional)"
+                        />
+                      ) : (
+                        <p className="text-black">{provider.user?.addressLine2 || 'N/A'}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                        <HiOutlineLocationMarker className="text-gray-500" size={16} />
+                        City
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm.city}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, city: e.target.value })
+                          }
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          placeholder="City"
+                        />
+                      ) : (
+                        <p className="text-black">{provider.user?.city || 'N/A'}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                        <HiOutlineLocationMarker className="text-gray-500" size={16} />
+                        State
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm.state}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, state: e.target.value })
+                          }
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          placeholder="State"
+                        />
+                      ) : (
+                        <p className="text-black">{provider.user?.state || 'N/A'}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                        <HiOutlineLocationMarker className="text-gray-500" size={16} />
+                        ZIP Code
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm.zip}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, zip: e.target.value })
+                          }
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          placeholder="ZIP Code"
+                        />
+                      ) : (
+                        <p className="text-black">{provider.user?.zip || 'N/A'}</p>
                       )}
                     </div>
                   </div>

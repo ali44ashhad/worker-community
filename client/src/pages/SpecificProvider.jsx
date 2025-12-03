@@ -6,6 +6,7 @@ import { HiLocationMarker, HiChatAlt2 } from 'react-icons/hi';
 import { FaStar } from 'react-icons/fa';
 import ServiceCard from '../components/service/ServiceCard';
 import axios from 'axios';
+import { getFullName, getInitials, formatAddress } from '../utils/userHelpers';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -40,10 +41,10 @@ const SpecificProvider = () => {
     );
   }
 
-  const providerName = selectedProvider?.user?.name || 'Unknown Provider';
+  const providerName = getFullName(selectedProvider?.user) || 'Unknown Provider';
   const profileImage = selectedProvider?.user?.profileImage;
   const providerPhoneNumber = selectedProvider?.user?.phoneNumber || '';
-  const providerAddress = selectedProvider?.user?.address || 'Address not provided';
+  const providerAddress = formatAddress(selectedProvider?.user) || 'Address not provided';
   const bio = selectedProvider?.bio || '';
   const stats = selectedProvider?.stats || { averageRating: 0, totalReviews: 0 };
   const userCreatedAt = selectedProvider?.user?.createdAt;
@@ -133,7 +134,7 @@ const SpecificProvider = () => {
                     className='w-32 h-32 rounded-full border-4 border-gray-900 bg-gray-900 text-white flex items-center justify-center font-bold text-4xl'
                     style={{ display: profileImage ? 'none' : 'flex' }}
                   >
-                    {providerName.charAt(0).toUpperCase()}
+                    {getInitials(selectedProvider?.user)}
                   </div>
                 </div>
 

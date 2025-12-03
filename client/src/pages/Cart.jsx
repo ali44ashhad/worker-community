@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { getAllProviders } from '../features/providerSlice'
 import { fetchWishlist, removeFromWishlist } from '../features/wishlistSlice'
 import { HiOutlinePhotograph, HiX, HiArrowRight } from 'react-icons/hi'
+import { getFullName, getInitials } from '../utils/userHelpers'
 
 const Cart = () => {
   const dispatch = useDispatch();
@@ -100,7 +101,7 @@ const Cart = () => {
                 const title = service?.servicename || service?.serviceCategory || 'Service';
                 const description = service?.description || '';
                 const price = service?.price;
-                const providerName = service?.provider?.user?.name || 'Unknown Provider';
+                const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
                 const profileImage = service?.provider?.user?.profileImage;
                 const truncatedDescription = description.length > 100 
                   ? description.substring(0, 100) + '...' 
@@ -154,7 +155,7 @@ const Cart = () => {
                                 />
                               ) : (
                                 <div className='w-5 h-5 rounded-full border border-gray-200 bg-gray-700 text-white flex items-center justify-center font-semibold text-[10px]'>
-                                  {providerName.charAt(0).toUpperCase()}
+                                  {getInitials(service?.provider?.user)}
                                 </div>
                               )}
                               <span className='text-xs text-gray-600'>{providerName}</span>

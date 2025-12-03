@@ -4,6 +4,7 @@ import { getAllProviders } from '../features/providerSlice';
 import ProviderCard from '../components/provider/ProviderCard';
 import HomePageLoader from '../components/loaders/HomePageLoader';
 import { HiOutlineSearch, HiOutlineRefresh } from 'react-icons/hi';
+import { getFullName } from '../utils/userHelpers';
 
 const Providers = () => {
   const dispatch = useDispatch();
@@ -25,7 +26,7 @@ const Providers = () => {
     // Apply search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(provider => {
-        const userName = provider?.user?.name?.toLowerCase() || '';
+        const userName = getFullName(provider?.user)?.toLowerCase() || '';
         const bio = provider?.bio?.toLowerCase() || '';
         const services = provider?.serviceOfferings || [];
         const categories = services.map(s => s.serviceCategory?.toLowerCase()).join(' ');

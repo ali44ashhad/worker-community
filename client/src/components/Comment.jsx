@@ -12,6 +12,7 @@ import {
   deleteReplyToComment,
 } from '../features/commentSlice';
 import axios from 'axios';
+import { getFullName, getInitials } from '../utils/userHelpers';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -321,7 +322,7 @@ const Comment = ({ serviceId }) => {
                     {c.customer?.profileImage ? (
                       <img
                         src={c.customer.profileImage}
-                        alt={c.customer?.name || 'User'}
+                        alt={getFullName(c.customer) || 'User'}
                         className='w-10 h-10 rounded-full border border-gray-300 object-cover'
                         onError={(e) => {
                           e.target.style.display = 'none';
@@ -335,11 +336,11 @@ const Comment = ({ serviceId }) => {
                       className='w-10 h-10 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold'
                       style={{ display: c.customer?.profileImage ? 'none' : 'flex' }}
                     >
-                      {(c.customer?.name || 'U').charAt(0).toUpperCase()}
+                      {getInitials(c.customer)}
                     </div>
                     <div>
                       <p className='font-semibold text-black'>
-                        {c.customer?.name || 'User'}
+                        {getFullName(c.customer) || 'User'}
                       </p>
                       <div className='flex items-center gap-2'>
                         {c.rating && (
@@ -453,7 +454,7 @@ const Comment = ({ serviceId }) => {
                             ? (typeof c.replyBy.user === 'object' ? c.replyBy.user : null)
                             : null;
                           const profileImage = replyUser?.profileImage;
-                          const userName = replyUser?.name || 'Provider';
+                          const userName = getFullName(replyUser) || 'Provider';
                           
                           return profileImage ? (
                             <img
@@ -469,7 +470,7 @@ const Comment = ({ serviceId }) => {
                             />
                           ) : (
                             <div className='w-8 h-8 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold text-sm'>
-                              {userName.charAt(0).toUpperCase()}
+                              {getInitials(replyUser)}
                             </div>
                           );
                         })()}
@@ -479,7 +480,7 @@ const Comment = ({ serviceId }) => {
                               const replyUser = typeof c.replyBy === 'object' && c.replyBy?.user 
                                 ? (typeof c.replyBy.user === 'object' ? c.replyBy.user : null)
                                 : null;
-                              return replyUser?.name || 'Provider';
+                              return getFullName(replyUser) || 'Provider';
                             })()}
                           </p>
                           <p className='text-xs text-gray-500'>

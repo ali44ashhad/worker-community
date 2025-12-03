@@ -441,6 +441,7 @@ import { logoutUser } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchDropdown from './SearchDropdown';
+import { getFullName, getFirstName, getInitials } from '../utils/userHelpers';
 
 const Navbar = () => {
   const location = useLocation();
@@ -497,15 +498,6 @@ const Navbar = () => {
   };
 
   // Get user's first name and initial
-  const getFirstName = (fullName) => {
-    if (!fullName) return '';
-    return fullName.split(' ')[0];
-  };
-
-  const getInitial = (fullName) => {
-    const firstName = getFirstName(fullName);
-    return firstName ? firstName.charAt(0).toUpperCase() : '';
-  };
 
   const navLinks = [
     { to: '/', text: 'Home' },
@@ -535,7 +527,7 @@ const Navbar = () => {
             >
               {/* {user ? (
                 <span className="truncate max-w-[220px] text-2xl font-bold text-gray-900">
-                  Hi {user.name},
+                  Hi {getFirstName(user)},
                 </span>
               ) : (
                 <>
@@ -651,12 +643,12 @@ const Navbar = () => {
                     {user.profileImage ? (
                       <img
                         src={user.profileImage}
-                        alt={user.name}
+                        alt={getFullName(user)}
                         className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-sm border-2 border-gray-200">
-                        {getInitial(user.name)}
+                        {getInitials(user)}
                       </div>
                     )}
                   </div>
@@ -684,19 +676,19 @@ const Navbar = () => {
                             {user.profileImage ? (
                               <img
                                 src={user.profileImage}
-                                alt={user.name}
+                                alt={getFullName(user)}
                                 className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
                               />
                             ) : (
                               <div className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-base border-2 border-gray-200">
-                                {getInitial(user.name)}
+                                {getInitials(user)}
                               </div>
                             )}
                           </div>
                           {/* Name and Email */}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {user.name}
+                              {getFullName(user)}
                             </p>
                             <p className="text-xs text-gray-500 truncate">
                               {user.email}
@@ -789,12 +781,12 @@ const Navbar = () => {
                     {user.profileImage ? (
                       <img
                         src={user.profileImage}
-                        alt={user.name}
+                        alt={getFullName(user)}
                         className="w-9 h-9 rounded-full object-cover border-2 border-gray-200"
                       />
                     ) : (
                       <div className="w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-sm border-2 border-gray-200">
-                        {getInitial(user.name)}
+                        {getInitials(user)}
                       </div>
                     )}
                   </div>
@@ -822,19 +814,19 @@ const Navbar = () => {
                             {user.profileImage ? (
                               <img
                                 src={user.profileImage}
-                                alt={user.name}
+                                alt={getFullName(user)}
                                 className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
                               />
                             ) : (
                               <div className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-base border-2 border-gray-200">
-                                {getInitial(user.name)}
+                                {getInitials(user)}
                               </div>
                             )}
                           </div>
                           {/* Name and Email */}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {user.name}
+                              {getFullName(user)}
                             </p>
                             <p className="text-xs text-gray-500 truncate">
                               {user.email}

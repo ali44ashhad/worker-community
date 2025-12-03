@@ -5,6 +5,7 @@ import { FaRegHeart } from "react-icons/fa6";
 import { IoIosHeart } from "react-icons/io";
 import { addToWishlist, removeFromWishlist } from '../../features/wishlistSlice';
 import { toast } from 'react-hot-toast';
+import { getFullName } from '../../utils/userHelpers';
 
 const TopServiceCard = ({ service }) => {
 
@@ -20,7 +21,7 @@ const TopServiceCard = ({ service }) => {
   const serviceCategory = service?.serviceCategory || 'Service';
   const description = service?.description || '';
   const keywords = Array.isArray(service?.keywords) ? service.keywords.slice(0, 4) : [];
-  const providerName = service?.provider?.user?.name || 'Unknown Provider';
+  const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
   const price = service?.price;
   console.log("service : ",service);
 

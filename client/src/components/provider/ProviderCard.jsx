@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { HiOutlineUserCircle, HiArrowRight } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
+import { getFullName, formatAddress, getInitials } from '../../utils/userHelpers';
 
 const ProviderCard = ({ provider }) => {
 
@@ -10,12 +11,12 @@ const ProviderCard = ({ provider }) => {
   const [imageError, setImageError] = useState(false);
   
   // Get provider info
-  const userName = provider?.user?.name || 'Unknown Provider';
+  const userName = getFullName(provider?.user) || 'Unknown Provider';
   const profileImage = provider?.user?.profileImage;
   const bio = provider?.bio || 'No bio available.';
   const experience = provider?.experience || 0; 
   const services = provider?.serviceOfferings || [];
-  const address = provider?.user?.address || '';
+  const address = formatAddress(provider?.user) || '';
   
   // Get first service portfolio images
   const firstService = services[0];
@@ -82,7 +83,7 @@ const ProviderCard = ({ provider }) => {
               className="w-12 h-12 rounded-full border-2 border-black bg-black text-white flex items-center justify-center font-bold text-lg"
               style={{ display: profileImage ? 'none' : 'flex' }}
             >
-              {userName.charAt(0).toUpperCase()}
+              {getInitials(provider?.user)}
             </div>
           </div>
           <div className="flex-1 min-w-0">
