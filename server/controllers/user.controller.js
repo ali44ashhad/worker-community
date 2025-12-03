@@ -44,9 +44,9 @@ const uploadBufferToCloudinary = (buffer) => {
 };
 
 const register = async (req, res) => {
-    const { name, email, password, phoneNumber, address } = req.body;
+    const { firstName, lastName, email, password, phoneNumber, addressLine1, addressLine2, city, state, zip } = req.body;
     try {
-        if (!name || !email || !password || !phoneNumber) {
+        if (!firstName || !lastName || !email || !password || !phoneNumber) {
             return res.status(400).json({
                 success: false,
                 message: "All required fields must be provided"
@@ -70,15 +70,19 @@ const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         
         const userPayload = {
-            name,
+            firstName,
+            lastName,
             email,
             password: hashedPassword,
             phoneNumber,
         };
 
-        if (address) {
-            userPayload.address = address;
-        }
+        // Add address fields if provided
+        if (addressLine1) userPayload.addressLine1 = addressLine1;
+        if (addressLine2) userPayload.addressLine2 = addressLine2;
+        if (city) userPayload.city = city;
+        if (state) userPayload.state = state;
+        if (zip) userPayload.zip = zip;
 
         const user = await User.create(userPayload);
 
@@ -184,7 +188,7 @@ const checkAuth = (req, res) => {
 // --- Controller to Update User Profile ---
 const updateUserProfile = async (req, res) => {
     try {
-        const { name, phoneNumber, address } = req.body;
+        const { firstName, lastName, phoneNumber, addressLine1, addressLine2, city, state, zip } = req.body;
         const userId = req.user._id; // From your auth middleware
 
         const user = await User.findById(userId);
@@ -194,9 +198,14 @@ const updateUserProfile = async (req, res) => {
         }
 
         // Update text fields if they were provided
-        if (name) user.name = name;
-        if (phoneNumber) user.phoneNumber = phoneNumber;
-        if (address !== undefined) user.address = address;
+        if (firstName !== undefined) user.firstName = firstName;
+        if (lastName !== undefined) user.lastName = lastName;
+        if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
+        if (addressLine1 !== undefined) user.addressLine1 = addressLine1;
+        if (addressLine2 !== undefined) user.addressLine2 = addressLine2;
+        if (city !== undefined) user.city = city;
+        if (state !== undefined) user.state = state;
+        if (zip !== undefined) user.zip = zip;
 
         // Handle profile image - prioritize new upload over removal
         // Check for and upload new profile image first
@@ -256,12 +265,12 @@ const getAdminDashboardStats = async (req, res) => {
 
         // 2. Get 5 Recent Bookings from the entire platform
         const recentBookings = await Booking.find({})
-            .populate('customer', 'name profileImage address') // Populate the customer
+            .populate('customer', 'firstName lastName profileImage addressLine1 addressLine2 city state zip') // Populate the customer
             .populate({ // Nested populate for the provider
                 path: 'provider',
                 populate: {
                     path: 'user',
-                    select: 'name profileImage address'
+                    select: 'firstName lastName profileImage addressLine1 addressLine2 city state zip'
                 }
             })
             .sort({ createdAt: -1 })
@@ -287,13 +296,13 @@ const getAllBookings = async (req, res) => {
     try {
         // Find all bookings
         const bookings = await Booking.find({})
-            .populate('customer', 'name profileImage email address') // Populate customer details
+            .populate('customer', 'firstName lastName profileImage email addressLine1 addressLine2 city state zip') // Populate customer details
             .populate({ // Nested populate for the provider
                 path: 'provider',
                 select: 'user serviceCategories', // Select fields from ProviderProfile
                 populate: {
                     path: 'user',
-                    select: 'name profileImage email address' // Select fields from User
+                    select: 'firstName lastName profileImage email addressLine1 addressLine2 city state zip' // Select fields from User
                 }
             })
             .sort({ createdAt: -1 }); // Show newest first

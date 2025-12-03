@@ -237,14 +237,14 @@ const getProviderDashboardStats = async (req, res) => {
                 { $group: { _id: "$status", count: { $sum: 1 } } }
             ]),
             Booking.find({ provider: providerProfileId })
-                .populate('customer', 'name profileImage address')
+                .populate('customer', 'firstName lastName profileImage addressLine1 addressLine2 city state zip')
                 .sort({ createdAt: -1 })
                 .limit(5),
             Booking.find({
                 provider: providerProfileId,
                 scheduledDate: { $gte: now }
             })
-                .populate('customer', 'name profileImage address')
+                .populate('customer', 'firstName lastName profileImage addressLine1 addressLine2 city state zip')
                 .sort({ scheduledDate: 1 })
                 .limit(5),
             serviceIds.length > 0
@@ -342,7 +342,7 @@ const getAllProviders = async (req, res) => {
     try {
         // Find all provider profiles and populate their associated user and service offerings
         const providers = await ProviderProfile.find()
-            .populate('user', 'name profileImage phoneNumber address') // Get user's public info (name, profile image, phone number)
+            .populate('user', 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip') // Get user's public info (name, profile image, phone number)
             .populate('serviceOfferings'); // Get all their service offerings (with images, categories, etc.)
         
         return res.status(200).json({
@@ -385,7 +385,7 @@ const getTopProvidersByServiceClicks = async (req, res) => {
         if (aggregatedProviders.length > 0) {
             const providerIds = aggregatedProviders.map((item) => item._id);
             const providers = await ProviderProfile.find({ _id: { $in: providerIds } })
-                .populate('user', 'name profileImage address')
+                .populate('user', 'firstName lastName profileImage addressLine1 addressLine2 city state zip')
                 .select('user providerProfileCount');
 
             const providerMap = new Map(
@@ -400,7 +400,9 @@ const getTopProvidersByServiceClicks = async (req, res) => {
                     }
                     return {
                         _id: provider._id,
-                        name: provider.user.name,
+                        name: provider.user.firstName && provider.user.lastName 
+                            ? `${provider.user.firstName} ${provider.user.lastName}` 
+                            : provider.user.firstName || '',
                         avatar: provider.user.profileImage || "",
                         totalServiceClicks: item.totalServiceClicks || 0,
                         serviceCount: item.serviceCount || 0,
@@ -411,7 +413,7 @@ const getTopProvidersByServiceClicks = async (req, res) => {
         } else {
             // Fallback: use provider profile count ordering if no services have clicks yet
             const fallbackProviders = await ProviderProfile.find({})
-                .populate('user', 'name profileImage address')
+                .populate('user', 'firstName lastName profileImage addressLine1 addressLine2 city state zip')
                 .sort({ providerProfileCount: -1 })
                 .limit(limit)
                 .select('user providerProfileCount serviceOfferings');
@@ -420,7 +422,9 @@ const getTopProvidersByServiceClicks = async (req, res) => {
                 .filter((provider) => provider.user)
                 .map((provider) => ({
                     _id: provider._id,
-                    name: provider.user.name,
+                    name: provider.user.firstName && provider.user.lastName 
+                        ? `${provider.user.firstName} ${provider.user.lastName}` 
+                        : provider.user.firstName || '',
                     avatar: provider.user.profileImage || "",
                     totalServiceClicks: 0,
                     serviceCount: Array.isArray(provider.serviceOfferings) ? provider.serviceOfferings.length : 0,
@@ -446,7 +450,7 @@ const getTopProvidersByServiceClicks = async (req, res) => {
 const getProviderById = async (req, res) => {
     try {
         const provider = await ProviderProfile.findById(req.params.id)
-            .populate('user', 'name profileImage phoneNumber address createdAt') // Get user's public info
+            .populate('user', 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip createdAt') // Get user's public info
             .populate('serviceOfferings'); // Get all their service offerings
 
         if (!provider) {
@@ -508,7 +512,7 @@ const getMyProviderProfile = async (req, res) => {
         const userId = req.user._id;
         
         const provider = await ProviderProfile.findOne({ user: userId })
-            .populate('user', 'name email phoneNumber address profileImage')
+            .populate('user', 'firstName lastName email phoneNumber addressLine1 addressLine2 city state zip profileImage')
             .populate('serviceOfferings');
 
         if (!provider) {
