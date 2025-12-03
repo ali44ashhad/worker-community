@@ -177,7 +177,7 @@ const updateProviderDetails = async (req, res) => {
 
         // Populate and return updated provider
         const updatedProvider = await ProviderProfile.findById(providerId)
-            .populate('user', 'name profileImage email phoneNumber address role')
+            .populate('user', 'firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip role')
             .populate('serviceOfferings');
 
         return res.status(200).json({
@@ -224,14 +224,14 @@ const updateProviderUserDetails = async (req, res) => {
         if (zip !== undefined) updateData.zip = zip;
 
         if (Object.keys(updateData).length > 0) {
-            await User.findByIdAndUpdate(userId, updateData, { new: true, runValidators: true });
+            const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true, runValidators: true });
         }
 
         // Populate and return updated provider
         const updatedProvider = await ProviderProfile.findById(providerId)
             .populate('user', 'firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip role')
             .populate('serviceOfferings');
-
+        
         return res.status(200).json({
             success: true,
             message: "Provider user details updated successfully.",
@@ -285,14 +285,6 @@ const updateServiceDetails = async (req, res) => {
     try {
         const { serviceId } = req.params;
         const { servicename, serviceCategory, subCategories, keywords, description, experience } = req.body;
-
-        // Debug logging to help identify issues
-        console.log('Update service request:', {
-            serviceId,
-            servicename,
-            serviceCategory,
-            bodyKeys: Object.keys(req.body)
-        });
 
         // Find the service offering first to check if it exists
         const existingService = await ServiceOffering.findById(serviceId);

@@ -88,7 +88,7 @@ const getCommentsForService = async (req, res) => {
                 select: 'user',
                 populate: {
                     path: 'user',
-                    select: 'name profileImage'
+                    select: 'firstName lastName profileImage'
                 }
             }) // Get reply author's info
             .sort({ createdAt: -1 }); // Show newest comments first
@@ -100,7 +100,7 @@ const getCommentsForService = async (req, res) => {
                 select: 'user',
                 populate: {
                     path: 'user',
-                    select: 'name profileImage _id'
+                    select: 'firstName lastName profileImage _id'
                 }
             });
 
@@ -157,7 +157,7 @@ const updateComment = async (req, res) => {
             select: 'user',
             populate: {
                 path: 'user',
-                select: 'name profileImage'
+                select: 'firstName lastName profileImage'
             }
         });
 
@@ -258,13 +258,13 @@ const addReply = async (req, res) => {
         await comment.save();
 
         // Populate all necessary fields for response
-        await comment.populate('customer', 'name profileImage');
+        await comment.populate('customer', 'firstName lastName profileImage');
         await comment.populate({
             path: 'replyBy',
             select: 'user',
             populate: {
                 path: 'user',
-                select: 'name profileImage'
+                select: 'firstName lastName profileImage'
             }
         });
 
@@ -326,13 +326,13 @@ const updateReply = async (req, res) => {
         await comment.save();
 
         // Populate all necessary fields for response
-        await comment.populate('customer', 'name profileImage');
+        await comment.populate('customer', 'firstName lastName profileImage');
         await comment.populate({
             path: 'replyBy',
             select: 'user',
             populate: {
                 path: 'user',
-                select: 'name profileImage'
+                select: 'firstName lastName profileImage'
             }
         });
 
@@ -444,16 +444,40 @@ const getTopServices = async (req, res) => {
                 select: 'user',
                 populate: {
                     path: 'user',
-                    select: 'name profileImage'
+                    select: 'firstName lastName profileImage email phoneNumber'
                 }
             })
             .select('servicename serviceCategory description portfolioImages provider experience keywords subCategories price');
+        
+        // Debug: Log user data to see what's actually being returned
+        services.forEach(service => {
+            if (service.provider?.user) {
+            }
+        });
 
         // Combine with rating data and maintain sort order
         const servicesWithRatings = services.map(service => {
             const ratingData = topServices.find(s => s._id.toString() === service._id.toString());
+            
+            // Convert to plain object
+            const serviceObj = service.toObject();
+            
+            // Ensure provider.user has firstName/lastName fields explicitly set
+            // This ensures they're included even if undefined (Mongoose might exclude undefined fields)
+            if (serviceObj.provider?.user) {
+                const populatedUser = service.provider?.user;
+                // Explicitly set fields to ensure they're in the response
+                serviceObj.provider.user.firstName = populatedUser?.firstName;
+                serviceObj.provider.user.lastName = populatedUser?.lastName;
+                serviceObj.provider.user.email = populatedUser?.email;
+                // Remove virtual name field if firstName/lastName exist (to avoid confusion)
+                if (populatedUser?.firstName || populatedUser?.lastName) {
+                    delete serviceObj.provider.user.name;
+                }
+            }
+            
             return {
-                ...service.toObject(),
+                ...serviceObj,
                 averageRating: ratingData?.averageRating || 0,
                 reviewCount: ratingData?.reviewCount || 0
             };

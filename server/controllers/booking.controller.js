@@ -75,7 +75,7 @@ const getCustomerBookings = async (req, res) => {
                 path: 'provider', 
                 populate: {
                     path: 'user', 
-                    select: 'name phoneNumber address profileImage' 
+                    select: 'firstName lastName phoneNumber addressLine1 addressLine2 city state zip profileImage' 
                 }
             })
             .sort({ scheduledDate: -1 });
