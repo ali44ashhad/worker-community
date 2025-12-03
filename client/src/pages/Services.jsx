@@ -599,6 +599,7 @@ const Services = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [priceSort, setPriceSort] = useState('All'); // 'All', 'Low to High', 'High to Low'
   const [priceRange, setPriceRange] = useState([0, 100000]); // [min, max]
   const [filteredServices, setFilteredServices] = useState([]);
@@ -693,6 +694,14 @@ const Services = () => {
       });
     }
 
+    // Apply subcategory filter (only when category is selected)
+    if (selectedCategory !== 'All' && selectedSubcategory !== 'All') {
+      filtered = filtered.filter(service => {
+        const subCategories = service?.subCategories || [];
+        return subCategories.includes(selectedSubcategory);
+      });
+    }
+
     // Apply price range filter
     filtered = filtered.filter(service => {
       const price = service?.price;
@@ -718,7 +727,7 @@ const Services = () => {
     }
 
     setFilteredServices(filtered);
-  }, [searchQuery, selectedCategory, priceSort, priceRange, allServices]);
+  }, [searchQuery, selectedCategory, selectedSubcategory, priceSort, priceRange, allServices]);
 
   // Get unique categories from all services
   const getUniqueCategories = () => {
@@ -731,7 +740,30 @@ const Services = () => {
     return Array.from(categories).sort();
   };
 
+  // Get unique subcategories for the selected category
+  const getUniqueSubcategories = () => {
+    if (selectedCategory === 'All') return [];
+    
+    const subcategories = new Set();
+    allServices.forEach(service => {
+      if (service?.serviceCategory === selectedCategory && service?.subCategories) {
+        service.subCategories.forEach(subCat => {
+          if (subCat) {
+            subcategories.add(subCat);
+          }
+        });
+      }
+    });
+    return Array.from(subcategories).sort();
+  };
+
   const categories = getUniqueCategories();
+  const subcategories = getUniqueSubcategories();
+
+  // Reset subcategory when category changes
+  useEffect(() => {
+    setSelectedSubcategory('All');
+  }, [selectedCategory]);
 
   const handleRefresh = () => {
     dispatch(getAllProviders());
@@ -740,6 +772,7 @@ const Services = () => {
   const handleClearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('All');
+    setSelectedSubcategory('All');
     setPriceSort('All');
     if (allServices.length > 0) {
       const [min, max] = getPriceRange();
@@ -830,6 +863,38 @@ const Services = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Subcategory Filters - Only show when a category is selected */}
+                {selectedCategory !== 'All' && subcategories.length > 0 && (
+                  <div className='space-y-2'>
+                    <h3 className='text-xs font-semibold text-gray-700'>Subcategories</h3>
+                    <div className='flex flex-wrap gap-1.5'>
+                      <button
+                        onClick={() => setSelectedSubcategory('All')}
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all border ${
+                          selectedSubcategory === 'All'
+                            ? 'bg-gray-600 text-white border-gray-600'
+                            : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                        }`}
+                      >
+                        All
+                      </button>
+                      {subcategories.map((subcategory) => (
+                        <button
+                          key={subcategory}
+                          onClick={() => setSelectedSubcategory(subcategory)}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                            selectedSubcategory === subcategory
+                              ? 'bg-gray-600 text-white border-gray-600'
+                              : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                          }`}
+                        >
+                          {subcategory}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Price Filter with Range Slider */}
                 <div className='space-y-3'>
@@ -956,7 +1021,7 @@ const Services = () => {
                     <HiOutlineRefresh size={14} />
                     Refresh
                   </button>
-                  {(searchQuery || selectedCategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
+                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
                     <button
                       onClick={handleClearFilters}
                       className='w-full px-3 py-1.5 bg-gray-600 text-white border border-gray-600 rounded text-xs font-semibold hover:bg-gray-700 transition-all'
@@ -1004,11 +1069,11 @@ const Services = () => {
                     No services found
                   </p>
                   <p className='text-gray-600 text-sm'>
-                    {searchQuery || selectedCategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice
+                    {searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice
                       ? 'Try adjusting your search or filter criteria.'
                       : 'No services available at the moment.'}
                   </p>
-                  {(searchQuery || selectedCategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
+                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
                     <button
                       onClick={handleClearFilters}
                       className='mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'
