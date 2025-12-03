@@ -220,7 +220,7 @@
  
 
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
@@ -228,10 +228,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 axios.defaults.withCredentials = true;
 
 const Footer = () => {
+  const location = useLocation();
   const [topServices, setTopServices] = useState([]);
   const [isLoadingTopServices, setIsLoadingTopServices] = useState(true);
   const [topProviders, setTopProviders] = useState([]);
   const [isLoadingTopProviders, setIsLoadingTopProviders] = useState(true);
+  
+  const isContactPage = location.pathname === '/contact';
 
   useEffect(() => {
     let isMounted = true;
@@ -292,13 +295,13 @@ const Footer = () => {
       <div className="pointer-events-none absolute -bottom-20 -right-12 w-72 h-72 rounded-full blur-2xl bg-gradient-to-br from-pink-50 via-indigo-50 to-yellow-50 opacity-20 transform rotate-6" />
 
       <div className="max-w-[1370px] mx-auto px-6 md:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-12"
-        >
+        <div className="mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
           {/* <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">Commun</h2> */}
           <Link
               to="/"
@@ -325,11 +328,22 @@ const Footer = () => {
                 </>
           
             </Link>
-          <p className="text-gray-600 max-w-2xl">Need help? Visit our Help Center or contact our support team — we’re here for neighbours.</p>
-          <div className="mt-4">
-            <Link to="/contact" className="inline-flex items-center px-5 py-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-sm hover:shadow-lg transition">Visit Help Center →</Link>
-          </div>
-        </motion.div>
+          </motion.div>
+          
+          {!isContactPage && (
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <p className="text-gray-600 max-w-2xl">Need help? Visit our Help Center or contact our support team — we're here for neighbours.</p>
+              <div className="mt-4">
+                <Link to="/contact" className="inline-flex items-center px-5 py-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-sm hover:shadow-lg transition">Visit Help Center →</Link>
+              </div>
+            </motion.div>
+          )}
+        </div>
 
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16"
