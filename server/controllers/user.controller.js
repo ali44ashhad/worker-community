@@ -196,13 +196,18 @@ const updateUserProfile = async (req, res) => {
         // Update text fields if they were provided
         if (name) user.name = name;
         if (phoneNumber) user.phoneNumber = phoneNumber;
-        if (address) user.address = address;
+        if (address !== undefined) user.address = address;
 
-        // Check for and upload new profile image
+        // Handle profile image - prioritize new upload over removal
+        // Check for and upload new profile image first
         // req.file comes from multer's upload.single('profileImage')
         if (req.file) {
             const imageUrl = await uploadBufferToCloudinary(req.file.buffer);
             user.profileImage = imageUrl;
+        }
+        // Handle profile image removal (only if no new file was uploaded)
+        else if (req.body.removeProfileImage === 'true' || req.body.removeProfileImage === true) {
+            user.profileImage = '';
         }
 
         // Save all changes to the database
