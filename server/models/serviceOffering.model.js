@@ -140,6 +140,12 @@ const serviceOfferingSchema = new Schema({
             public_id: { type: String, required: true },
         },
     ],
+    portfolioPDFs: [
+        {
+            url: { type: String, required: true },
+            public_id: { type: String, required: true },
+        },
+    ],
     description: { type: String, default: "" },
     experience: {
         type: Number,

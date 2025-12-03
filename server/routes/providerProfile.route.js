@@ -14,7 +14,7 @@ import {
     incrementProviderProfileCount
 } from "../controllers/providerProfile.controller.js";
 import { protect, isProvider } from "../middlewares/user.middleware.js";
-import upload from "../middlewares/multer.js";
+import upload, { uploadAny } from "../middlewares/multer.js";
 
 const router = express.Router();
 
@@ -41,9 +41,9 @@ router.post("/become-provider", protect, becomeProvider);
 router.post("/become-provider-multi", protect, upload.any(), becomeProviderWithServices);
 
 // --- Routes for Managing Services ---
-router.post("/service", protect, isProvider, upload.array("portfolioImages", 10), addServiceOffering);
+router.post("/service", protect, isProvider, uploadAny, addServiceOffering);
 
-router.put("/service/:serviceId", protect, isProvider, upload.array("portfolioImages", 10), updateServiceOffering);
+router.put("/service/:serviceId", protect, isProvider, uploadAny, updateServiceOffering);
 
 router.delete("/service/:serviceId", protect, isProvider, deleteServiceOffering);
 

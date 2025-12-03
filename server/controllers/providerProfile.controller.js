@@ -104,9 +104,15 @@ const deleteFromCloudinary = (public_id) => {
         const userId = req.user._id;
         const { servicename, serviceCategory, subCategories, keywords, description, price } = req.body;
 
-        // Ensure images are provided if this is a new service offering
-        if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ success: false, message: "Portfolio images are required for a service." });
+        // When using upload.any(), req.files is an array
+        const filesArray = req.files || [];
+        
+        // Filter files by fieldname
+        const images = filesArray.filter(file => file.fieldname === 'portfolioImages');
+        const pdfs = filesArray.filter(file => file.fieldname === 'portfolioPDFs');
+        
+        if (images.length === 0 && pdfs.length === 0) {
+            return res.status(400).json({ success: false, message: "At least one portfolio image or PDF is required for a service." });
         }
         
         const profile = await ProviderProfile.findOne({ user: userId });
@@ -115,8 +121,12 @@ const deleteFromCloudinary = (public_id) => {
         }
 
         // 1. Upload images to Cloudinary
-        const uploadPromises = req.files.map(file => uploadBufferToCloudinary(file.buffer));
-        const portfolioImages = await Promise.all(uploadPromises); 
+        const imageUploadPromises = images.map(file => uploadBufferToCloudinary(file.buffer));
+        const portfolioImages = await Promise.all(imageUploadPromises);
+        
+        // 2. Upload PDFs to Cloudinary
+        const pdfUploadPromises = pdfs.map(file => uploadBufferToCloudinary(file.buffer));
+        const portfolioPDFs = await Promise.all(pdfUploadPromises); 
 
         // Parse subCategories if it's a JSON string
         let parsedSubCategories = subCategories;
@@ -140,7 +150,7 @@ const deleteFromCloudinary = (public_id) => {
             }
         }
 
-        // 2. Create the service offering document
+        // 3. Create the service offering document
         const newService = new ServiceOffering({
             provider: profile._id,
             servicename,
@@ -150,10 +160,11 @@ const deleteFromCloudinary = (public_id) => {
             keywords: Array.isArray(parsedKeywords) ? parsedKeywords : (parsedKeywords ? [parsedKeywords] : []),
             description,
             portfolioImages,
+            portfolioPDFs,
             price: parseFloat(price) || 0
         });
         
-        // 3. Save the new service offering (triggers pre-save validation)
+        // 4. Save the new service offering (triggers pre-save validation)
         await newService.save();
 
         return res.status(201).json({
@@ -195,10 +206,14 @@ const deleteFromCloudinary = (public_id) => {
         }
 
         // 1. Delete associated images from Cloudinary
-        const deletePromises = service.portfolioImages.map(img => deleteFromCloudinary(img.public_id));
-        await Promise.all(deletePromises);
+        const imageDeletePromises = service.portfolioImages.map(img => deleteFromCloudinary(img.public_id));
+        await Promise.all(imageDeletePromises);
         
-        // 2. Delete the service offering from MongoDB
+        // 2. Delete associated PDFs from Cloudinary
+        const pdfDeletePromises = service.portfolioPDFs?.map(pdf => deleteFromCloudinary(pdf.public_id)) || [];
+        await Promise.all(pdfDeletePromises);
+        
+        // 3. Delete the service offering from MongoDB
         await ServiceOffering.findByIdAndDelete(serviceId);
 
         return res.status(200).json({ success: true, message: "Service deleted successfully." });
@@ -649,17 +664,27 @@ const becomeProviderWithServices = async (req, res) => {
         // req.files is an array when using upload.any()
         const filesArray = req.files || [];
         
-        // Group files by service index
-        const filesByService = {};
+        // Group files by service index and type (images vs PDFs)
+        const imagesByService = {};
+        const pdfsByService = {};
         filesArray.forEach(file => {
-            // Extract service index from fieldname (e.g., "service_0_images", "0", etc.)
-            const match = file.fieldname.match(/(\d+)/);
+            // Extract service index and file type from fieldname (e.g., "service_0_images", "service_0_pdfs")
+            const match = file.fieldname.match(/service_(\d+)_(images|pdfs)/);
             if (match) {
                 const index = parseInt(match[1]);
-                if (!filesByService[index]) {
-                    filesByService[index] = [];
+                const fileType = match[2];
+                
+                if (fileType === 'images') {
+                    if (!imagesByService[index]) {
+                        imagesByService[index] = [];
+                    }
+                    imagesByService[index].push(file);
+                } else if (fileType === 'pdfs') {
+                    if (!pdfsByService[index]) {
+                        pdfsByService[index] = [];
+                    }
+                    pdfsByService[index].push(file);
                 }
-                filesByService[index].push(file);
             }
         });
         
@@ -667,19 +692,24 @@ const becomeProviderWithServices = async (req, res) => {
             const service = services[i];
             
             try {
-                // Get images for this service index
-                const serviceImages = filesByService[i] || [];
+                // Get images and PDFs for this service index
+                const serviceImages = imagesByService[i] || [];
+                const servicePDFs = pdfsByService[i] || [];
 
-                if (serviceImages.length === 0) {
+                if (serviceImages.length === 0 && servicePDFs.length === 0) {
                     return res.status(400).json({ 
                         success: false, 
-                        message: `Service ${i + 1}: Please upload at least one image.` 
+                        message: `Service ${i + 1}: Please upload at least one image or PDF.` 
                     });
                 }
 
                 // Upload images to Cloudinary
-                const uploadPromises = serviceImages.map(file => uploadBufferToCloudinary(file.buffer));
-                const portfolioImages = await Promise.all(uploadPromises);
+                const imageUploadPromises = serviceImages.map(file => uploadBufferToCloudinary(file.buffer));
+                const portfolioImages = await Promise.all(imageUploadPromises);
+                
+                // Upload PDFs to Cloudinary
+                const pdfUploadPromises = servicePDFs.map(file => uploadBufferToCloudinary(file.buffer));
+                const portfolioPDFs = await Promise.all(pdfUploadPromises);
 
                 // Create the service offering
                 const newServiceOffering = new ServiceOffering({
@@ -694,6 +724,7 @@ const becomeProviderWithServices = async (req, res) => {
                         : [service.keywords],
                     description: service.bio,
                     portfolioImages: portfolioImages,
+                    portfolioPDFs: portfolioPDFs,
                     experience: parseInt(service.experience),
                     price: parseFloat(service.price) || 0
                 });
@@ -805,13 +836,29 @@ const updateServiceOffering = async (req, res) => {
         if (experience !== undefined) service.experience = parseInt(experience);
         if (price !== undefined) service.price = parseFloat(price);
 
+        // When using upload.any(), req.files is an array
+        const filesArray = req.files || [];
+        
+        // Filter files by fieldname
+        const images = filesArray.filter(file => file.fieldname === 'portfolioImages');
+        const pdfs = filesArray.filter(file => file.fieldname === 'portfolioPDFs');
+        
         // Handle new images if uploaded
-        if (req.files && req.files.length > 0) {
-            const uploadPromises = req.files.map(file => uploadBufferToCloudinary(file.buffer));
-            const newImages = await Promise.all(uploadPromises);
+        if (images.length > 0) {
+            const imageUploadPromises = images.map(file => uploadBufferToCloudinary(file.buffer));
+            const newImages = await Promise.all(imageUploadPromises);
             
             // Add new images to existing ones
             service.portfolioImages = [...service.portfolioImages, ...newImages];
+        }
+        
+        // Handle new PDFs if uploaded
+        if (pdfs.length > 0) {
+            const pdfUploadPromises = pdfs.map(file => uploadBufferToCloudinary(file.buffer));
+            const newPDFs = await Promise.all(pdfUploadPromises);
+            
+            // Add new PDFs to existing ones
+            service.portfolioPDFs = [...(service.portfolioPDFs || []), ...newPDFs];
         }
 
         await service.save();
