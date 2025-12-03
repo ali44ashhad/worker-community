@@ -1,6 +1,6 @@
 import React from 'react'
 import Hero from '../components/Hero'
-import TopCategory from '../components/home/TopCategoty'
+import TopCategory from '../components/home/TopCategory'
 import TopServices from '../components/home/TopServices'
 import Testimonial from './Testimonial'
 import { motion } from 'framer-motion'
