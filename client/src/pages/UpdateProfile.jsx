@@ -18,6 +18,7 @@ const UpdateProfile = () => {
   });
   const [previewImage, setPreviewImage] = useState('');
   const [profileImage, setProfileImage] = useState(null);
+  const [removeProfileImage, setRemoveProfileImage] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -30,6 +31,8 @@ const UpdateProfile = () => {
         address: user.address || '',
       });
       setPreviewImage(user.profileImage || '');
+      setRemoveProfileImage(false);
+      setProfileImage(null);
     }
   }, [user]);
 
@@ -56,6 +59,7 @@ const UpdateProfile = () => {
       }
 
       setProfileImage(file);
+      setRemoveProfileImage(false); // Clear removal flag when uploading new image
       
       // Create preview
       const reader = new FileReader();
@@ -67,10 +71,25 @@ const UpdateProfile = () => {
   };
 
   const handleRemoveImage = () => {
-    setProfileImage(null);
-    setPreviewImage(user?.profileImage || '');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    // If there's a newly uploaded image, just remove it locally
+    if (profileImage) {
+      setProfileImage(null);
+      setPreviewImage(user?.profileImage || '');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } 
+    // If there's an existing profile image, toggle removal state
+    else if (user?.profileImage) {
+      if (removeProfileImage) {
+        // Undo removal
+        setRemoveProfileImage(false);
+        setPreviewImage(user.profileImage);
+      } else {
+        // Mark for removal
+        setRemoveProfileImage(true);
+        setPreviewImage('');
+      }
     }
   };
 
@@ -83,7 +102,9 @@ const UpdateProfile = () => {
       formDataToSend.append('phoneNumber', formData.phoneNumber);
       formDataToSend.append('address', formData.address);
       
-      if (profileImage) {
+      if (removeProfileImage) {
+        formDataToSend.append('removeProfileImage', 'true');
+      } else if (profileImage) {
         formDataToSend.append('profileImage', profileImage);
       }
 
@@ -156,17 +177,6 @@ const UpdateProfile = () => {
                 >
                   <HiOutlineCamera className="text-xl" />
                 </button>
-
-                {/* Remove Image Button */}
-                {profileImage && previewImage !== user?.profileImage && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveImage}
-                    className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-full border-2 border-white shadow-lg hover:bg-red-600 transition-all"
-                  >
-                    <HiX className="text-sm" />
-                  </button>
-                )}
               </div>
 
               {/* File Input (Hidden) */}
@@ -178,9 +188,22 @@ const UpdateProfile = () => {
                 className="hidden"
               />
 
-              <p className="text-sm text-gray-600 max-w-md text-center">
+              <p className="text-sm text-gray-600 max-w-md text-center mb-4">
                 Click the camera icon to upload a new profile picture
               </p>
+              {user?.profileImage && (
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    removeProfileImage 
+                      ? 'bg-orange-100 text-orange-700 border-2 border-orange-300 hover:bg-orange-200' 
+                      : 'bg-red-100 text-red-700 border-2 border-red-300 hover:bg-red-200'
+                  }`}
+                >
+                  {removeProfileImage ? 'Profile picture will be removed (click to undo)' : 'Remove Profile Picture'}
+                </button>
+              )}
             </div>
           </div>
 
@@ -244,8 +267,8 @@ const UpdateProfile = () => {
             {/* Address Input */}
             <div className="mb-8">
               <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                Address
-              </label>
+                Address <span className="text-gray-400 font-bold normal-case">(optional)</span>
+              </label> 
               <textarea
                 name="address"
                 value={formData.address}
@@ -253,7 +276,7 @@ const UpdateProfile = () => {
                 placeholder="Enter your full address"
                 className="w-full px-4 py-3 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
                 rows="3"
-                required
+                // required
               />
             </div>
 
