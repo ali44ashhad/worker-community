@@ -166,7 +166,7 @@ const TopCategoryCard = ({ category, data = {}, image }) => {
       </h3>
 
       {/* Rating / Stats */}
-      {(averageRating > 0 || reviewCount > 0 || serviceCount > 0) && (
+      {/* {(averageRating > 0 || reviewCount > 0 || serviceCount > 0) && (
         <div className="flex items-center justify-center gap-4 mb-3">
           {averageRating > 0 && (
             <div className="flex items-center gap-1">
@@ -181,7 +181,7 @@ const TopCategoryCard = ({ category, data = {}, image }) => {
             <span className="text-xs text-gray-600">{serviceCount} {serviceCount === 1 ? 'service' : 'services'}</span>
           )}
         </div>
-      )}
+      )} */}
 
       {/* Description */}
       <div className="text-gray-600 text-center text-sm mb-4 min-h-[2.5rem] flex items-center justify-center">
