@@ -279,16 +279,34 @@ const getAllServices = async (req, res) => {
 const updateServiceDetails = async (req, res) => {
     try {
         const { serviceId } = req.params;
-        const { serviceCategory, subCategories, keywords, description, experience } = req.body;
+        const { servicename, serviceCategory, subCategories, keywords, description, experience } = req.body;
 
-        // Find the service offering
-        const service = await ServiceOffering.findById(serviceId);
-        if (!service) {
+        // Debug logging to help identify issues
+        console.log('Update service request:', {
+            serviceId,
+            servicename,
+            serviceCategory,
+            bodyKeys: Object.keys(req.body)
+        });
+
+        // Find the service offering first to check if it exists
+        const existingService = await ServiceOffering.findById(serviceId);
+        if (!existingService) {
             return res.status(404).json({ success: false, message: "Service offering not found." });
         }
 
-        // Update service fields
-        if (serviceCategory !== undefined) service.serviceCategory = serviceCategory;
+        // Build update object
+        const updateData = {};
+
+        // Update servicename if provided
+        if (servicename !== undefined && servicename !== null) {
+            const trimmedServicename = typeof servicename === 'string' ? servicename.trim() : servicename;
+            if (trimmedServicename !== '') {
+                updateData.servicename = trimmedServicename;
+            }
+        }
+
+        if (serviceCategory !== undefined) updateData.serviceCategory = serviceCategory;
         
         // Parse subCategories if it's a JSON string
         if (subCategories !== undefined) {
@@ -300,7 +318,7 @@ const updateServiceDetails = async (req, res) => {
                     parsedSubCategories = [subCategories];
                 }
             }
-            service.subCategories = Array.isArray(parsedSubCategories) ? parsedSubCategories : [parsedSubCategories];
+            updateData.subCategories = Array.isArray(parsedSubCategories) ? parsedSubCategories : [parsedSubCategories];
         }
         
         // Parse keywords if it's a JSON string
@@ -313,22 +331,31 @@ const updateServiceDetails = async (req, res) => {
                     parsedKeywords = [keywords];
                 }
             }
-            service.keywords = Array.isArray(parsedKeywords) ? parsedKeywords : [parsedKeywords];
+            updateData.keywords = Array.isArray(parsedKeywords) ? parsedKeywords : [parsedKeywords];
         }
         
-        if (description !== undefined) service.description = description;
-        if (experience !== undefined) service.experience = parseInt(experience);
+        if (description !== undefined) updateData.description = description;
+        if (experience !== undefined) updateData.experience = parseInt(experience);
 
-        // Handle new images if uploaded
+        // Update regular fields first if there are any
+        if (Object.keys(updateData).length > 0) {
+            await ServiceOffering.findByIdAndUpdate(
+                serviceId,
+                updateData,
+                { new: true, runValidators: true }
+            );
+        }
+
+        // Handle new images if uploaded (separate update for array operations)
         if (req.files && req.files.length > 0) {
             const uploadPromises = req.files.map(file => uploadBufferToCloudinary(file.buffer));
             const newImages = await Promise.all(uploadPromises);
-            
-            // Add new images to existing ones
-            service.portfolioImages = [...service.portfolioImages, ...newImages];
+            await ServiceOffering.findByIdAndUpdate(
+                serviceId,
+                { $push: { portfolioImages: { $each: newImages } } },
+                { new: true }
+            );
         }
-
-        await service.save();
 
         // Populate and return updated service
         const updatedService = await ServiceOffering.findById(serviceId)

@@ -102,7 +102,7 @@ const deleteFromCloudinary = (public_id) => {
  const addServiceOffering = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { serviceCategory, subCategories, keywords, description, price } = req.body;
+        const { servicename, serviceCategory, subCategories, keywords, description, price } = req.body;
 
         // Ensure images are provided if this is a new service offering
         if (!req.files || req.files.length === 0) {
@@ -143,6 +143,7 @@ const deleteFromCloudinary = (public_id) => {
         // 2. Create the service offering document
         const newService = new ServiceOffering({
             provider: profile._id,
+            servicename,
             serviceCategory,
             // Ensure subCategories and keywords are arrays
             subCategories: Array.isArray(parsedSubCategories) ? parsedSubCategories : (parsedSubCategories ? [parsedSubCategories] : []),
@@ -564,6 +565,12 @@ const becomeProviderWithServices = async (req, res) => {
         // Validate each service has required fields
         for (let i = 0; i < services.length; i++) {
             const service = services[i];
+            if (!service.servicename || !service.servicename.trim()) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Service ${i + 1}: Service name is required.` 
+                });
+            }
             if (!service.category) {
                 return res.status(400).json({ 
                     success: false, 
@@ -673,6 +680,7 @@ const becomeProviderWithServices = async (req, res) => {
                 // Create the service offering
                 const newServiceOffering = new ServiceOffering({
                     provider: newProfile._id,
+                    servicename: service.servicename,
                     serviceCategory: service.category,
                     subCategories: Array.isArray(service.subCategories) 
                         ? service.subCategories 
@@ -737,7 +745,7 @@ const updateServiceOffering = async (req, res) => {
     try {
         const userId = req.user._id;
         const { serviceId } = req.params;
-        const { serviceCategory, subCategories, keywords, description, experience, price } = req.body;
+        const { servicename, serviceCategory, subCategories, keywords, description, experience, price } = req.body;
 
         const profile = await ProviderProfile.findOne({ user: userId });
         if (!profile) {
@@ -758,6 +766,7 @@ const updateServiceOffering = async (req, res) => {
         }
 
         // Update service fields
+        if (servicename !== undefined) service.servicename = servicename;
         if (serviceCategory) service.serviceCategory = serviceCategory;
         
         // Parse subCategories if it's a JSON string

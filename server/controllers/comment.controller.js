@@ -447,7 +447,7 @@ const getTopServices = async (req, res) => {
                     select: 'name profileImage'
                 }
             })
-            .select('serviceCategory description portfolioImages provider experience keywords subCategories price');
+            .select('servicename serviceCategory description portfolioImages provider experience keywords subCategories price');
 
         // Combine with rating data and maintain sort order
         const servicesWithRatings = services.map(service => {

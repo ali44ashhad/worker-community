@@ -121,6 +121,11 @@ const serviceOfferingSchema = new Schema({
         ref: "ProviderProfile",
         required: true,
     },
+    servicename: {
+        type: String,
+        required: true,
+        trim: true
+    },
     serviceCategory: {
         type: String,
         required: true,
