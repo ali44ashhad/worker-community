@@ -146,6 +146,8 @@ const TopCategoryCard = ({ category, data = {}, image }) => {
               src={image}
               alt={category}
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 const fallback = e.currentTarget.parentNode.querySelector('.fallback-text');

@@ -66,7 +66,13 @@ const TopServiceCard = ({ service }) => {
       <div className="mb-4">
         <div className="w-full h-48 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
           {image ? (
-            <img src={image} alt={serviceName || serviceCategory} className="w-full h-full object-cover" />
+            <img 
+              src={image} 
+              alt={serviceName || serviceCategory} 
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-black font-bold">
               No Image

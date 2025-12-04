@@ -31,6 +31,20 @@ const Hero = () => {
     { src: "art.png", title: "Art & Craft", subtitle: "Creative classes and workshops" },
   ];
 
+  // Preload critical images
+  useEffect(() => {
+    // Preload first carousel image (above the fold)
+    const firstImage = new Image();
+    firstImage.src = carouselImages[0].src;
+    
+    // Preload first few category icons (visible on initial render)
+    const criticalIcons = categories.slice(0, 4).map(cat => cat.icon);
+    criticalIcons.forEach(icon => {
+      const img = new Image();
+      img.src = icon;
+    });
+  }, []);
+
   const user = useSelector((state) => state.auth.user);
 
   // Auto-play carousel
@@ -205,7 +219,14 @@ const Hero = () => {
                       className="category-item flex-shrink-0 flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-center border border-gray-100 bg-white shadow-sm hover:shadow-md transition focus-visible:ring-2 focus-visible:ring-gray-200 w-28 sm:w-32"
                     >
                       <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center ring-1 ring-gray-100 overflow-hidden">
-                        <img src={cat.icon} alt={cat.name} className="max-h-7 max-w-7 object-contain" loading="lazy" />
+                        <img 
+                          src={cat.icon} 
+                          alt={cat.name} 
+                          className="max-h-7 max-w-7 object-contain" 
+                          loading={idx < 4 ? "eager" : "lazy"}
+                          fetchPriority={idx < 4 ? "high" : "auto"}
+                          decoding="async"
+                        />
                       </div>
                       <p className="text-xs sm:text-sm text-gray-700 font-medium leading-tight whitespace-normal break-words">
                         {cat.name}
@@ -271,6 +292,9 @@ const Hero = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.98 }}
                         transition={{ duration: 0.6 }}
+                        loading={idx === 0 ? "eager" : "lazy"}
+                        fetchPriority={idx === 0 ? "high" : "auto"}
+                        decoding="async"
                         className="absolute inset-0 w-full h-full object-cover object-center"
                       />
                     )
@@ -309,7 +333,13 @@ const Hero = () => {
                     onClick={() => goToSlide(i)}
                     className={`rounded-lg overflow-hidden border ${i === currentSlide ? 'ring-1 ring-indigo-300' : 'border-transparent'} shadow-sm aspect-[4/3]`}
                   >
-                    <img src={s.src} alt={s.title} className="w-full h-full object-cover object-center" />
+                    <img 
+                      src={s.src} 
+                      alt={s.title} 
+                      loading={i === 0 ? "eager" : "lazy"}
+                      decoding="async"
+                      className="w-full h-full object-cover object-center" 
+                    />
                   </button>
                 ))}
               </div>
