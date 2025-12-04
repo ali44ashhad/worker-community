@@ -135,7 +135,7 @@ const SERVICE_RULES = {
 const AdminServices = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const { services, isLoading, error } = useSelector((state) => state.admin);
+  const { services, servicesPagination, isLoading, error } = useSelector((state) => state.admin);
   const [editingService, setEditingService] = useState(null);
   const [editForm, setEditForm] = useState({
     servicename: '',
@@ -148,15 +148,36 @@ const AdminServices = () => {
     newPDFs: []
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
   const serviceRefs = useRef({});
   const [pdfToDelete, setPdfToDelete] = useState(null);
   const [imageToDelete, setImageToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [savingServiceId, setSavingServiceId] = useState(null);
 
+  // Debounce search input
   useEffect(() => {
-    dispatch(getAllServicesAdmin());
-  }, [dispatch]);
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Reset to page 1 if current page exceeds total pages (e.g., after search)
+  useEffect(() => {
+    if (servicesPagination && servicesPagination.totalPages > 0 && currentPage > servicesPagination.totalPages) {
+      setCurrentPage(1);
+    }
+  }, [servicesPagination, currentPage]);
+
+  // Fetch services when page or search changes
+  useEffect(() => {
+    dispatch(getAllServicesAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
+  }, [dispatch, currentPage, pageSize, searchTerm]);
 
   const handleEdit = (service) => {
     setEditingService(service._id);
@@ -219,7 +240,7 @@ const AdminServices = () => {
 
       await dispatch(updateServiceDetails({ serviceId, formData }));
       handleCancel();
-      dispatch(getAllServicesAdmin());
+      dispatch(getAllServicesAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
     } catch (error) {
       console.error('Error saving service:', error);
     } finally {
@@ -244,7 +265,7 @@ const AdminServices = () => {
         serviceId: imageToDelete.serviceId, 
         imagePublicId: imageToDelete.imagePublicId 
       }));
-      dispatch(getAllServicesAdmin());
+      dispatch(getAllServicesAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
       setImageToDelete(null);
     } catch (error) {
       console.error('Error deleting image:', error);
@@ -262,7 +283,7 @@ const AdminServices = () => {
         serviceId: pdfToDelete.serviceId, 
         pdfPublicId: pdfToDelete.pdfPublicId 
       }));
-      dispatch(getAllServicesAdmin());
+      dispatch(getAllServicesAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
       setPdfToDelete(null);
     } catch (error) {
       console.error('Error deleting PDF:', error);
@@ -389,8 +410,8 @@ const AdminServices = () => {
                 type="text"
                 placeholder="Search by service name, provider name, category, or keywords..."
                 title="Search by service name, provider name, category, or keywords..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full md:w-80 pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black placeholder-gray-400"
               />
             </div>
@@ -398,26 +419,9 @@ const AdminServices = () => {
         </div>
       </div>
 
-      {services && services.length > 0 ? (() => {
-        // Filter services based on search term
-        const filteredServices = services.filter((service) => {
-          if (!searchTerm.trim()) return true;
-          const searchLower = searchTerm.toLowerCase();
-          const serviceName = service.servicename?.toLowerCase() || '';
-          const providerName = getFullName(service.provider?.user)?.toLowerCase() || '';
-          const category = service.serviceCategory?.toLowerCase() || '';
-          const keywords = Array.isArray(service.keywords) 
-            ? service.keywords.map(k => k?.toLowerCase() || '').join(' ')
-            : '';
-          return serviceName.includes(searchLower) || 
-                 providerName.includes(searchLower) || 
-                 category.includes(searchLower) ||
-                 keywords.includes(searchLower);
-        });
-
-        return filteredServices.length > 0 ? (
+      {services && services.length > 0 ? (
           <div className="space-y-6">
-            {filteredServices.map((service) => {
+            {services.map((service) => {
             const isEditing = editingService === service._id;
             
             const providerName = getFullName(service.provider?.user) || 'Unknown Provider';
@@ -784,13 +788,77 @@ const AdminServices = () => {
           </div>
         ) : (
           <div className="bg-white border border-gray-300 rounded-xl p-12 text-center">
-            <p className="text-gray-600 text-lg">No services found matching your search</p>
+            <p className="text-gray-600 text-lg">No services found{searchTerm ? ' matching your search' : ''}</p>
           </div>
-        );
-      })() : (
-        <div className="bg-white border border-gray-300 rounded-xl p-12 text-center">
-          <p className="text-gray-600 text-lg">No services found</p>
-        </div>
+        )}
+
+      {/* Pagination Controls */}
+      {services && services.length > 0 && servicesPagination && servicesPagination.totalPages > 1 && (
+        <motion.div 
+          className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="text-sm text-gray-600">
+            Showing {(servicesPagination.currentPage - 1) * servicesPagination.limit + 1} to {Math.min(servicesPagination.currentPage * servicesPagination.limit, servicesPagination.totalServices)} of {servicesPagination.totalServices} services
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={!servicesPagination.hasPrevPage || isLoading}
+              className={`px-4 py-2 rounded-xl border transition-all duration-300 ${
+                !servicesPagination.hasPrevPage || isLoading
+                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                  : 'bg-white text-black border-gray-300 hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+            >
+              Previous
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, servicesPagination.totalPages) }, (_, i) => {
+                let pageNum;
+                if (servicesPagination.totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (servicesPagination.currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (servicesPagination.currentPage >= servicesPagination.totalPages - 2) {
+                  pageNum = servicesPagination.totalPages - 4 + i;
+                } else {
+                  pageNum = servicesPagination.currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    disabled={isLoading}
+                    className={`px-3 py-2 rounded-xl border transition-all duration-300 ${
+                      servicesPagination.currentPage === pageNum
+                        ? 'bg-black text-white border-black'
+                        : 'bg-white text-black border-gray-300 hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+                    } ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(servicesPagination.totalPages, prev + 1))}
+              disabled={!servicesPagination.hasNextPage || isLoading}
+              className={`px-4 py-2 rounded-xl border transition-all duration-300 ${
+                !servicesPagination.hasNextPage || isLoading
+                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                  : 'bg-white text-black border-gray-300 hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        </motion.div>
       )}
 
       {/* PDF Deletion Modal */}

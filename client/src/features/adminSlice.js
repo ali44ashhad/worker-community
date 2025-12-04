@@ -20,13 +20,22 @@ export const getAdminDashboardStats = createAsyncThunk(
   }
 );
 
-// Get all providers (admin)
+// Get all providers (admin) with pagination
 export const getAllProvidersAdmin = createAsyncThunk(
   "admin/getAllProviders",
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10, search = '' } = {}, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/api/admin/all-providers`);
-      return res.data.providers;
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      if (search.trim()) {
+        params.append('search', search.trim());
+      }
+      const res = await axios.get(`${API_URL}/api/admin/all-providers?${params.toString()}`);
+      return {
+        providers: res.data.providers,
+        pagination: res.data.pagination
+      };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch providers");
     }
@@ -72,13 +81,22 @@ export const updateProviderUserDetails = createAsyncThunk(
   }
 );
 
-// Get all services (admin)
+// Get all services (admin) with pagination
 export const getAllServicesAdmin = createAsyncThunk(
   "admin/getAllServices",
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10, search = '' } = {}, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/api/admin/all-services`);
-      return res.data.services;
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      if (search.trim()) {
+        params.append('search', search.trim());
+      }
+      const res = await axios.get(`${API_URL}/api/admin/all-services?${params.toString()}`);
+      return {
+        services: res.data.services,
+        pagination: res.data.pagination
+      };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch services");
     }
@@ -145,7 +163,23 @@ const adminSlice = createSlice({
   initialState: {
     dashboardStats: null,
     providers: [],
+    pagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalProviders: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+      limit: 10
+    },
     services: [],
+    servicesPagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalServices: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+      limit: 10
+    },
     isLoading: false,
     error: null,
   },
@@ -153,7 +187,23 @@ const adminSlice = createSlice({
     clearAdminState: (state) => {
       state.dashboardStats = null;
       state.providers = [];
+      state.pagination = {
+        currentPage: 1,
+        totalPages: 1,
+        totalProviders: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 10
+      };
       state.services = [];
+      state.servicesPagination = {
+        currentPage: 1,
+        totalPages: 1,
+        totalServices: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 10
+      };
       state.error = null;
     },
   },
@@ -179,7 +229,8 @@ const adminSlice = createSlice({
       })
       .addCase(getAllProvidersAdmin.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.providers = action.payload;
+        state.providers = action.payload.providers;
+        state.pagination = action.payload.pagination;
       })
       .addCase(getAllProvidersAdmin.rejected, (state, action) => {
         state.isLoading = false;
@@ -208,7 +259,8 @@ const adminSlice = createSlice({
       })
       .addCase(getAllServicesAdmin.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.services = action.payload;
+        state.services = action.payload.services;
+        state.servicesPagination = action.payload.pagination;
       })
       .addCase(getAllServicesAdmin.rejected, (state, action) => {
         state.isLoading = false;

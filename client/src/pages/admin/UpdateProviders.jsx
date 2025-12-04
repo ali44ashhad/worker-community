@@ -132,7 +132,7 @@ const SERVICE_RULES = {
 
 const UpdateProviders = () => {
   const dispatch = useDispatch();
-  const { providers, isLoading, error } = useSelector((state) => state.admin);
+  const { providers, pagination, isLoading, error } = useSelector((state) => state.admin);
   const [editingProvider, setEditingProvider] = useState(null);
   const [editForm, setEditForm] = useState({
     bio: '',
@@ -157,10 +157,31 @@ const UpdateProviders = () => {
     newImages: []
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [searchInput, setSearchInput] = useState('');
 
+  // Debounce search input
   useEffect(() => {
-    dispatch(getAllProvidersAdmin());
-  }, [dispatch]);
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Reset to page 1 if current page exceeds total pages (e.g., after search)
+  useEffect(() => {
+    if (pagination && pagination.totalPages > 0 && currentPage > pagination.totalPages) {
+      setCurrentPage(1);
+    }
+  }, [pagination, currentPage]);
+
+  // Fetch providers when page or search changes
+  useEffect(() => {
+    dispatch(getAllProvidersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
+  }, [dispatch, currentPage, pageSize, searchTerm]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -223,13 +244,13 @@ const UpdateProviders = () => {
 
     await dispatch(updateServiceDetails({ serviceId: selectedService._id, formData }));
     handleCloseServiceModal();
-    dispatch(getAllProvidersAdmin());
+    dispatch(getAllProvidersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
   };
 
   const handleDeleteServiceImage = async (imagePublicId) => {
     if (window.confirm('Are you sure you want to delete this image?')) {
       await dispatch(deleteServiceImage({ serviceId: selectedService._id, imagePublicId }));
-      dispatch(getAllProvidersAdmin());
+      dispatch(getAllProvidersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
     }
   };
 
@@ -344,7 +365,7 @@ const UpdateProviders = () => {
     });
 
     // Refresh providers list
-    dispatch(getAllProvidersAdmin());
+    dispatch(getAllProvidersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
   };
 
   if (isLoading) {
@@ -404,8 +425,8 @@ const UpdateProviders = () => {
               <input
                 type="text"
                 placeholder="Search by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full md:w-80 pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black placeholder-gray-400"
               />
             </div>
@@ -413,19 +434,9 @@ const UpdateProviders = () => {
         </div>
       </motion.div>
 
-      {providers && providers.length > 0 ? (() => {
-        // Filter providers based on search term
-        const filteredProviders = providers.filter((provider) => {
-          if (!searchTerm.trim()) return true;
-          const searchLower = searchTerm.toLowerCase();
-          const fullName = getFullName(provider.user)?.toLowerCase() || '';
-          const email = provider.user?.email?.toLowerCase() || '';
-          return fullName.includes(searchLower) || email.includes(searchLower);
-        });
-
-        return filteredProviders.length > 0 ? (
+      {providers && providers.length > 0 ? (
           <div className="space-y-6">
-            {filteredProviders.map((provider) => {
+            {providers.map((provider) => {
             const isEditing = editingProvider === provider._id;
 
             return (
@@ -772,13 +783,77 @@ const UpdateProviders = () => {
           </div>
         ) : (
           <div className="bg-white border border-gray-300 rounded-2xl p-12 text-center shadow-md">
-            <p className="text-gray-600 text-lg">No providers found matching your search</p>
+            <p className="text-gray-600 text-lg">No providers found{searchTerm ? ' matching your search' : ''}</p>
           </div>
-        );
-      })() : (
-        <div className="bg-white border border-gray-300 rounded-2xl p-12 text-center shadow-md">
-          <p className="text-gray-600 text-lg">No providers found</p>
-        </div>
+        )}
+
+      {/* Pagination Controls */}
+      {providers && providers.length > 0 && pagination && pagination.totalPages > 1 && (
+        <motion.div 
+          className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="text-sm text-gray-600">
+            Showing {(pagination.currentPage - 1) * pagination.limit + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalProviders)} of {pagination.totalProviders} providers
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={!pagination.hasPrevPage || isLoading}
+              className={`px-4 py-2 rounded-xl border transition-all duration-300 ${
+                !pagination.hasPrevPage || isLoading
+                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                  : 'bg-white text-black border-gray-300 hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+            >
+              Previous
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                let pageNum;
+                if (pagination.totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (pagination.currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                  pageNum = pagination.totalPages - 4 + i;
+                } else {
+                  pageNum = pagination.currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    disabled={isLoading}
+                    className={`px-3 py-2 rounded-xl border transition-all duration-300 ${
+                      pagination.currentPage === pageNum
+                        ? 'bg-black text-white border-black'
+                        : 'bg-white text-black border-gray-300 hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+                    } ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+              disabled={!pagination.hasNextPage || isLoading}
+              className={`px-4 py-2 rounded-xl border transition-all duration-300 ${
+                !pagination.hasNextPage || isLoading
+                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                  : 'bg-white text-black border-gray-300 hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        </motion.div>
       )}
 
       {/* Service Edit Modal */}
