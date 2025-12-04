@@ -157,6 +157,14 @@ const SpecificService = () => {
       // Continue even if increment fails
     }
 
+    // Increment provider profile count
+    try {
+      await axios.post(`${API_URL}/api/provider-profile/${service.provider._id}/increment-count`);
+    } catch (error) {
+      console.error('Failed to increment provider profile count:', error);
+      // Continue even if increment fails
+    }
+
     // Redirect to WhatsApp with provider's phone number
     if (providerPhoneNumber) {
       // Clean the phone number - remove spaces, +, and special characters
@@ -172,11 +180,6 @@ const SpecificService = () => {
       // Fallback to contact page if no phone number
       navigate(`/contact`);
     }
-  };
-
-  const handleContactNow = () => {
-    // Navigate to provider profile or contact
-    navigate(`/provider/${service.provider._id}`);
   };
 
   const isInWishlist = wishlistIds?.includes(id);
@@ -358,18 +361,12 @@ const SpecificService = () => {
                   )}
 
                   {/* Action Buttons */}
-                  <div className='flex gap-3 mt-4'>
-                    <button
-                      onClick={handleContactNow}
-                      className='flex-1 bg-white text-gray-900 py-2.5 px-4 rounded-lg font-semibold text-sm hover:bg-gray-50 border border-gray-300 transition-all'
-                    >
-                      Contact me
-                    </button>
+                  <div className='mt-4'>
                     <button
                       onClick={handleOrderNow}
-                      className='flex-1 bg-gray-900 text-white py-2.5 px-4 rounded-lg font-semibold text-sm hover:bg-gray-800 transition-all'
+                      className='w-full bg-gray-900 text-white py-2.5 px-4 rounded-lg font-semibold text-sm hover:bg-gray-800 transition-all'
                     >
-                      Request to order
+                      I'm interested
                     </button>
                   </div>
                 </div>
@@ -482,13 +479,7 @@ const SpecificService = () => {
                   onClick={handleOrderNow}
                   className='w-full bg-gray-900 text-white py-3 px-4 rounded-lg font-semibold text-sm hover:bg-gray-800 transition-all'
                 >
-                  Request to order
-                </button>
-                <button
-                  onClick={handleContactNow}
-                  className='w-full bg-white text-gray-900 py-3 px-4 rounded-lg font-semibold text-sm hover:bg-gray-50 border border-gray-300 transition-all'
-                >
-                  Contact me
+                  I'm interested
                 </button>
               </div>
 
