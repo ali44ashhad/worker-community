@@ -128,22 +128,68 @@ const getAdminDashboardStats = async (req, res) => {
 };
 
 /**
- * @description Get all providers on the platform
+ * @description Get all providers on the platform with pagination
  * @route GET /api/admin/all-providers
  * @access Private (Admin)
+ * @queryParams page (default: 1), limit (default: 10), search (optional)
  */
 
 const getAllProviders = async (req, res) => {
     try {
-        // Find all provider profiles with their user and service offerings
-        const providers = await ProviderProfile.find({})
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const skip = (page - 1) * limit;
+
+        // Build search query
+        let searchQuery = {};
+        if (search.trim()) {
+            // First, find users that match the search criteria
+            const matchingUsers = await User.find({
+                $or: [
+                    { firstName: { $regex: search, $options: 'i' } },
+                    { lastName: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ]
+            }).select('_id');
+            
+            const userIds = matchingUsers.map(user => user._id);
+            
+            // Find providers that reference these users
+            if (userIds.length > 0) {
+                searchQuery = { user: { $in: userIds } };
+            } else {
+                // No matching users, return empty result
+                searchQuery = { _id: null }; // This will match nothing
+            }
+        }
+
+        // Get total count for pagination metadata
+        const totalProviders = await ProviderProfile.countDocuments(searchQuery);
+
+        // Find providers with pagination
+        const providers = await ProviderProfile.find(searchQuery)
             .populate('user', 'firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip role createdAt')
             .populate('serviceOfferings')
-            .sort({ createdAt: -1 }); // Show newest first
+            .sort({ createdAt: -1 }) // Show newest first
+            .skip(skip)
+            .limit(limit);
+
+        const totalPages = Math.ceil(totalProviders / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
 
         return res.status(200).json({
             success: true,
-            providers
+            providers,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalProviders,
+                hasNextPage,
+                hasPrevPage,
+                limit
+            }
         });
 
     } catch (error) {
@@ -246,15 +292,64 @@ const updateProviderUserDetails = async (req, res) => {
 
 
 /**
- * @description Get all service offerings on the platform
+ * @description Get all service offerings on the platform with pagination
  * @route GET /api/admin/all-services
  * @access Private (Admin)
+ * @queryParams page (default: 1), limit (default: 10), search (optional)
  */
 
 const getAllServices = async (req, res) => {
     try {
-        // Find all service offerings with their provider and user info
-        const services = await ServiceOffering.find({})
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const skip = (page - 1) * limit;
+
+        // Build search query
+        let searchQuery = {};
+        if (search.trim()) {
+            // Search in service name, category, keywords, and provider name/email
+            const searchLower = search.trim().toLowerCase();
+            
+            // First, find users that match the search (for provider name/email)
+            const matchingUsers = await User.find({
+                $or: [
+                    { firstName: { $regex: search.trim(), $options: 'i' } },
+                    { lastName: { $regex: search.trim(), $options: 'i' } },
+                    { email: { $regex: search.trim(), $options: 'i' } }
+                ]
+            }).select('_id');
+            
+            const userIds = matchingUsers.map(user => user._id);
+            
+            // Find providers that reference these users
+            let providerIds = [];
+            if (userIds.length > 0) {
+                const matchingProviders = await ProviderProfile.find({
+                    user: { $in: userIds }
+                }).select('_id');
+                providerIds = matchingProviders.map(p => p._id);
+            }
+            
+            // Build search query for services
+            const searchConditions = [
+                { servicename: { $regex: search.trim(), $options: 'i' } },
+                { serviceCategory: { $regex: search.trim(), $options: 'i' } },
+                { keywords: { $regex: search.trim(), $options: 'i' } }
+            ];
+            
+            if (providerIds.length > 0) {
+                searchConditions.push({ provider: { $in: providerIds } });
+            }
+            
+            searchQuery = { $or: searchConditions };
+        }
+
+        // Get total count for pagination metadata
+        const totalServices = await ServiceOffering.countDocuments(searchQuery);
+
+        // Find services with pagination
+        const services = await ServiceOffering.find(searchQuery)
             .populate({
                 path: 'provider',
                 populate: {
@@ -262,11 +357,25 @@ const getAllServices = async (req, res) => {
                     select: 'firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip'
                 }
             })
-            .sort({ createdAt: -1 }); // Show newest first
+            .sort({ createdAt: -1 }) // Show newest first
+            .skip(skip)
+            .limit(limit);
+
+        const totalPages = Math.ceil(totalServices / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
 
         return res.status(200).json({
             success: true,
-            services
+            services,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalServices,
+                hasNextPage,
+                hasPrevPage,
+                limit
+            }
         });
 
     } catch (error) {
