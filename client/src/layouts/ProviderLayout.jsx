@@ -1,23 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { HiOutlineMenu } from 'react-icons/hi';
+import { HiOutlineMenu, HiChevronDown, HiOutlineUserCircle, HiOutlineLogout } from 'react-icons/hi';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
-import { FaCartShopping } from "react-icons/fa6";
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ProviderSidebar from '../components/ProviderSidebar';
+import { getFullName, getInitials } from '../utils/userHelpers';
 
 const ProviderLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const location = useLocation();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
-  const wishlistIds = useSelector((s) => s.wishlist.ids);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     setIsSidebarOpen(false);
+    setIsUserDropdownOpen(false);
   }, [location.pathname]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (isSidebarOpen) {
@@ -72,42 +88,99 @@ const ProviderLayout = ({ children }) => {
             
             <div className="flex items-center gap-2 flex-shrink-0">
               {user && (
-                <motion.div whileHover={{ scale: 1.05 }}>
-                  <Link to={`/cart/${user._id}`} className="relative">
-                    <FaCartShopping size={20} className="text-gray-700" />
-                    {wishlistIds?.length > 0 && (
-                      <motion.span
-                        className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500 }}
-                      >
-                        {wishlistIds?.length || 0}
-                      </motion.span>
-                    )}
-                  </Link>
-                </motion.div>
-              )}
-              
-              {user && (
-                <motion.div whileHover={{ scale: 1.03 }}>
-                  <Link
-                    to={`/update-profile/${user._id}`}
-                    className="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-semibold text-gray-900 whitespace-nowrap"
+                <div className="relative" ref={dropdownRef}>
+                  <motion.button
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    className="flex items-center gap-2"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    Profile
-                  </Link>
-                </motion.div>
+                    {/* Avatar */}
+                    <div className="relative">
+                      {user.profileImage ? (
+                        <img
+                          src={user.profileImage}
+                          alt={getFullName(user)}
+                          className="w-9 h-9 rounded-full object-cover border-2 border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-sm border-2 border-gray-200">
+                          {getInitials(user)}
+                        </div>
+                      )}
+                    </div>
+                    <HiChevronDown 
+                      className={`text-gray-600 transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`}
+                      size={18}
+                    />
+                  </motion.button>
+
+                  {/* Dropdown Menu */}
+                  <AnimatePresence>
+                    {isUserDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
+                      >
+                        {/* User Info Section */}
+                        <div className="px-4 py-3 border-b border-gray-100">
+                          <div className="flex items-center gap-3">
+                            {/* Avatar */}
+                            <div className="relative flex-shrink-0">
+                              {user.profileImage ? (
+                                <img
+                                  src={user.profileImage}
+                                  alt={getFullName(user)}
+                                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-base border-2 border-gray-200">
+                                  {getInitials(user)}
+                                </div>
+                              )}
+                            </div>
+                            {/* Name and Email */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">
+                                {getFullName(user)}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Menu Items */}
+                        <div className="py-1.5">
+                          <Link
+                            to={`/update-profile/${user._id}`}
+                            onClick={() => setIsUserDropdownOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <HiOutlineUserCircle size={18} className="text-gray-500 flex-shrink-0" />
+                            <span>Update Profile</span>
+                          </Link>
+                          <div className="border-t border-gray-100 my-1"></div>
+                          <button
+                            onClick={() => {
+                              setIsUserDropdownOpen(false);
+                              handleLogout();
+                            }}
+                            className="flex items-center gap-2.5 w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <HiOutlineLogout size={18} className="text-red-500 flex-shrink-0" />
+                            <span>Logout</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
-              
-              <motion.button
-                onClick={handleLogout}
-                className="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-semibold text-gray-900 whitespace-nowrap"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                Logout
-              </motion.button>
             </div>
           </div>
         </div>
