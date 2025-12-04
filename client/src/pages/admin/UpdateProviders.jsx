@@ -17,7 +17,8 @@ import {
   HiOutlineMail,
   HiOutlinePhone,
   HiOutlineLocationMarker,
-  HiOutlineDocumentText
+  HiOutlineDocumentText,
+  HiOutlineSearch
 } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import { getFullName, getInitials } from '../../utils/userHelpers';
@@ -155,6 +156,7 @@ const UpdateProviders = () => {
     price: 0,
     newImages: []
   });
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     dispatch(getAllProvidersAdmin());
@@ -391,13 +393,39 @@ const UpdateProviders = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl md:text-5xl font-bold text-black mb-3 tracking-tight">Manage Providers</h1>
-        <p className="text-gray-600 max-w-2xl">View and update provider information</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-3">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold text-black mb-3 tracking-tight">Manage Providers</h1>
+            <p className="text-gray-600 max-w-2xl">View and update provider information</p>
+          </div>
+          <div className="flex-shrink-0">
+            <div className="relative">
+              <HiOutlineSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full md:w-80 pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black placeholder-gray-400"
+              />
+            </div>
+          </div>
+        </div>
       </motion.div>
 
-      {providers && providers.length > 0 ? (
-        <div className="space-y-6">
-          {providers.map((provider) => {
+      {providers && providers.length > 0 ? (() => {
+        // Filter providers based on search term
+        const filteredProviders = providers.filter((provider) => {
+          if (!searchTerm.trim()) return true;
+          const searchLower = searchTerm.toLowerCase();
+          const fullName = getFullName(provider.user)?.toLowerCase() || '';
+          const email = provider.user?.email?.toLowerCase() || '';
+          return fullName.includes(searchLower) || email.includes(searchLower);
+        });
+
+        return filteredProviders.length > 0 ? (
+          <div className="space-y-6">
+            {filteredProviders.map((provider) => {
             const isEditing = editingProvider === provider._id;
 
             return (
@@ -740,9 +768,14 @@ const UpdateProviders = () => {
                 </div>
               </motion.div>
             );
-          })}
-        </div>
-      ) : (
+            })}
+          </div>
+        ) : (
+          <div className="bg-white border border-gray-300 rounded-2xl p-12 text-center shadow-md">
+            <p className="text-gray-600 text-lg">No providers found matching your search</p>
+          </div>
+        );
+      })() : (
         <div className="bg-white border border-gray-300 rounded-2xl p-12 text-center shadow-md">
           <p className="text-gray-600 text-lg">No providers found</p>
         </div>
