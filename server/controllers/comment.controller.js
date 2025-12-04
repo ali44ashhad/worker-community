@@ -81,7 +81,7 @@ const getCommentsForService = async (req, res) => {
 
         // 1. Find all comments where 'serviceOffering' matches the ServiceOffering ID
         const comments = await Comment.find({ serviceOffering: serviceId })
-            .populate('customer', 'name profileImage') // Get commenter's name and image
+            .populate('customer', 'firstName lastName name profileImage') // Get commenter's name and image
             .populate('provider', 'user') // Get provider info for ownership checking
             .populate({
                 path: 'replyBy',
@@ -150,7 +150,7 @@ const updateComment = async (req, res) => {
         const updatedComment = await existingComment.save();
 
         // Populate all necessary fields for response
-        await updatedComment.populate('customer', 'name profileImage');
+        await updatedComment.populate('customer', 'firstName lastName name profileImage');
         await updatedComment.populate('provider', 'user');
         await updatedComment.populate({
             path: 'replyBy',
@@ -391,7 +391,7 @@ const deleteReply = async (req, res) => {
         await comment.save();
 
         // Populate customer field for response
-        await comment.populate('customer', 'name profileImage');
+        await comment.populate('customer', 'firstName lastName name profileImage');
 
         return res.status(200).json({
             success: true,

@@ -360,9 +360,77 @@ const getAllProviders = async (req, res) => {
             .populate('user', 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip') // Get user's public info (name, profile image, phone number)
             .populate('serviceOfferings'); // Get all their service offerings (with images, categories, etc.)
         
+        // Get all service offering IDs to calculate ratings
+        const allServiceIds = [];
+        providers.forEach(provider => {
+            if (provider.serviceOfferings && Array.isArray(provider.serviceOfferings)) {
+                provider.serviceOfferings.forEach(service => {
+                    allServiceIds.push(service._id);
+                });
+            }
+        });
+
+        // Calculate average ratings for all services using aggregation
+        let serviceRatingsMap = {};
+        if (allServiceIds.length > 0) {
+            const ratingStats = await Comment.aggregate([
+                {
+                    $match: {
+                        serviceOffering: { $in: allServiceIds }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$serviceOffering",
+                        averageRating: { $avg: "$rating" },
+                        reviewCount: { $sum: 1 }
+                    }
+                }
+            ]);
+
+
+            // Convert to map for easy lookup - handle both ObjectId and string IDs
+            ratingStats.forEach(stat => {
+                const serviceId = stat._id.toString();
+                serviceRatingsMap[serviceId] = {
+                    averageRating: parseFloat(stat.averageRating.toFixed(2)),
+                    reviewCount: stat.reviewCount
+                };
+            });
+            
+        }
+
+        // Add ratings to each service offering
+        const providersWithRatings = providers.map(provider => {
+            const providerObj = provider.toObject();
+            if (providerObj.serviceOfferings && Array.isArray(providerObj.serviceOfferings)) {
+                providerObj.serviceOfferings = providerObj.serviceOfferings.map(service => {
+                    // Ensure service is a plain object
+                    const serviceObj = service && typeof service.toObject === 'function' 
+                        ? service.toObject() 
+                        : service;
+                    
+                    // Handle both ObjectId and string IDs
+                    const serviceId = serviceObj._id 
+                        ? (serviceObj._id.toString ? serviceObj._id.toString() : String(serviceObj._id))
+                        : null;
+                    
+                    const ratingData = serviceId && serviceRatingsMap[serviceId] 
+                        ? serviceRatingsMap[serviceId] 
+                        : { averageRating: 0, reviewCount: 0 };
+                    return {
+                        ...serviceObj,
+                        averageRating: ratingData.averageRating,
+                        reviewCount: ratingData.reviewCount
+                    };
+                });
+            }
+            return providerObj;
+        });
+        
         return res.status(200).json({
             success: true,
-            providers
+            providers: providersWithRatings
         });
     } catch (error) {
         console.error("Error in getAllProviders:", error.message);
