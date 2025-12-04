@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAdminDashboardStats } from '../../features/adminSlice';
+import { getAdminDashboardStats, getAllProvidersAdmin } from '../../features/adminSlice';
 import { 
   HiOutlineUsers, 
   HiOutlineUserGroup, 
@@ -11,13 +11,15 @@ import {
 } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import { getFullName, getInitials } from '../../utils/userHelpers';
+import ProvidersTable from '../../components/admin/ProvidersTable';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { dashboardStats, isLoading, error } = useSelector((state) => state.admin);
+  const { dashboardStats, providers, isLoading, error } = useSelector((state) => state.admin);
 
   useEffect(() => {
     dispatch(getAdminDashboardStats());
+    dispatch(getAllProvidersAdmin());
   }, [dispatch]);
 
   if (isLoading) {
@@ -245,48 +247,15 @@ const Dashboard = () => {
         </motion.div>
       </div>
 
-      {/* Recent Providers */}
+      {/* All Providers Table */}
       <motion.div 
         className="bg-white border border-gray-300 rounded-2xl p-8 shadow-md"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
-        <h2 className="text-2xl font-bold text-black mb-6 tracking-tight">Recent Providers</h2>
-        {dashboardStats?.recentProviders && dashboardStats.recentProviders.length > 0 ? (
-          <div className="space-y-4">
-            {dashboardStats.recentProviders.map((provider) => (
-              <motion.div
-                key={provider._id}
-                className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-300"
-                whileHover={{ x: 4 }}
-              >
-                <div className="w-12 h-12 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden">
-                  {provider.user?.profileImage ? (
-                    <img
-                      src={provider.user.profileImage}
-                      alt={getFullName(provider.user)}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-gray-600 font-semibold">
-                      {getInitials(provider.user)}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-black">{getFullName(provider.user) || 'Unknown'}</p>
-                  <p className="text-sm text-gray-600">{provider.user?.email || ''}</p>
-                </div>
-                <div className="text-sm text-gray-500 font-medium">
-                  {new Date(provider.createdAt).toLocaleDateString()}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-600 text-center py-8">No providers yet</p>
-        )}
+        <h2 className="text-2xl font-bold text-black mb-6 tracking-tight">All Providers</h2>
+        <ProvidersTable providers={providers} isLoading={isLoading} />
       </motion.div>
     </motion.div>
   );
