@@ -360,6 +360,9 @@ const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const carouselRef = useRef(null);
+  const [categoryScrollIndex, setCategoryScrollIndex] = useState(0);
+  const [isCategoryAutoPlaying, setIsCategoryAutoPlaying] = useState(true);
+  const categoryScrollRef = useRef(null);
 
   const categories = [
     { name: "Home Cooking", icon: "cookingIcon1.png", url: "/category/Home%20Cooking" },
@@ -389,6 +392,36 @@ const Hero = () => {
     return () => clearInterval(id);
   }, [isAutoPlaying, carouselImages.length]);
 
+  // Auto-scroll category grid
+  useEffect(() => {
+    if (!isCategoryAutoPlaying || !categoryScrollRef.current) return;
+    
+    const id = setInterval(() => {
+      if (!categoryScrollRef.current) return;
+      const container = categoryScrollRef.current;
+      const scrollWidth = container.scrollWidth;
+      const clientWidth = container.clientWidth;
+      const maxScroll = scrollWidth - clientWidth;
+      
+      if (maxScroll <= 0) return;
+      
+      const scrollAmount = 150; // Reduced scroll amount for slower movement
+      const currentScroll = container.scrollLeft;
+      const nextScroll = currentScroll + scrollAmount;
+      
+      if (nextScroll >= maxScroll - 10) {
+        // Reset to start when near the end
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+        setCategoryScrollIndex(0);
+      } else {
+        container.scrollTo({ left: nextScroll, behavior: 'smooth' });
+        setCategoryScrollIndex((prev) => prev + 1);
+      }
+    }, 5000); // Increased interval for slower auto-scroll
+    
+    return () => clearInterval(id);
+  }, [isCategoryAutoPlaying, categories.length]);
+
   const goToSlide = (index) => {
     setCurrentSlide(index);
     setIsAutoPlaying(false);
@@ -400,6 +433,44 @@ const Hero = () => {
   const goPrev = () => {
     setCurrentSlide((s) => (s - 1 + carouselImages.length) % carouselImages.length);
     setIsAutoPlaying(false);
+  };
+
+  const scrollCategoryNext = () => {
+    if (!categoryScrollRef.current) return;
+    const container = categoryScrollRef.current;
+    const scrollAmount = 170; // Reduced for slower movement
+    const scrollWidth = container.scrollWidth;
+    const clientWidth = container.clientWidth;
+    const maxScroll = scrollWidth - clientWidth;
+    
+    const nextScroll = container.scrollLeft + scrollAmount;
+    if (nextScroll >= maxScroll - 10) {
+      container.scrollTo({ left: 0, behavior: 'smooth' });
+      setCategoryScrollIndex(0);
+    } else {
+      container.scrollTo({ left: nextScroll, behavior: 'smooth' });
+      setCategoryScrollIndex((prev) => prev + 1);
+    }
+    setIsCategoryAutoPlaying(false);
+  };
+
+  const scrollCategoryPrev = () => {
+    if (!categoryScrollRef.current) return;
+    const container = categoryScrollRef.current;
+    const scrollAmount = 150; // Reduced for slower movement
+    const scrollWidth = container.scrollWidth;
+    const clientWidth = container.clientWidth;
+    const maxScroll = scrollWidth - clientWidth;
+    
+    const prevScroll = container.scrollLeft - scrollAmount;
+    if (prevScroll <= 0) {
+      container.scrollTo({ left: maxScroll, behavior: 'smooth' });
+      setCategoryScrollIndex(Math.floor(maxScroll / scrollAmount));
+    } else {
+      container.scrollTo({ left: prevScroll, behavior: 'smooth' });
+      setCategoryScrollIndex((prev) => Math.max(0, prev - 1));
+    }
+    setIsCategoryAutoPlaying(false);
   };
 
   // Pause autoplay when user hovers (desktop)
@@ -445,37 +516,67 @@ const Hero = () => {
               }
             </div>
 
-            {/* Category grid compact - glassy cards with crisp outlines */}
-            {/*
-            <motion.div className="mt-8 rounded-2xl p-5 bg-white/70 backdrop-blur-md border border-gray-200 shadow-md overflow-hidden">
+            {/* Category grid compact - single row carousel with auto-scroll */}
+            
+            <motion.div 
+              className="mt-6 relative group"
+              onMouseEnter={() => setIsCategoryAutoPlaying(false)}
+              onMouseLeave={() => setIsCategoryAutoPlaying(true)}
+            >
               <h3 className="text-sm font-semibold text-gray-700 mb-4">Quick categories</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-fr">
-                {categories.slice(0, 8).map((cat, idx) => (
-                  <Link
-                    key={idx}
-                    to={cat.url}
-                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-center border border-gray-100 bg-white shadow-sm hover:shadow-md transition focus-visible:ring-2 focus-visible:ring-gray-200 h-full overflow-hidden"
-                  >
-                    <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center ring-1 ring-gray-100 overflow-hidden">
-                      <img src={cat.icon} alt={cat.name} className="max-h-7 max-w-7 object-contain" loading="lazy" />
-                    </div>
-                    <p className="text-xs sm:text-sm text-gray-700 font-medium leading-tight whitespace-normal break-words">
-                      {cat.name}
-                    </p>
-                  </Link>
-                ))}
-                <Link
-                  to="/category"
-                  className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-gray-300 text-xs sm:text-sm text-gray-600 hover:bg-gray-50 transition h-full"
+              <div className="relative">
+                {/* Navigation Buttons */}
+                <button
+                  onClick={scrollCategoryPrev}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/95 backdrop-blur-sm hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all hover:scale-110 -translate-x-2"
+                  aria-label="Previous categories"
                 >
-                  View all
-                </Link>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={scrollCategoryNext}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/95 backdrop-blur-sm hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all hover:scale-110 translate-x-2"
+                  aria-label="Next categories"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                {/* Single row scrolling container */}
+                <div 
+                  ref={categoryScrollRef}
+                  className="flex gap-3 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                >
+                  {categories.map((cat, idx) => (
+                    <Link
+                      key={idx}
+                      to={cat.url}
+                      className="category-item flex-shrink-0 flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-center border border-gray-100 bg-white shadow-sm hover:shadow-md transition focus-visible:ring-2 focus-visible:ring-gray-200 w-28 sm:w-32"
+                    >
+                      <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center ring-1 ring-gray-100 overflow-hidden">
+                        <img src={cat.icon} alt={cat.name} className="max-h-7 max-w-7 object-contain" loading="lazy" />
+                      </div>
+                      <p className="text-xs sm:text-sm text-gray-700 font-medium leading-tight whitespace-normal break-words">
+                        {cat.name}
+                      </p>
+                    </Link>
+                  ))}
+                  <Link
+                    to="/category"
+                    className="flex-shrink-0 flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-gray-300 text-xs sm:text-sm text-gray-600 hover:bg-gray-50 transition w-28 sm:w-32"
+                  >
+                    View all
+                  </Link>
+                </div>
               </div>
             </motion.div>
-            */}
+           
 
             {/* Trust row */}
-            <div className="mt-6 flex items-center gap-4">
+            {/* <div className="mt-6 flex items-center gap-4">
               <div className="flex -space-x-2 sm:-space-x-3">
                 {["testimonial1.png", "testimonial2.jpg", "testimonial3.jpg", "testimonial4.jpg"].map((src, i) => (
                   <div
@@ -496,7 +597,7 @@ const Hero = () => {
                 <p className="text-sm font-medium text-gray-900">Trusted by <span className="font-bold">100,000+</span> neighbours</p>
                 <p className="text-xs text-gray-500">Highly rated providers across cities</p>
               </div>
-            </div>
+            </div> */}
           </motion.div>
 
           {/* RIGHT: Carousel + images */}
