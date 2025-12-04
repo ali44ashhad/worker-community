@@ -343,15 +343,33 @@ const updateServiceDetails = async (req, res) => {
             );
         }
 
-        // Handle new images if uploaded (separate update for array operations)
+        // Handle new images and PDFs if uploaded (separate update for array operations)
         if (req.files && req.files.length > 0) {
-            const uploadPromises = req.files.map(file => uploadBufferToCloudinary(file.buffer));
-            const newImages = await Promise.all(uploadPromises);
-            await ServiceOffering.findByIdAndUpdate(
-                serviceId,
-                { $push: { portfolioImages: { $each: newImages } } },
-                { new: true }
-            );
+            // Filter files by fieldname
+            const images = req.files.filter(file => file.fieldname === 'portfolioImages');
+            const pdfs = req.files.filter(file => file.fieldname === 'portfolioPDFs');
+            
+            // Handle new images if uploaded
+            if (images.length > 0) {
+                const imageUploadPromises = images.map(file => uploadBufferToCloudinary(file.buffer));
+                const newImages = await Promise.all(imageUploadPromises);
+                await ServiceOffering.findByIdAndUpdate(
+                    serviceId,
+                    { $push: { portfolioImages: { $each: newImages } } },
+                    { new: true }
+                );
+            }
+            
+            // Handle new PDFs if uploaded
+            if (pdfs.length > 0) {
+                const pdfUploadPromises = pdfs.map(file => uploadBufferToCloudinary(file.buffer));
+                const newPDFs = await Promise.all(pdfUploadPromises);
+                await ServiceOffering.findByIdAndUpdate(
+                    serviceId,
+                    { $push: { portfolioPDFs: { $each: newPDFs } } },
+                    { new: true }
+                );
+            }
         }
 
         // Populate and return updated service
@@ -423,6 +441,53 @@ const deleteServiceImage = async (req, res) => {
     }
 };
 
+/**
+ * @description Delete a PDF from a service offering (admin only)
+ * @route DELETE /api/admin/service/:serviceId/pdf?publicId=xxx
+ * @access Private (Admin)
+ */
+
+const deleteServicePDF = async (req, res) => {
+    try {
+        const { serviceId } = req.params;
+        const { publicId } = req.query;
+        
+        if (!publicId) {
+            return res.status(400).json({ success: false, message: "PDF public ID is required." });
+        }
+        
+        const pdfPublicId = publicId;
+
+        const service = await ServiceOffering.findById(serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+
+        // Find and remove the PDF
+        const pdfIndex = service.portfolioPDFs?.findIndex(pdf => pdf.public_id === pdfPublicId) ?? -1;
+        if (pdfIndex === -1) {
+            return res.status(404).json({ success: false, message: "PDF not found." });
+        }
+
+        // Delete from Cloudinary
+        await deleteFromCloudinary(pdfPublicId);
+
+        // Remove from array
+        service.portfolioPDFs.splice(pdfIndex, 1);
+        await service.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "PDF deleted successfully.",
+            service
+        });
+
+    } catch (error) {
+        console.error("Error in deleteServicePDF controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 export { 
     getAdminDashboardStats,
     getAllProviders,
@@ -430,5 +495,6 @@ export {
     updateProviderUserDetails,
     getAllServices,
     updateServiceDetails,
-    deleteServiceImage
+    deleteServiceImage,
+    deleteServicePDF
 };

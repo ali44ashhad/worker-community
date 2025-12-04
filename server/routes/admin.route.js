@@ -6,7 +6,8 @@ import {
     updateProviderUserDetails,
     getAllServices,
     updateServiceDetails,
-    deleteServiceImage
+    deleteServiceImage,
+    deleteServicePDF
 } from "../controllers/admin.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
@@ -52,7 +53,7 @@ router.put(
     "/update-service/:serviceId",
     protect,
     isAdmin,
-    upload.array("portfolioImages", 10),
+    upload.any(),
     updateServiceDetails
 );
 
@@ -61,6 +62,13 @@ router.delete(
     protect,
     isAdmin,
     deleteServiceImage
+);
+
+router.delete(
+    "/service/:serviceId/pdf",
+    protect,
+    isAdmin,
+    deleteServicePDF
 );
 
 export default router;
