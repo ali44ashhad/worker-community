@@ -708,7 +708,7 @@ const AdminServices = () => {
                   <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                       <HiOutlineDocument size={18} />
-                      Portfolio PDFs
+                      Service related Documents
                     </label>
                     {isEditing ? (
                       <div>

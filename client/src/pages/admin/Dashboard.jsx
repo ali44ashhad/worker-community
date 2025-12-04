@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAdminDashboardStats, getAllProvidersAdmin } from '../../features/adminSlice';
+import { getAdminDashboardStats, getAllProvidersAdmin, getAllServicesAdmin } from '../../features/adminSlice';
 import { 
   HiOutlineUsers, 
   HiOutlineUserGroup, 
@@ -12,14 +12,16 @@ import {
 import { motion } from 'framer-motion';
 import { getFullName, getInitials } from '../../utils/userHelpers';
 import ProvidersTable from '../../components/admin/ProvidersTable';
+import ServicesTable from '../../components/admin/ServicesTable';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { dashboardStats, providers, isLoading, error } = useSelector((state) => state.admin);
+  const { dashboardStats, providers, services, isLoading, error } = useSelector((state) => state.admin);
 
   useEffect(() => {
     dispatch(getAdminDashboardStats());
     dispatch(getAllProvidersAdmin());
+    dispatch(getAllServicesAdmin());
   }, [dispatch]);
 
   if (isLoading) {
@@ -249,13 +251,24 @@ const Dashboard = () => {
 
       {/* All Providers Table */}
       <motion.div 
-        className="bg-white border border-gray-300 rounded-2xl p-8 shadow-md"
+        className="bg-white border border-gray-300 rounded-2xl p-8 shadow-md mb-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
         <h2 className="text-2xl font-bold text-black mb-6 tracking-tight">All Providers</h2>
         <ProvidersTable providers={providers} isLoading={isLoading} />
+      </motion.div>
+
+      {/* All Services Table */}
+      <motion.div 
+        className="bg-white border border-gray-300 rounded-2xl p-8 shadow-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.9 }}
+      >
+        <h2 className="text-2xl font-bold text-black mb-6 tracking-tight">All Services</h2>
+        <ServicesTable services={services} isLoading={isLoading} />
       </motion.div>
     </motion.div>
   );

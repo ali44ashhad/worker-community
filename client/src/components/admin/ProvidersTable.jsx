@@ -48,7 +48,6 @@ const ProvidersTable = ({ providers = [], isLoading = false, itemsPerPage = 10 }
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
       setExpandedRows(new Set()); // Close all expanded rows when changing pages
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
