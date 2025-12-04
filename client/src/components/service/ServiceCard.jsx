@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { FaRegHeart } from "react-icons/fa6";
 import { IoIosHeart } from "react-icons/io";
+import { FaStar } from 'react-icons/fa';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlistSlice';
 import { toast } from 'react-hot-toast';
 import { getFullName, getInitials } from '../../utils/userHelpers';
@@ -37,6 +38,31 @@ const ServiceCard = ({ service }) => {
   const providerName = getFullName(providerUser) || 'Unknown Provider';
   const profileImage = providerUser?.profileImage;
 //   const providerId = provider?._id;
+
+  // Get rating information
+  const averageRating = service?.averageRating || 0;
+  const reviewCount = service?.reviewCount || 0;
+  
+  // Debug: Log service data to check ratings
+
+  
+  // Render stars for rating
+  const renderStars = () => {
+    const stars = [];
+    const fullStars = Math.floor(averageRating);
+    const hasHalfStar = averageRating % 1 >= 0.5;
+    
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<FaStar key={i} className="text-yellow-400" size={12} />);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<FaStar key={i} className="text-yellow-400" size={12} style={{ opacity: 0.5 }} />);
+      } else {
+        stars.push(<FaStar key={i} className="text-gray-300" size={12} />);
+      }
+    }
+    return stars;
+  };
 
   const handleImageError = () => {
     setImageError(true);
@@ -108,6 +134,23 @@ const ServiceCard = ({ service }) => {
             {serviceName || service?.serviceCategory || 'Service'}
           </h3>
         </div>
+
+        {/* Rating Display */}
+        {averageRating > 0 && (
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="flex items-center gap-0.5">
+              {renderStars()}
+            </div>
+            <span className="text-xs font-semibold text-gray-700">
+              {averageRating.toFixed(1)}
+            </span>
+            {reviewCount > 0 && (
+              <span className="text-xs text-gray-500">
+                ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Service Description */}
         <div className="mb-3">

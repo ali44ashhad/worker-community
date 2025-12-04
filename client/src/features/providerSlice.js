@@ -14,6 +14,12 @@ export const getAllProviders = createAsyncThunk(
     try {
       // NOTE: Update this API endpoint to your actual route
       const res = await axios.get(`${API_URL}/api/provider-profile`); 
+  
+      // Log first provider's service offerings to check for ratings
+      if (res.data.providers && res.data.providers.length > 0 && res.data.providers[0].serviceOfferings) {
+        if (res.data.providers[0].serviceOfferings.length > 0) {
+        }
+      }
       return res.data.providers; // Assuming the API returns { success: true, providers: [...] }
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch providers");
