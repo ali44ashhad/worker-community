@@ -17,7 +17,8 @@ import {
   HiOutlineDocumentText,
   HiOutlineClock,
   HiOutlinePhotograph,
-  HiOutlineCube
+  HiOutlineCube,
+  HiOutlineSearch
 } from 'react-icons/hi';
 import { getFullName } from '../../utils/userHelpers';
 
@@ -142,6 +143,7 @@ const AdminServices = () => {
     experience: 0,
     newImages: []
   });
+  const [searchTerm, setSearchTerm] = useState('');
   const serviceRefs = useRef({});
 
   useEffect(() => {
@@ -294,13 +296,47 @@ const AdminServices = () => {
   return (
     <div className="max-w-7xl p-6 py-8 mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Manage Services</h1>
-        <p className="text-gray-600 mt-2">View and update service offerings</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-3">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Manage Services</h1>
+            <p className="text-gray-600 mt-2">View and update service offerings</p>
+          </div>
+          <div className="flex-shrink-0">
+            <div className="relative">
+              <HiOutlineSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search by service name, provider name, category, or keywords..."
+                title="Search by service name, provider name, category, or keywords..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full md:w-80 pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black placeholder-gray-400"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {services && services.length > 0 ? (
-        <div className="space-y-6">
-          {services.map((service) => {
+      {services && services.length > 0 ? (() => {
+        // Filter services based on search term
+        const filteredServices = services.filter((service) => {
+          if (!searchTerm.trim()) return true;
+          const searchLower = searchTerm.toLowerCase();
+          const serviceName = service.servicename?.toLowerCase() || '';
+          const providerName = getFullName(service.provider?.user)?.toLowerCase() || '';
+          const category = service.serviceCategory?.toLowerCase() || '';
+          const keywords = Array.isArray(service.keywords) 
+            ? service.keywords.map(k => k?.toLowerCase() || '').join(' ')
+            : '';
+          return serviceName.includes(searchLower) || 
+                 providerName.includes(searchLower) || 
+                 category.includes(searchLower) ||
+                 keywords.includes(searchLower);
+        });
+
+        return filteredServices.length > 0 ? (
+          <div className="space-y-6">
+            {filteredServices.map((service) => {
             const isEditing = editingService === service._id;
             
             const providerName = getFullName(service.provider?.user) || 'Unknown Provider';
@@ -580,8 +616,13 @@ const AdminServices = () => {
               </div>
             );
           })}
-        </div>
-      ) : (
+          </div>
+        ) : (
+          <div className="bg-white border border-gray-300 rounded-xl p-12 text-center">
+            <p className="text-gray-600 text-lg">No services found matching your search</p>
+          </div>
+        );
+      })() : (
         <div className="bg-white border border-gray-300 rounded-xl p-12 text-center">
           <p className="text-gray-600 text-lg">No services found</p>
         </div>
