@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   getAllServicesAdmin, 
   updateServiceDetails,
-  deleteServiceImage 
+  deleteServiceImage,
+  deleteServicePDF
 } from '../../features/adminSlice';
 import { 
   HiOutlinePencil, 
@@ -18,7 +20,8 @@ import {
   HiOutlineClock,
   HiOutlinePhotograph,
   HiOutlineCube,
-  HiOutlineSearch
+  HiOutlineSearch,
+  HiOutlineDocument
 } from 'react-icons/hi';
 import { getFullName } from '../../utils/userHelpers';
 
@@ -141,10 +144,15 @@ const AdminServices = () => {
     keywords: [],
     description: '',
     experience: 0,
-    newImages: []
+    newImages: [],
+    newPDFs: []
   });
   const [searchTerm, setSearchTerm] = useState('');
   const serviceRefs = useRef({});
+  const [pdfToDelete, setPdfToDelete] = useState(null);
+  const [imageToDelete, setImageToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [savingServiceId, setSavingServiceId] = useState(null);
 
   useEffect(() => {
     dispatch(getAllServicesAdmin());
@@ -159,7 +167,8 @@ const AdminServices = () => {
       keywords: Array.isArray(service.keywords) ? service.keywords : [],
       description: service.description || '',
       experience: service.experience || 0,
-      newImages: []
+      newImages: [],
+      newPDFs: []
     });
   };
 
@@ -172,43 +181,107 @@ const AdminServices = () => {
       keywords: [],
       description: '',
       experience: 0,
-      newImages: []
+      newImages: [],
+      newPDFs: []
     });
   };
 
   const handleSave = async (serviceId) => {
-    const formData = new FormData();
+    if (savingServiceId) return; // Prevent multiple simultaneous saves
     
-    // Always send servicename if it exists in the form (even if empty string)
-    if (editForm.servicename !== undefined && editForm.servicename !== null) {
-      formData.append('servicename', editForm.servicename);
-    }
-    if (editForm.serviceCategory) formData.append('serviceCategory', editForm.serviceCategory);
-    if (editForm.subCategories.length > 0) {
-      formData.append('subCategories', JSON.stringify(editForm.subCategories));
-    }
-    if (editForm.keywords.length > 0) {
-      formData.append('keywords', JSON.stringify(editForm.keywords));
-    }
-    if (editForm.description !== undefined) formData.append('description', editForm.description);
-    if (editForm.experience !== undefined) formData.append('experience', editForm.experience.toString());
+    try {
+      setSavingServiceId(serviceId);
+      const formData = new FormData();
+      
+      // Always send servicename if it exists in the form (even if empty string)
+      if (editForm.servicename !== undefined && editForm.servicename !== null) {
+        formData.append('servicename', editForm.servicename);
+      }
+      if (editForm.serviceCategory) formData.append('serviceCategory', editForm.serviceCategory);
+      if (editForm.subCategories.length > 0) {
+        formData.append('subCategories', JSON.stringify(editForm.subCategories));
+      }
+      if (editForm.keywords.length > 0) {
+        formData.append('keywords', JSON.stringify(editForm.keywords));
+      }
+      if (editForm.description !== undefined) formData.append('description', editForm.description);
+      if (editForm.experience !== undefined) formData.append('experience', editForm.experience.toString());
 
-    // Add new images
-    editForm.newImages.forEach((file) => {
-      formData.append('portfolioImages', file);
-    });
+      // Add new images
+      editForm.newImages.forEach((file) => {
+        formData.append('portfolioImages', file);
+      });
 
-    await dispatch(updateServiceDetails({ serviceId, formData }));
-    handleCancel();
-    dispatch(getAllServicesAdmin());
-  };
+      // Add new PDFs
+      editForm.newPDFs.forEach((file) => {
+        formData.append('portfolioPDFs', file);
+      });
 
-  const handleDeleteImage = async (serviceId, imagePublicId) => {
-    if (window.confirm('Are you sure you want to delete this image?')) {
-      await dispatch(deleteServiceImage({ serviceId, imagePublicId }));
+      await dispatch(updateServiceDetails({ serviceId, formData }));
+      handleCancel();
       dispatch(getAllServicesAdmin());
+    } catch (error) {
+      console.error('Error saving service:', error);
+    } finally {
+      setSavingServiceId(null);
     }
   };
+
+  const handleDeleteImage = (serviceId, imagePublicId) => {
+    setImageToDelete({ serviceId, imagePublicId });
+  };
+
+  const handleDeletePDF = (serviceId, pdfPublicId) => {
+    setPdfToDelete({ serviceId, pdfPublicId });
+  };
+
+  const confirmDeleteImage = async () => {
+    if (!imageToDelete || isDeleting) return;
+    
+    try {
+      setIsDeleting(true);
+      await dispatch(deleteServiceImage({ 
+        serviceId: imageToDelete.serviceId, 
+        imagePublicId: imageToDelete.imagePublicId 
+      }));
+      dispatch(getAllServicesAdmin());
+      setImageToDelete(null);
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const confirmDeletePDF = async () => {
+    if (!pdfToDelete || isDeleting) return;
+    
+    try {
+      setIsDeleting(true);
+      await dispatch(deleteServicePDF({ 
+        serviceId: pdfToDelete.serviceId, 
+        pdfPublicId: pdfToDelete.pdfPublicId 
+      }));
+      dispatch(getAllServicesAdmin());
+      setPdfToDelete(null);
+    } catch (error) {
+      console.error('Error deleting PDF:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (pdfToDelete || imageToDelete) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [pdfToDelete, imageToDelete]);
 
   const handleSubCategoryToggle = (subCategory) => {
     const current = editForm.subCategories || [];
@@ -245,6 +318,14 @@ const AdminServices = () => {
     setEditForm({
       ...editForm,
       newImages: files
+    });
+  };
+
+  const handlePDFChange = (e) => {
+    const files = Array.from(e.target.files);
+    setEditForm({
+      ...editForm,
+      newPDFs: files
     });
   };
 
@@ -366,14 +447,24 @@ const AdminServices = () => {
                       <>
                         <button
                           onClick={() => handleSave(service._id)}
-                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          disabled={savingServiceId === service._id}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                            savingServiceId === service._id
+                              ? 'bg-green-400 text-white cursor-not-allowed'
+                              : 'bg-green-600 text-white hover:bg-green-700'
+                          }`}
                         >
                           <HiOutlineCheck size={18} />
-                          <span>Save</span>
+                          <span>{savingServiceId === service._id ? 'Saving...' : 'Save'}</span>
                         </button>
                         <button
                           onClick={handleCancel}
-                          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                          disabled={savingServiceId === service._id}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                            savingServiceId === service._id
+                              ? 'bg-gray-400 text-white cursor-not-allowed'
+                              : 'bg-red-600 text-white hover:bg-red-700'
+                          }`}
                         >
                           <HiOutlineX size={18} />
                           <span>Cancel</span>
@@ -612,6 +703,80 @@ const AdminServices = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Portfolio PDFs */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                      <HiOutlineDocument size={18} />
+                      Portfolio PDFs
+                    </label>
+                    {isEditing ? (
+                      <div>
+                        {service.portfolioPDFs && service.portfolioPDFs.length > 0 && (
+                          <div className="space-y-2 mb-4">
+                            {service.portfolioPDFs.map((pdf, idx) => (
+                              <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-300">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <HiOutlineDocument size={20} className="text-red-600 flex-shrink-0" />
+                                  <a
+                                    href={pdf.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800 truncate flex-1"
+                                  >
+                                    PDF {idx + 1}
+                                  </a>
+                                </div>
+                                <button
+                                  onClick={() => handleDeletePDF(service._id, pdf.public_id)}
+                                  className="ml-3 bg-red-600 text-white p-1.5 rounded hover:bg-red-700 flex-shrink-0"
+                                  title="Delete PDF"
+                                >
+                                  <HiOutlineTrash size={16} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          multiple
+                          accept="application/pdf"
+                          onChange={handlePDFChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Select new PDFs to add</p>
+                        {editForm.newPDFs.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {editForm.newPDFs.map((file, idx) => (
+                              <p key={idx} className="text-xs text-gray-600">• {file.name}</p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {service.portfolioPDFs && service.portfolioPDFs.length > 0 ? (
+                          service.portfolioPDFs.map((pdf, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-300">
+                              <HiOutlineDocument size={20} className="text-red-600" />
+                              <a
+                                href={pdf.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 flex-1"
+                              >
+                                PDF {idx + 1}
+                              </a>
+                              <span className="text-xs text-gray-500">({Math.round((pdf.url.length * 0.75) / 1024)} KB)</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-gray-500">No PDFs attached</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -625,6 +790,92 @@ const AdminServices = () => {
       })() : (
         <div className="bg-white border border-gray-300 rounded-xl p-12 text-center">
           <p className="text-gray-600 text-lg">No services found</p>
+        </div>
+      )}
+
+      {/* PDF Deletion Modal */}
+      {pdfToDelete && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => !isDeleting && setPdfToDelete(null)}
+        >
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-black mb-3">Delete PDF?</h2>
+            <p className="text-gray-600 mb-6">
+              This action will permanently delete this PDF. You won't be able to recover it later.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
+                onClick={() => setPdfToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-white transition ${
+                  isDeleting
+                    ? 'bg-red-300 cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-500'
+                }`}
+                onClick={confirmDeletePDF}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, delete'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Image Deletion Modal */}
+      {imageToDelete && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => !isDeleting && setImageToDelete(null)}
+        >
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-black mb-3">Delete Image?</h2>
+            <p className="text-gray-600 mb-6">
+              This action will permanently delete this image. You won't be able to recover it later.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
+                onClick={() => setImageToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-white transition ${
+                  isDeleting
+                    ? 'bg-red-300 cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-500'
+                }`}
+                onClick={confirmDeleteImage}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, delete'}
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>

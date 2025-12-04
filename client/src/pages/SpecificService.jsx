@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getAllProviders } from '../features/providerSlice';
-import { HiOutlinePhotograph, HiArrowRight, HiHeart, HiOutlineHeart, HiChevronLeft, HiChevronRight, HiOutlineClock, HiOutlineRefresh, HiChevronDown, HiChevronUp } from 'react-icons/hi';
+import { HiOutlinePhotograph, HiArrowRight, HiHeart, HiOutlineHeart, HiChevronLeft, HiChevronRight, HiOutlineClock, HiOutlineRefresh, HiChevronDown, HiChevronUp, HiOutlineDocument } from 'react-icons/hi';
 import { FaStar } from 'react-icons/fa';
 import Comment from '../components/Comment';
 import { addToWishlist, removeFromWishlist, fetchWishlist } from '../features/wishlistSlice';
@@ -101,6 +101,7 @@ const SpecificService = () => {
   }
   
   const portfolioImages = service?.portfolioImages || [];
+  const portfolioPDFs = service?.portfolioPDFs || [];
   const currentImage = portfolioImages[selectedImageIndex]?.url;
   const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
   const profileImage = service?.provider?.user?.profileImage;
@@ -229,14 +230,14 @@ const SpecificService = () => {
           <div className='lg:col-span-2 space-y-6'>
             {/* Image Carousel */}
             <div className='bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm'>
-              <div className='relative'>
+                <div className='relative'>
                 {/* Main Image */}
-                <div className='relative h-[500px] bg-gray-100'>
+                <div className='relative h-[500px] bg-gray-100 overflow-hidden flex items-center justify-center'>
                   {currentImage && !imageError ? (
                     <img
                       src={currentImage}
                       alt={`Service portfolio ${selectedImageIndex + 1}`}
-                      className='w-full h-full object-cover'
+                      className='max-w-full max-h-full object-contain'
                       onError={handleImageError}
                     />
                   ) : (
@@ -295,6 +296,41 @@ const SpecificService = () => {
                 )}
               </div>
             </div>
+
+            {/* Portfolio PDFs Section */}
+            {portfolioPDFs.length > 0 && (
+              <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm'>
+                <h2 className='text-xl font-bold text-gray-900 mb-4 flex items-center gap-2'>
+                  <HiOutlineDocument className='w-6 h-6 text-gray-700' />
+                  Service related Documents
+                </h2>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  {portfolioPDFs.map((pdf, index) => {
+                    const pdfName = pdf.url.split('/').pop() || `Document ${index + 1}`;
+                    return (
+                      <a
+                        key={index}
+                        href={pdf.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all group'
+                      >
+                        <div className='flex-shrink-0 w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center group-hover:bg-red-100 transition-colors'>
+                          <HiOutlineDocument className='w-6 h-6 text-red-600' />
+                        </div>
+                        <div className='flex-1 min-w-0'>
+                          <p className='text-sm font-medium text-gray-900 truncate group-hover:text-gray-700'>
+                            {pdfName}
+                          </p>
+                          <p className='text-xs text-gray-500 mt-1'>Click to view PDF</p>
+                        </div>
+                        <HiArrowRight className='w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0' />
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Provider Profile Section */}
             <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm'>

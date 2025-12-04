@@ -121,6 +121,23 @@ export const deleteServiceImage = createAsyncThunk(
   }
 );
 
+// Delete service PDF (admin)
+export const deleteServicePDF = createAsyncThunk(
+  "admin/deleteServicePDF",
+  async ({ serviceId, pdfPublicId }, { rejectWithValue }) => {
+    try {
+      // Use query parameter to handle public_id with forward slashes
+      const encodedPublicId = encodeURIComponent(pdfPublicId);
+      const res = await axios.delete(`${API_URL}/api/admin/service/${serviceId}/pdf?publicId=${encodedPublicId}`);
+      toast.success("PDF deleted successfully");
+      return { serviceId, service: res.data.service };
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete PDF");
+      return rejectWithValue(err.response?.data?.message || "Failed to delete PDF");
+    }
+  }
+);
+
 /* ----------------- SLICE ----------------- */
 
 const adminSlice = createSlice({
@@ -207,6 +224,14 @@ const adminSlice = createSlice({
       })
       // Delete service image
       .addCase(deleteServiceImage.fulfilled, (state, action) => {
+        const { serviceId, service } = action.payload;
+        const index = state.services.findIndex((s) => s._id === serviceId);
+        if (index !== -1) {
+          state.services[index] = service;
+        }
+      })
+      // Delete service PDF
+      .addCase(deleteServicePDF.fulfilled, (state, action) => {
         const { serviceId, service } = action.payload;
         const index = state.services.findIndex((s) => s._id === serviceId);
         if (index !== -1) {
