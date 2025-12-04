@@ -15,6 +15,7 @@ const Services = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [priceSort, setPriceSort] = useState('All'); // 'All', 'Low to High', 'High to Low'
   const [priceRange, setPriceRange] = useState([0, 100000]); // [min, max]
+  const [minRating, setMinRating] = useState(0); // Minimum rating filter (0 = All)
   const [filteredServices, setFilteredServices] = useState([]);
   const [allServices, setAllServices] = useState([]);
 
@@ -124,6 +125,14 @@ const Services = () => {
       return numPrice >= priceRange[0] && numPrice <= priceRange[1];
     });
 
+    // Apply rating filter
+    if (minRating > 0) {
+      filtered = filtered.filter(service => {
+        const rating = service?.averageRating || 0;
+        return rating >= minRating;
+      });
+    }
+
     // Apply price sorting
     if (priceSort === 'Low to High') {
       filtered.sort((a, b) => {
@@ -140,7 +149,7 @@ const Services = () => {
     }
 
     setFilteredServices(filtered);
-  }, [searchQuery, selectedCategory, selectedSubcategory, priceSort, priceRange, allServices]);
+  }, [searchQuery, selectedCategory, selectedSubcategory, priceSort, priceRange, minRating, allServices]);
 
   // Get unique categories from all services
   const getUniqueCategories = () => {
@@ -187,6 +196,7 @@ const Services = () => {
     setSelectedCategory('All');
     setSelectedSubcategory('All');
     setPriceSort('All');
+    setMinRating(0);
     if (allServices.length > 0) {
       const [min, max] = getPriceRange();
       setPriceRange([min, max]);
@@ -308,6 +318,63 @@ const Services = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Rating Filter */}
+                <div className='space-y-2'>
+                  <h3 className='text-xs font-semibold text-gray-700'>Minimum Rating</h3>
+                  <div className='flex flex-wrap gap-1.5'>
+                    <button
+                      onClick={() => setMinRating(0)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all border ${
+                        minRating === 0
+                          ? 'bg-gray-600 text-white border-gray-600'
+                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setMinRating(4)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                        minRating === 4
+                          ? 'bg-gray-600 text-white border-gray-600'
+                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      4+ ⭐
+                    </button>
+                    <button
+                      onClick={() => setMinRating(3)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                        minRating === 3
+                          ? 'bg-gray-600 text-white border-gray-600'
+                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      3+ ⭐
+                    </button>
+                    <button
+                      onClick={() => setMinRating(2)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                        minRating === 2
+                          ? 'bg-gray-600 text-white border-gray-600'
+                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      2+ ⭐
+                    </button>
+                    <button
+                      onClick={() => setMinRating(1)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                        minRating === 1
+                          ? 'bg-gray-600 text-white border-gray-600'
+                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      1+ ⭐
+                    </button>
+                  </div>
+                </div>
 
                 {/* Price Filter with Range Slider */}
                 <div className='space-y-3'>
@@ -434,7 +501,7 @@ const Services = () => {
                     <HiOutlineRefresh size={14} />
                     Refresh
                   </button>
-                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
+                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || minRating > 0) && (
                     <button
                       onClick={handleClearFilters}
                       className='w-full px-3 py-1.5 bg-gray-600 text-white border border-gray-600 rounded text-xs font-semibold hover:bg-gray-700 transition-all'
@@ -482,11 +549,11 @@ const Services = () => {
                     No services found
                   </p>
                   <p className='text-gray-600 text-sm'>
-                    {searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice
+                    {searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || minRating > 0
                       ? 'Try adjusting your search or filter criteria.'
                       : 'No services available at the moment.'}
                   </p>
-                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
+                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || minRating > 0) && (
                     <button
                       onClick={handleClearFilters}
                       className='mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'
