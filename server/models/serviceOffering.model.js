@@ -199,6 +199,13 @@ serviceOfferingSchema.pre('save', function(next) {
     next();
 });
 
+// Add indexes for performance optimization
+// Index on serviceCategory for fast lookups in top-categories aggregation
+serviceOfferingSchema.index({ serviceCategory: 1 });
+
+// Index on _id for faster $lookup operations
+serviceOfferingSchema.index({ _id: 1 });
+
 const ServiceOffering = mongoose.model("ServiceOffering", serviceOfferingSchema);
 
 export default ServiceOffering;

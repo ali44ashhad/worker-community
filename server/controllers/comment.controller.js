@@ -3,6 +3,27 @@ import User from "../models/user.model.js";
 import ProviderProfile from "../models/providerProfile.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
 
+// In-memory cache for top services and categories
+// Cache structure: { key: { data: any, expiresAt: number } }
+const cache = {
+    topServices: null,
+    topCategories: null
+};
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+// Helper function to check if cache is valid
+const isCacheValid = (cacheEntry) => {
+    if (!cacheEntry) return false;
+    return Date.now() < cacheEntry.expiresAt;
+};
+
+// Helper function to invalidate cache
+const invalidateCache = () => {
+    cache.topServices = null;
+    cache.topCategories = null;
+};
+
 /**
  * @description Create a new comment for a service offering
  * @route POST /api/comments/create-comment/:serviceId (This ID is the ServiceOffering ID)
@@ -52,6 +73,9 @@ const createComment = async (req, res) => {
             comment,
             rating: parseInt(rating)
         });
+
+        // Invalidate cache when new comment is created
+        invalidateCache();
 
         return res.status(201).json({
             success: true,
@@ -149,6 +173,9 @@ const updateComment = async (req, res) => {
         existingComment.rating = parseInt(rating);
         const updatedComment = await existingComment.save();
 
+        // Invalidate cache when comment rating is updated
+        invalidateCache();
+
         // Populate all necessary fields for response
         await updatedComment.populate('customer', 'firstName lastName name profileImage');
         await updatedComment.populate('provider', 'user');
@@ -197,6 +224,9 @@ const deleteComment = async (req,res) => {
         }
 
         await Comment.findByIdAndDelete(commentId);
+
+        // Invalidate cache when comment is deleted
+        invalidateCache();
 
         return res.status(200).json({
             success: true,
@@ -414,6 +444,15 @@ const getTopServices = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 6;
 
+        // Check cache first
+        const cacheKey = `topServices_${limit}`;
+        if (isCacheValid(cache.topServices)) {
+            return res.status(200).json({
+                success: true,
+                services: cache.topServices.data
+            });
+        }
+
         // Aggregate comments to calculate average rating and review count per service
         const topServices = await Comment.aggregate([
             {
@@ -491,6 +530,12 @@ const getTopServices = async (req, res) => {
             return b.reviewCount - a.reviewCount;
         });
 
+        // Store in cache
+        cache.topServices = {
+            data: servicesWithRatings,
+            expiresAt: Date.now() + CACHE_TTL
+        };
+
         return res.status(200).json({
             success: true,
             services: servicesWithRatings
@@ -510,6 +555,14 @@ const getTopServices = async (req, res) => {
 const getTopCategories = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 6;
+
+        // Check cache first
+        if (isCacheValid(cache.topCategories)) {
+            return res.status(200).json({
+                success: true,
+                categories: cache.topCategories.data
+            });
+        }
 
         // Use aggregation to join comments with service offerings and calculate category stats
         const categoryStats = await Comment.aggregate([
@@ -554,6 +607,12 @@ const getTopCategories = async (req, res) => {
                 $limit: limit
             }
         ]);
+
+        // Store in cache
+        cache.topCategories = {
+            data: categoryStats,
+            expiresAt: Date.now() + CACHE_TTL
+        };
 
         return res.status(200).json({
             success: true,
