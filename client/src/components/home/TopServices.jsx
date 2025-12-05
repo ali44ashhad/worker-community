@@ -38,6 +38,23 @@ const TopServices = () => {
     fetchTopServices();
   }, []);
 
+  // Preload service images to prevent scroll interruptions
+  useEffect(() => {
+    if (topServices.length > 0) {
+      topServices.forEach((service, idx) => {
+        const image = service?.portfolioImages?.[0]?.url;
+        if (image) {
+          const img = new Image();
+          img.src = image;
+          // Prioritize first few images
+          if (idx < 3) {
+            img.fetchPriority = 'high';
+          }
+        }
+      });
+    }
+  }, [topServices]);
+
   if (isLoading) {
     return (
       <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
@@ -97,7 +114,15 @@ const TopServices = () => {
       <div 
         ref={scrollContainerRef}
         className="flex gap-8 overflow-x-auto scrollbar-hide pb-4"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflowY: 'visible' }}
+        style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none', 
+            overflowY: 'visible',
+            WebkitOverflowScrolling: 'touch',
+            transform: 'translateZ(0)',
+            WebkitTransform: 'translateZ(0)',
+            willChange: 'scroll-position'
+        }}
       >
         {topServices.map((service) => (
           <div key={service._id} className="flex-shrink-0 w-full sm:w-80 lg:w-96 pt-3">

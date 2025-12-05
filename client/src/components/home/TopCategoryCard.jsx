@@ -140,14 +140,30 @@ const TopCategoryCard = ({ category, data = {}, image }) => {
     >
       {/* Image area */}
       <div className="mb-4 flex justify-center">
-        <div className="w-full h-44 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+        <div className="w-full h-44 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center aspect-[4/3]">
           {image && image !== 'DefaultCategoryImage' ? (
             <img
               src={image}
               alt={category}
               className="w-full h-full object-cover"
-              loading="lazy"
+              loading={undefined}
               decoding="async"
+              width="400"
+              height="300"
+              style={{
+                contentVisibility: 'auto',
+                transform: 'translateZ(0)',
+                WebkitTransform: 'translateZ(0)',
+                willChange: 'auto',
+                opacity: 1
+              }}
+              onLoad={(e) => {
+                // Prevent layout shift by ensuring image is fully loaded
+                const img = e.currentTarget;
+                img.style.opacity = '1';
+                img.setAttribute('data-loaded', 'true');
+                img.removeAttribute('data-loading');
+              }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 const fallback = e.currentTarget.parentNode.querySelector('.fallback-text');

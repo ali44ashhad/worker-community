@@ -11,12 +11,34 @@ const TestimonialCard = ({ card }) => (
   <motion.div
     className="p-3 sm:p-4 rounded-2xl mx-2 sm:mx-4 shadow-sm hover:shadow-lg transition-all duration-200 w-72 sm:w-80 shrink-0 bg-white/70 border border-gray-200"
     whileHover={{ y: -6 }}
+    style={{ 
+      willChange: 'auto',
+      transform: 'translateZ(0)',
+      WebkitTransform: 'translateZ(0)'
+    }}
   >
     <div className="flex gap-3 items-center">
       <img
         className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white bg-gray-50 object-cover shadow-sm"
         src={card.image}
         alt={card.providerName}
+        width="48"
+        height="48"
+        loading="lazy"
+        decoding="async"
+        style={{
+          contentVisibility: 'auto',
+          transform: 'translateZ(0)',
+          WebkitTransform: 'translateZ(0)',
+          willChange: 'auto'
+        }}
+        onLoad={(e) => {
+          // Prevent layout shift
+          const img = e.currentTarget;
+          img.style.opacity = '1';
+          img.setAttribute('data-loaded', 'true');
+          img.removeAttribute('data-loading');
+        }}
       />
       <div className="flex flex-col">
         <div className="font-semibold text-sm text-gray-900">{card.providerName}</div>
@@ -76,9 +98,19 @@ const Testimonial = () => {
         </motion.h2>
 
         <style>{`
-          @keyframes marqueeScroll { 0% { transform: translateX(0%);} 100% { transform: translateX(-50%);} }
-          .marquee-inner { animation: marqueeScroll 24s linear infinite; }
-          .marquee-reverse { animation-direction: reverse; }
+          @keyframes marqueeScroll { 
+            0% { transform: translate3d(0%, 0, 0); } 
+            100% { transform: translate3d(-50%, 0, 0); } 
+          }
+          .marquee-inner { 
+            animation: marqueeScroll 24s linear infinite;
+            will-change: transform;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+          }
+          .marquee-reverse { 
+            animation-direction: reverse; 
+          }
         `}</style>
 
         {/* Row 1 */}

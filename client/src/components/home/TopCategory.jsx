@@ -207,6 +207,22 @@ const TopCategory = () => {
         fetchTopCategories();
     }, []);
 
+    // Preload category images to prevent scroll interruptions
+    useEffect(() => {
+        if (topCategories.length > 0) {
+            topCategories.forEach((categoryData, idx) => {
+                if (categoryData.image && categoryData.image !== 'DefaultCategoryImage') {
+                    const img = new Image();
+                    img.src = categoryData.image;
+                    // Prioritize first few images
+                    if (idx < 3) {
+                        img.fetchPriority = 'high';
+                    }
+                }
+            });
+        }
+    }, [topCategories]);
+
     if (isLoading) {
         return (
             <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
@@ -268,7 +284,15 @@ const TopCategory = () => {
             <div 
                 ref={scrollContainerRef}
                 className="flex gap-8 overflow-x-auto scrollbar-hide pb-4"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflowY: 'visible' }}
+                style={{ 
+                    scrollbarWidth: 'none', 
+                    msOverflowStyle: 'none', 
+                    overflowY: 'visible',
+                    WebkitOverflowScrolling: 'touch',
+                    transform: 'translateZ(0)',
+                    WebkitTransform: 'translateZ(0)',
+                    willChange: 'scroll-position'
+                }}
             >
                 {topCategories.map((categoryData) => (
                     <div key={categoryData.category} className="flex-shrink-0 w-full sm:w-80 lg:w-96 pt-3">

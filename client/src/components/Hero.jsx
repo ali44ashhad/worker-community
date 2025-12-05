@@ -11,6 +11,8 @@ const Hero = () => {
   const [categoryScrollIndex, setCategoryScrollIndex] = useState(0);
   const [isCategoryAutoPlaying, setIsCategoryAutoPlaying] = useState(true);
   const categoryScrollRef = useRef(null);
+  const isUserScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef(null);
 
   const categories = [
     { name: "Home Cooking", icon: "cookingIcon1.png", url: "/category/Home%20Cooking" },
@@ -31,17 +33,22 @@ const Hero = () => {
     { src: "art.png", title: "Art & Craft", subtitle: "Creative classes and workshops" },
   ];
 
-  // Preload critical images
+  // Preload critical images and images likely to be seen soon
   useEffect(() => {
-    // Preload first carousel image (above the fold)
-    const firstImage = new Image();
-    firstImage.src = carouselImages[0].src;
-    
-    // Preload first few category icons (visible on initial render)
-    const criticalIcons = categories.slice(0, 4).map(cat => cat.icon);
-    criticalIcons.forEach(icon => {
+    // Preload all carousel images (they're likely to be seen)
+    carouselImages.forEach((slide, idx) => {
       const img = new Image();
-      img.src = icon;
+      img.src = slide.src;
+      // Set priority for first image
+      if (idx === 0) {
+        img.fetchPriority = 'high';
+      }
+    });
+    
+    // Preload all category icons (they're in a horizontal scroll, likely to be seen)
+    categories.forEach(cat => {
+      const img = new Image();
+      img.src = cat.icon;
     });
   }, []);
 
@@ -54,12 +61,48 @@ const Hero = () => {
     return () => clearInterval(id);
   }, [isAutoPlaying, carouselImages.length]);
 
+  // Handle user scroll detection
+  useEffect(() => {
+    if (!categoryScrollRef.current) return;
+    
+    const container = categoryScrollRef.current;
+    
+    const handleScroll = () => {
+      isUserScrollingRef.current = true;
+      setIsCategoryAutoPlaying(false);
+      
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      
+      // Resume auto-scroll after user stops scrolling
+      scrollTimeoutRef.current = setTimeout(() => {
+        isUserScrollingRef.current = false;
+        setIsCategoryAutoPlaying(true);
+      }, 3000); // Resume after 3 seconds of no scrolling
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    container.addEventListener('touchstart', handleScroll, { passive: true });
+    container.addEventListener('touchmove', handleScroll, { passive: true });
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      container.removeEventListener('touchstart', handleScroll);
+      container.removeEventListener('touchmove', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Auto-scroll category grid
   useEffect(() => {
-    if (!isCategoryAutoPlaying || !categoryScrollRef.current) return;
+    if (!isCategoryAutoPlaying || !categoryScrollRef.current || isUserScrollingRef.current) return;
     
     const id = setInterval(() => {
-      if (!categoryScrollRef.current) return;
+      if (!categoryScrollRef.current || isUserScrollingRef.current) return;
       const container = categoryScrollRef.current;
       const scrollWidth = container.scrollWidth;
       const clientWidth = container.clientWidth;
@@ -148,7 +191,12 @@ const Hero = () => {
       <div className="max-w-[1370px] mx-auto px-6 md:px-8 relative">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
           {/* LEFT: Headline + Categories */}
-          <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
+          <motion.div 
+            initial={{ opacity: 0, x: -16 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            transition={{ duration: 0.6 }}
+            style={{ willChange: 'auto' }}
+          >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight">
               Services from <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500">your society</span>
             </h1>
@@ -184,6 +232,7 @@ const Hero = () => {
               className="mt-6 relative group"
               onMouseEnter={() => setIsCategoryAutoPlaying(false)}
               onMouseLeave={() => setIsCategoryAutoPlaying(true)}
+              style={{ willChange: 'auto' }}
             >
               <h3 className="text-sm font-semibold text-gray-700 mb-4">Quick categories</h3>
               <div className="relative">
@@ -211,6 +260,12 @@ const Hero = () => {
                 <div 
                   ref={categoryScrollRef}
                   className="flex gap-3 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                  style={{
+                    WebkitOverflowScrolling: 'touch',
+                    transform: 'translateZ(0)',
+                    WebkitTransform: 'translateZ(0)',
+                    willChange: 'scroll-position'
+                  }}
                 >
                   {categories.map((cat, idx) => (
                     <Link
@@ -226,6 +281,18 @@ const Hero = () => {
                           loading={idx < 4 ? "eager" : "lazy"}
                           fetchPriority={idx < 4 ? "high" : "auto"}
                           decoding="async"
+                          width="28"
+                          height="28"
+                          style={{
+                            contentVisibility: 'auto',
+                            transform: 'translateZ(0)',
+                            WebkitTransform: 'translateZ(0)',
+                            willChange: 'auto'
+                          }}
+                          onLoad={(e) => {
+                            // Prevent layout shift
+                            e.currentTarget.style.opacity = '1';
+                          }}
                         />
                       </div>
                       <p className="text-xs sm:text-sm text-gray-700 font-medium leading-tight whitespace-normal break-words">
@@ -278,6 +345,7 @@ const Hero = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             className="relative"
+            style={{ willChange: 'auto' }}
           >
             <div className="rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm">
               <div className="relative w-full bg-gray-50 overflow-hidden aspect-[4/3] md:aspect-[16/9]">
@@ -295,7 +363,22 @@ const Hero = () => {
                         loading={idx === 0 ? "eager" : "lazy"}
                         fetchPriority={idx === 0 ? "high" : "auto"}
                         decoding="async"
+                        width="800"
+                        height="600"
                         className="absolute inset-0 w-full h-full object-cover object-center"
+                        style={{
+                          contentVisibility: 'auto',
+                          transform: 'translateZ(0)',
+                          WebkitTransform: 'translateZ(0)',
+                          willChange: 'auto'
+                        }}
+                        onLoad={(e) => {
+                          // Prevent layout shift
+                          const img = e.currentTarget;
+                          img.style.opacity = '1';
+                          img.setAttribute('data-loaded', 'true');
+                          img.removeAttribute('data-loading');
+                        }}
                       />
                     )
                   ))}
@@ -338,7 +421,19 @@ const Hero = () => {
                       alt={s.title} 
                       loading={i === 0 ? "eager" : "lazy"}
                       decoding="async"
-                      className="w-full h-full object-cover object-center" 
+                      width="200"
+                      height="150"
+                      className="w-full h-full object-cover object-center"
+                      style={{
+                        contentVisibility: 'auto',
+                        transform: 'translateZ(0)',
+                        WebkitTransform: 'translateZ(0)',
+                        willChange: 'auto'
+                      }}
+                      onLoad={(e) => {
+                        // Prevent layout shift
+                        e.currentTarget.style.opacity = '1';
+                      }}
                     />
                   </button>
                 ))}
