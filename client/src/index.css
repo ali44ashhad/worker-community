@@ -45,13 +45,16 @@ html {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  /* This is where the main scrollbar should be - html handles full page scroll */
+  overflow-y: auto;
+  /* Allow html to grow with content */
+  height: auto;
+  min-height: 100%;
   /* Enable smooth scrolling on iOS */
   -webkit-overflow-scrolling: touch;
   /* Force hardware acceleration */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
-  /* Prevent scroll interruptions from layout shifts */
-  contain: layout style paint;
 }
 
 body {
@@ -61,8 +64,15 @@ body {
   font-weight: 400;
   width: 100%;
   max-width: 100%;
+  /* Use min-height so body can grow with content */
   min-height: 100vh;
+  height: auto;
   overflow-x: hidden;
+  /* Prevent double scrollbar - body should not scroll, explicitly hide scrollbar */
+  overflow-y: hidden;
+  /* Explicitly hide scrollbar on body */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
   /* Enable smooth scrolling on iOS */
   -webkit-overflow-scrolling: touch;
   /* Force hardware acceleration */
@@ -72,11 +82,20 @@ body {
   will-change: scroll-position;
 }
 
+/* Hide scrollbar on body for Chrome/Safari */
+body::-webkit-scrollbar {
+  display: none;
+}
+
 #root {
   width: 100%;
   max-width: 100%;
+  /* Let root grow with content, don't constrain it */
   min-height: 100%;
+  height: auto;
   overflow-x: hidden;
+  /* Don't create scrollbar on root - explicitly set to hidden */
+  overflow-y: hidden;
   /* Enable smooth scrolling on iOS */
   -webkit-overflow-scrolling: touch;
   /* Force hardware acceleration */
@@ -149,23 +168,31 @@ img[loading="lazy"]:not([data-loading]) {
   will-change: scroll-position;
 }
 
-/* Custom scrollbar styling */
-::-webkit-scrollbar {
+/* Custom scrollbar styling - only show on html */
+html::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-::-webkit-scrollbar-track {
+html::-webkit-scrollbar-track {
   background: var(--color-gray-100);
 }
 
-::-webkit-scrollbar-thumb {
+html::-webkit-scrollbar-thumb {
   background: var(--color-gray-300);
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+html::-webkit-scrollbar-thumb:hover {
   background: var(--color-gray-400);
+}
+
+/* Hide scrollbars on body and root */
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Button base styles */
