@@ -11,10 +11,21 @@ import { getFullName, getInitials } from '../utils/userHelpers';
 const ProviderLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const location = useLocation();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const dropdownRef = useRef(null);
+
+  // Check if desktop on mount and resize
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -60,17 +71,12 @@ const ProviderLayout = ({ children }) => {
 
   return (
     <div className="relative min-h-screen bg-gray-50">
-      <ProviderSidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
-
-      {isSidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30"
-          onClick={closeSidebar}
-        />
-      )}
+      <ProviderSidebar isOpen={isDesktop ? true : isSidebarOpen} onClose={closeSidebar} />
 
       <main className="lg:ml-64 min-h-screen">
-        <div className="lg:hidden sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm">
+        <div className={`lg:hidden sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm transition-opacity duration-300 ${
+          isSidebarOpen ? 'hidden' : ''
+        }`}>
           <div className="flex items-center justify-between px-4 py-3 gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <button

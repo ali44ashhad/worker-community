@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import {
   HiOutlineHome,
@@ -13,6 +14,22 @@ import { logoutUser } from '../features/authSlice';
 import { motion } from 'framer-motion';
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
+  const portalContainerRef = useRef(null);
+
+  useEffect(() => {
+    // Create a container for the sidebar that doesn't have transforms
+    const container = document.createElement('div');
+    container.id = 'admin-sidebar-portal';
+    container.style.cssText = 'position: static; transform: none; -webkit-transform: none; isolation: isolate; will-change: auto;';
+    document.body.appendChild(container);
+    portalContainerRef.current = container;
+
+    return () => {
+      if (portalContainerRef.current && portalContainerRef.current.parentNode) {
+        portalContainerRef.current.parentNode.removeChild(portalContainerRef.current);
+      }
+    };
+  }, []);
   const location = useLocation();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
@@ -55,11 +72,31 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
     }
   };
 
-  return (
+  const sidebarContent = (
     <div
-      className={`w-64 bg-white border-r border-gray-300 min-h-screen fixed left-0 top-0 flex flex-col shadow-lg z-40 transform transition-transform duration-300 lg:translate-x-0 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}
+      className="w-64 bg-white border-r border-gray-300 fixed left-0 top-0 flex flex-col shadow-lg z-50 overflow-hidden"
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        height: '100vh',
+        maxHeight: '100vh',
+        width: '16rem',
+        transform: isOpen ? 'translateX(0) translateZ(0)' : 'translateX(-100%) translateZ(0)',
+        WebkitTransform: isOpen ? 'translateX(0) translateZ(0)' : 'translateX(-100%) translateZ(0)',
+        transition: 'transform 0.3s ease-in-out',
+        WebkitTransition: 'transform 0.3s ease-in-out',
+        WebkitFontSmoothing: 'antialiased',
+        MozOsxFontSmoothing: 'grayscale',
+        textRendering: 'optimizeLegibility',
+        imageRendering: 'crisp-edges',
+        filter: 'none !important',
+        WebkitFilter: 'none !important',
+        backdropFilter: 'none !important',
+        WebkitBackdropFilter: 'none !important',
+        isolation: 'isolate',
+        opacity: 1
+      }}
     >
       {/* Logo/Header */}
       <motion.div
@@ -141,6 +178,12 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
       </motion.div>
     </div>
   );
+
+  if (!portalContainerRef.current) {
+    return null;
+  }
+
+  return createPortal(sidebarContent, portalContainerRef.current);
 };
 
 export default AdminSidebar;

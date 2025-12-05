@@ -52,9 +52,8 @@ html {
   min-height: 100%;
   /* Enable smooth scrolling on iOS */
   -webkit-overflow-scrolling: touch;
-  /* Force hardware acceleration */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  /* Hardware acceleration without breaking fixed positioning */
+  will-change: scroll-position;
 }
 
 body {
@@ -75,10 +74,7 @@ body {
   -ms-overflow-style: none; /* IE/Edge */
   /* Enable smooth scrolling on iOS */
   -webkit-overflow-scrolling: touch;
-  /* Force hardware acceleration */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  /* Optimize scrolling performance */
+  /* Optimize scrolling performance without breaking fixed positioning */
   will-change: scroll-position;
 }
 
@@ -98,9 +94,8 @@ body::-webkit-scrollbar {
   overflow-y: hidden;
   /* Enable smooth scrolling on iOS */
   -webkit-overflow-scrolling: touch;
-  /* Force hardware acceleration */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  /* Hardware acceleration without breaking fixed positioning */
+  will-change: auto;
 }
 
 img,
@@ -283,4 +278,28 @@ input[type="range"]::-moz-range-thumb {
 input[type="range"]::-moz-range-thumb:hover {
   transform: scale(1.1);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Sidebar Portal Containers - Ensure fixed positioning works correctly */
+#admin-sidebar-portal,
+#provider-sidebar-portal {
+  position: static !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  isolation: isolate;
+  will-change: auto;
+  filter: none !important;
+  -webkit-filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Ensure sidebar content is crisp and clear */
+#admin-sidebar-portal > *,
+#provider-sidebar-portal > * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
