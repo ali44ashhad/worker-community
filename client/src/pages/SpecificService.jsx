@@ -172,7 +172,8 @@ const SpecificService = () => {
       const cleanPhoneNumber = providerPhoneNumber.replace(/\D/g, '');
       
       // Create WhatsApp message
-      const message = `Hi! I'm interested in your ${serviceCategory} service. Could you please provide more details?`;
+      const loggedInUserName = getFullName(user);
+      const message = `Hi ${providerName}, this is ${loggedInUserName}! I viewed your profile on Commun and would like to know more about your services. Could you please provide more details?`;
       const encodedMessage = encodeURIComponent(message);
       
       // Open WhatsApp

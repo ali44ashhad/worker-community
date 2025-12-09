@@ -16,6 +16,7 @@ const SpecificProvider = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { selectedProvider, isFetchingSelected } = useSelector((state) => state.provider);
+  const user = useSelector((s) => s.auth.user);
   
   const [showFullBio, setShowFullBio] = useState(false);
 
@@ -82,7 +83,8 @@ const SpecificProvider = () => {
 
     if (providerPhoneNumber) {
       const cleanPhoneNumber = providerPhoneNumber.replace(/\D/g, '');
-      const message = `Hi ${providerName}! I'd like to know more about your services. Could you please provide more details?`;
+      const loggedInUserName = getFullName(user);
+      const message = `Hi ${providerName}, this is ${loggedInUserName}! I viewed your profile on Commun and would like to know more about your services. Could you please provide more details?`;
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/${cleanPhoneNumber}?text=${encodedMessage}`, '_blank');
     } else {
