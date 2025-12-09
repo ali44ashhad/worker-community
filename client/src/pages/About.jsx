@@ -27,7 +27,7 @@ const About = () => {
               Commun was created to bring all of this to light.
             </p>
             <p className="tracking-wide">
-              Commun is a hyperlocal platform that helps residents discover trusted services within their neighbourhood and enables those who offer skills or home-based products to become visible to fellow neighbours. Built for independent colonies and community clusters, Commun brings residents together by making discovery easy, communication seamless, and opportunities accessible to everyone.
+              Commun is a hyperlocal platform that helps residents discover trusted services within their neighbourhood and enables those who offer skills or home-based products to become visible to fellow neighbours. Built for independent colonies and Community clusters, Commun brings residents together by making discovery easy, Communication seamless, and opportunities accessible to everyone.
             </p>
             <p className="font-medium text-indigo-600">
               And this is only the beginning.
@@ -51,7 +51,7 @@ const About = () => {
             </h2>
           </div>
           <p className="text-gray-700 text-base sm:text-lg leading-relaxed sm:leading-relaxed max-w-4xl mx-auto text-center font-semibold px-4 tracking-wide">
-            To make neighbourhood living more connected, convenient, and community-driven.
+            To make neighbourhood living more connected, convenient, and Community-driven.
           </p>
         </motion.div>
 
@@ -78,7 +78,7 @@ const About = () => {
               Despite living just a few steps apart, neighbours often remain disconnected from the skills, services, and support systems that exist right around them.
             </p>
             <p>
-              Independent colonies — unlike gated communities — lack a unified platform where residents can communicate, offer services, or discover what others provide. People end up searching the entire internet for services that may be available right next door. This gap inspired the creation of Commun.
+              Independent colonies — unlike gated Communities — lack a unified platform where residents can Communicate, offer services, or discover what others provide. People end up searching the entire internet for services that may be available right next door. This gap inspired the creation of Commun.
             </p>
             <p className="font-semibold text-gray-900">We imagined a platform where:</p>
             <ul className="list-none space-y-2 sm:space-y-3 ml-0">
@@ -164,7 +164,7 @@ const About = () => {
                     <span>IamHere is radius-based, not colony-based</span>
                   </li>
                 </ul>
-                <p className="mt-2 font-semibold text-gray-900">None of them solve the "my colony, my community" gap.</p>
+                <p className="mt-2 font-semibold text-gray-900">None of them solve the "my colony, my Community" gap.</p>
               </div>
             </div>
             <div className="flex gap-4 sm:gap-6">
@@ -222,7 +222,7 @@ const About = () => {
                   </li>
                   <li className="flex items-start">
                     <span className="text-indigo-600 mr-2 mt-1">•</span>
-                    <span>Support local talent and build real community connections</span>
+                    <span>Support local talent and build real Community connections</span>
                   </li>
                 </ul>
               </div>
@@ -279,7 +279,7 @@ const About = () => {
             </motion.div>
           </div>
           <p className="text-gray-700 text-base sm:text-lg leading-relaxed sm:leading-relaxed max-w-4xl mx-auto text-center px-4 tracking-wide">
-            Commun is built to become <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500">the digital backbone of every neighbourhood</span> — simple, safe, and truly community-first.
+            Commun is built to become <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500">the digital backbone of every neighbourhood</span> — simple, safe, and truly Community-first.
           </p>
         </motion.div>
 
@@ -292,7 +292,7 @@ const About = () => {
         <motion.div className="mb-16 sm:mb-20 md:mb-24" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
           <div className="bg-gradient-to-r from-indigo-600 to-pink-500 text-white rounded-2xl p-8 sm:p-10 md:p-12 text-center shadow-xl mx-4">
             <p className="text-base sm:text-lg md:text-xl leading-relaxed sm:leading-relaxed max-w-4xl mx-auto text-white/90 tracking-wide">
-              Commun operates at the intersection of <span className="font-semibold text-white">community, convenience, and hyperlocal commerce</span>, aiming to become the default digital layer for neighbourhoods across India. By empowering residents and enabling micro-entrepreneurs, Commun unlocks a scalable ecosystem with long-term network effects.
+              Commun operates at the intersection of <span className="font-semibold text-white">Community, convenience, and hyperlocal commerce</span>, aiming to become the default digital layer for neighbourhoods across India. By empowering residents and enabling micro-entrepreneurs, Commun unlocks a scalable ecosystem with long-term network effects.
             </p>
           </div>
         </motion.div>
