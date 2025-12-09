@@ -136,25 +136,21 @@ const ServiceCard = ({ service }) => {
         </div>
 
         {/* Rating Display */}
-        {averageRating > 0 && (
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="flex items-center gap-0.5">
-              {renderStars()}
-            </div>
-            <span className="text-xs font-semibold text-gray-700">
-              {averageRating.toFixed(1)}
-            </span>
-            {reviewCount > 0 && (
-              <span className="text-xs text-gray-500">
-                ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
-              </span>
-            )}
+        <div className="flex items-center gap-1.5 mb-2">
+          <div className="flex items-center gap-0.5">
+            {renderStars()}
           </div>
-        )}
+          <span className="text-xs font-semibold text-gray-700">
+            {averageRating.toFixed(1)}
+          </span>
+          <span className="text-xs text-gray-500">
+            ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+          </span>
+        </div>
 
         {/* Service Description */}
         <div className="mb-3">
-          <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+          <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed" style={{ minHeight: '2.5rem' }}>
             {truncatedDescription}
           </p>
         </div>

@@ -20,7 +20,7 @@ const TopServiceCard = ({ service }) => {
   const serviceName = service?.servicename || '';
   const serviceCategory = service?.serviceCategory || 'Service';
   const description = service?.description || '';
-  const keywords = Array.isArray(service?.keywords) ? service.keywords.slice(0, 4) : [];
+  const keywords = Array.isArray(service?.keywords) ? service.keywords.slice(0, 3) : [];
   
   // Get provider information - match ServiceCard approach exactly
   const provider = service?.provider || {};
@@ -98,7 +98,7 @@ const TopServiceCard = ({ service }) => {
 
       {/* Service Name */}
       <h3 className="text-xl font-bold text-black mb-1">{serviceName || 'Service'}</h3>
-      <p className="text-sm text-gray-700 mb-2 line-clamp-2">{description}</p>
+      <p className="text-sm text-gray-700 mb-2 line-clamp-2" style={{ minHeight: '2.5rem' }}>{description}</p>
 
       {/* Price Display */}
 
@@ -123,9 +123,9 @@ const TopServiceCard = ({ service }) => {
             {k}
           </span>
         ))}
-        {Array.isArray(service?.keywords) && service.keywords.length > 4 && (
+        {Array.isArray(service?.keywords) && service.keywords.length > 3 && (
           <span className="px-3 py-1 bg-white text-gray-700 text-xs font-semibold rounded-full border border-gray-300 hover:bg-gray-100 hover:border-gray-400 transition-all">
-            +{service.keywords.length - 4} more
+            +{service.keywords.length - 3} more
           </span>
         )}
       </div>
