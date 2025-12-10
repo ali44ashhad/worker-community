@@ -4,6 +4,8 @@ import {
   HiChevronDown, 
   HiChevronRight,
   HiChevronLeft,
+  HiChevronDoubleLeft,
+  HiChevronDoubleRight,
   HiOutlineUser,
   HiOutlineMail,
   HiOutlinePhone,
@@ -333,38 +335,38 @@ const ProvidersTable = ({ providers = [], isLoading = false, itemsPerPage = 10 }
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3 sm:px-4 py-3 sm:py-4 bg-gray-50 rounded-lg border border-gray-200">
           {/* Page Info */}
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-gray-700 whitespace-nowrap">
             Showing <span className="font-semibold text-black">{startItemNumber}</span> to{' '}
             <span className="font-semibold text-black">{endItemNumber}</span> of{' '}
             <span className="font-semibold text-black">{providers.length}</span> providers
           </div>
 
           {/* Pagination Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap">
             {/* First Page */}
             <button
               onClick={goToFirstPage}
               disabled={currentPage === 1}
-              className="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium text-gray-700"
+              className="p-2 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity hover:opacity-70 flex items-center justify-center flex-shrink-0"
               aria-label="First page"
             >
-              First
+              <HiChevronDoubleLeft className="text-gray-700" size={20} />
             </button>
 
             {/* Previous Page */}
             <button
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity hover:opacity-70 flex items-center justify-center flex-shrink-0"
               aria-label="Previous page"
             >
-              <HiChevronLeft className="text-gray-700" size={18} />
+              <HiChevronLeft className="text-gray-700" size={20} />
             </button>
 
             {/* Page Numbers */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-nowrap">
               {pageNumbers.map((page, idx) => {
                 if (page === 'ellipsis') {
                   return (
@@ -395,20 +397,20 @@ const ProvidersTable = ({ providers = [], isLoading = false, itemsPerPage = 10 }
             <button
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity hover:opacity-70 flex items-center justify-center flex-shrink-0"
               aria-label="Next page"
             >
-              <HiChevronRight className="text-gray-700" size={18} />
+              <HiChevronRight className="text-gray-700" size={20} />
             </button>
 
             {/* Last Page */}
             <button
               onClick={goToLastPage}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium text-gray-700"
+              className="p-2 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity hover:opacity-70 flex items-center justify-center flex-shrink-0"
               aria-label="Last page"
             >
-              Last
+              <HiChevronDoubleRight className="text-gray-700" size={20} />
             </button>
           </div>
         </div>
