@@ -20,8 +20,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     dispatch(getAdminDashboardStats());
-    dispatch(getAllProvidersAdmin());
-    dispatch(getAllServicesAdmin());
+    dispatch(getAllProvidersAdmin({ limit: 10000 }));
+    dispatch(getAllServicesAdmin({ limit: 10000 }));
   }, [dispatch]);
 
   if (isLoading) {
