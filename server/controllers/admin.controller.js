@@ -597,6 +597,220 @@ const deleteServicePDF = async (req, res) => {
     }
 };
 
+/**
+ * @description Get category clicks data - all categories with cumulative clicks and their services
+ * @route GET /api/admin/category-clicks
+ * @access Private (Admin)
+ */
+const getCategoryClicks = async (req, res) => {
+    try {
+        // Get all categories from SERVICE_RULES to ensure we include all categories
+        const SERVICE_RULES = {
+            "Academics": {},
+            "Music": {},
+            "Dance": {},
+            "Fitness & Sports": {},
+            "Home Cooking": {},
+            "Home Catering": {},
+            "Home Baker": {},
+            "Catering": {},
+            "Professional Baker": {},
+            "Workshops": {},
+            "Photography": {},
+            "Technology": {},
+            "Consulting": {},
+            "Finance": {},
+            "Groceries": {},
+            "Home Products": {},
+            "Apparels & Footwear": {},
+            "Law": {},
+            "Medical": {},
+            "Art & Craft": {},
+            "Home Interiors": {},
+            "Construction": {},
+            "Real Estate": {},
+            "Event Planner": {},
+            "Gifting": {},
+            "Other": {}
+        };
+
+        // Aggregate categories with cumulative clicks
+        const categoryData = await ServiceOffering.aggregate([
+            {
+                $group: {
+                    _id: "$serviceCategory",
+                    totalClicks: { $sum: { $ifNull: ["$serviceOfferingCount", 0] } },
+                    serviceCount: { $sum: 1 }
+                }
+            },
+            { $sort: { totalClicks: -1 } }
+        ]);
+
+        // Create a map for quick lookup
+        const categoryMap = new Map();
+        categoryData.forEach(cat => {
+            categoryMap.set(cat._id, {
+                category: cat._id,
+                totalClicks: cat.totalClicks || 0,
+                serviceCount: cat.serviceCount || 0,
+                services: []
+            });
+        });
+
+        // Add categories with 0 clicks that exist in SERVICE_RULES
+        Object.keys(SERVICE_RULES).forEach(category => {
+            if (!categoryMap.has(category)) {
+                categoryMap.set(category, {
+                    category: category,
+                    totalClicks: 0,
+                    serviceCount: 0,
+                    services: []
+                });
+            }
+        });
+
+        // Get all services with provider info using populate (simpler approach)
+        const allServices = await ServiceOffering.find({})
+            .populate({
+                path: 'provider',
+                populate: {
+                    path: 'user',
+                    select: 'firstName lastName'
+                }
+            })
+            .select('serviceCategory servicename serviceOfferingCount provider')
+            .lean();
+
+        // Group services by category and sort by clicks
+        allServices.forEach(service => {
+            const category = service.serviceCategory;
+            if (categoryMap.has(category)) {
+                const providerName = service.provider?.user 
+                    ? `${service.provider.user.firstName || ''} ${service.provider.user.lastName || ''}`.trim()
+                    : 'Unknown Provider';
+                
+                categoryMap.get(category).services.push({
+                    _id: service._id,
+                    servicename: service.servicename,
+                    serviceOfferingCount: service.serviceOfferingCount || 0,
+                    provider: {
+                        user: {
+                            firstName: service.provider?.user?.firstName || '',
+                            lastName: service.provider?.user?.lastName || ''
+                        }
+                    },
+                    serviceCategory: service.serviceCategory
+                });
+            }
+        });
+
+        // Sort services within each category by clicks descending
+        categoryMap.forEach((categoryInfo) => {
+            categoryInfo.services.sort((a, b) => b.serviceOfferingCount - a.serviceOfferingCount);
+        });
+
+        // Convert map to array and sort by total clicks descending
+        const result = Array.from(categoryMap.values())
+            .sort((a, b) => b.totalClicks - a.totalClicks);
+
+        return res.status(200).json({
+            success: true,
+            data: result
+        });
+
+    } catch (error) {
+        console.error("Error in getCategoryClicks controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Get provider clicks data - all providers with cumulative clicks and their services
+ * @route GET /api/admin/provider-clicks
+ * @access Private (Admin)
+ */
+const getProviderClicks = async (req, res) => {
+    try {
+        // Get all providers with their user information
+        const allProviders = await ProviderProfile.find({})
+            .populate('user', 'firstName lastName')
+            .select('providerProfileCount user')
+            .lean();
+
+        // Get all services grouped by provider
+        const servicesByProvider = await ServiceOffering.aggregate([
+            {
+                $group: {
+                    _id: "$provider",
+                    totalServiceClicks: { $sum: { $ifNull: ["$serviceOfferingCount", 0] } },
+                    serviceCount: { $sum: 1 },
+                    services: {
+                        $push: {
+                            _id: "$_id",
+                            servicename: "$servicename",
+                            serviceCategory: "$serviceCategory",
+                            serviceOfferingCount: { $ifNull: ["$serviceOfferingCount", 0] }
+                        }
+                    }
+                }
+            }
+        ]);
+
+        // Create a map for quick lookup of service data by provider ID
+        const serviceMap = new Map();
+        servicesByProvider.forEach(item => {
+            serviceMap.set(item._id.toString(), {
+                totalServiceClicks: item.totalServiceClicks || 0,
+                serviceCount: item.serviceCount || 0,
+                services: item.services || []
+            });
+        });
+
+        // Build result array with provider data
+        const result = allProviders.map(provider => {
+            const providerId = provider._id.toString();
+            const serviceData = serviceMap.get(providerId) || {
+                totalServiceClicks: 0,
+                serviceCount: 0,
+                services: []
+            };
+
+            // Calculate total clicks: providerProfileCount + sum of all service clicks
+            const providerProfileClicks = provider.providerProfileCount || 0;
+            const totalClicks = providerProfileClicks + serviceData.totalServiceClicks;
+
+            // Sort services by clicks descending
+            const sortedServices = serviceData.services.sort((a, b) => b.serviceOfferingCount - a.serviceOfferingCount);
+
+            return {
+                provider: {
+                    _id: provider._id,
+                    user: {
+                        firstName: provider.user?.firstName || '',
+                        lastName: provider.user?.lastName || ''
+                    },
+                    providerProfileCount: providerProfileClicks
+                },
+                totalClicks: totalClicks,
+                serviceCount: serviceData.serviceCount,
+                services: sortedServices
+            };
+        });
+
+        // Sort providers by total clicks descending
+        result.sort((a, b) => b.totalClicks - a.totalClicks);
+
+        return res.status(200).json({
+            success: true,
+            data: result
+        });
+
+    } catch (error) {
+        console.error("Error in getProviderClicks controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 export { 
     getAdminDashboardStats,
     getAllProviders,
@@ -605,5 +819,7 @@ export {
     getAllServices,
     updateServiceDetails,
     deleteServiceImage,
-    deleteServicePDF
+    deleteServicePDF,
+    getCategoryClicks,
+    getProviderClicks
 };

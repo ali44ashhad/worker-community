@@ -7,7 +7,9 @@ import {
     getAllServices,
     updateServiceDetails,
     deleteServiceImage,
-    deleteServicePDF
+    deleteServicePDF,
+    getCategoryClicks,
+    getProviderClicks
 } from "../controllers/admin.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
@@ -69,6 +71,20 @@ router.delete(
     protect,
     isAdmin,
     deleteServicePDF
+);
+
+router.get(
+    "/category-clicks",
+    protect,
+    isAdmin,
+    getCategoryClicks
+);
+
+router.get(
+    "/provider-clicks",
+    protect,
+    isAdmin,
+    getProviderClicks
 );
 
 export default router;
