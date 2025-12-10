@@ -262,7 +262,7 @@ const Footer = () => {
     const fetchTopProviders = async () => {
       try {
         setIsLoadingTopProviders(true);
-        const res = await axios.get(`${API_URL}/api/provider-profile/top-providers?limit=3`);
+        const res = await axios.get(`${API_URL}/api/provider-profile/top-providers?limit=5`);
         if (!isMounted) return;
 
         if (res.data?.success && Array.isArray(res.data.providers)) {
@@ -381,7 +381,7 @@ const Footer = () => {
               {isLoadingTopServices && <li className="text-gray-500 text-sm font-medium">Loading top services...</li>}
               {!isLoadingTopServices && topServiceLinks.length === 0 && <li className="text-gray-500 text-sm font-medium">No top services available right now.</li>}
               {topServiceLinks.map((service) => {
-                const label = service?.serviceCategory || service?.title || service?.name || 'View Service';
+                const label = service?.servicename || service?.serviceCategory || 'View Service';
                 return (
                   <li key={service._id}>
                     <Link to={`/service/${service._id}`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">{label}</Link>
