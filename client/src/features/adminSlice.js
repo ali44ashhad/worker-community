@@ -156,6 +156,32 @@ export const deleteServicePDF = createAsyncThunk(
   }
 );
 
+// Get category clicks (admin)
+export const getCategoryClicks = createAsyncThunk(
+  "admin/getCategoryClicks",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/category-clicks`);
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch category clicks");
+    }
+  }
+);
+
+// Get provider clicks (admin)
+export const getProviderClicks = createAsyncThunk(
+  "admin/getProviderClicks",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/provider-clicks`);
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch provider clicks");
+    }
+  }
+);
+
 /* ----------------- SLICE ----------------- */
 
 const adminSlice = createSlice({
@@ -180,6 +206,8 @@ const adminSlice = createSlice({
       hasPrevPage: false,
       limit: 10
     },
+    categoryClicks: [],
+    providerClicks: [],
     isLoading: false,
     error: null,
   },
@@ -204,6 +232,8 @@ const adminSlice = createSlice({
         hasPrevPage: false,
         limit: 10
       };
+      state.categoryClicks = [];
+      state.providerClicks = [];
       state.error = null;
     },
   },
@@ -289,6 +319,32 @@ const adminSlice = createSlice({
         if (index !== -1) {
           state.services[index] = service;
         }
+      })
+      // Get category clicks
+      .addCase(getCategoryClicks.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getCategoryClicks.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.categoryClicks = action.payload;
+      })
+      .addCase(getCategoryClicks.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Get provider clicks
+      .addCase(getProviderClicks.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getProviderClicks.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.providerClicks = action.payload;
+      })
+      .addCase(getProviderClicks.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       });
   },
 });

@@ -32,6 +32,8 @@ import ProviderProtectedRoute from './components/ProviderProtectedRoute'
 import Dashboard from './pages/admin/Dashboard'
 import UpdateProviders from './pages/admin/UpdateProviders'
 import AdminServices from './pages/admin/AdminServices'
+import CategoryClicks from './pages/admin/CategoryClicks'
+import ProviderClicks from './pages/admin/ProviderClicks'
 import ProviderDashboard from './pages/provider/Dashboard'
 import ManageServices from './pages/provider/ManageServices'
 import EditService from './pages/provider/EditService'
@@ -180,6 +182,8 @@ const App = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="providers" element={<UpdateProviders />} />
           <Route path="services" element={<AdminServices />} />
+          <Route path="category-clicks" element={<CategoryClicks />} />
+          <Route path="provider-clicks" element={<ProviderClicks />} />
           <Route path="update-profile" element={<UpdateProfile />} />
         </Route>
       </Routes>
