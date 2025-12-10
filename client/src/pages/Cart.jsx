@@ -5,6 +5,11 @@ import { getAllProviders } from '../features/providerSlice'
 import { fetchWishlist, removeFromWishlist } from '../features/wishlistSlice'
 import { HiOutlinePhotograph, HiX, HiArrowRight } from 'react-icons/hi'
 import { getFullName, getInitials } from '../utils/userHelpers'
+import { toast } from 'react-hot-toast'
+import axios from 'axios'
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+axios.defaults.withCredentials = true;
 
 const Cart = () => {
   const dispatch = useDispatch();
@@ -54,6 +59,48 @@ const Cart = () => {
     navigate(`/service/${serviceId}`);
   };
 
+  const handleContactProvider = async (serviceId, providerId, providerName, providerPhoneNumber) => {
+    // Check if user is logged in
+    if (!user) {
+      toast.error('Please login to continue with your order');
+      navigate('/login');
+      return;
+    }
+
+    // Increment service offering count
+    try {
+      await axios.post(`${API_URL}/api/service-offering/${serviceId}/increment-count`);
+    } catch (error) {
+      console.error('Failed to increment service offering count:', error);
+      // Continue even if increment fails
+    }
+
+    // Increment provider profile count
+    try {
+      await axios.post(`${API_URL}/api/provider-profile/${providerId}/increment-count`);
+    } catch (error) {
+      console.error('Failed to increment provider profile count:', error);
+      // Continue even if increment fails
+    }
+
+    // Redirect to WhatsApp with provider's phone number
+    if (providerPhoneNumber) {
+      // Clean the phone number - remove spaces, +, and special characters
+      const cleanPhoneNumber = providerPhoneNumber.replace(/\D/g, '');
+      
+      // Create WhatsApp message
+      const loggedInUserName = getFullName(user);
+      const message = `Hi ${providerName}, this is ${loggedInUserName}! I viewed your profile on Commun and would like to know more about your services. Could you please provide more details?`;
+      const encodedMessage = encodeURIComponent(message);
+      
+      // Open WhatsApp
+      window.open(`https://wa.me/${cleanPhoneNumber}?text=${encodedMessage}`, '_blank');
+    } else {
+      // Fallback to contact page if no phone number
+      navigate(`/contact`);
+    }
+  };
+
   if (!user) {
     return (
       <div className='min-h-screen bg-gray-50 pt-24 pb-12'>
@@ -93,129 +140,142 @@ const Cart = () => {
             </div>
           </div>
         ) : (
-          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-            {/* Left Column - Wishlist Items */}
-            <div className='lg:col-span-2 space-y-4'>
-              {wishlistServices.map((service) => {
-                const image = service?.portfolioImages?.[0]?.url;
-                const title = service?.servicename || service?.serviceCategory || 'Service';
-                const description = service?.description || '';
-                // const price = service?.price;
-                const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
-                const profileImage = service?.provider?.user?.profileImage;
-                const truncatedDescription = description.length > 100 
-                  ? description.substring(0, 100) + '...' 
-                  : description;
+          <div className='space-y-4'>
+            {/* Wishlist Items */}
+            {wishlistServices.map((service) => {
+              const image = service?.portfolioImages?.[0]?.url;
+              const title = service?.servicename || service?.serviceCategory || 'Service';
+              const description = service?.description || '';
+              // const price = service?.price;
+              const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
+              const profileImage = service?.provider?.user?.profileImage;
+              const providerPhoneNumber = service?.provider?.user?.phoneNumber || '';
+              const providerId = service?.provider?._id;
+              const truncatedDescription = description.length > 100 
+                ? description.substring(0, 100) + '...' 
+                : description;
 
-                return (
-                  <div
-                    key={service._id}
-                    className='bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200'
+              return (
+                <div
+                  key={service._id}
+                  className='relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200'
+                >
+                  {/* Remove Button - Positioned absolutely in top right on mobile */}
+                  <button
+                    onClick={(e) => handleRemove(service._id, e)}
+                    className='absolute top-4 right-4 sm:hidden flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors z-10'
+                    title='Remove from wishlist'
                   >
-                    <div className='flex gap-4'>
-                      {/* Image */}
-                      <div 
-                        className='flex-shrink-0 w-32 h-32 bg-gray-100 rounded-lg overflow-hidden cursor-pointer'
-                        onClick={() => handleServiceClick(service._id)}
-                      >
-                        {image ? (
-                          <img 
-                            src={image} 
-                            alt={title} 
-                            className='w-full h-full object-cover'
-                          />
-                        ) : (
-                          <div className='w-full h-full flex items-center justify-center'>
-                            <HiOutlinePhotograph className='w-8 h-8 text-gray-400' />
-                          </div>
-                        )}
-                      </div>
+                    <HiX className='w-5 h-5 text-gray-600' />
+                  </button>
 
-                      {/* Content */}
-                      <div className='flex-1 min-w-0'>
-                        <div className='flex items-start justify-between gap-4'>
-                          <div className='flex-1 min-w-0'>
-                            <h3 
-                              className='text-sm font-semibold text-gray-900 mb-1 cursor-pointer hover:text-gray-700 line-clamp-1'
-                              onClick={() => handleServiceClick(service._id)}
-                            >
-                              {title}
-                            </h3>
-                            <p className='text-xs text-gray-600 mb-2 line-clamp-2'>
-                              {truncatedDescription}
-                            </p>
-                            
-                            {/* Provider Info */}
-                            <div className='flex items-center gap-2 mb-2'>
-                              {profileImage ? (
-                                <img
-                                  src={profileImage}
-                                  alt={providerName}
-                                  className='w-5 h-5 rounded-full border border-gray-200 object-cover'
-                                />
-                              ) : (
-                                <div className='w-5 h-5 rounded-full border border-gray-200 bg-gray-700 text-white flex items-center justify-center font-semibold text-[10px]'>
-                                  {getInitials(service?.provider?.user)}
-                                </div>
-                              )}
-                              <span className='text-xs text-gray-600'>{providerName}</span>
-                            </div>
-
-                            {/* Price */}
-                            {/* {price !== undefined && price !== null && (
-                              <div className='mt-2'>
-                                <span className='text-base font-semibold text-gray-900'>
-                                  ₹{typeof price === 'number' ? price.toLocaleString('en-IN') : price}
-                                </span>
-                              </div>
-                            )} */}
-                          </div>
-
-                          {/* Remove Button */}
-                          <button
-                            onClick={(e) => handleRemove(service._id, e)}
-                            className='flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors'
-                            title='Remove from wishlist'
-                          >
-                            <HiX className='w-5 h-5 text-gray-600' />
-                          </button>
+                  <div className='flex flex-col sm:flex-row gap-4'>
+                    {/* Image */}
+                    <div 
+                      className='flex-shrink-0 w-32 h-32 bg-gray-100 rounded-lg overflow-hidden cursor-pointer'
+                      onClick={() => handleServiceClick(service._id)}
+                    >
+                      {image ? (
+                        <img 
+                          src={image} 
+                          alt={title} 
+                          className='w-full h-full object-cover'
+                        />
+                      ) : (
+                        <div className='w-full h-full flex items-center justify-center'>
+                          <HiOutlinePhotograph className='w-8 h-8 text-gray-400' />
                         </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className='flex-1 min-w-0'>
+                      <div className='flex items-start justify-between gap-4'>
+                        <div className='flex-1 min-w-0'>
+                          <h3 
+                            className='text-sm font-semibold text-gray-900 mb-1 cursor-pointer hover:text-gray-700 line-clamp-1'
+                            onClick={() => handleServiceClick(service._id)}
+                          >
+                            {title}
+                          </h3>
+                          <p className='text-xs text-gray-600 mb-2 line-clamp-2'>
+                            {truncatedDescription}
+                          </p>
+                          
+                          {/* Provider Info */}
+                          <div className='flex items-center gap-2 mb-2'>
+                            {profileImage ? (
+                              <img
+                                src={profileImage}
+                                alt={providerName}
+                                className='w-5 h-5 rounded-full border border-gray-200 object-cover'
+                              />
+                            ) : (
+                              <div className='w-5 h-5 rounded-full border border-gray-200 bg-gray-700 text-white flex items-center justify-center font-semibold text-[10px]'>
+                                {getInitials(service?.provider?.user)}
+                              </div>
+                            )}
+                            <span className='text-xs text-gray-600'>{providerName}</span>
+                          </div>
+
+                          {/* Contact Provider Button - Desktop */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleContactProvider(service._id, providerId, providerName, providerPhoneNumber);
+                            }}
+                            className='hidden sm:block mt-8 w-auto bg-gray-900 text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-gray-800 transition-all'
+                          >
+                            Contact Provider
+                          </button>
+
+                          {/* Price */}
+                          {/* {price !== undefined && price !== null && (
+                            <div className='mt-2'>
+                              <span className='text-base font-semibold text-gray-900'>
+                                ₹{typeof price === 'number' ? price.toLocaleString('en-IN') : price}
+                              </span>
+                            </div>
+                          )} */}
+                        </div>
+
+                        {/* Remove Button - Desktop */}
+                        <button
+                          onClick={(e) => handleRemove(service._id, e)}
+                          className='hidden sm:flex flex-shrink-0 w-8 h-8 items-center justify-center rounded-full hover:bg-gray-100 transition-colors'
+                          title='Remove from wishlist'
+                        >
+                          <HiX className='w-5 h-5 text-gray-600' />
+                        </button>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
 
-            {/* Right Column - Summary */}
-            <div className='lg:col-span-1'>
-              <div className='bg-white border border-gray-200 rounded-lg p-4 sticky top-24'>
-                {/* <h2 className='text-base font-semibold text-gray-900 mb-4'>Price Details</h2>
-                
-                <div className='space-y-3 mb-4 pb-4 border-b border-gray-200'>
-                  <div className='flex justify-between text-xs text-gray-600'>
-                    <span>Price ({wishlistServices.length} items)</span>
-                    <span>₹{totalAmount.toLocaleString('en-IN')}</span>
-                  </div>
+                  {/* Contact Provider Button - Mobile (below image and description) */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleContactProvider(service._id, providerId, providerName, providerPhoneNumber);
+                    }}
+                    className='sm:hidden mt-4 w-full bg-gray-900 text-white py-2 px-4 rounded-lg text-xs font-semibold hover:bg-gray-800 transition-all'
+                  >
+                    Contact Provider
+                  </button>
                 </div>
+              );
+            })}
 
-                <div className='mb-4'>
-                  <div className='flex justify-between items-center'>
-                    <span className='text-sm font-semibold text-gray-900'>Total Amount</span>
-                    <span className='text-lg font-bold text-gray-900'>₹{totalAmount.toLocaleString('en-IN')}</span>
-                  </div>
-                </div> */}
-
-                <button
-                  onClick={() => navigate('/service')}
-                  className='w-full bg-gray-900 text-white py-2.5 px-4 rounded-lg text-xs font-semibold hover:bg-gray-800 transition-all flex items-center justify-center gap-2'
-                >
-                  Continue Shopping
-                  <HiArrowRight className='w-4 h-4' />
-                </button>
-              </div>
+            {/* Continue Shopping Button */}
+            <div className='pt-4'>
+              <button
+                onClick={() => navigate('/service')}
+                className='w-full bg-gray-900 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-gray-800 transition-all flex items-center justify-center gap-2'
+              >
+                Continue Shopping
+                <HiArrowRight className='w-4 h-4' />
+              </button>
             </div>
-        </div>
+          </div>
       )}
       </div>
     </div>
