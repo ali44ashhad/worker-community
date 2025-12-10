@@ -5,7 +5,8 @@ import {
   updateProviderDetails, 
   updateProviderUserDetails,
   updateServiceDetails,
-  deleteServiceImage
+  deleteServiceImage,
+  deleteServicePDF
 } from '../../features/adminSlice';
 import { 
   HiOutlinePencil, 
@@ -18,6 +19,7 @@ import {
   HiOutlinePhone,
   HiOutlineLocationMarker,
   HiOutlineDocumentText,
+  HiOutlineDocument,
   HiOutlineSearch
 } from 'react-icons/hi';
 import { motion } from 'framer-motion';
@@ -148,18 +150,24 @@ const UpdateProviders = () => {
   });
   const [selectedService, setSelectedService] = useState(null);
   const [serviceEditForm, setServiceEditForm] = useState({
+    servicename: '',
     serviceCategory: '',
     subCategories: [],
     keywords: [],
     description: '',
     experience: 0,
     // price: 0,
-    newImages: []
+    newImages: [],
+    newPDFs: []
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [searchInput, setSearchInput] = useState('');
+  const [imageToDelete, setImageToDelete] = useState(null);
+  const [pdfToDelete, setPdfToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -185,7 +193,7 @@ const UpdateProviders = () => {
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    if (selectedService) {
+    if (selectedService || imageToDelete || pdfToDelete) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -193,64 +201,105 @@ const UpdateProviders = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [selectedService]);
+  }, [selectedService, imageToDelete, pdfToDelete]);
 
   const handleServiceClick = (service) => {
     setSelectedService(service);
     setServiceEditForm({
+      servicename: service.servicename || '',
       serviceCategory: service.serviceCategory || '',
       subCategories: Array.isArray(service.subCategories) ? service.subCategories : [],
       keywords: Array.isArray(service.keywords) ? service.keywords : [],
       description: service.description || '',
       experience: service.experience || 0,
       // price: service.price || 0,
-      newImages: []
+      newImages: [],
+      newPDFs: []
     });
   };
 
   const handleCloseServiceModal = () => {
     setSelectedService(null);
     setServiceEditForm({
+      servicename: '',
       serviceCategory: '',
       subCategories: [],
       keywords: [],
       description: '',
       experience: 0,
       // price: 0,
-      newImages: []
+      newImages: [],
+      newPDFs: []
     });
   };
 
   const handleServiceSave = async () => {
-    if (!selectedService) return;
+    if (!selectedService || isSaving) return;
     
-    const formData = new FormData();
-    
-    if (serviceEditForm.serviceCategory) formData.append('serviceCategory', serviceEditForm.serviceCategory);
-    if (serviceEditForm.subCategories.length > 0) {
-      formData.append('subCategories', JSON.stringify(serviceEditForm.subCategories));
-    }
-    if (serviceEditForm.keywords.length > 0) {
-      formData.append('keywords', JSON.stringify(serviceEditForm.keywords));
-    }
-    if (serviceEditForm.description !== undefined) formData.append('description', serviceEditForm.description);
-    if (serviceEditForm.experience !== undefined) formData.append('experience', serviceEditForm.experience.toString());
-    // if (serviceEditForm.price !== undefined) formData.append('price', serviceEditForm.price.toString());
+    try {
+      setIsSaving(true);
+      const formData = new FormData();
+      
+      // Always send servicename if it exists in the form (even if empty string)
+      if (serviceEditForm.servicename !== undefined && serviceEditForm.servicename !== null) {
+        formData.append('servicename', serviceEditForm.servicename);
+      }
+      if (serviceEditForm.serviceCategory) formData.append('serviceCategory', serviceEditForm.serviceCategory);
+      if (serviceEditForm.subCategories.length > 0) {
+        formData.append('subCategories', JSON.stringify(serviceEditForm.subCategories));
+      }
+      if (serviceEditForm.keywords.length > 0) {
+        formData.append('keywords', JSON.stringify(serviceEditForm.keywords));
+      }
+      if (serviceEditForm.description !== undefined) formData.append('description', serviceEditForm.description);
+      if (serviceEditForm.experience !== undefined) formData.append('experience', serviceEditForm.experience.toString());
+      // if (serviceEditForm.price !== undefined) formData.append('price', serviceEditForm.price.toString());
 
-    // Add new images
-    serviceEditForm.newImages.forEach((file) => {
-      formData.append('portfolioImages', file);
-    });
+      // Add new images
+      serviceEditForm.newImages.forEach((file) => {
+        formData.append('portfolioImages', file);
+      });
 
-    await dispatch(updateServiceDetails({ serviceId: selectedService._id, formData }));
-    handleCloseServiceModal();
-    dispatch(getAllProvidersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
+      // Add new PDFs
+      serviceEditForm.newPDFs.forEach((file) => {
+        formData.append('portfolioPDFs', file);
+      });
+
+      await dispatch(updateServiceDetails({ serviceId: selectedService._id, formData }));
+      handleCloseServiceModal();
+      dispatch(getAllProvidersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
+    } catch (error) {
+      console.error('Error saving service:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDeleteServiceImage = async (imagePublicId) => {
-    if (window.confirm('Are you sure you want to delete this image?')) {
-      await dispatch(deleteServiceImage({ serviceId: selectedService._id, imagePublicId }));
+  const handleDeleteServiceImage = (imagePublicId) => {
+    setImageToDelete({ serviceId: selectedService._id, imagePublicId });
+  };
+
+  const confirmDeleteImage = async () => {
+    if (!imageToDelete || isDeleting) return;
+    
+    try {
+      setIsDeleting(true);
+      const result = await dispatch(deleteServiceImage({ 
+        serviceId: imageToDelete.serviceId, 
+        imagePublicId: imageToDelete.imagePublicId 
+      }));
+      
+      // Update selectedService with the updated service from API
+      if (result.payload?.service) {
+        setSelectedService(result.payload.service);
+      }
+      
+      setImageToDelete(null);
       dispatch(getAllProvidersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -290,6 +339,42 @@ const UpdateProviders = () => {
       ...serviceEditForm,
       newImages: files
     });
+  };
+
+  const handlePDFChange = (e) => {
+    const files = Array.from(e.target.files);
+    setServiceEditForm({
+      ...serviceEditForm,
+      newPDFs: files
+    });
+  };
+
+  const handleDeletePDF = (pdfPublicId) => {
+    setPdfToDelete({ serviceId: selectedService._id, pdfPublicId });
+  };
+
+  const confirmDeletePDF = async () => {
+    if (!pdfToDelete || isDeleting) return;
+    
+    try {
+      setIsDeleting(true);
+      const result = await dispatch(deleteServicePDF({ 
+        serviceId: pdfToDelete.serviceId, 
+        pdfPublicId: pdfToDelete.pdfPublicId 
+      }));
+      
+      // Update selectedService with the updated service from API
+      if (result.payload?.service) {
+        setSelectedService(result.payload.service);
+      }
+      
+      setPdfToDelete(null);
+      dispatch(getAllProvidersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
+    } catch (error) {
+      console.error('Error deleting PDF:', error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const getCurrentRules = () => {
@@ -882,6 +967,20 @@ const UpdateProviders = () => {
 
             {/* Modal Content */}
             <div className="p-6 space-y-6">
+              {/* Service Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  Service Name
+                </label>
+                <input
+                  type="text"
+                  value={serviceEditForm.servicename}
+                  onChange={(e) => setServiceEditForm({ ...serviceEditForm, servicename: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                  placeholder="Enter service name"
+                />
+              </div>
+
               {/* Service Category */}
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-2">
@@ -1023,23 +1122,170 @@ const UpdateProviders = () => {
                 />
                 <p className="text-xs text-gray-500 mt-1">Select new images to add</p>
               </div>
+
+              {/* Portfolio PDFs */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2 flex items-center gap-2">
+                  <HiOutlineDocument className="text-gray-500" size={16} />
+                  Service Related Documents
+                </label>
+                <div>
+                  {selectedService.portfolioPDFs && selectedService.portfolioPDFs.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                      {selectedService.portfolioPDFs.map((pdf, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-300">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <HiOutlineDocument size={20} className="text-red-600 flex-shrink-0" />
+                            <a
+                              href={pdf.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 truncate flex-1"
+                            >
+                              PDF {idx + 1}
+                            </a>
+                          </div>
+                          <button
+                            onClick={() => handleDeletePDF(pdf.public_id)}
+                            className="ml-3 bg-red-600 text-white p-1.5 rounded-full hover:bg-red-700 flex-shrink-0 transition-all duration-300 shadow-md"
+                            title="Delete PDF"
+                          >
+                            <HiOutlineTrash size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    multiple
+                    accept="application/pdf"
+                    onChange={handlePDFChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Select new PDFs to add</p>
+                  {serviceEditForm.newPDFs.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {serviceEditForm.newPDFs.map((file, idx) => (
+                        <p key={idx} className="text-xs text-gray-600">• {file.name}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Modal Footer */}
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-300 px-6 py-4 flex items-center justify-end gap-3">
               <button
                 onClick={handleCloseServiceModal}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-black border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                disabled={isSaving}
+                className={`flex items-center gap-2 px-4 py-2 bg-white text-black border border-gray-300 rounded-xl transition-all duration-300 ${
+                  isSaving
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+                }`}
               >
                 <HiOutlineX size={18} />
                 <span>Cancel</span>
               </button>
               <button
                 onClick={handleServiceSave}
-                className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                disabled={isSaving}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+                  isSaving
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-black text-white hover:bg-gray-800 hover:scale-[1.02] active:scale-[0.98]'
+                }`}
               >
                 <HiOutlineCheck size={18} />
-                <span>Save Changes</span>
+                <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Image Deletion Confirmation Modal */}
+      {imageToDelete && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => !isDeleting && setImageToDelete(null)}
+        >
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-black mb-3">Delete Image?</h2>
+            <p className="text-gray-600 mb-6">
+              This action will permanently delete this image. You won't be able to recover it later.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
+                onClick={() => setImageToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-white transition ${
+                  isDeleting
+                    ? 'bg-red-300 cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-500'
+                }`}
+                onClick={confirmDeleteImage}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, delete'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* PDF Deletion Confirmation Modal */}
+      {pdfToDelete && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => !isDeleting && setPdfToDelete(null)}
+        >
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-black mb-3">Delete PDF?</h2>
+            <p className="text-gray-600 mb-6">
+              This action will permanently delete this PDF. You won't be able to recover it later.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
+                onClick={() => setPdfToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-white transition ${
+                  isDeleting
+                    ? 'bg-red-300 cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-500'
+                }`}
+                onClick={confirmDeletePDF}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, delete'}
               </button>
             </div>
           </motion.div>
