@@ -102,7 +102,7 @@ const deleteFromCloudinary = (public_id) => {
  const addServiceOffering = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { servicename, serviceCategory, subCategories, keywords, description, price } = req.body;
+        const { servicename, serviceCategory, subCategories, keywords, description /* , price */ } = req.body;
 
         // When using upload.any(), req.files is an array
         const filesArray = req.files || [];
@@ -161,7 +161,7 @@ const deleteFromCloudinary = (public_id) => {
             description,
             portfolioImages,
             portfolioPDFs,
-            price: parseFloat(price) || 0
+            // price: parseFloat(price) || 0
         });
         
         // 4. Save the new service offering (triggers pre-save validation)
@@ -235,7 +235,7 @@ const getProviderDashboardStats = async (req, res) => {
 
         // 1. Find the provider's profile along with their service offerings
         const providerProfile = await ProviderProfile.findOne({ user: providerUserId })
-            .populate('serviceOfferings', '_id serviceCategory price serviceOfferingCount');
+            .populate('serviceOfferings', '_id serviceCategory /* price */ serviceOfferingCount');
 
         if (!providerProfile) {
             return res.status(404).json({ success: false, message: "Provider profile not found." });
@@ -331,7 +331,7 @@ const getProviderDashboardStats = async (req, res) => {
                 serviceClickDetails: providerProfile.serviceOfferings.map(service => ({
                     id: service._id,
                     serviceCategory: service.serviceCategory,
-                    price: service.price,
+                    // price: service.price,
                     clicks: service.serviceOfferingCount || 0
                 })),
                 recentBookings,
@@ -688,7 +688,7 @@ const becomeProviderWithServices = async (req, res) => {
                     message: `Service ${i + 1}: Experience is required.` 
                 });
             }
-            if (service.price === undefined || service.price === '' || service.price === null) {
+            /* if (service.price === undefined || service.price === '' || service.price === null) {
                 return res.status(400).json({ 
                     success: false, 
                     message: `Service ${i + 1}: Price is required.` 
@@ -699,7 +699,7 @@ const becomeProviderWithServices = async (req, res) => {
                     success: false, 
                     message: `Service ${i + 1}: Price cannot be negative.` 
                 });
-            }
+            } */
         }
 
         // For multi-service, we'll need to handle images differently
@@ -794,7 +794,7 @@ const becomeProviderWithServices = async (req, res) => {
                     portfolioImages: portfolioImages,
                     portfolioPDFs: portfolioPDFs,
                     experience: parseInt(service.experience),
-                    price: parseFloat(service.price) || 0
+                    // price: parseFloat(service.price) || 0
                 });
 
                 await newServiceOffering.save();
@@ -848,7 +848,7 @@ const updateServiceOffering = async (req, res) => {
     try {
         const userId = req.user._id;
         const { serviceId } = req.params;
-        const { servicename, serviceCategory, subCategories, keywords, description, experience, price } = req.body;
+        const { servicename, serviceCategory, subCategories, keywords, description, experience /* , price */ } = req.body;
 
         const profile = await ProviderProfile.findOne({ user: userId });
         if (!profile) {
@@ -902,7 +902,7 @@ const updateServiceOffering = async (req, res) => {
         
         if (description) service.description = description;
         if (experience !== undefined) service.experience = parseInt(experience);
-        if (price !== undefined) service.price = parseFloat(price);
+        // if (price !== undefined) service.price = parseFloat(price);
 
         // When using upload.any(), req.files is an array
         const filesArray = req.files || [];

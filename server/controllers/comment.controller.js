@@ -486,7 +486,7 @@ const getTopServices = async (req, res) => {
                     select: 'firstName lastName profileImage email phoneNumber'
                 }
             })
-            .select('servicename serviceCategory description portfolioImages provider experience keywords subCategories price');
+            .select('servicename serviceCategory description portfolioImages provider experience keywords subCategories /* price */');
         
         // Debug: Log user data to see what's actually being returned
         services.forEach(service => {
