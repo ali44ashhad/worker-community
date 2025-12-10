@@ -27,10 +27,16 @@ const Hero = () => {
   ];
 
   const carouselImages = [
-    { src: "cooking.png", title: "Delicious Home Cooking", subtitle: "Find trusted home cooks nearby" },
+    { src: "cooking2.png", title: "Delicious Home Cooking", subtitle: "Find trusted home cooks nearby" },
     { src: "fitness.png", title: "Fitness & Trainers", subtitle: "Personal trainers and group classes" },
     { src: "tutor.png", title: "Personal Tutors", subtitle: "Academics, languages & exam prep" },
     { src: "art.png", title: "Art & Craft", subtitle: "Creative classes and workshops" },
+    { src: "dance.png", title: "Dance Tuitions", subtitle: "Learn classical, western & freestyle dance" },
+    { src: "homebakery.png", title: "Home Bakery", subtitle: "Order fresh homemade cakes & desserts" },
+    { src: "homecatering.png", title: "Home Catering", subtitle: "Delicious catering for small & large events" },
+    { src: "musictution.png", title: "Music Tuitions", subtitle: "Learn instruments & vocal music from experts" },
+    // { src: "photography.png", title: "P", subtitle: "Creative classes and workshops" },
+
   ];
 
   // Preload critical images and images likely to be seen soon
@@ -183,13 +189,13 @@ const Hero = () => {
   const handleMouseLeave = () => setIsAutoPlaying(true);
 
   return (
-    <section className="mt-28 w-full relative">
+    <section className="mt-28 w-full relative pb-6 md:pb-8">
       {/* Minimal glass decorative blobs for subtle color — low opacity */}
       <div className="pointer-events-none absolute -top-12 -left-10 w-80 h-80 rounded-full blur-3xl bg-gradient-to-br from-indigo-50 via-pink-50 to-purple-50 opacity-40 transform -rotate-12" />
       <div className="pointer-events-none absolute -bottom-12 -right-6 w-64 h-64 rounded-full blur-2xl bg-gradient-to-br from-pink-50 via-indigo-50 to-yellow-50 opacity-30 transform rotate-6" />
 
       <div className="max-w-[1370px] mx-auto px-6 md:px-8 relative">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-end">
           {/* LEFT: Headline + Categories */}
           <motion.div 
             initial={{ opacity: 0, x: -16 }} 
@@ -197,12 +203,16 @@ const Hero = () => {
             transition={{ duration: 0.6 }}
             style={{ willChange: 'auto' }}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight">
+            {/* <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight">
               Services from <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500">your society</span>
+            </h1> */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight">
+            India’s First True <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500">Hyperlocal Neighbourhood Platform</span>
             </h1>
 
             <p className="mt-6 text-gray-700 max-w-xl text-lg">
-              Discover trusted local providers — from home cooks and tutors to fitness trainers and event planners. Connect, book and support neighbours who make life easier.
+            A simple way for neighbours to offer services, find support, and connect locally. From tuitions to
+            fitness to home-baked products—find everything your neighbourhood offers.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -348,7 +358,7 @@ const Hero = () => {
             style={{ willChange: 'auto' }}
           >
             <div className="rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm">
-              <div className="relative w-full bg-gray-50 overflow-hidden aspect-[4/3] md:aspect-[16/9]">
+              <div className="relative w-full bg-gray-50 overflow-hidden aspect-[4/3] md:aspect-[3/2]">
                 <AnimatePresence mode="wait">
                   {carouselImages.map((slide, idx) => (
                     idx === currentSlide && (
@@ -365,7 +375,7 @@ const Hero = () => {
                         decoding="async"
                         width="800"
                         height="600"
-                        className="absolute inset-0 w-full h-full object-cover object-center"
+                        className="absolute inset-0 w-full h-full object-contain object-center"
                         style={{
                           contentVisibility: 'auto',
                           transform: 'translateZ(0)',

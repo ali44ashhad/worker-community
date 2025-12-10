@@ -82,7 +82,7 @@ const Testimonial = () => {
   if (!testimonialCards || testimonialCards.length === 0) return null;
 
   return (
-    <section className="w-full relative mt-16">
+    <section className="w-full relative mt-6 md:mt-8">
       {/* subtle glass blobs to tie into theme */}
       <div className="pointer-events-none absolute -top-12 left-6 w-64 h-64 rounded-full blur-3xl bg-gradient-to-br from-indigo-50 via-pink-50 to-purple-50 opacity-30 transform -rotate-12" />
       <div className="pointer-events-none absolute -bottom-12 right-6 w-56 h-56 rounded-full blur-2xl bg-gradient-to-br from-pink-50 via-indigo-50 to-yellow-50 opacity-20 transform rotate-6" />

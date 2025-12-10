@@ -225,7 +225,7 @@ const TopCategory = () => {
 
     if (isLoading) {
         return (
-            <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
+            <section className="w-full max-w-[1350px] mx-auto px-4 pb-4 pt-6 md:py-16">
                 <div className="text-center">
                     <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4'></div>
                     <p className='text-xl font-semibold'>Loading categories...</p>
@@ -249,12 +249,13 @@ const TopCategory = () => {
     };
 
     return (
-        <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
+        <section className="w-full max-w-[1350px] mx-auto px-4 pb-6 pt-6 md:pt-16 md:pb-8">
             {/* Header */}
             <div className="mb-3">
-                <h1 className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500 md:text-5xl font-bold text-black mb-3">
+                {/* <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500 mb-3">
                     Top Categories
-                </h1>
+                </h1> */}
+                 <h2 className="text-4xl md:text-5xl font-bold text-black mb-3">Top Categories</h2>
                 <div className="flex items-start justify-between gap-4">
                     <p className="text-gray-600 max-w-2xl flex-1">
                         Discover the diverse talents within our community! Explore some of the most popular services offered by your skilled neighbors, ready to lend a hand.

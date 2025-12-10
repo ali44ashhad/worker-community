@@ -532,7 +532,7 @@ const UpdateProviders = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden">
                       {provider.user?.profileImage ? (
@@ -554,7 +554,7 @@ const UpdateProviders = () => {
                       <p className="text-sm text-gray-600">{provider.user?.email || ''}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
                     {!isEditing ? (
                       <button
                         onClick={() => handleEdit(provider)}
@@ -567,14 +567,14 @@ const UpdateProviders = () => {
                       <>
                         <button
                           onClick={() => handleSave(provider._id)}
-                          className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base"
                         >
                           <HiOutlineCheck size={18} />
                           <span>Save</span>
                         </button>
                         <button
                           onClick={handleCancel}
-                          className="flex items-center gap-2 px-4 py-2 bg-white text-black border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white text-black border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base"
                         >
                           <HiOutlineX size={18} />
                           <span>Cancel</span>

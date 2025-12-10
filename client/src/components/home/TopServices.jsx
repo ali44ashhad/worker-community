@@ -57,7 +57,7 @@ const TopServices = () => {
 
   if (isLoading) {
     return (
-      <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
+      <section className="w-full max-w-[1350px] mx-auto px-4 pt-4 pb-6 md:py-16">
         <div className="text-center">
           <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4'></div>
           <p className='text-xl font-semibold'>Loading services...</p>
@@ -81,7 +81,7 @@ const TopServices = () => {
   };
 
   return (
-    <section className="w-full max-w-[1350px] mx-auto px-4 py-16">
+    <section className="w-full max-w-[1350px] mx-auto px-4 pt-6 pb-6 md:pt-8 md:pb-8">
       {/* Header */}
       <div className="mb-3">
         <h2 className="text-4xl md:text-5xl font-bold text-black mb-3">Top Services</h2>
