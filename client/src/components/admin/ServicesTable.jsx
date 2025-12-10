@@ -133,7 +133,7 @@ const ServicesTable = ({ services = [], isLoading = false, itemsPerPage = 10 }) 
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">Service Name</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">Category</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">Provider</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-black">Price</th>
+              {/* <th className="px-4 py-3 text-left text-sm font-semibold text-black">Price</th> */}
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">Created</th>
             </tr>
           </thead>
@@ -191,9 +191,9 @@ const ServicesTable = ({ services = [], isLoading = false, itemsPerPage = 10 }) 
                         <span className="text-sm text-gray-700">N/A</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    {/* <td className="px-4 py-3 text-sm text-gray-700">
                       {service.price > 0 ? `$${service.price}` : 'N/A'}
-                    </td>
+                    </td> */}
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {service.createdAt ? new Date(service.createdAt).toLocaleDateString() : 'N/A'}
                     </td>
@@ -267,13 +267,13 @@ const ServicesTable = ({ services = [], isLoading = false, itemsPerPage = 10 }) 
                                     </p>
                                     <p className="text-sm text-black">{service.experience || 0} years</p>
                                   </div>
-                                  <div>
+                                  {/* <div>
                                     <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
                                       <HiOutlineCurrencyDollar size={14} />
                                       Price
                                     </p>
                                     <p className="text-sm text-black">{service.price > 0 ? `$${service.price}` : 'N/A'}</p>
-                                  </div>
+                                  </div> */}
                                 </div>
                               </div>
                             </div>

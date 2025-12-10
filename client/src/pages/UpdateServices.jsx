@@ -50,7 +50,7 @@ const UpdateServices = () => {
         keywords: service.keywords || [],
         bio: service.description || '',
         experience: service.experience || '',
-        price: service.price || '',
+        // price: service.price || '',
         // For existing images from database
         existingImages: service.portfolioImages || [],
         // For new images to be uploaded
@@ -83,7 +83,7 @@ const UpdateServices = () => {
         pdfPreviews: [],
         bio: '',
         experience: '',
-        price: ''
+        // price: ''
       }]);
     }
   }, [myProviderProfile, focusServiceId]);
@@ -280,7 +280,7 @@ const UpdateServices = () => {
       imagePreviews: [],
       bio: '',
       experience: '',
-      price: ''
+      // price: ''
     }]);
   };
 
@@ -341,13 +341,13 @@ const UpdateServices = () => {
         hasErrors = true;
       }
 
-      if (service.price === '' || service.price === null || service.price === undefined) {
+      /* if (service.price === '' || service.price === null || service.price === undefined) {
         newErrors[`service-${serviceId}-price`] = "Price is required.";
         hasErrors = true;
       } else if (parseFloat(service.price) < 0) {
         newErrors[`service-${serviceId}-price`] = "Price cannot be negative.";
         hasErrors = true;
-      }
+      } */
 
       // For existing services, at least one image or PDF must exist
       const totalImages = (service.existingImages?.length || 0) + (service.imagePreviews?.length || 0);
@@ -399,7 +399,7 @@ const UpdateServices = () => {
         formData.append('keywords', JSON.stringify(service.keywords));
         formData.append('description', service.bio);
         formData.append('experience', service.experience);
-        formData.append('price', service.price);
+        // formData.append('price', service.price);
         
         // Add new images if any
         service.images.forEach((file) => {
@@ -770,7 +770,7 @@ const UpdateServices = () => {
             </div>
 
             {/* Price */}
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                 Price (in ₹) *
               </label>
@@ -796,7 +796,7 @@ const UpdateServices = () => {
                   {errors[`service-${service.id}-price`]}
                 </motion.p>
               )}
-            </div>
+            </div> */}
 
             {/* Image Upload */}
             <div className="mb-6">

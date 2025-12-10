@@ -17,7 +17,7 @@ const buildServiceState = (service) => ({
   keywords: service?.keywords || [],
   bio: service?.description || '',
   experience: service?.experience ?? '',
-  price: service?.price ?? '',
+  // price: service?.price ?? '',
   existingImages: service?.portfolioImages || [],
   images: [],
   imagePreviews: [],
@@ -172,13 +172,13 @@ const EditService = () => {
       hasErrors = true;
     }
 
-    if (serviceForm?.price === '' || serviceForm?.price === null || serviceForm?.price === undefined) {
+    /* if (serviceForm?.price === '' || serviceForm?.price === null || serviceForm?.price === undefined) {
       newErrors.price = 'Price is required.';
       hasErrors = true;
     } else if (parseFloat(serviceForm.price) < 0) {
       newErrors.price = 'Price cannot be negative.';
       hasErrors = true;
-    }
+    } */
 
     const totalImages =
       (serviceForm?.existingImages?.length || 0) + (serviceForm?.imagePreviews?.length || 0);
@@ -211,7 +211,7 @@ const EditService = () => {
       formData.append('keywords', JSON.stringify(serviceForm.keywords));
       formData.append('description', serviceForm.bio);
       formData.append('experience', serviceForm.experience);
-      formData.append('price', serviceForm.price);
+      // formData.append('price', serviceForm.price);
 
       serviceForm.images.forEach((file) => {
         if (file instanceof File) {
@@ -428,7 +428,7 @@ const EditService = () => {
                 <p className="text-red-500 text-sm mt-2 font-medium">{errors.experience}</p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">Price (₹) *</label>
               <input
                 type="number"
@@ -445,7 +445,7 @@ const EditService = () => {
               {errors.price && (
                 <p className="text-red-500 text-sm mt-2 font-medium">{errors.price}</p>
               )}
-            </div>
+            </div> */}
           </div>
 
           <div className="mt-6">

@@ -26,7 +26,7 @@ const ServiceCard = ({ service }) => {
   : fullDescription;
 
   // Get price
-  const price = service?.price;
+  // const price = service?.price;
 
   // Get portfolio images
   const portfolioImages = service?.portfolioImages || [];
@@ -158,11 +158,11 @@ const ServiceCard = ({ service }) => {
         {/* Price and Provider Row */}
         <div className="flex items-center justify-between gap-3 mb-3">
           {/* Price Display */}
-          {price !== undefined && price !== null && (
+          {/* {price !== undefined && price !== null && (
             <span className="text-base font-semibold text-gray-900">
               ₹{typeof price === 'number' ? price.toLocaleString('en-IN') : price}
             </span>
-          )}
+          )} */}
 
           {/* Provider Info */}
           <div className="flex items-center gap-2 flex-shrink-0">

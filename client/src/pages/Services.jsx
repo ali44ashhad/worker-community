@@ -13,8 +13,8 @@ const Services = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
-  const [priceSort, setPriceSort] = useState('All'); // 'All', 'Low to High', 'High to Low'
-  const [priceRange, setPriceRange] = useState([0, 100000]); // [min, max]
+  // const [priceSort, setPriceSort] = useState('All'); // 'All', 'Low to High', 'High to Low'
+  // const [priceRange, setPriceRange] = useState([0, 100000]); // [min, max]
   const [minRating, setMinRating] = useState(0); // Minimum rating filter (0 = All)
   const [filteredServices, setFilteredServices] = useState([]);
   const [allServices, setAllServices] = useState([]);
@@ -48,7 +48,7 @@ const Services = () => {
   }, [allProviders]);
 
   // Calculate min and max price from all services
-  const getPriceRange = () => {
+  /* const getPriceRange = () => {
     const prices = allServices
       .map(service => service?.price)
       .filter(price => price !== undefined && price !== null && !isNaN(price))
@@ -59,23 +59,23 @@ const Services = () => {
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     return [Math.floor(min), Math.ceil(max)];
-  };
+  }; */
 
   // Calculate min and max price - memoized
-  const [minPrice, maxPrice] = useMemo(() => {
+  /* const [minPrice, maxPrice] = useMemo(() => {
     if (allServices.length > 0) {
       return getPriceRange();
     }
     return [0, 100000];
-  }, [allServices]);
+  }, [allServices]); */
 
   // Initialize price range when services are loaded
-  useEffect(() => {
+  /* useEffect(() => {
     if (allServices.length > 0) {
       const [min, max] = getPriceRange();
       setPriceRange([min, max]);
     }
-  }, [allServices]);
+  }, [allServices]); */
 
   // Filter services based on search, category, and price
   useEffect(() => {
@@ -117,13 +117,13 @@ const Services = () => {
     }
 
     // Apply price range filter
-    filtered = filtered.filter(service => {
+    /* filtered = filtered.filter(service => {
       const price = service?.price;
       if (price === undefined || price === null) return false;
       const numPrice = typeof price === 'number' ? price : parseFloat(price);
       if (isNaN(numPrice)) return false;
       return numPrice >= priceRange[0] && numPrice <= priceRange[1];
-    });
+    }); */
 
     // Apply rating filter
     if (minRating > 0) {
@@ -134,7 +134,7 @@ const Services = () => {
     }
 
     // Apply price sorting
-    if (priceSort === 'Low to High') {
+    /* if (priceSort === 'Low to High') {
       filtered.sort((a, b) => {
         const priceA = typeof a?.price === 'number' ? a.price : parseFloat(a?.price) || 0;
         const priceB = typeof b?.price === 'number' ? b.price : parseFloat(b?.price) || 0;
@@ -146,10 +146,10 @@ const Services = () => {
         const priceB = typeof b?.price === 'number' ? b.price : parseFloat(b?.price) || 0;
         return priceB - priceA;
       });
-    }
+    } */
 
     setFilteredServices(filtered);
-  }, [searchQuery, selectedCategory, selectedSubcategory, priceSort, priceRange, minRating, allServices]);
+  }, [searchQuery, selectedCategory, selectedSubcategory, /* priceSort, priceRange, */ minRating, allServices]);
 
   // Get unique categories from all services
   const getUniqueCategories = () => {
@@ -195,27 +195,27 @@ const Services = () => {
     setSearchQuery('');
     setSelectedCategory('All');
     setSelectedSubcategory('All');
-    setPriceSort('All');
+    // setPriceSort('All');
     setMinRating(0);
-    if (allServices.length > 0) {
-      const [min, max] = getPriceRange();
-      setPriceRange([min, max]);
-    }
+    // if (allServices.length > 0) {
+    //   const [min, max] = getPriceRange();
+    //   setPriceRange([min, max]);
+    // }
   };
 
-  const handleMinChange = (value) => {
-    const numValue = parseInt(value) || minPrice;
-    if (numValue < priceRange[1]) {
-      setPriceRange([Math.max(minPrice, numValue), priceRange[1]]);
-    }
-  };
+  // const handleMinChange = (value) => {
+  //   const numValue = parseInt(value) || minPrice;
+  //   if (numValue < priceRange[1]) {
+  //     setPriceRange([Math.max(minPrice, numValue), priceRange[1]]);
+  //   }
+  // };
 
-  const handleMaxChange = (value) => {
-    const numValue = parseInt(value) || maxPrice;
-    if (numValue > priceRange[0]) {
-      setPriceRange([priceRange[0], Math.min(maxPrice, numValue)]);
-    }
-  };
+  // const handleMaxChange = (value) => {
+  //   const numValue = parseInt(value) || maxPrice;
+  //   if (numValue > priceRange[0]) {
+  //     setPriceRange([priceRange[0], Math.min(maxPrice, numValue)]);
+  //   }
+  // };
 
   return (
     <div className='min-h-screen bg-gray-50 pb-16'>
@@ -377,10 +377,10 @@ const Services = () => {
                 </div>
 
                 {/* Price Filter with Range Slider */}
-                <div className='space-y-3'>
+                {/* <div className='space-y-3'>
                   <h3 className='text-xs font-semibold text-gray-700'>Price Range</h3>
                   
-                  {/* Price Sort Options */}
+                  Price Sort Options
                   <div className='flex gap-1.5'>
                     <button
                       onClick={() => setPriceSort('All')}
@@ -414,17 +414,17 @@ const Services = () => {
                     </button>
                   </div>
 
-                  {/* Price Range Display */}
+                  Price Range Display
                   <div className='text-center mb-2'>
                     <span className='text-xs font-bold text-black'>
                       ₹{priceRange[0].toLocaleString()} - ₹{priceRange[1].toLocaleString()}
                     </span>
                   </div>
 
-                  {/* Dual Range Slider */}
+                  Dual Range Slider
                   <div className='relative pt-3 pb-1'>
                     <div className='relative h-2 bg-gray-200 rounded-lg'>
-                      {/* Active range track */}
+                      Active range track
                       {maxPrice > minPrice && (
                         <div
                           className='absolute h-2 bg-gray-600 rounded-lg top-0 pointer-events-none'
@@ -435,7 +435,7 @@ const Services = () => {
                         />
                       )}
                       
-                      {/* Min range input */}
+                      Min range input
                       <input
                         type='range'
                         min={minPrice}
@@ -446,7 +446,7 @@ const Services = () => {
                         style={{ top: 0, zIndex: priceRange[0] > maxPrice - (maxPrice - minPrice) * 0.1 ? 5 : 3 }}
                       />
                       
-                      {/* Max range input */}
+                      Max range input
                       <input
                         type='range'
                         min={minPrice}
@@ -458,14 +458,14 @@ const Services = () => {
                       />
                     </div>
                     
-                    {/* Price Range Labels */}
+                    Price Range Labels
                     <div className='flex justify-between text-[10px] text-gray-600 mt-1'>
                       <span>₹{minPrice.toLocaleString()}</span>
                       <span>₹{maxPrice.toLocaleString()}</span>
                     </div>
                   </div>
 
-                  {/* Min/Max Input Fields */}
+                  Min/Max Input Fields
                   <div className='flex items-end gap-1.5'>
                     <div className='flex-1'>
                       <label className='block text-[10px] text-gray-600 mb-0.5'>Min</label>
@@ -501,7 +501,7 @@ const Services = () => {
                     <HiOutlineRefresh size={14} />
                     Refresh
                   </button>
-                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || minRating > 0) && (
+                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' /* || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice */ || minRating > 0) && (
                     <button
                       onClick={handleClearFilters}
                       className='w-full px-3 py-1.5 bg-gray-600 text-white border border-gray-600 rounded text-xs font-semibold hover:bg-gray-700 transition-all'
@@ -549,11 +549,11 @@ const Services = () => {
                     No services found
                   </p>
                   <p className='text-gray-600 text-sm'>
-                    {searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || minRating > 0
+                    {searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' /* || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice */ || minRating > 0
                       ? 'Try adjusting your search or filter criteria.'
                       : 'No services available at the moment.'}
                   </p>
-                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || minRating > 0) && (
+                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' /* || priceSort !== 'All' || priceRange[0] !== minPrice || priceRange[1] !== maxPrice */ || minRating > 0) && (
                     <button
                       onClick={handleClearFilters}
                       className='mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'

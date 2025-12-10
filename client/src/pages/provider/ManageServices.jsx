@@ -159,9 +159,9 @@ const ManageServices = () => {
                   <h3 className="text-2xl font-bold text-black">
                     {service.servicename || service.serviceCategory || 'Service'}
                   </h3>
-                  {service.price !== undefined && (
+                  {/* {service.price !== undefined && (
                     <span className="text-lg font-bold text-black">₹{service.price}</span>
-                  )}
+                  )} */}
                 </div>
 
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-2 mb-2">

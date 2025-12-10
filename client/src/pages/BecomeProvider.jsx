@@ -20,7 +20,7 @@ const BecomeProvider = () => {
     pdfPreviews: [], // Will store PDF preview info
     bio: '',
     experience: '',
-    price: ''
+    // price: ''
   }]);
 
   // State for provider bio
@@ -276,7 +276,7 @@ const BecomeProvider = () => {
       pdfPreviews: [],
       bio: '',
       experience: '',
-      price: ''
+      // price: ''
     }]);
   };
 
@@ -346,13 +346,13 @@ const BecomeProvider = () => {
       }
 
       // 7. Price
-      if (service.price === '' || service.price === null || service.price === undefined) {
+      /* if (service.price === '' || service.price === null || service.price === undefined) {
         newErrors[`service-${serviceId}-price`] = "Price is required.";
         hasErrors = true;
       } else if (parseFloat(service.price) < 0) {
         newErrors[`service-${serviceId}-price`] = "Price cannot be negative.";
         hasErrors = true;
-      }
+      } */
 
       // 8. Images or PDFs (at least one required)
       if (service.images.length === 0 && (service.pdfs?.length || 0) === 0) {
@@ -431,7 +431,7 @@ const BecomeProvider = () => {
           pdfPreviews: [],
           bio: '',
           experience: '',
-          price: ''
+          // price: ''
         }]);
         setProviderBio('');
         setErrors({});
@@ -653,7 +653,7 @@ const BecomeProvider = () => {
             </div>
 
             {/* Price */}
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                 Price (in ₹) *
               </label>
@@ -671,7 +671,7 @@ const BecomeProvider = () => {
               {errors[`service-${service.id}-price`] && (
                 <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-price`]}</p>
               )}
-            </div>
+            </div> */}
 
             {/* Image Upload */}
             <div className="mb-6">

@@ -153,7 +153,7 @@ const UpdateProviders = () => {
     keywords: [],
     description: '',
     experience: 0,
-    price: 0,
+    // price: 0,
     newImages: []
   });
   const [searchTerm, setSearchTerm] = useState('');
@@ -203,7 +203,7 @@ const UpdateProviders = () => {
       keywords: Array.isArray(service.keywords) ? service.keywords : [],
       description: service.description || '',
       experience: service.experience || 0,
-      price: service.price || 0,
+      // price: service.price || 0,
       newImages: []
     });
   };
@@ -216,7 +216,7 @@ const UpdateProviders = () => {
       keywords: [],
       description: '',
       experience: 0,
-      price: 0,
+      // price: 0,
       newImages: []
     });
   };
@@ -235,7 +235,7 @@ const UpdateProviders = () => {
     }
     if (serviceEditForm.description !== undefined) formData.append('description', serviceEditForm.description);
     if (serviceEditForm.experience !== undefined) formData.append('experience', serviceEditForm.experience.toString());
-    if (serviceEditForm.price !== undefined) formData.append('price', serviceEditForm.price.toString());
+    // if (serviceEditForm.price !== undefined) formData.append('price', serviceEditForm.price.toString());
 
     // Add new images
     serviceEditForm.newImages.forEach((file) => {
@@ -978,7 +978,7 @@ const UpdateProviders = () => {
               </div>
 
               {/* Price */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-600 mb-2">
                   Price (₹)
                 </label>
@@ -990,7 +990,7 @@ const UpdateProviders = () => {
                   step="0.01"
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
                 />
-              </div>
+              </div> */}
 
               {/* Portfolio Images */}
               <div>

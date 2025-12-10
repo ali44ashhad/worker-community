@@ -13,7 +13,7 @@ const initialServiceState = {
   keywords: [],
   bio: '',
   experience: '',
-  price: '',
+  // price: '',
   images: [],
   imagePreviews: [],
   pdfs: [],
@@ -131,13 +131,13 @@ const CreateService = () => {
       invalid = true;
     }
 
-    if (form.price === '' || form.price === null || form.price === undefined) {
+    /* if (form.price === '' || form.price === null || form.price === undefined) {
       validationErrors.price = 'Price is required.';
       invalid = true;
     } else if (parseFloat(form.price) < 0) {
       validationErrors.price = 'Price cannot be negative.';
       invalid = true;
-    }
+    } */
 
     if ((form.imagePreviews?.length || 0) === 0 && (form.pdfPreviews?.length || 0) === 0) {
       validationErrors.images = 'Upload at least one work image or PDF.';
@@ -166,7 +166,7 @@ const CreateService = () => {
       formData.append('keywords', JSON.stringify(form.keywords));
       formData.append('description', form.bio);
       formData.append('experience', form.experience);
-      formData.append('price', form.price);
+      // formData.append('price', form.price);
 
       form.images.forEach((file) => {
         if (file instanceof File) {
@@ -340,7 +340,7 @@ const CreateService = () => {
                 className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium border-gray-200 focus:ring-gray-400 focus:bg-white"
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">Price (₹) *</label>
               <input
                 type="number"
@@ -357,7 +357,7 @@ const CreateService = () => {
               {errors.price && (
                 <p className="text-red-500 text-sm mt-2 font-medium">{errors.price}</p>
               )}
-            </div>
+            </div> */}
           </div>
 
           <div className="mt-6">

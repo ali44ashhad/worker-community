@@ -310,9 +310,9 @@ const ProvidersTable = ({ providers = [], isLoading = false, itemsPerPage = 10 }
                                       {service.experience > 0 && (
                                         <span>{service.experience} years exp.</span>
                                       )}
-                                      {service.price > 0 && (
+                                      {/* {service.price > 0 && (
                                         <span>${service.price}</span>
-                                      )}
+                                      )} */}
                                     </div>
                                   </div>
                                 ))}

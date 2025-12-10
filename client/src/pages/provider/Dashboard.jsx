@@ -398,9 +398,9 @@ const ProviderDashboard = () => {
                   {service.servicename && service.serviceCategory && (
                     <p className="text-xs text-gray-500">{service.serviceCategory}</p>
                   )}
-                  {service.price !== undefined && (
+                  {/* {service.price !== undefined && (
                     <p className="text-xs text-gray-500">Price: ₹{service.price}</p>
-                  )}
+                  )} */}
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-black">{service.clicks}</p>

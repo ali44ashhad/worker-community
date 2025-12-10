@@ -110,7 +110,7 @@ const SpecificService = () => {
   const serviceCategory = service?.serviceCategory || '';
   const subCategories = service?.subCategories || [];
   const keywords = service?.keywords || [];
-  const price = service?.price || 0;
+  // const price = service?.price || 0;
   const providerBio = service?.provider?.bio || '';
   const providerCreatedAt = service?.provider?.user?.createdAt;
   const serviceExperience = service?.experience || 0;
@@ -442,13 +442,13 @@ const SpecificService = () => {
           <div className='lg:col-span-1'>
             <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm sticky top-24'>
               {/* Price */}
-              <div className='mb-6'>
+              {/* <div className='mb-6'>
                 <div className='flex items-baseline gap-2 mb-2'>
                   <span className='text-3xl font-bold text-gray-900'>
                     ₹{typeof price === 'number' ? price.toLocaleString('en-IN') : price}
                   </span>
                 </div>
-              </div>
+              </div> */}
 
               {/* Service Description */}
               <div className='mb-6'>

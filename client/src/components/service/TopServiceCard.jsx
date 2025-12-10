@@ -27,7 +27,7 @@ const TopServiceCard = ({ service }) => {
   const providerUser = provider?.user || {};
   const providerName = getFullName(providerUser) || 'Unknown Provider';
   
-  const price = service?.price;
+  // const price = service?.price;
 
   const goToService = () => navigate(`/service/${service._id}`);
 
@@ -102,13 +102,13 @@ const TopServiceCard = ({ service }) => {
 
       {/* Price Display */}
 
-      {price !== undefined && price !== null && (
+      {/* {price !== undefined && price !== null && (
         <div className="mb-2">
           <span className="text-xl font-bold text-gray-900">
             ₹{typeof price === 'number' ? price.toFixed(2) : price}
           </span>
         </div>
-      )}
+      )} */}
 
       <div className="flex items-center justify-between mb-3">
         <div className="text-xs text-gray-600">By {providerName}</div>

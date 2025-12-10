@@ -36,11 +36,11 @@ const Cart = () => {
   // Calculate total amount
   const totalAmount = useMemo(() => {
     return wishlistServices.reduce((sum, service) => {
-      const price = service?.price;
-      if (price !== undefined && price !== null) {
-        const numPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
-        return sum + numPrice;
-      }
+      // const price = service?.price;
+      // if (price !== undefined && price !== null) {
+      //   const numPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
+      //   return sum + numPrice;
+      // }
       return sum;
     }, 0);
   }, [wishlistServices]);
@@ -100,7 +100,7 @@ const Cart = () => {
                 const image = service?.portfolioImages?.[0]?.url;
                 const title = service?.servicename || service?.serviceCategory || 'Service';
                 const description = service?.description || '';
-                const price = service?.price;
+                // const price = service?.price;
                 const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
                 const profileImage = service?.provider?.user?.profileImage;
                 const truncatedDescription = description.length > 100 
@@ -162,13 +162,13 @@ const Cart = () => {
                             </div>
 
                             {/* Price */}
-                            {price !== undefined && price !== null && (
+                            {/* {price !== undefined && price !== null && (
                               <div className='mt-2'>
                                 <span className='text-base font-semibold text-gray-900'>
                                   ₹{typeof price === 'number' ? price.toLocaleString('en-IN') : price}
                                 </span>
                               </div>
-                            )}
+                            )} */}
                           </div>
 
                           {/* Remove Button */}
@@ -190,7 +190,7 @@ const Cart = () => {
             {/* Right Column - Summary */}
             <div className='lg:col-span-1'>
               <div className='bg-white border border-gray-200 rounded-lg p-4 sticky top-24'>
-                <h2 className='text-base font-semibold text-gray-900 mb-4'>Price Details</h2>
+                {/* <h2 className='text-base font-semibold text-gray-900 mb-4'>Price Details</h2>
                 
                 <div className='space-y-3 mb-4 pb-4 border-b border-gray-200'>
                   <div className='flex justify-between text-xs text-gray-600'>
@@ -204,7 +204,7 @@ const Cart = () => {
                     <span className='text-sm font-semibold text-gray-900'>Total Amount</span>
                     <span className='text-lg font-bold text-gray-900'>₹{totalAmount.toLocaleString('en-IN')}</span>
                   </div>
-                </div>
+                </div> */}
 
                 <button
                   onClick={() => navigate('/service')}
