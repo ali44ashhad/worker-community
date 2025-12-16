@@ -336,10 +336,7 @@ const UpdateServices = () => {
         hasErrors = true;
       }
 
-      if (service.experience === '') {
-        newErrors[`service-${serviceId}-experience`] = "Experience is required.";
-        hasErrors = true;
-      }
+      // Experience is optional - no validation needed
 
       /* if (service.price === '' || service.price === null || service.price === undefined) {
         newErrors[`service-${serviceId}-price`] = "Price is required.";
@@ -398,7 +395,10 @@ const UpdateServices = () => {
         formData.append('subCategories', JSON.stringify(service.subCategories));
         formData.append('keywords', JSON.stringify(service.keywords));
         formData.append('description', service.bio);
-        formData.append('experience', service.experience);
+        // Only append experience if provided
+        if (service.experience !== '' && service.experience !== undefined && service.experience !== null) {
+          formData.append('experience', service.experience);
+        }
         // formData.append('price', service.price);
         
         // Add new images if any
@@ -744,7 +744,7 @@ const UpdateServices = () => {
             {/* Experience */}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
-                Experience (in years) *
+                Experience (in years) (optional)
               </label>
               <input
                 type="number"

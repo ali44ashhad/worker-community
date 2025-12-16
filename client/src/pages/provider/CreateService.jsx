@@ -165,7 +165,10 @@ const CreateService = () => {
       formData.append('subCategories', JSON.stringify(form.subCategories));
       formData.append('keywords', JSON.stringify(form.keywords));
       formData.append('description', form.bio);
-      formData.append('experience', form.experience);
+      // Only append experience if provided
+      if (form.experience !== '' && form.experience !== undefined && form.experience !== null) {
+        formData.append('experience', form.experience);
+      }
       // formData.append('price', form.price);
 
       form.images.forEach((file) => {

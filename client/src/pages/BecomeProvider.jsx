@@ -339,11 +339,7 @@ const BecomeProvider = () => {
         hasErrors = true;
       }
 
-      // 6. Experience
-      if (service.experience === '') { // Check for empty string, allowing "0"
-        newErrors[`service-${serviceId}-experience`] = "Experience is required.";
-        hasErrors = true;
-      }
+      // 6. Experience (optional - no validation needed)
 
       // 7. Price
       /* if (service.price === '' || service.price === null || service.price === undefined) {
@@ -635,7 +631,7 @@ const BecomeProvider = () => {
             {/* Experience */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
-                Experience (in years) *
+                Experience (in years) (optional)
               </label>
               <input
                 type="number"
