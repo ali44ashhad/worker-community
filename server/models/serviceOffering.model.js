@@ -149,7 +149,6 @@ const serviceOfferingSchema = new Schema({
     description: { type: String, default: "" },
     experience: {
         type: Number,
-        required: true,
         min: [0, "Experience cannot be negative"],
         default: 0
     },

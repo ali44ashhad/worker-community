@@ -682,12 +682,6 @@ const becomeProviderWithServices = async (req, res) => {
                     message: `Service ${i + 1}: Bio/Description is required.` 
                 });
             }
-            if (service.experience === undefined || service.experience === '') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `Service ${i + 1}: Experience is required.` 
-                });
-            }
             /* if (service.price === undefined || service.price === '' || service.price === null) {
                 return res.status(400).json({ 
                     success: false, 
@@ -706,10 +700,13 @@ const becomeProviderWithServices = async (req, res) => {
         // Images need to be mapped to the correct service index
         // Since the frontend uploads preview URLs, we'll need to handle actual file uploads
         
-        // Calculate average experience
-        const avgExperience = Math.round(
-            services.reduce((sum, s) => sum + parseInt(s.experience || 0), 0) / services.length
-        );
+        // Calculate average experience (only include services with experience values)
+        const servicesWithExperience = services.filter(s => s.experience !== undefined && s.experience !== '' && s.experience !== null);
+        const avgExperience = servicesWithExperience.length > 0
+            ? Math.round(
+                servicesWithExperience.reduce((sum, s) => sum + parseInt(s.experience || 0), 0) / servicesWithExperience.length
+            )
+            : 0;
         
         // Get provider bio from request body (not from first service)
         const providerBioFromRequest = req.body.providerBio;
@@ -780,7 +777,7 @@ const becomeProviderWithServices = async (req, res) => {
                 const portfolioPDFs = await Promise.all(pdfUploadPromises);
 
                 // Create the service offering
-                const newServiceOffering = new ServiceOffering({
+                const serviceData = {
                     provider: newProfile._id,
                     servicename: service.servicename,
                     serviceCategory: service.category,
@@ -793,9 +790,15 @@ const becomeProviderWithServices = async (req, res) => {
                     description: service.bio,
                     portfolioImages: portfolioImages,
                     portfolioPDFs: portfolioPDFs,
-                    experience: parseInt(service.experience),
                     // price: parseFloat(service.price) || 0
-                });
+                };
+                
+                // Only set experience if provided
+                if (service.experience !== undefined && service.experience !== '' && service.experience !== null) {
+                    serviceData.experience = parseInt(service.experience);
+                }
+                
+                const newServiceOffering = new ServiceOffering(serviceData);
 
                 await newServiceOffering.save();
                 createdServices.push(newServiceOffering);
@@ -901,7 +904,13 @@ const updateServiceOffering = async (req, res) => {
         }
         
         if (description) service.description = description;
-        if (experience !== undefined) service.experience = parseInt(experience);
+        // Only update experience if provided and not empty
+        if (experience !== undefined && experience !== '' && experience !== null) {
+            service.experience = parseInt(experience);
+        } else if (experience === '' || experience === null) {
+            // Allow clearing experience by setting to undefined
+            service.experience = undefined;
+        }
         // if (price !== undefined) service.price = parseFloat(price);
 
         // When using upload.any(), req.files is an array
