@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "https://api.commun.in/api/sitemap.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "https://api.commun.in/api/robots.txt"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "https://api.commun.in/$1"
     },
