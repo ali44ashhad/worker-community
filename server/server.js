@@ -7,6 +7,7 @@ import bookingRouter from "./routes/booking.route.js";
 import commentRouter from "./routes/comment.routes.js";
 import adminRouter from "./routes/admin.route.js";
 import serviceOfferingRouter from "./routes/serviceOffering.route.js";
+import sitemapRouter from "./routes/sitemap.route.js";
 import cors from "cors";
 import "dotenv/config"
 
@@ -40,6 +41,7 @@ app.use('/api/service-offering', serviceOfferingRouter);
 app.use('/api/bookings', bookingRouter);
 app.use('/api/comments', commentRouter);
 app.use('/api/admin',adminRouter)
+app.use('/api', sitemapRouter);
 
 // Global error handler to prevent crashes on unexpected errors
 app.use((err, req, res, next) => {

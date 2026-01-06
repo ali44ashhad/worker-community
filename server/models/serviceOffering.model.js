@@ -208,3 +208,4 @@ serviceOfferingSchema.index({ _id: 1 });
 const ServiceOffering = mongoose.model("ServiceOffering", serviceOfferingSchema);
 
 export default ServiceOffering;
+export { SERVICE_RULES };
