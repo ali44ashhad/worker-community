@@ -18,6 +18,8 @@ app.use(cookieParser());
 app.use(cors({
   origin: [
     'https://worker-community.vercel.app',
+    'https://www.commun.in',
+    'https://commun.in',
     'http://localhost:5173', // for local dev
     'http://localhost:3000'  // for local dev
   ],
