@@ -133,6 +133,10 @@ const BecomeProvider = () => {
       subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
       keywords: ["Corporate", "Gift Set"]
     },
+    "Beauty": {
+      subCategories: ["Salon at Home", "Makeup Artist", "Bridal", "Nail Care", "Skincare", "Spa & Massage"],
+      keywords: ["Haircut", "Hair Styling", "Hair Color", "Blow Dry", "Facial", "Cleanup", "Waxing", "Threading", "Manicure", "Pedicure", "Nails", "Nail Art", "Makeup", "Party Makeup", "Bridal Makeup", "Mehendi", "Massage", "Spa"]
+    },
     "Other": {
       subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
       keywords: []

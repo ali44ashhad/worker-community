@@ -3,7 +3,25 @@ import "dotenv/config"
 
 const dbConnect = async()=>{
     try{
-        const connectionInstance=await mongoose.connect(`${process.env.DATABASE_URL}/${process.env.DATABASE_NAME}`);
+        const {
+            MONGODB_URI,
+            DATABASE_URI,
+            DATABASE_URL,
+            DATABASE_NAME,
+        } = process.env;
+
+        const uri =
+            MONGODB_URI ||
+            DATABASE_URI ||
+            (DATABASE_URL && DATABASE_NAME ? `${DATABASE_URL}/${DATABASE_NAME}` : DATABASE_URL);
+
+        if (!uri || !(uri.startsWith("mongodb://") || uri.startsWith("mongodb+srv://"))) {
+            throw new Error(
+                "Missing/invalid MongoDB connection string. Set MONGODB_URI (recommended) to a value starting with mongodb:// or mongodb+srv://"
+            );
+        }
+
+        const connectionInstance = await mongoose.connect(uri);
         console.log(`Database Connected Succefully \nHost : ${connectionInstance.connection.host}`);
     }
     catch(error){

@@ -131,6 +131,11 @@ const AllCategory = () => {
       subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
       keywords: ["Corporate", "Gift Set"]
     },
+    "Beauty": {
+      description: "Beauty, salon, makeup, and wellness services at home or studio.",
+      subCategories: ["Salon at Home", "Makeup Artist", "Bridal", "Nail Care", "Skincare", "Spa & Massage"],
+      keywords: ["Haircut", "Hair Styling", "Hair Color", "Blow Dry", "Facial", "Cleanup", "Waxing", "Threading", "Manicure", "Pedicure", "Nails", "Nail Art", "Makeup", "Party Makeup", "Bridal Makeup", "Mehendi", "Massage", "Spa"]
+    },
     "Other": {
       description: "Other unique services and offerings.",
       subCategories: ["Basic Services", "Premium Services", "Specialized Services"],

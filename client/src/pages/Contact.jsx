@@ -106,13 +106,15 @@ const Contact = () => {
     {
       icon: <HiOutlineMail className="w-8 h-8" />,
       title: "Email Us",
-      content: "support@commun.com",
+      content: "info@commun.in",
+      href: "mailto:info@commun.in",
       description: "Send us an email anytime"
     },
     {
       icon: <HiOutlinePhone className="w-8 h-8" />,
       title: "Call Us",
-      content: "+1 (555) 123-4567",
+      content: "+91 76781 71765",
+      href: "tel:+917678171765",
       description: "Mon to Fri, 9am to 6pm"
     },
     // {
@@ -179,9 +181,16 @@ const Contact = () => {
                       <h3 className='text-lg font-semibold text-gray-900 mb-1'>
                         {info.title}
                       </h3>
-                      <p className='text-gray-700 font-semibold mb-1'>
-                        {info.content}
-                      </p>
+                      {info.href ? (
+                        <a
+                          href={info.href}
+                          className='text-gray-700 font-semibold mb-1 inline-block hover:underline'
+                        >
+                          {info.content}
+                        </a>
+                      ) : (
+                        <p className='text-gray-700 font-semibold mb-1'>{info.content}</p>
+                      )}
                       <p className='text-gray-500 text-sm'>
                         {info.description}
                       </p>
