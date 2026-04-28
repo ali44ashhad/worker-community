@@ -45,10 +45,13 @@ const UpdateProfile = () => {
   }, [user]);
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, value } = e.target;
+    if (name === 'phoneNumber') {
+      const digitsOnly = String(value || '').replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, phoneNumber: digitsOnly }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
@@ -105,6 +108,13 @@ const UpdateProfile = () => {
     e.preventDefault();
     
     try {
+      if (formData.phoneNumber) {
+        const phoneDigits = String(formData.phoneNumber || '').replace(/\D/g, '');
+        if (phoneDigits.length !== 10) {
+          toast.error('Enter a valid phone number (10 digits).');
+          return;
+        }
+      }
       const formDataToSend = new FormData();
       formDataToSend.append('firstName', formData.firstName);
       formDataToSend.append('lastName', formData.lastName);
@@ -290,6 +300,9 @@ const UpdateProfile = () => {
                   value={formData.phoneNumber}
                   onChange={handleChange}
                   placeholder="Enter your phone number"
+                  inputMode="numeric"
+                  pattern="\\d{10}"
+                  maxLength={10}
                   className="w-full h-14 pl-12 pr-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
                   required
                 />

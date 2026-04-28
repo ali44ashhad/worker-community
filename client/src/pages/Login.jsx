@@ -8,6 +8,8 @@ import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [mode, setMode] = useState("login");
+  const PHONE_DIGITS_MIN = 10;
+  const PHONE_DIGITS_MAX = 10;
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,9 +25,18 @@ const Login = () => {
   const passwordRef = useRef(null);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "phoneNumber") {
+      // Keep only digits. (We store digits-only in state so backend gets clean data.)
+      const digitsOnly = String(value || "").replace(/\D/g, "").slice(0, PHONE_DIGITS_MAX);
+      setFormData((prev) => ({ ...prev, phoneNumber: digitsOnly }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
   };
 
@@ -41,6 +52,12 @@ const Login = () => {
           loginUser({ email: formData.email, password: formData.password })
         ).unwrap();
       } else {
+        const phoneDigits = String(formData.phoneNumber || "").replace(/\D/g, "");
+        if (phoneDigits.length !== PHONE_DIGITS_MIN) {
+          toast.error(`Enter a valid phone number (${PHONE_DIGITS_MIN} digits).`);
+          setLoading(false);
+          return;
+        }
         data = await dispatch(signupUser(formData)).unwrap();
 
         
@@ -152,6 +169,9 @@ const Login = () => {
                     value={formData.phoneNumber}
                     onChange={handleChange}
                     placeholder="Phone Number"
+                    inputMode="numeric"
+                    pattern={`\\d{${PHONE_DIGITS_MIN}}`}
+                    maxLength={PHONE_DIGITS_MAX}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
                     required
                   />

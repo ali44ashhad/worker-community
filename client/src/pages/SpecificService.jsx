@@ -457,17 +457,7 @@ const SpecificService = () => {
                 </p>
               </div>
 
-              {/* Features */}
-              <div className='space-y-3 mb-6'>
-                <div className='flex items-center gap-2 text-sm text-gray-700'>
-                  <HiOutlineClock className='w-5 h-5 text-gray-600' />
-                  <span>Custom delivery time</span>
-                </div>
-                <div className='flex items-center gap-2 text-sm text-gray-700'>
-                  <HiOutlineRefresh className='w-5 h-5 text-gray-600' />
-                  <span>Unlimited Revisions</span>
-                </div>
-              </div>
+             
 
               {/* What's Included */}
               <div className='mb-6 border-t border-gray-200 pt-4'>

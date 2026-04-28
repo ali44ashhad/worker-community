@@ -271,7 +271,7 @@ const Cart = () => {
                 onClick={() => navigate('/service')}
                 className='w-full bg-gray-900 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-gray-800 transition-all flex items-center justify-center gap-2'
               >
-                Continue Shopping
+                Shopping
                 <HiArrowRight className='w-4 h-4' />
               </button>
             </div>

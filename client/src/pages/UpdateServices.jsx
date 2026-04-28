@@ -8,6 +8,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SERVICE_RULES from '../constants/serviceRules';
 
 const UpdateServices = () => {
+  const PROVIDER_BIO_MAX_CHARS = 500;
+  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file
+  const EXPERIENCE_MAX_YEARS = 80;
+  const formatBytes = (bytes) => {
+    const mb = bytes / (1024 * 1024);
+    return `${mb.toFixed(mb >= 10 ? 1 : 2)}MB`;
+  };
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -164,15 +171,33 @@ const UpdateServices = () => {
   };
 
   const handleImageUpload = (serviceId, e) => {
-    const files = Array.from(e.target.files);
-    const imageUrls = files.map(file => URL.createObjectURL(file));
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const validFiles = [];
+    const validUrls = [];
+
+    files.forEach((file) => {
+      if (!file?.type?.startsWith('image/')) {
+        toast.error(`${file?.name || 'File'} is not a valid image. Only images are allowed.`);
+        return;
+      }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast.error(`${file.name} is ${formatBytes(file.size)} (max 10MB).`);
+        return;
+      }
+      validFiles.push(file);
+      validUrls.push(URL.createObjectURL(file));
+    });
+
+    if (!validFiles.length) return;
 
     setServices(services.map(service =>
       service.id === serviceId
         ? { 
             ...service, 
-            images: [...service.images, ...files],
-            imagePreviews: [...service.imagePreviews, ...imageUrls]
+            images: [...service.images, ...validFiles],
+            imagePreviews: [...service.imagePreviews, ...validUrls]
           }
         : service
     ));
@@ -182,14 +207,32 @@ const UpdateServices = () => {
   };
 
   const handlePDFUpload = (serviceId, e) => {
-    const files = Array.from(e.target.files);
-    const previews = files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) }));
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const validFiles = [];
+    const previews = [];
+
+    files.forEach((file) => {
+      if (file?.type !== 'application/pdf') {
+        toast.error(`${file?.name || 'File'} is not a PDF. Only PDF files are allowed.`);
+        return;
+      }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast.error(`${file.name} is ${formatBytes(file.size)} (max 10MB).`);
+        return;
+      }
+      validFiles.push(file);
+      previews.push({ name: file.name, url: URL.createObjectURL(file) });
+    });
+
+    if (!validFiles.length) return;
 
     setServices(services.map(service =>
       service.id === serviceId
         ? { 
             ...service, 
-            pdfs: [...service.pdfs, ...files],
+            pdfs: [...service.pdfs, ...validFiles],
             pdfPreviews: [...service.pdfPreviews, ...previews]
           }
         : service
@@ -256,6 +299,44 @@ const UpdateServices = () => {
   };
 
   const handleInputChange = (serviceId, field, value) => {
+    if (field === 'experience') {
+      const raw = String(value ?? '').trim();
+      if (raw === '') {
+        setServices(services.map(service =>
+          service.id === serviceId ? { ...service, [field]: '' } : service
+        ));
+        if (errors[`service-${serviceId}-${field}`]) {
+          setErrors(prev => ({ ...prev, [`service-${serviceId}-${field}`]: null }));
+        }
+        return;
+      }
+
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        setErrors(prev => ({
+          ...prev,
+          [`service-${serviceId}-${field}`]: 'Experience must be a number (0 or more).',
+        }));
+        return;
+      }
+      if (parsed > EXPERIENCE_MAX_YEARS) {
+        setErrors(prev => ({
+          ...prev,
+          [`service-${serviceId}-${field}`]: `Experience cannot exceed ${EXPERIENCE_MAX_YEARS} years.`,
+        }));
+        return;
+      }
+
+      const normalized = String(Math.floor(parsed));
+      setServices(services.map(service =>
+        service.id === serviceId ? { ...service, [field]: normalized } : service
+      ));
+      if (errors[`service-${serviceId}-${field}`]) {
+        setErrors(prev => ({ ...prev, [`service-${serviceId}-${field}`]: null }));
+      }
+      return;
+    }
+
     setServices(services.map(service =>
       service.id === serviceId
         ? { ...service, [field]: value }
@@ -307,6 +388,10 @@ const UpdateServices = () => {
       newErrors['providerBio'] = "Provider bio is required.";
       hasErrors = true;
     }
+    if (providerBio && providerBio.length > PROVIDER_BIO_MAX_CHARS) {
+      newErrors['providerBio'] = `Provider bio cannot exceed ${PROVIDER_BIO_MAX_CHARS} characters.`;
+      hasErrors = true;
+    }
 
     services.forEach((service) => {
       const serviceId = service.id;
@@ -337,6 +422,17 @@ const UpdateServices = () => {
       }
 
       // Experience is optional - no validation needed
+      // Experience is optional, but if provided it must be valid
+      if (service.experience !== '' && service.experience !== undefined && service.experience !== null) {
+        const exp = Number(service.experience);
+        if (!Number.isFinite(exp) || exp < 0) {
+          newErrors[`service-${serviceId}-experience`] = "Experience must be a number (0 or more).";
+          hasErrors = true;
+        } else if (exp > EXPERIENCE_MAX_YEARS) {
+          newErrors[`service-${serviceId}-experience`] = `Experience cannot exceed ${EXPERIENCE_MAX_YEARS} years.`;
+          hasErrors = true;
+        }
+      }
 
       /* if (service.price === '' || service.price === null || service.price === undefined) {
         newErrors[`service-${serviceId}-price`] = "Price is required.";
@@ -520,12 +616,22 @@ const UpdateServices = () => {
             <textarea
               value={providerBio}
               onChange={(e) => {
-                setProviderBio(e.target.value);
+                const next = e.target.value;
+                if (next.length <= PROVIDER_BIO_MAX_CHARS) {
+                  setProviderBio(next);
+                } else {
+                  setProviderBio(next.slice(0, PROVIDER_BIO_MAX_CHARS));
+                  setErrors(prev => ({
+                    ...prev,
+                    providerBio: `Provider bio cannot exceed ${PROVIDER_BIO_MAX_CHARS} characters.`,
+                  }));
+                }
                 if (errors['providerBio']) {
                   setErrors(prev => ({ ...prev, ['providerBio']: null }));
                 }
               }}
               placeholder="Tell us about yourself and your background..."
+              maxLength={PROVIDER_BIO_MAX_CHARS}
               rows="4"
               className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all duration-300 ${
                 errors['providerBio'] 
@@ -533,6 +639,12 @@ const UpdateServices = () => {
                   : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
               }`}
             />
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-xs text-gray-500">Max {PROVIDER_BIO_MAX_CHARS} characters</p>
+              <p className={`text-xs ${providerBio.length >= PROVIDER_BIO_MAX_CHARS ? 'text-red-600' : 'text-gray-500'}`}>
+                {providerBio.length}/{PROVIDER_BIO_MAX_CHARS}
+              </p>
+            </div>
             {errors['providerBio'] && (
               <motion.p 
                 className="text-red-500 text-sm mt-2 font-medium"
@@ -803,6 +915,9 @@ const UpdateServices = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                 Upload Work Images *
               </label>
+              <p className="text-sm text-gray-500 mb-3">
+                Max size: <span className="font-semibold text-gray-700">10MB per file</span> (Images: PNG/JPG/JPEG)
+              </p>
               <motion.div 
                 className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
                   errors[`service-${service.id}-images`] 
@@ -886,6 +1001,9 @@ const UpdateServices = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                 Upload PDFs <span className="text-gray-400">(optional)</span>
               </label>
+              <p className="text-sm text-gray-500 mb-3">
+                Max size: <span className="font-semibold text-gray-700">10MB per file</span> (Documents: PDF)
+              </p>
               <motion.div 
                 className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
                   errors[`service-${service.id}-pdfs`] 

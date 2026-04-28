@@ -8,6 +8,13 @@ import { checkAuth } from '../features/authSlice';
 const BecomeProvider = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const PROVIDER_BIO_MAX_CHARS = 500;
+  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file
+  const EXPERIENCE_MAX_YEARS = 80;
+  const formatBytes = (bytes) => {
+    const mb = bytes / (1024 * 1024);
+    return `${mb.toFixed(mb >= 10 ? 1 : 2)}MB`;
+  };
   const [services, setServices] = useState([{
     id: Date.now(),
     servicename: '',
@@ -194,15 +201,33 @@ const BecomeProvider = () => {
   };
 
   const handleImageUpload = (serviceId, e) => {
-    const files = Array.from(e.target.files);
-    const imageUrls = files.map(file => URL.createObjectURL(file));
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const validFiles = [];
+    const validUrls = [];
+
+    files.forEach((file) => {
+      if (!file?.type?.startsWith('image/')) {
+        toast.error(`${file?.name || 'File'} is not a valid image. Only images are allowed.`);
+        return;
+      }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast.error(`${file.name} is ${formatBytes(file.size)} (max 10MB).`);
+        return;
+      }
+      validFiles.push(file);
+      validUrls.push(URL.createObjectURL(file));
+    });
+
+    if (!validFiles.length) return;
 
     setServices(services.map(service =>
       service.id === serviceId
         ? { 
             ...service, 
-            images: [...service.images, ...files], // Store File objects
-            imagePreviews: [...service.imagePreviews, ...imageUrls] // Store preview URLs
+            images: [...service.images, ...validFiles], // Store File objects
+            imagePreviews: [...service.imagePreviews, ...validUrls] // Store preview URLs
           }
         : service
     ));
@@ -213,14 +238,32 @@ const BecomeProvider = () => {
   };
 
   const handlePDFUpload = (serviceId, e) => {
-    const files = Array.from(e.target.files);
-    const previews = files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) }));
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const validFiles = [];
+    const previews = [];
+
+    files.forEach((file) => {
+      if (file?.type !== 'application/pdf') {
+        toast.error(`${file?.name || 'File'} is not a PDF. Only PDF files are allowed.`);
+        return;
+      }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast.error(`${file.name} is ${formatBytes(file.size)} (max 10MB).`);
+        return;
+      }
+      validFiles.push(file);
+      previews.push({ name: file.name, url: URL.createObjectURL(file) });
+    });
+
+    if (!validFiles.length) return;
 
     setServices(services.map(service =>
       service.id === serviceId
         ? { 
             ...service, 
-            pdfs: [...service.pdfs, ...files], // Store File objects
+            pdfs: [...service.pdfs, ...validFiles], // Store File objects
             pdfPreviews: [...service.pdfPreviews, ...previews] // Store preview info
           }
         : service
@@ -256,6 +299,44 @@ const BecomeProvider = () => {
   };
 
   const handleInputChange = (serviceId, field, value) => {
+    if (field === 'experience') {
+      const raw = String(value ?? '').trim();
+      if (raw === '') {
+        setServices(services.map(service =>
+          service.id === serviceId ? { ...service, [field]: '' } : service
+        ));
+        if (errors[`service-${serviceId}-${field}`]) {
+          setErrors(prev => ({ ...prev, [`service-${serviceId}-${field}`]: null }));
+        }
+        return;
+      }
+
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        setErrors(prev => ({
+          ...prev,
+          [`service-${serviceId}-${field}`]: 'Experience must be a number (0 or more).',
+        }));
+        return;
+      }
+      if (parsed > EXPERIENCE_MAX_YEARS) {
+        setErrors(prev => ({
+          ...prev,
+          [`service-${serviceId}-${field}`]: `Experience cannot exceed ${EXPERIENCE_MAX_YEARS} years.`,
+        }));
+        return;
+      }
+
+      const normalized = String(Math.floor(parsed));
+      setServices(services.map(service =>
+        service.id === serviceId ? { ...service, [field]: normalized } : service
+      ));
+      if (errors[`service-${serviceId}-${field}`]) {
+        setErrors(prev => ({ ...prev, [`service-${serviceId}-${field}`]: null }));
+      }
+      return;
+    }
+
     setServices(services.map(service =>
       service.id === serviceId
         ? { ...service, [field]: value }
@@ -309,6 +390,10 @@ const BecomeProvider = () => {
       newErrors['providerBio'] = "Provider bio is required.";
       hasErrors = true;
     }
+    if (providerBio && providerBio.length > PROVIDER_BIO_MAX_CHARS) {
+      newErrors['providerBio'] = `Provider bio cannot exceed ${PROVIDER_BIO_MAX_CHARS} characters.`;
+      hasErrors = true;
+    }
 
     services.forEach((service) => {
       const serviceId = service.id;
@@ -344,6 +429,17 @@ const BecomeProvider = () => {
       }
 
       // 6. Experience (optional - no validation needed)
+      // 6. Experience (optional)
+      if (service.experience !== '' && service.experience !== undefined && service.experience !== null) {
+        const exp = Number(service.experience);
+        if (!Number.isFinite(exp) || exp < 0) {
+          newErrors[`service-${serviceId}-experience`] = "Experience must be a number (0 or more).";
+          hasErrors = true;
+        } else if (exp > EXPERIENCE_MAX_YEARS) {
+          newErrors[`service-${serviceId}-experience`] = `Experience cannot exceed ${EXPERIENCE_MAX_YEARS} years.`;
+          hasErrors = true;
+        }
+      }
 
       // 7. Price
       /* if (service.price === '' || service.price === null || service.price === undefined) {
@@ -413,10 +509,24 @@ const BecomeProvider = () => {
         credentials: 'include' // Include cookies for JWT authentication
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      const data = rawText ? (() => { try { return JSON.parse(rawText); } catch { return null; } })() : null;
 
-      if (data.success) {
-        toast.success(data.message || 'Provider registration submitted successfully!');
+      if (!response.ok) {
+        const message =
+          data?.message ||
+          (response.status === 401
+            ? 'Session expired. Please login again and retry.'
+            : response.status === 413
+              ? 'Upload too large. Please keep each file under 10MB.'
+              : `Failed to submit (${response.status}). Please try again.`);
+        toast.error(message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (data?.success) {
+        toast.success(data?.message || 'Provider registration submitted successfully!');
         
         // Reset form
         setServices([{
@@ -443,12 +553,12 @@ const BecomeProvider = () => {
         // Redirect to home page after auth state is refreshed
         navigate('/');
       } else {
-        toast.error(data.message || 'Failed to submit provider registration.');
+        toast.error(data?.message || 'Failed to submit provider registration.');
         setIsSubmitting(false);
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast.error('An error occurred while submitting the form. Please try again.');
+      toast.error(error?.message || 'An error occurred while submitting the form. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -477,17 +587,33 @@ const BecomeProvider = () => {
             <textarea
               value={providerBio}
               onChange={(e) => {
-                setProviderBio(e.target.value);
+                const next = e.target.value;
+                if (next.length <= PROVIDER_BIO_MAX_CHARS) {
+                  setProviderBio(next);
+                } else {
+                  setProviderBio(next.slice(0, PROVIDER_BIO_MAX_CHARS));
+                  setErrors(prev => ({
+                    ...prev,
+                    providerBio: `Provider bio cannot exceed ${PROVIDER_BIO_MAX_CHARS} characters.`,
+                  }));
+                }
                 if (errors['providerBio']) {
                   setErrors(prev => ({ ...prev, ['providerBio']: null }));
                 }
               }}
               placeholder="Tell us about yourself and your background..."
+              maxLength={PROVIDER_BIO_MAX_CHARS}
               rows="4"
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
                 errors['providerBio'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
               }`}
             />
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-xs text-gray-500">Max {PROVIDER_BIO_MAX_CHARS} characters</p>
+              <p className={`text-xs ${providerBio.length >= PROVIDER_BIO_MAX_CHARS ? 'text-red-600' : 'text-gray-500'}`}>
+                {providerBio.length}/{PROVIDER_BIO_MAX_CHARS}
+              </p>
+            </div>
             {errors['providerBio'] && (
               <p className="text-red-600 text-sm mt-2 font-medium">{errors['providerBio']}</p>
             )}
@@ -678,6 +804,9 @@ const BecomeProvider = () => {
               <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                 Upload Work Images *
               </label>
+              <p className="text-sm text-gray-600 mb-3">
+                Max size: <span className="font-semibold">10MB per file</span> (Images: PNG/JPG/JPEG)
+              </p>
               <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
                   errors[`service-${service.id}-images`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
                 }`}>
@@ -730,6 +859,9 @@ const BecomeProvider = () => {
               <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
                 Upload PDFs <span className="text-gray-500 normal-case">(optional)</span>
               </label>
+              <p className="text-sm text-gray-600 mb-3">
+                Max size: <span className="font-semibold">10MB per file</span> (Documents: PDF)
+              </p>
               <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
                   errors[`service-${service.id}-pdfs`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
                 }`}>

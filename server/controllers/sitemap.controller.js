@@ -20,7 +20,6 @@ export const generateSitemap = (req, res) => {
     const staticRoutes = [
       { path: '/', priority: '1.0', changefreq: 'weekly' },
       { path: '/about', priority: '0.9', changefreq: 'weekly' },
-      { path: '/testimonials', priority: '0.9', changefreq: 'weekly' },
       { path: '/faq', priority: '0.9', changefreq: 'weekly' },
       { path: '/contact', priority: '0.9', changefreq: 'weekly' },
       { path: '/category', priority: '0.9', changefreq: 'weekly' }
