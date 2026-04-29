@@ -301,7 +301,7 @@ const UpdateProfile = () => {
                   onChange={handleChange}
                   placeholder="Enter your phone number"
                   inputMode="numeric"
-                  pattern="\\d{10}"
+                  pattern="[0-9]{10}"
                   maxLength={10}
                   className="w-full h-14 pl-12 pr-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
                   required
