@@ -811,6 +811,105 @@ const getProviderClicks = async (req, res) => {
     }
 };
 
+/**
+ * @description Get all users with pagination/search (admin)
+ * @route GET /api/admin/all-users
+ * @access Private (Admin)
+ */
+const getAllUsers = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const search = (req.query.search || '').trim();
+        const skip = (page - 1) * limit;
+
+        let query = {};
+        if (search) {
+            query = {
+                $or: [
+                    { firstName: { $regex: search, $options: 'i' } },
+                    { lastName: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } },
+                    { phoneNumber: { $regex: search, $options: 'i' } },
+                    { role: { $regex: search, $options: 'i' } },
+                ]
+            };
+        }
+
+        const totalUsers = await User.countDocuments(query);
+        const users = await User.find(query)
+            .select('firstName lastName email phoneNumber role profileImage isActive createdAt')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        return res.status(200).json({
+            success: true,
+            users,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalUsers,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+                limit
+            }
+        });
+    } catch (error) {
+        console.error("Error in getAllUsers controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Activate/deactivate user (admin)
+ * @route PATCH /api/admin/user-status/:userId
+ * @access Private (Admin)
+ */
+const updateUserStatus = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { isActive } = req.body;
+
+        if (typeof isActive !== 'boolean') {
+            return res.status(400).json({ success: false, message: "isActive must be boolean." });
+        }
+
+        if (req.user?._id?.toString() === userId && isActive === false) {
+            return res.status(400).json({ success: false, message: "You cannot deactivate your own account." });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        user.isActive = isActive;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: `User ${isActive ? 'activated' : 'deactivated'} successfully.`,
+            user: {
+                _id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                role: user.role,
+                isActive: user.isActive,
+                profileImage: user.profileImage,
+                createdAt: user.createdAt
+            }
+        });
+    } catch (error) {
+        console.error("Error in updateUserStatus controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 export { 
     getAdminDashboardStats,
     getAllProviders,
@@ -821,5 +920,7 @@ export {
     deleteServiceImage,
     deleteServicePDF,
     getCategoryClicks,
-    getProviderClicks
+    getProviderClicks,
+    getAllUsers,
+    updateUserStatus
 };

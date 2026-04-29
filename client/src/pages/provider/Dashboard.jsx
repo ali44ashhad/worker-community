@@ -14,6 +14,7 @@ import {
 } from 'react-icons/hi';
 import { getProviderDashboardStats } from '../../features/providerSlice';
 import { getFullName, getFirstName, getInitials } from '../../utils/userHelpers';
+import { Link } from 'react-router-dom';
 
 const statusStyles = {
   pending: {
@@ -128,67 +129,55 @@ const ProviderDashboard = () => {
       subValue: `${totalReviews} reviews`,
       icon: HiOutlineStar,
     },
-    // {
-    //   label: 'Pending Requests',
-    //   value: statusCounts.pending || 0,
-    //   icon: HiOutlineClock,
-    // },
-    {
-      label: 'Profile Clicks',
-      value: profileViews,
-      icon: HiOutlineUser,
-    },
-    {
-      label: 'Service Clicks',
-      value: serviceClicks,
-      icon: HiOutlineCheckCircle,
-    },
-    // {
-    //   label: 'Accepted Jobs',
-    //   value: statusCounts.accepted || 0,
-    //   icon: HiOutlineCheckCircle,
-    // },
-    // {
-    //   label: 'Completed Jobs',
-    //   value: statusCounts.completed || 0,
-    //   icon: HiOutlineBadgeCheck,
-    // },
-    // {
-    //   label: 'Cancelled',
-    //   value: statusCounts.cancelled || 0,
-    //   icon: HiOutlineXCircle,
-    // },
   ];
 
   return (
     <motion.div
-      className="max-w-[1200px] mx-auto px-6 py-8"
+      className="max-w-[1200px] mx-auto px-6 py-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       <motion.div
-        className="mb-10"
+        className="mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <p className="text-sm uppercase tracking-wide text-gray-500 mb-1">
-          Welcome back{user ? `, ${getFirstName(user)}` : ''}
-        </p>
-        <h1 className="text-4xl font-bold text-black tracking-tight">Provider Dashboard</h1>
-        <p className="text-gray-600 mt-2">
-          Track your bookings, monitor progress, and stay ahead of your commitments.
-        </p>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-wide text-gray-500 mb-1">
+              Welcome back{user ? `, ${getFirstName(user)}` : ''}
+            </p>
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
+            <p className="text-gray-600 mt-2">
+              Quick overview of your services and bookings.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/provider/manage-services"
+              className="px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition"
+            >
+              Manage services
+            </Link>
+            <Link
+              to="/provider/update-profile"
+              className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm font-semibold hover:bg-gray-50 transition"
+            >
+              Update profile
+            </Link>
+          </div>
+        </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <motion.div
               key={stat.label}
-              className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+              className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.08 }}
@@ -212,115 +201,27 @@ const ProviderDashboard = () => {
         })}
       </div>
 
-      {/* <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
           className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.35 }}
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
-              <HiOutlineClipboardList className="text-gray-900" size={24} />
-            </div>
-            <h2 className="text-xl font-bold text-black tracking-tight">Booking Status</h2>
-          </div>
-          <div className="space-y-4">
-            {statusData.map((status) => (
-              <div key={status.key}>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="font-medium text-black">{status.label}</p>
-                  <p className="text-sm text-gray-500">{status.count} bookings</p>
-                </div>
-                <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${status.bar}`}
-                    style={{ width: `${status.percentage}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">{status.percentage}% of total</p>
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                <HiOutlineCalendar className="text-gray-900" size={22} />
               </div>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
-              <HiOutlineUser className="text-gray-900" size={24} />
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight">Upcoming bookings</h2>
             </div>
-            <h2 className="text-xl font-bold text-black tracking-tight">Recent Bookings</h2>
           </div>
 
-          {recentBookings.length === 0 ? (
-            <p className="text-gray-500 text-center py-10">No bookings yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {recentBookings.map((booking, index) => {
-                const customer = booking.customer || {};
-                const initials = getInitials(customer);
-                const scheduledDate = formatDate(booking.scheduledDate);
-                const createdAt = formatDate(booking.createdAt);
-                const style = statusStyles[booking.status] || statusStyles.pending;
-
-                return (
-                  <motion.div
-                    key={booking._id || index}
-                    className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200"
-                    whileHover={{ x: 4 }}
-                  >
-                    <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {customer.profileImage ? (
-                        <img
-                          src={customer.profileImage}
-                          alt={getFullName(customer)}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-gray-700 font-semibold">{initials}</span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-black truncate">
-                        {getFullName(customer) || 'Unknown Customer'}
-                      </p>
-                      <p className="text-sm text-gray-500 truncate">
-                        {booking.serviceCategory} • Scheduled {scheduledDate}
-                      </p>
-                      <p className="text-xs text-gray-400">Booked on {createdAt}</p>
-                    </div>
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${style.badge}`}>
-                      {style.label}
-                    </span>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </motion.div>
-
-        <motion.div
-          className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
-              <HiOutlineCalendar className="text-gray-900" size={24} />
-            </div>
-            <h2 className="text-xl font-bold text-black tracking-tight">Upcoming Jobs</h2>
-          </div>
           {upcomingBookings.length === 0 ? (
             <p className="text-gray-500 text-center py-10">No upcoming bookings.</p>
           ) : (
-            <div className="space-y-4">
-              {upcomingBookings.map((booking, index) => {
+            <div className="space-y-3">
+              {upcomingBookings.slice(0, 5).map((booking, index) => {
                 const customer = booking.customer || {};
                 const initials = getInitials(customer);
                 const scheduledDate = booking.scheduledDate
@@ -334,12 +235,11 @@ const ProviderDashboard = () => {
                 const style = statusStyles[booking.status] || statusStyles.pending;
 
                 return (
-                  <motion.div
+                  <div
                     key={booking._id || index}
-                    className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200"
-                    whileHover={{ x: 4 }}
+                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200"
                   >
-                    <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                       {customer.profileImage ? (
                         <img
                           src={customer.profileImage}
@@ -351,66 +251,84 @@ const ProviderDashboard = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-black truncate">
-                        {getFullName(customer) || 'Unknown Customer'}
+                      <p className="font-semibold text-gray-900 truncate">
+                        {getFullName(customer) || 'Customer'}
                       </p>
-                      <p className="text-sm text-gray-500 truncate">
+                      <p className="text-sm text-gray-600 truncate">
                         {booking.serviceCategory} • {scheduledDate}
                       </p>
                     </div>
                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${style.badge}`}>
                       {style.label}
                     </span>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
           )}
         </motion.div>
-      </div> */}
 
-    
-
-      <motion.div
-        className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
-            <HiOutlineBriefcase className="text-gray-900" size={24} />
-          </div>
-          <h2 className="text-xl font-bold text-black tracking-tight">Service Clicks Overview</h2>
-        </div>
-
-        {serviceClickDetails.length === 0 ? (
-          <p className="text-gray-500 text-center py-6">No services found.</p>
-        ) : (
-          <div className="space-y-3">
-            {serviceClickDetails.map((service) => (
-              <div
-                key={service.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200"
-              >
-                <div>
-                  <p className="font-semibold text-black">{service.servicename || service.serviceCategory || 'Service'}</p>
-                  {service.servicename && service.serviceCategory && (
-                    <p className="text-xs text-gray-500">{service.serviceCategory}</p>
-                  )}
-                  {/* {service.price !== undefined && (
-                    <p className="text-xs text-gray-500">Price: ₹{service.price}</p>
-                  )} */}
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-black">{service.clicks}</p>
-                  <p className="text-xs text-gray-500">Total Clicks</p>
-                </div>
+        <motion.div
+          className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.05 }}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                <HiOutlineClipboardList className="text-gray-900" size={22} />
               </div>
-            ))}
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight">Recent bookings</h2>
+            </div>
           </div>
-        )}
-      </motion.div>
+
+          {recentBookings.length === 0 ? (
+            <p className="text-gray-500 text-center py-10">No bookings yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {recentBookings.slice(0, 5).map((booking, index) => {
+                const customer = booking.customer || {};
+                const initials = getInitials(customer);
+                const scheduledDate = formatDate(booking.scheduledDate);
+                const createdAt = formatDate(booking.createdAt);
+                const style = statusStyles[booking.status] || statusStyles.pending;
+
+                return (
+                  <div
+                    key={booking._id || index}
+                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {customer.profileImage ? (
+                        <img
+                          src={customer.profileImage}
+                          alt={getFullName(customer)}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-gray-700 font-semibold">{initials}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {getFullName(customer) || 'Customer'}
+                      </p>
+                      <p className="text-sm text-gray-600 truncate">
+                        {booking.serviceCategory} • Scheduled {scheduledDate}
+                      </p>
+                      <p className="text-xs text-gray-400">Booked on {createdAt}</p>
+                    </div>
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${style.badge}`}>
+                      {style.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </motion.div>
+      </div>
     </motion.div>
   );
 };

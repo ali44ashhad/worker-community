@@ -31,9 +31,15 @@ const ManageServices = () => {
         credentials: 'include',
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      const data = rawText ? (() => { try { return JSON.parse(rawText); } catch { return null; } })() : null;
       if (!response.ok) {
-        throw new Error(data?.message || 'Failed to delete service');
+        const message =
+          data?.message ||
+          (response.status === 401
+            ? 'Session expired. Please login again and retry.'
+            : `Failed to delete service (${response.status}).`);
+        throw new Error(message);
       }
 
       toast.success('Service removed successfully.');

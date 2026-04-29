@@ -75,9 +75,7 @@ const CategoryClicks = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-3">
-          <div className="p-2 sm:p-3 rounded-xl bg-gray-50 border border-gray-200">
-            <HiOutlineChartBar className="text-gray-900" size={24} />
-          </div>
+           
           <div>
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-black tracking-tight">Category Clicks</h1>
             <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">View cumulative clicks for each category and their services</p>
@@ -95,8 +93,7 @@ const CategoryClicks = () => {
         {/* Table Header - Hidden on mobile */}
         <div className="hidden md:block bg-gray-50 border-b border-gray-300 px-4 sm:px-6 py-4">
           <div className="grid grid-cols-12 gap-4 items-center">
-            <div className="col-span-1"></div>
-            <div className="col-span-4">
+            <div className="col-span-5">
               <p className="font-semibold text-black">Category Name</p>
             </div>
             <div className="col-span-2 text-center">
@@ -105,7 +102,8 @@ const CategoryClicks = () => {
             <div className="col-span-2 text-center">
               <p className="font-semibold text-black">Service Count</p>
             </div>
-            <div className="col-span-3"></div>
+            <div className="col-span-2"></div>
+            <div className="col-span-1"></div>
           </div>
         </div>
 
@@ -127,11 +125,6 @@ const CategoryClicks = () => {
                     {/* Mobile Layout */}
                     <div className="md:hidden flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {isExpanded ? (
-                          <HiOutlineChevronDown className="text-gray-600 flex-shrink-0" size={20} />
-                        ) : (
-                          <HiOutlineChevronRight className="text-gray-600 flex-shrink-0" size={20} />
-                        )}
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-black text-sm truncate">{category.category}</p>
                         </div>
@@ -145,19 +138,19 @@ const CategoryClicks = () => {
                           <p className="text-xs text-gray-500">Services</p>
                           <p className="text-base text-gray-700">{category.serviceCount || 0}</p>
                         </div>
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors">
+                          {isExpanded ? (
+                            <HiOutlineChevronDown className="text-gray-600" size={20} />
+                          ) : (
+                            <HiOutlineChevronRight className="text-gray-600" size={20} />
+                          )}
+                        </div>
                       </div>
                     </div>
 
                     {/* Desktop Layout */}
                     <div className="hidden md:grid grid-cols-12 gap-4 items-center">
-                      <div className="col-span-1">
-                        {isExpanded ? (
-                          <HiOutlineChevronDown className="text-gray-600" size={20} />
-                        ) : (
-                          <HiOutlineChevronRight className="text-gray-600" size={20} />
-                        )}
-                      </div>
-                      <div className="col-span-4">
+                      <div className="col-span-5">
                         <p className="font-semibold text-black">{category.category}</p>
                       </div>
                       <div className="col-span-2 text-center">
@@ -166,7 +159,16 @@ const CategoryClicks = () => {
                       <div className="col-span-2 text-center">
                         <p className="text-gray-700">{category.serviceCount || 0}</p>
                       </div>
-                      <div className="col-span-3"></div>
+                      <div className="col-span-2"></div>
+                      <div className="col-span-1 flex justify-end">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors">
+                          {isExpanded ? (
+                            <HiOutlineChevronDown className="text-gray-600" size={20} />
+                          ) : (
+                            <HiOutlineChevronRight className="text-gray-600" size={20} />
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
 

@@ -491,6 +491,9 @@ const UpdateServices = () => {
         formData.append('subCategories', JSON.stringify(service.subCategories));
         formData.append('keywords', JSON.stringify(service.keywords));
         formData.append('description', service.bio);
+        // Send retained existing assets so backend can delete removed ones.
+        formData.append('existingImages', JSON.stringify(service.existingImages || []));
+        formData.append('existingPDFs', JSON.stringify(service.existingPDFs || []));
         // Only append experience if provided
         if (service.experience !== '' && service.experience !== undefined && service.experience !== null) {
           formData.append('experience', service.experience);
@@ -513,18 +516,28 @@ const UpdateServices = () => {
 
         if (service._id) {
           // Update existing service
-          await fetch(`${API_URL}/api/provider-profile/service/${service._id}`, {
+          const response = await fetch(`${API_URL}/api/provider-profile/service/${service._id}`, {
             method: 'PUT',
             body: formData,
             credentials: 'include'
           });
+          if (!response.ok) {
+            const rawText = await response.text();
+            const data = rawText ? (() => { try { return JSON.parse(rawText); } catch { return null; } })() : null;
+            throw new Error(data?.message || `Failed to update service (${response.status}).`);
+          }
         } else {
           // Add new service
-          await fetch(`${API_URL}/api/provider-profile/service`, {
+          const response = await fetch(`${API_URL}/api/provider-profile/service`, {
             method: 'POST',
             body: formData,
             credentials: 'include'
           });
+          if (!response.ok) {
+            const rawText = await response.text();
+            const data = rawText ? (() => { try { return JSON.parse(rawText); } catch { return null; } })() : null;
+            throw new Error(data?.message || `Failed to add service (${response.status}).`);
+          }
         }
       }
 

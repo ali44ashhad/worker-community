@@ -42,6 +42,44 @@ export const getAllProvidersAdmin = createAsyncThunk(
   }
 );
 
+// Get all users (admin) with pagination
+export const getAllUsersAdmin = createAsyncThunk(
+  "admin/getAllUsers",
+  async ({ page = 1, limit = 10, search = '' } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      if (search.trim()) {
+        params.append('search', search.trim());
+      }
+      const res = await axios.get(`${API_URL}/api/admin/all-users?${params.toString()}`);
+      return {
+        users: res.data.users,
+        usersPagination: res.data.pagination
+      };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch users");
+    }
+  }
+);
+
+// Activate/deactivate user (admin)
+export const updateUserStatusAdmin = createAsyncThunk(
+  "admin/updateUserStatus",
+  async ({ userId, isActive }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/admin/user-status/${userId}`, { isActive });
+      toast.success(res.data?.message || "User status updated.");
+      return res.data.user;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update user status";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 // Update provider details (admin)
 export const updateProviderDetails = createAsyncThunk(
   "admin/updateProviderDetails",
@@ -189,6 +227,7 @@ const adminSlice = createSlice({
   initialState: {
     dashboardStats: null,
     providers: [],
+    users: [],
     pagination: {
       currentPage: 1,
       totalPages: 1,
@@ -198,6 +237,14 @@ const adminSlice = createSlice({
       limit: 10
     },
     services: [],
+    usersPagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalUsers: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+      limit: 10
+    },
     servicesPagination: {
       currentPage: 1,
       totalPages: 1,
@@ -215,6 +262,7 @@ const adminSlice = createSlice({
     clearAdminState: (state) => {
       state.dashboardStats = null;
       state.providers = [];
+      state.users = [];
       state.pagination = {
         currentPage: 1,
         totalPages: 1,
@@ -224,6 +272,14 @@ const adminSlice = createSlice({
         limit: 10
       };
       state.services = [];
+      state.usersPagination = {
+        currentPage: 1,
+        totalPages: 1,
+        totalUsers: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 10
+      };
       state.servicesPagination = {
         currentPage: 1,
         totalPages: 1,
@@ -265,6 +321,28 @@ const adminSlice = createSlice({
       .addCase(getAllProvidersAdmin.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+      // Get all users
+      .addCase(getAllUsersAdmin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getAllUsersAdmin.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.users = action.payload.users;
+        state.usersPagination = action.payload.usersPagination;
+      })
+      .addCase(getAllUsersAdmin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Update user status
+      .addCase(updateUserStatusAdmin.fulfilled, (state, action) => {
+        const updatedUser = action.payload;
+        const index = state.users.findIndex((u) => u._id === updatedUser._id);
+        if (index !== -1) {
+          state.users[index] = updatedUser;
+        }
       })
       // Update provider details
       .addCase(updateProviderDetails.fulfilled, (state, action) => {

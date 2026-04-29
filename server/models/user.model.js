@@ -65,6 +65,10 @@ const userSchema = new Schema({
         enum: ["customer", "provider", "admin"],
         default: "customer"
     },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
     profileImage: {
         type: String,
         default: ""

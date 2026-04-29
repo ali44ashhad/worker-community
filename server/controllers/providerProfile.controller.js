@@ -913,6 +913,54 @@ const updateServiceOffering = async (req, res) => {
         }
         // if (price !== undefined) service.price = parseFloat(price);
 
+        // Keep/remove existing portfolio assets if frontend sent latest retained lists.
+        // This allows users to delete old images/PDFs during edit/update flows.
+        if (req.body.existingImages !== undefined) {
+            let retainedImages = [];
+            try {
+                retainedImages = typeof req.body.existingImages === 'string'
+                    ? JSON.parse(req.body.existingImages)
+                    : req.body.existingImages;
+            } catch {
+                retainedImages = [];
+            }
+
+            const retainedImageIds = new Set(
+                (Array.isArray(retainedImages) ? retainedImages : [])
+                    .map((img) => img?.public_id)
+                    .filter(Boolean)
+            );
+
+            const imagesToDelete = (service.portfolioImages || []).filter(
+                (img) => img?.public_id && !retainedImageIds.has(img.public_id)
+            );
+            await Promise.all(imagesToDelete.map((img) => deleteFromCloudinary(img.public_id)));
+            service.portfolioImages = Array.isArray(retainedImages) ? retainedImages : [];
+        }
+
+        if (req.body.existingPDFs !== undefined) {
+            let retainedPDFs = [];
+            try {
+                retainedPDFs = typeof req.body.existingPDFs === 'string'
+                    ? JSON.parse(req.body.existingPDFs)
+                    : req.body.existingPDFs;
+            } catch {
+                retainedPDFs = [];
+            }
+
+            const retainedPDFIds = new Set(
+                (Array.isArray(retainedPDFs) ? retainedPDFs : [])
+                    .map((pdf) => pdf?.public_id)
+                    .filter(Boolean)
+            );
+
+            const pdfsToDelete = (service.portfolioPDFs || []).filter(
+                (pdf) => pdf?.public_id && !retainedPDFIds.has(pdf.public_id)
+            );
+            await Promise.all(pdfsToDelete.map((pdf) => deleteFromCloudinary(pdf.public_id)));
+            service.portfolioPDFs = Array.isArray(retainedPDFs) ? retainedPDFs : [];
+        }
+
         // When using upload.any(), req.files is an array
         const filesArray = req.files || [];
         

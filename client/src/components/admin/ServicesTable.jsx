@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  HiChevronDown, 
   HiChevronRight,
   HiChevronLeft,
   HiChevronDoubleLeft,
   HiChevronDoubleRight,
+  HiX,
   HiOutlineBriefcase,
   HiOutlineTag,
   HiOutlineDocumentText,
   HiOutlineClock,
-  HiOutlineCurrencyDollar,
   HiOutlineUser,
   HiOutlineMail,
   HiOutlinePhone,
@@ -21,25 +20,13 @@ import {
 import { getFullName, getInitials } from '../../utils/userHelpers';
 
 const ServicesTable = ({ services = [], isLoading = false, itemsPerPage = 10 }) => {
-  const [expandedRows, setExpandedRows] = useState(new Set());
+  const [selectedService, setSelectedService] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const toggleRow = (serviceId) => {
-    setExpandedRows((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(serviceId)) {
-        newSet.delete(serviceId);
-      } else {
-        newSet.add(serviceId);
-      }
-      return newSet;
-    });
-  };
 
   // Reset to page 1 when services change
   useEffect(() => {
     setCurrentPage(1);
-    setExpandedRows(new Set());
+    setSelectedService(null);
   }, [services.length]);
 
   // Calculate pagination values
@@ -54,7 +41,7 @@ const ServicesTable = ({ services = [], isLoading = false, itemsPerPage = 10 }) 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      setExpandedRows(new Set()); // Close all expanded rows when changing pages
+      setSelectedService(null);
     }
   };
 
@@ -124,275 +111,315 @@ const ServicesTable = ({ services = [], isLoading = false, itemsPerPage = 10 }) 
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b-2 border-gray-300">
-              <th className="px-4 py-3 text-left text-sm font-semibold text-black w-12">
-                {/* Arrow column */}
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-black">S.No</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-black">Service Name</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-black">Category</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-black">Provider</th>
-              {/* <th className="px-4 py-3 text-left text-sm font-semibold text-black">Price</th> */}
-              <th className="px-4 py-3 text-left text-sm font-semibold text-black">Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentServices.map((service, index) => {
-              const actualIndex = startIndex + index;
-              const isExpanded = expandedRows.has(service._id);
-              const providerName = service.provider?.user ? getFullName(service.provider.user) : 'N/A';
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {currentServices.map((service) => {
+          const providerName = service.provider?.user ? getFullName(service.provider.user) : 'N/A';
+          const imagesCount = service.portfolioImages?.length || 0;
+          const pdfsCount = service.portfolioPDFs?.length || 0;
 
-              return (
-                <React.Fragment key={service._id}>
-                  <motion.tr
-                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => toggleRow(service._id)}
-                        className="flex items-center justify-center w-6 h-6 rounded hover:bg-gray-200 transition-colors"
-                        aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
-                      >
-                        {isExpanded ? (
-                          <HiChevronDown className="text-gray-700" size={18} />
-                        ) : (
-                          <HiChevronRight className="text-gray-700" size={18} />
-                        )}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{actualIndex + 1}</td>
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-black">{service.servicename || 'N/A'}</span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{service.serviceCategory || 'N/A'}</td>
-                    <td className="px-4 py-3">
-                      {service.provider?.user ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden flex-shrink-0">
-                            {service.provider.user?.profileImage ? (
-                              <img
-                                src={service.provider.user.profileImage}
-                                alt={providerName}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-gray-600 font-semibold text-xs">
-                                {getInitials(service.provider.user)}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 truncate max-w-[150px]">{providerName}</span>
+          return (
+            <motion.button
+              key={service._id}
+              type="button"
+              onClick={() => setSelectedService(service)}
+              className="text-left bg-white border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors shadow-sm"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm text-gray-500 mb-1">Service</p>
+                  <p className="font-semibold text-black truncate">{service.servicename || 'N/A'}</p>
+                </div>
+                <HiChevronRight className="text-gray-400 flex-shrink-0 mt-1" size={18} />
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                  <HiOutlineTag size={14} />
+                  {service.serviceCategory || 'N/A'}
+                </span>
+                {service.createdAt && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                    <HiOutlineClock size={14} />
+                    {new Date(service.createdAt).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 flex items-center gap-2">
+                <div className="w-9 h-9 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {service.provider?.user?.profileImage ? (
+                    <img
+                      src={service.provider.user.profileImage}
+                      alt={providerName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-gray-600 font-semibold text-xs">
+                      {service.provider?.user ? getInitials(service.provider.user) : 'NA'}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500">Provider</p>
+                  <p className="text-sm text-gray-700 truncate">{providerName}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                  <p className="text-gray-500 mb-0.5">Exp.</p>
+                  <p className="font-semibold text-black">{service.experience || 0}y</p>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                  <p className="text-gray-500 mb-0.5">Images</p>
+                  <p className="font-semibold text-black">{imagesCount}</p>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                  <p className="text-gray-500 mb-0.5">PDFs</p>
+                  <p className="font-semibold text-black">{pdfsCount}</p>
+                </div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Details Modal */}
+      <AnimatePresence>
+        {selectedService && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedService(null)}
+          >
+            <motion.div
+              className="w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.98 }}
+              transition={{ duration: 0.18 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {(() => {
+                const service = selectedService;
+                const providerName = service.provider?.user ? getFullName(service.provider.user) : 'N/A';
+                return (
+                  <>
+                    <div className="px-5 py-4 border-b border-gray-200 flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500 mb-1">Service Details</p>
+                        <p className="text-lg font-semibold text-black truncate">
+                          {service.servicename || 'N/A'}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                            <HiOutlineTag size={14} />
+                            {service.serviceCategory || 'N/A'}
+                          </span>
+                          {service.createdAt && (
+                            <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                              <HiOutlineClock size={14} />
+                              {new Date(service.createdAt).toLocaleDateString()}
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <span className="text-sm text-gray-700">N/A</span>
-                      )}
-                    </td>
-                    {/* <td className="px-4 py-3 text-sm text-gray-700">
-                      {service.price > 0 ? `$${service.price}` : 'N/A'}
-                    </td> */}
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {service.createdAt ? new Date(service.createdAt).toLocaleDateString() : 'N/A'}
-                    </td>
-                  </motion.tr>
-                  
-                  {/* Expanded Row */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.tr
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="border-b border-gray-200"
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedService(null)}
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                        aria-label="Close"
                       >
-                        <td colSpan="7" className="px-4 py-6 bg-gray-50">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Service Information */}
-                            <div className="space-y-4">
-                              <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                <HiOutlineBriefcase className="text-gray-700" size={20} />
-                                Service Information
-                              </h3>
-                              <div className="space-y-3">
-                                <div>
-                                  <p className="text-xs text-gray-500 mb-1">Service Name</p>
-                                  <p className="text-sm text-black">{service.servicename || 'N/A'}</p>
+                        <HiX className="text-gray-700" size={20} />
+                      </button>
+                    </div>
+
+                    <div className="max-h-[75vh] overflow-y-auto px-5 py-5 bg-gray-50">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Service Information */}
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
+                            <HiOutlineBriefcase className="text-gray-700" size={20} />
+                            Service Information
+                          </h3>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Service Name</p>
+                              <p className="text-sm text-black">{service.servicename || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                                <HiOutlineTag size={14} />
+                                Category
+                              </p>
+                              <p className="text-sm text-black">{service.serviceCategory || 'N/A'}</p>
+                            </div>
+                            {service.subCategories && service.subCategories.length > 0 && (
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Subcategories</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {service.subCategories.map((sub, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                                    >
+                                      {sub}
+                                    </span>
+                                  ))}
                                 </div>
+                              </div>
+                            )}
+                            {service.keywords && service.keywords.length > 0 && (
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Keywords</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {service.keywords.map((keyword, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                                    >
+                                      {keyword}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                                  <HiOutlineClock size={14} />
+                                  Experience
+                                </p>
+                                <p className="text-sm text-black">{service.experience || 0} years</p>
+                              </div>
+                              {/* <div>
+                                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                                  <HiOutlineCurrencyDollar size={14} />
+                                  Price
+                                </p>
+                                <p className="text-sm text-black">{service.price > 0 ? `$${service.price}` : 'N/A'}</p>
+                              </div> */}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Provider Information */}
+                        {service.provider?.user && (
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
+                              <HiOutlineUser className="text-gray-700" size={20} />
+                              Provider Information
+                            </h3>
+                            <div className="space-y-3">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Name</p>
+                                <p className="text-sm text-black">{providerName}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                                  <HiOutlineMail size={14} />
+                                  Email
+                                </p>
+                                <p className="text-sm text-black">{service.provider.user?.email || 'N/A'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                                  <HiOutlinePhone size={14} />
+                                  Phone
+                                </p>
+                                <p className="text-sm text-black">{service.provider.user?.phoneNumber || 'N/A'}</p>
+                              </div>
+                              {service.provider.user?.addressLine1 && (
                                 <div>
                                   <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                                    <HiOutlineTag size={14} />
-                                    Category
+                                    <HiOutlineLocationMarker size={14} />
+                                    Address
                                   </p>
-                                  <p className="text-sm text-black">{service.serviceCategory || 'N/A'}</p>
+                                  <p className="text-sm text-black">
+                                    {service.provider.user.addressLine1}
+                                    {service.provider.user.addressLine2 && `, ${service.provider.user.addressLine2}`}
+                                    {service.provider.user.city && `, ${service.provider.user.city}`}
+                                    {service.provider.user.state && `, ${service.provider.user.state}`}
+                                    {service.provider.user.zip && ` ${service.provider.user.zip}`}
+                                  </p>
                                 </div>
-                                {service.subCategories && service.subCategories.length > 0 && (
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Subcategories</p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {service.subCategories.map((sub, idx) => (
-                                        <span
-                                          key={idx}
-                                          className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
-                                        >
-                                          {sub}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                {service.keywords && service.keywords.length > 0 && (
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Keywords</p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {service.keywords.map((keyword, idx) => (
-                                        <span
-                                          key={idx}
-                                          className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
-                                        >
-                                          {keyword}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                                      <HiOutlineClock size={14} />
-                                      Experience
-                                    </p>
-                                    <p className="text-sm text-black">{service.experience || 0} years</p>
-                                  </div>
-                                  {/* <div>
-                                    <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                                      <HiOutlineCurrencyDollar size={14} />
-                                      Price
-                                    </p>
-                                    <p className="text-sm text-black">{service.price > 0 ? `$${service.price}` : 'N/A'}</p>
-                                  </div> */}
-                                </div>
-                              </div>
+                              )}
                             </div>
-
-                            {/* Provider Information */}
-                            {service.provider?.user && (
-                              <div className="space-y-4">
-                                <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                  <HiOutlineUser className="text-gray-700" size={20} />
-                                  Provider Information
-                                </h3>
-                                <div className="space-y-3">
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Name</p>
-                                    <p className="text-sm text-black">{providerName}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                                      <HiOutlineMail size={14} />
-                                      Email
-                                    </p>
-                                    <p className="text-sm text-black">{service.provider.user?.email || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                                      <HiOutlinePhone size={14} />
-                                      Phone
-                                    </p>
-                                    <p className="text-sm text-black">{service.provider.user?.phoneNumber || 'N/A'}</p>
-                                  </div>
-                                  {service.provider.user?.addressLine1 && (
-                                    <div>
-                                      <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                                        <HiOutlineLocationMarker size={14} />
-                                        Address
-                                      </p>
-                                      <p className="text-sm text-black">
-                                        {service.provider.user.addressLine1}
-                                        {service.provider.user.addressLine2 && `, ${service.provider.user.addressLine2}`}
-                                        {service.provider.user.city && `, ${service.provider.user.city}`}
-                                        {service.provider.user.state && `, ${service.provider.user.state}`}
-                                        {service.provider.user.zip && ` ${service.provider.user.zip}`}
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Description */}
-                            {service.description && (
-                              <div className="space-y-4 md:col-span-2">
-                                <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                  <HiOutlineDocumentText className="text-gray-700" size={20} />
-                                  Description
-                                </h3>
-                                <p className="text-sm text-gray-700 bg-white p-4 rounded-lg border border-gray-200">
-                                  {service.description}
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Portfolio Images */}
-                            {service.portfolioImages && service.portfolioImages.length > 0 && (
-                              <div className="space-y-4 md:col-span-2">
-                                <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                  <HiOutlinePhotograph className="text-gray-700" size={20} />
-                                  Portfolio Images ({service.portfolioImages.length})
-                                </h3>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  {service.portfolioImages.map((image, idx) => (
-                                    <div key={idx} className="relative">
-                                      <img
-                                        src={image.url}
-                                        alt={`Portfolio ${idx + 1}`}
-                                        className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Portfolio PDFs */}
-                            {service.portfolioPDFs && service.portfolioPDFs.length > 0 && (
-                              <div className="space-y-4 md:col-span-2">
-                                <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                  <HiOutlineDocument className="text-gray-700" size={20} />
-                                  Portfolio PDFs ({service.portfolioPDFs.length})
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                  {service.portfolioPDFs.map((pdf, idx) => (
-                                    <a
-                                      key={idx}
-                                      href={pdf.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                                    >
-                                      <HiOutlineDocument className="text-gray-700" size={18} />
-                                      <span className="text-sm text-gray-700">PDF {idx + 1}</span>
-                                    </a>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
                           </div>
-                        </td>
-                      </motion.tr>
-                    )}
-                  </AnimatePresence>
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                        )}
+
+                        {/* Description */}
+                        {service.description && (
+                          <div className="space-y-4 md:col-span-2">
+                            <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
+                              <HiOutlineDocumentText className="text-gray-700" size={20} />
+                              Description
+                            </h3>
+                            <p className="text-sm text-gray-700 bg-white p-4 rounded-lg border border-gray-200 whitespace-pre-wrap">
+                              {service.description}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Portfolio Images */}
+                        {service.portfolioImages && service.portfolioImages.length > 0 && (
+                          <div className="space-y-4 md:col-span-2">
+                            <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
+                              <HiOutlinePhotograph className="text-gray-700" size={20} />
+                              Portfolio Images ({service.portfolioImages.length})
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              {service.portfolioImages.map((image, idx) => (
+                                <div key={idx} className="relative">
+                                  <img
+                                    src={image.url}
+                                    alt={`Portfolio ${idx + 1}`}
+                                    className="w-full h-32 object-cover rounded-lg border border-gray-200 bg-white"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Portfolio PDFs */}
+                        {service.portfolioPDFs && service.portfolioPDFs.length > 0 && (
+                          <div className="space-y-4 md:col-span-2">
+                            <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
+                              <HiOutlineDocument className="text-gray-700" size={20} />
+                              Portfolio PDFs ({service.portfolioPDFs.length})
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {service.portfolioPDFs.map((pdf, idx) => (
+                                <a
+                                  key={idx}
+                                  href={pdf.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                                >
+                                  <HiOutlineDocument className="text-gray-700" size={18} />
+                                  <span className="text-sm text-gray-700">PDF {idx + 1}</span>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (

@@ -123,15 +123,15 @@ const ProvidersTable = ({ providers = [], isLoading = false, itemsPerPage = 10 }
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b-2 border-gray-300">
-              <th className="px-4 py-3 text-left text-sm font-semibold text-black w-12">
-                {/* Arrow column */}
-              </th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">S.No</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">Name</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">Email</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">Phone</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">Services</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-black">Joined</th>
+              <th className="px-4 py-3 text-right text-sm font-semibold text-black w-12">
+                {/* Arrow column */}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -149,19 +149,6 @@ const ProvidersTable = ({ providers = [], isLoading = false, itemsPerPage = 10 }
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => toggleRow(provider._id)}
-                      className="flex items-center justify-center w-6 h-6 rounded hover:bg-gray-200 transition-colors"
-                      aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
-                    >
-                      {isExpanded ? (
-                        <HiChevronDown className="text-gray-700" size={18} />
-                      ) : (
-                        <HiChevronRight className="text-gray-700" size={18} />
-                      )}
-                    </button>
-                  </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{actualIndex + 1}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -186,6 +173,19 @@ const ProvidersTable = ({ providers = [], isLoading = false, itemsPerPage = 10 }
                   <td className="px-4 py-3 text-sm text-gray-700">{serviceCount}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">
                     {provider.createdAt ? new Date(provider.createdAt).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => toggleRow(provider._id)}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-200 transition-colors"
+                      aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
+                    >
+                      {isExpanded ? (
+                        <HiChevronDown className="text-gray-700" size={18} />
+                      ) : (
+                        <HiChevronRight className="text-gray-700" size={18} />
+                      )}
+                    </button>
                   </td>
                 </motion.tr>
                 

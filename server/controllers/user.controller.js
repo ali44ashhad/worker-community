@@ -43,6 +43,33 @@ const uploadBufferToCloudinary = (buffer) => {
     });
 };
 
+const extractCloudinaryPublicIdFromUrl = (url) => {
+    try {
+        if (!url || typeof url !== "string") return null;
+        // Example:
+        // https://res.cloudinary.com/<cloud>/image/upload/v1710000000/profile_images/abc123.jpg
+        const marker = "/upload/";
+        const idx = url.indexOf(marker);
+        if (idx === -1) return null;
+        let path = url.slice(idx + marker.length); // v.../folder/file.jpg
+        path = path.replace(/^v\d+\//, ""); // remove optional version prefix
+        path = path.replace(/\.[^/.]+$/, ""); // remove extension
+        return path || null;
+    } catch {
+        return null;
+    }
+};
+
+const deleteCloudinaryImageByUrl = async (url) => {
+    const publicId = extractCloudinaryPublicIdFromUrl(url);
+    if (!publicId) return;
+    try {
+        await cloudinary.uploader.destroy(publicId);
+    } catch (error) {
+        console.log("Cloudinary profile image cleanup failed:", error?.message || error);
+    }
+};
+
 const register = async (req, res) => {
     const { firstName, lastName, email, password, phoneNumber, addressLine1, addressLine2, city, state, zip } = req.body;
     try {
@@ -113,6 +140,13 @@ const login = async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(401).json({ success: false, message: "Email is not registered" });
+        }
+
+        if (user.isActive === false) {
+            return res.status(403).json({
+                success: false,
+                message: "Your account is deactivated. Please contact admin."
+            });
         }
 
         const isCorrectPassword = await bcrypt.compare(password, user.password);
@@ -211,11 +245,18 @@ const updateUserProfile = async (req, res) => {
         // Check for and upload new profile image first
         // req.file comes from multer's upload.single('profileImage')
         if (req.file) {
+            // If replacing existing profile image, clean up old Cloudinary asset.
+            if (user.profileImage) {
+                await deleteCloudinaryImageByUrl(user.profileImage);
+            }
             const imageUrl = await uploadBufferToCloudinary(req.file.buffer);
             user.profileImage = imageUrl;
         }
         // Handle profile image removal (only if no new file was uploaded)
         else if (req.body.removeProfileImage === 'true' || req.body.removeProfileImage === true) {
+            if (user.profileImage) {
+                await deleteCloudinaryImageByUrl(user.profileImage);
+            }
             user.profileImage = '';
         }
 

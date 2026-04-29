@@ -9,7 +9,9 @@ import {
     deleteServiceImage,
     deleteServicePDF,
     getCategoryClicks,
-    getProviderClicks
+    getProviderClicks,
+    getAllUsers,
+    updateUserStatus
 } from "../controllers/admin.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
@@ -42,6 +44,20 @@ router.put(
     protect,
     isAdmin,
     updateProviderUserDetails
+);
+
+router.get(
+    "/all-users",
+    protect,
+    isAdmin,
+    getAllUsers
+);
+
+router.patch(
+    "/user-status/:userId",
+    protect,
+    isAdmin,
+    updateUserStatus
 );
 
 router.get(

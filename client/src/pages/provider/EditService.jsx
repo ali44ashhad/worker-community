@@ -207,6 +207,9 @@ const EditService = () => {
       formData.append('subCategories', JSON.stringify(serviceForm.subCategories));
       formData.append('keywords', JSON.stringify(serviceForm.keywords));
       formData.append('description', serviceForm.bio);
+      // Send retained existing assets so backend can delete removed ones.
+      formData.append('existingImages', JSON.stringify(serviceForm.existingImages || []));
+      formData.append('existingPDFs', JSON.stringify(serviceForm.existingPDFs || []));
       // Only append experience if provided
       if (serviceForm.experience !== '' && serviceForm.experience !== undefined && serviceForm.experience !== null) {
         formData.append('experience', serviceForm.experience);
@@ -231,9 +234,17 @@ const EditService = () => {
         credentials: 'include',
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      const data = rawText ? (() => { try { return JSON.parse(rawText); } catch { return null; } })() : null;
       if (!response.ok) {
-        throw new Error(data?.message || 'Failed to update service.');
+        const message =
+          data?.message ||
+          (response.status === 401
+            ? 'Session expired. Please login again and retry.'
+            : response.status === 413
+              ? 'Upload too large. Please keep each file under 10MB.'
+              : `Failed to update service (${response.status}).`);
+        throw new Error(message);
       }
 
       toast.success('Service updated successfully.');

@@ -33,6 +33,7 @@ import UpdateProviders from './pages/admin/UpdateProviders'
 import AdminServices from './pages/admin/AdminServices'
 import CategoryClicks from './pages/admin/CategoryClicks'
 import ProviderClicks from './pages/admin/ProviderClicks'
+import UserManagement from './pages/admin/UserManagement'
 import ProviderDashboard from './pages/provider/Dashboard'
 import ManageServices from './pages/provider/ManageServices'
 import EditService from './pages/provider/EditService'
@@ -182,6 +183,7 @@ const App = () => {
           <Route path="services" element={<AdminServices />} />
           <Route path="category-clicks" element={<CategoryClicks />} />
           <Route path="provider-clicks" element={<ProviderClicks />} />
+          <Route path="users" element={<UserManagement />} />
           <Route path="update-profile" element={<UpdateProfile />} />
         </Route>
       </Routes>

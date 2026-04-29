@@ -189,9 +189,17 @@ const CreateService = () => {
         credentials: 'include',
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      const data = rawText ? (() => { try { return JSON.parse(rawText); } catch { return null; } })() : null;
       if (!response.ok) {
-        throw new Error(data?.message || 'Failed to create service.');
+        const message =
+          data?.message ||
+          (response.status === 401
+            ? 'Session expired. Please login again and retry.'
+            : response.status === 413
+              ? 'Upload too large. Please keep each file under 10MB.'
+              : `Failed to create service (${response.status}).`);
+        throw new Error(message);
       }
 
       toast.success('Service created successfully.');
