@@ -280,6 +280,59 @@ const updateUserProfile = async (req, res) => {
     }
 };
 
+// --- Controller to Change Password ---
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Current password and new password are required"
+            });
+        }
+
+        if (String(newPassword).length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: "Password should be at least 8 characters"
+            });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const isCorrectPassword = await bcrypt.compare(
+            String(currentPassword),
+            String(user.password || "")
+        );
+        if (!isCorrectPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Current password is incorrect"
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(String(newPassword), 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Password updated successfully"
+        });
+    } catch (error) {
+        console.log("Error in changePassword:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error: " + error.message,
+        });
+    }
+};
+
 const getAdminDashboardStats = async (req, res) => {
     try {
         // 1. Get status counts and total bookings in one query
@@ -396,4 +449,4 @@ export const removeServiceFromWishlist = async (req, res) => {
 };
 
 // --- Single Export Block ---
-export { register, login, logout, checkAuth, updateUserProfile, getAdminDashboardStats,getAllBookings };
+export { register, login, logout, checkAuth, updateUserProfile, changePassword, getAdminDashboardStats, getAllBookings };

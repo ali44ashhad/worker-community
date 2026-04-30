@@ -5,6 +5,7 @@ import {
     logout, 
     register, 
     updateUserProfile, 
+    changePassword,
     addServiceToWishlist, 
     removeServiceFromWishlist 
 } from '../controllers/user.controller.js'; // Remove admin controllers
@@ -25,6 +26,8 @@ userRouter.put(
     upload.single("profileImage"), 
     updateUserProfile
 );
+
+userRouter.put("/change-password", protect, changePassword);
 
 // Add service to wishlist
 userRouter.post('/wishlist/:serviceId', protect, addServiceToWishlist);

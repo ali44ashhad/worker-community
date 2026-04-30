@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { updateProfile } from '../features/authSlice';
+import { changePasswordUser, updateProfile } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
 import { HiOutlineUser, HiOutlineMail, HiOutlinePhone, HiOutlineCamera, HiOutlineCheck, HiX } from 'react-icons/hi';
 
@@ -24,6 +24,16 @@ const UpdateProfile = () => {
   const [previewImage, setPreviewImage] = useState('');
   const [profileImage, setProfileImage] = useState(null);
   const [removeProfileImage, setRemoveProfileImage] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  });
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -78,6 +88,48 @@ const UpdateProfile = () => {
         setPreviewImage(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    const currentPassword = String(passwordForm.currentPassword || '').trim();
+    const newPassword = String(passwordForm.newPassword || '').trim();
+    const confirmNewPassword = String(passwordForm.confirmNewPassword || '').trim();
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      toast.error('Please fill all password fields.');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error('New password should be at least 8 characters.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast.error('New password and confirm password do not match.');
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      toast.error('New password must be different from current password.');
+      return;
+    }
+
+    try {
+      const data = await dispatch(changePasswordUser({ currentPassword, newPassword })).unwrap();
+      toast.success(data?.message || 'Password updated successfully');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+      setShowPasswords({ current: false, next: false, confirm: false });
+    } catch (error) {
+      toast.error(error || 'Failed to update password');
     }
   };
 
@@ -395,6 +447,107 @@ const UpdateProfile = () => {
               </button>
             </div>
           </form>
+
+          {/* Change Password Section */}
+          <div className="border-t-2 border-black bg-white p-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-black">Change Password</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Update your password to keep your account secure.
+              </p>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-5">
+              <div>
+                <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
+                  Current Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.current ? 'text' : 'password'}
+                    name="currentPassword"
+                    value={passwordForm.currentPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Enter current password"
+                    className="w-full h-14 px-4 pr-16 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords((p) => ({ ...p, current: !p.current }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-2 text-sm font-semibold rounded-md border border-gray-300 hover:bg-gray-100 transition-colors"
+                  >
+                    {showPasswords.current ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.next ? 'text' : 'password'}
+                      name="newPassword"
+                      value={passwordForm.newPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Min 8 characters"
+                      className="w-full h-14 px-4 pr-16 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                      autoComplete="new-password"
+                      minLength={8}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords((p) => ({ ...p, next: !p.next }))}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-2 text-sm font-semibold rounded-md border border-gray-300 hover:bg-gray-100 transition-colors"
+                    >
+                      {showPasswords.next ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.confirm ? 'text' : 'password'}
+                      name="confirmNewPassword"
+                      value={passwordForm.confirmNewPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Re-enter new password"
+                      className="w-full h-14 px-4 pr-16 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                      autoComplete="new-password"
+                      minLength={8}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords((p) => ({ ...p, confirm: !p.confirm }))}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-2 text-sm font-semibold rounded-md border border-gray-300 hover:bg-gray-100 transition-colors"
+                    >
+                      {showPasswords.confirm ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                <p className="text-xs text-gray-500">
+                  Tip: Use a strong password (mix letters, numbers, symbols).
+                </p>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="h-12 px-6 bg-black text-white rounded-lg font-semibold hover:bg-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Updating...' : 'Change Password'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
 
         {/* Additional Info */}

@@ -73,6 +73,22 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
+// ========================== CHANGE PASSWORD ==========================
+export const changePasswordUser = createAsyncThunk(
+  "auth/changePassword",
+  async ({ currentPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const response = await axios.put(`${API_URL}/api/user/change-password`, {
+        currentPassword,
+        newPassword,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Password update failed");
+    }
+  }
+);
+
 // ========================== INITIAL STATE ==========================
 const initialState = {
   user: null,
@@ -158,6 +174,19 @@ const authSlice = createSlice({
         state.user = action.payload.user;
       })
       .addCase(updateProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
+      // ---------- CHANGE PASSWORD ----------
+      .addCase(changePasswordUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(changePasswordUser.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(changePasswordUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       });
