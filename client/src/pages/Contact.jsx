@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { HiOutlineMail, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineClock } from 'react-icons/hi';
+import { HiOutlineMail, HiOutlinePhone, HiOutlineClock } from 'react-icons/hi';
 import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import emailjs from '@emailjs/browser';
+
+const EMAILJS_SERVICE_ID = 'service_j70psri';
+const EMAILJS_TEMPLATE_ID = 'template_rtmto2q';
+const EMAILJS_PUBLIC_KEY = 'CHh6M29utstehJebQ';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -68,19 +73,18 @@ const Contact = () => {
     setIsSubmitting(true);
     
     try {
-      // TODO: Replace with actual API endpoint when backend is ready
-      // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      // const response = await fetch(`${API_URL}/api/contact`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   credentials: 'include',
-      //   body: JSON.stringify(formData)
-      // });
-      
-      // For now, simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          from_phone: formData.phone || 'N/A',
+          subject: formData.subject,
+          message: formData.message,
+        },
+        { publicKey: EMAILJS_PUBLIC_KEY }
+      );
       
       toast.success('Thank you for contacting us! We\'ll get back to you soon.');
       
@@ -96,7 +100,7 @@ const Contact = () => {
       
     } catch (error) {
       console.error('Error submitting contact form:', error);
-      toast.error('Something went wrong. Please try again later.');
+      toast.error('Failed to send message. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }
