@@ -57,7 +57,7 @@ const SERVICE_RULES = {
   },
   "Consulting": {
     subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Landscaping", "Garden", "Flowers"]
+    keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Human Resource", "Landscaping", "Garden", "Flowers"]
   },
   "Finance": {
     subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
@@ -204,10 +204,9 @@ serviceOfferingSchema.pre('save', function(next) {
 
 // Add indexes for performance optimization
 // Index on serviceCategory for fast lookups in top-categories aggregation
+// Note: do not call .index({ _id: 1 }) — MongoDB already has a unique index on _id;
+// defining one triggers a Mongoose warning and has no benefit.
 serviceOfferingSchema.index({ serviceCategory: 1 });
-
-// Index on _id for faster $lookup operations
-serviceOfferingSchema.index({ _id: 1 });
 
 const ServiceOffering = mongoose.model("ServiceOffering", serviceOfferingSchema);
 

@@ -71,7 +71,7 @@ const SERVICE_RULES = {
   "Consulting": {
     description: "Expert consulting services for various business and personal needs.",
     subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Landscaping", "Garden", "Flowers"]
+    keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Human Resource", "Landscaping", "Garden", "Flowers"]
   },
   "Finance": {
     description: "Financial planning, investment advice, and accounting services.",
