@@ -193,6 +193,7 @@ const SERVICE_RULES = {
       'CA',
       'Chartered Accountant',
       'Returns',
+      'Human Resource',
       'Landscaping',
       'Garden',
       'Flowers',

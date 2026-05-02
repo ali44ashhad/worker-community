@@ -76,7 +76,7 @@ const SERVICE_RULES = {
   },
   "Consulting": {
     subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Landscaping", "Garden", "Flowers"]
+    keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Human Resource", "Landscaping", "Garden", "Flowers"]
   },
   "Finance": {
     subCategories: ["Basic Services", "Premium Services", "Specialized Services"],

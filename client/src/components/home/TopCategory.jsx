@@ -76,7 +76,7 @@ const TopCategory = () => {
         "Consulting": {
             description: "Expert consulting services for business, finance, and specialized needs.",
             subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-            keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Landscaping", "Garden", "Flowers"]
+            keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Human Resource", "Landscaping", "Garden", "Flowers"]
         },
         "Finance": {
             description: "Financial planning, investment advice, and money management services.",
