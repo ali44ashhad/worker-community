@@ -9,7 +9,7 @@ import { getActiveCategories } from '../features/adminSlice';
 
 const UpdateServices = () => {
   const PROVIDER_BIO_MAX_CHARS = 500;
-  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file
+  const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50MB per file
   const EXPERIENCE_MAX_YEARS = 80;
   const formatBytes = (bytes) => {
     const mb = bytes / (1024 * 1024);
@@ -198,7 +198,7 @@ const UpdateServices = () => {
         return;
       }
       if (file.size > MAX_UPLOAD_BYTES) {
-        toast.error(`${file.name} is ${formatBytes(file.size)} (max 10MB).`);
+        toast.error(`${file.name} is ${formatBytes(file.size)} (max 50MB).`);
         return;
       }
       validFiles.push(file);
@@ -234,7 +234,7 @@ const UpdateServices = () => {
         return;
       }
       if (file.size > MAX_UPLOAD_BYTES) {
-        toast.error(`${file.name} is ${formatBytes(file.size)} (max 10MB).`);
+        toast.error(`${file.name} is ${formatBytes(file.size)} (max 50MB).`);
         return;
       }
       validFiles.push(file);
@@ -944,7 +944,7 @@ const UpdateServices = () => {
                 Upload Work Images *
               </label>
               <p className="text-sm text-gray-500 mb-3">
-                Max size: <span className="font-semibold text-gray-700">10MB per file</span> (Images: PNG/JPG/JPEG)
+                Max size: <span className="font-semibold text-gray-700">50MB per file</span> (Images: PNG/JPG/JPEG)
               </p>
               <motion.div 
                 className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
@@ -970,7 +970,7 @@ const UpdateServices = () => {
                     <Upload className="text-gray-400 mb-4" size={48} />
                   </motion.div>
                   <span className="text-gray-900 font-semibold text-lg mb-2">Click to upload images</span>
-                  <span className="text-sm text-gray-500">PNG, JPG up to 10MB</span>
+                  <span className="text-sm text-gray-500">PNG, JPG up to 50MB</span>
                 </label>
               </motion.div>
               {errors[`service-${service.id}-images`] && (
@@ -1030,7 +1030,7 @@ const UpdateServices = () => {
                 Upload PDFs <span className="text-gray-400">(optional)</span>
               </label>
               <p className="text-sm text-gray-500 mb-3">
-                Max size: <span className="font-semibold text-gray-700">10MB per file</span> (Documents: PDF)
+                Max size: <span className="font-semibold text-gray-700">50MB per file</span> (Documents: PDF)
               </p>
               <motion.div 
                 className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
@@ -1056,7 +1056,7 @@ const UpdateServices = () => {
                     <FileText className="text-gray-400 mb-4" size={48} />
                   </motion.div>
                   <span className="text-gray-900 font-semibold text-lg mb-2">Click to upload PDFs</span>
-                  <span className="text-sm text-gray-500">PDF files up to 10MB</span>
+                  <span className="text-sm text-gray-500">PDF files up to 50MB</span>
                 </label>
               </motion.div>
               {/* {errors[`service-${service.id}-pdfs`] && (

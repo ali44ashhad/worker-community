@@ -257,7 +257,7 @@ const EditService = () => {
           (response.status === 401
             ? 'Session expired. Please login again and retry.'
             : response.status === 413
-              ? 'Upload too large. Please keep each file under 10MB.'
+              ? 'Upload too large. Please keep each file under 50MB.'
               : `Failed to update service (${response.status}).`);
         throw new Error(message);
       }
@@ -495,7 +495,7 @@ const EditService = () => {
               <label htmlFor="edit-service-images" className="cursor-pointer flex flex-col items-center">
                 <Upload className="text-gray-400 mb-3" size={40} />
                 <span className="text-gray-900 font-semibold">Click to upload images</span>
-                <span className="text-xs text-gray-500">PNG, JPG up to 10MB</span>
+                <span className="text-xs text-gray-500">PNG, JPG up to 50MB</span>
               </label>
             </motion.div>
             {errors.images && (
@@ -557,7 +557,7 @@ const EditService = () => {
               <label htmlFor="edit-service-pdfs" className="cursor-pointer flex flex-col items-center">
                 <FileText className="text-gray-400 mb-3" size={40} />
                 <span className="text-gray-900 font-semibold">Click to upload PDFs</span>
-                <span className="text-xs text-gray-500">PDF files up to 10MB</span>
+                <span className="text-xs text-gray-500">PDF files up to 50MB</span>
               </label>
             </motion.div>
             {/* {errors.pdfs && (

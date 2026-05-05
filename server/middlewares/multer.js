@@ -13,7 +13,9 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB (increased to accommodate PDFs)
+  // NOTE: true "unlimited" with memoryStorage can exhaust RAM and crash the server.
+  // Use a high cap to feel unlimited while staying safe.
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB per file
   fileFilter,
 });
 

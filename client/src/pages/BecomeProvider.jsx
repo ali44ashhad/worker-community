@@ -11,7 +11,7 @@ const BecomeProvider = () => {
   const dispatch = useDispatch();
   const { activeCategories } = useSelector((state) => state.admin);
   const PROVIDER_BIO_MAX_CHARS = 500;
-  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file
+  const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50MB per file
   const EXPERIENCE_MAX_YEARS = 80;
   const formatBytes = (bytes) => {
     const mb = bytes / (1024 * 1024);
@@ -118,7 +118,7 @@ const BecomeProvider = () => {
         return;
       }
       if (file.size > MAX_UPLOAD_BYTES) {
-        toast.error(`${file.name} is ${formatBytes(file.size)} (max 10MB).`);
+        toast.error(`${file.name} is ${formatBytes(file.size)} (max 50MB).`);
         return;
       }
       validFiles.push(file);
@@ -155,7 +155,7 @@ const BecomeProvider = () => {
         return;
       }
       if (file.size > MAX_UPLOAD_BYTES) {
-        toast.error(`${file.name} is ${formatBytes(file.size)} (max 10MB).`);
+        toast.error(`${file.name} is ${formatBytes(file.size)} (max 50MB).`);
         return;
       }
       validFiles.push(file);
@@ -423,7 +423,7 @@ const BecomeProvider = () => {
           (response.status === 401
             ? 'Session expired. Please login again and retry.'
             : response.status === 413
-              ? 'Upload too large. Please keep each file under 10MB.'
+              ? 'Upload too large. Please keep each file under 50MB.'
               : `Failed to submit (${response.status}). Please try again.`);
         toast.error(message);
         setIsSubmitting(false);
@@ -710,7 +710,7 @@ const BecomeProvider = () => {
                 Upload Work Images *
               </label>
               <p className="text-sm text-gray-600 mb-3">
-                Max size: <span className="font-semibold">10MB per file</span> (Images: PNG/JPG/JPEG)
+                Max size: <span className="font-semibold">50MB per file</span> (Images: PNG/JPG/JPEG)
               </p>
               <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
                   errors[`service-${service.id}-images`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
@@ -729,7 +729,7 @@ const BecomeProvider = () => {
                 >
                   <Upload className="text-black mb-3" size={48} />
                   <span className="text-black font-bold text-lg mb-1">Click to upload images</span>
-                  <span className="text-sm text-gray-600">PNG, JPG up to 10MB</span>
+                  <span className="text-sm text-gray-600">PNG, JPG up to 50MB</span>
                 </label>
               </div>
               {errors[`service-${service.id}-images`] && (
@@ -765,7 +765,7 @@ const BecomeProvider = () => {
                 Upload PDFs <span className="text-gray-500 normal-case">(optional)</span>
               </label>
               <p className="text-sm text-gray-600 mb-3">
-                Max size: <span className="font-semibold">10MB per file</span> (Documents: PDF)
+                Max size: <span className="font-semibold">50MB per file</span> (Documents: PDF)
               </p>
               <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
                   errors[`service-${service.id}-pdfs`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
@@ -784,7 +784,7 @@ const BecomeProvider = () => {
                 >
                   <FileText className="text-black mb-3" size={48} />
                   <span className="text-black font-bold text-lg mb-1">Click to upload PDFs</span>
-                  <span className="text-sm text-gray-600">PDF files up to 10MB</span>
+                  <span className="text-sm text-gray-600">PDF files up to 50MB</span>
                 </label>
               </div>
               {/* {errors[`service-${service.id}-pdfs`] && (
