@@ -30,6 +30,33 @@ const allowedOrigins = new Set([
   "http://localhost:3000",
 ]);
 
+// Ensure CORS headers are present even on cached/early/error responses.
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+  }
+  next();
+});
+
+// Handle preflight early (Vercel/edge can be picky about 204 + headers)
+app.options(/^.*$/, (req, res) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    req.headers["access-control-request-headers"] || "Content-Type, Authorization"
+  );
+  return res.status(204).send();
+});
+
 app.use(
   cors({
     origin(origin, cb) {
@@ -42,8 +69,7 @@ app.use(
   })
 );
 
-// 2. Explicitly handle preflight OPTIONS for ALL paths:
-app.options(/^.*$/, cors({ origin: true, credentials: true })); // [2]
+// (preflight handled above)
 
 // Increase payload limits for JSON and urlencoded bodies
 app.use(express.json({ limit: '20mb' }));
