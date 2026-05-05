@@ -64,19 +64,41 @@ app.get("/", (req, res) => {
   res.send("Server is live");
 });
 
-async function start() {
-  // ✅ Connect to database
-  await dbConnect();
+// ----------------------------
+// Vercel serverless bootstrap
+// ----------------------------
+const isVercel = Boolean(process.env.VERCEL);
+let initPromise = null;
 
-  // ✅ Seed initial categories (create missing only)
-  await seedCategoriesIfMissing();
-
-  app.listen(port, () => {
-    console.log(`Server is listening at port: ${port}`);
-  });
+async function init() {
+  if (!initPromise) {
+    initPromise = (async () => {
+      await dbConnect();
+      await seedCategoriesIfMissing();
+    })();
+  }
+  return initPromise;
 }
 
-start();
+// Local/dev: start a long-running HTTP server.
+if (!isVercel) {
+  init()
+    .then(() => {
+      app.listen(port, () => {
+        console.log(`Server is listening at port: ${port}`);
+      });
+    })
+    .catch((err) => {
+      console.error("Failed to start server:", err);
+      process.exit(1);
+    });
+}
+
+// Vercel: export a serverless handler (no app.listen).
+export default async function handler(req, res) {
+  await init();
+  return app(req, res);
+}
 
 // Catch unhandled promise rejections / uncaught exceptions so the server keeps running
 process.on("unhandledRejection", (reason) => {
