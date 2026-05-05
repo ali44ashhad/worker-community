@@ -15,19 +15,32 @@ import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
 
 const app = express();
 
+// On serverless/CDN layers, 304 responses may be served without CORS headers.
+// Disable automatic ETag generation so the browser always receives full CORS headers.
+app.set("etag", false);
+
 app.use(cookieParser()); 
 
 // 1. Allow CORS for ALL routes and ALL methods:
-app.use(cors({
-  origin: [
-    'https://worker-community.vercel.app',
-    'https://www.commun.in',
-    'https://commun.in',
-    'http://localhost:5173', // for local dev
-    'http://localhost:3000'  // for local dev
-  ],
-  credentials: true,
-}));
+const allowedOrigins = new Set([
+  "https://worker-community.vercel.app",
+  "https://www.commun.in",
+  "https://commun.in",
+  "http://localhost:5173",
+  "http://localhost:3000",
+]);
+
+app.use(
+  cors({
+    origin(origin, cb) {
+      // allow non-browser clients (no origin) and allowed browser origins
+      if (!origin || allowedOrigins.has(origin)) return cb(null, true);
+      return cb(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    optionsSuccessStatus: 204,
+  })
+);
 
 // 2. Explicitly handle preflight OPTIONS for ALL paths:
 app.options(/^.*$/, cors({ origin: true, credentials: true })); // [2]
