@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import ProviderProfile from "../models/providerProfile.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
+import { validateCategorySelection } from "../utils/categoryValidation.js";
 import Booking from "../models/booking.model.js"; // <-- You need to import Booking model here for dashboard stats
 import Comment from "../models/comment.model.js";
 import cloudinary from "../config/cloudinary.js";
@@ -150,14 +151,27 @@ const deleteFromCloudinary = (public_id) => {
             }
         }
 
+        const nextSubCategories = Array.isArray(parsedSubCategories)
+            ? parsedSubCategories
+            : (parsedSubCategories ? [parsedSubCategories] : []);
+        const nextKeywords = Array.isArray(parsedKeywords)
+            ? parsedKeywords
+            : (parsedKeywords ? [parsedKeywords] : []);
+
+        // Enforce DB-driven category/subcategory/specialization validation
+        const validated = await validateCategorySelection({
+            serviceCategory,
+            subCategories: nextSubCategories,
+            keywords: nextKeywords,
+        });
+
         // 3. Create the service offering document
         const newService = new ServiceOffering({
             provider: profile._id,
             servicename,
-            serviceCategory,
-            // Ensure subCategories and keywords are arrays
-            subCategories: Array.isArray(parsedSubCategories) ? parsedSubCategories : (parsedSubCategories ? [parsedSubCategories] : []),
-            keywords: Array.isArray(parsedKeywords) ? parsedKeywords : (parsedKeywords ? [parsedKeywords] : []),
+            serviceCategory: validated.serviceCategory,
+            subCategories: validated.subCategories,
+            keywords: validated.keywords,
             description,
             portfolioImages,
             portfolioPDFs,
@@ -902,6 +916,13 @@ const updateServiceOffering = async (req, res) => {
             }
             service.keywords = Array.isArray(parsedKeywords) ? parsedKeywords : [parsedKeywords];
         }
+
+        // Enforce DB-driven category/subcategory/specialization validation using the final values to be saved
+        await validateCategorySelection({
+            serviceCategory: service.serviceCategory,
+            subCategories: service.subCategories || [],
+            keywords: service.keywords || [],
+        });
         
         if (description) service.description = description;
         // Only update experience if provided and not empty

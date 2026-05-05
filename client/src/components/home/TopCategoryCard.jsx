@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaStar } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { slugifyCategoryName } from '../../utils/slug';
 
 const TopCategoryCard = ({ category, data = {}, image }) => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const TopCategoryCard = ({ category, data = {}, image }) => {
   const serviceCount = Number(data?.serviceCount || 0);
   const description = data?.description || '';
 
-  const handleClick = () => navigate(`/category/${encodeURIComponent(category)}`);
+  const handleClick = () => navigate(`/category/${slugifyCategoryName(category)}`);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') handleClick();

@@ -8,8 +8,10 @@ import commentRouter from "./routes/comment.routes.js";
 import adminRouter from "./routes/admin.route.js";
 import serviceOfferingRouter from "./routes/serviceOffering.route.js";
 import sitemapRouter from "./routes/sitemap.route.js";
+import categoryRouter from "./routes/category.route.js";
 import cors from "cors";
 import "dotenv/config"
+import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
 
 const app = express();
 
@@ -38,6 +40,7 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use('/api/user', userRouter);
 app.use('/api/provider-profile', providerProfileRouter);
 app.use('/api/service-offering', serviceOfferingRouter);
+app.use('/api/categories', categoryRouter);
 app.use('/api/bookings', bookingRouter);
 app.use('/api/comments', commentRouter);
 app.use('/api/admin',adminRouter)
@@ -61,12 +64,19 @@ app.get("/", (req, res) => {
   res.send("Server is live");
 });
 
-// ✅ Connect to database
-dbConnect();
+async function start() {
+  // ✅ Connect to database
+  await dbConnect();
 
-const serverInstance = app.listen(port, () => {
-  console.log(`Server is listening at port: ${port}`);
-});
+  // ✅ Seed initial categories (create missing only)
+  await seedCategoriesIfMissing();
+
+  app.listen(port, () => {
+    console.log(`Server is listening at port: ${port}`);
+  });
+}
+
+start();
 
 // Catch unhandled promise rejections / uncaught exceptions so the server keeps running
 process.on("unhandledRejection", (reason) => {

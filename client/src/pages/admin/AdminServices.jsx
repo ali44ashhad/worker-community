@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -6,7 +6,8 @@ import {
   getAllServicesAdmin, 
   updateServiceDetails,
   deleteServiceImage,
-  deleteServicePDF
+  deleteServicePDF,
+  getActiveCategories
 } from '../../features/adminSlice';
 import { 
   HiOutlinePencil, 
@@ -25,121 +26,12 @@ import {
 } from 'react-icons/hi';
 import { getFullName } from '../../utils/userHelpers';
 
-const SERVICE_RULES = {
-  "Academics": {
-    subCategories: ["Home Tuitions", "Tuition Center", "School", "College"],
-    keywords: ["Maths", "Science", "Language", "English", "Hindi", "Sanskrit", "Spanish", "French", "German", "Mandarin", "Italian", "Accounts", "Economics", "Physics", "Chemistry"]
-  },
-  "Music": {
-    subCategories: ["Home Classes", "Academy"],
-    keywords: ["Home Classes", "Guitar", "Academy", "Piano", "Drums", "Violin", "Flute", "Vocals", "Singing", "Saxophone"]
-  },
-  "Dance": {
-    subCategories: ["Home Classes", "Academy"],
-    keywords: ["Zumba", "Bhangra", "Salsa", "Jiving", "Freestyle", "Breakdance"]
-  },
-  "Fitness & Sports": {
-    subCategories: ["Home Classes", "Academy"],
-    keywords: ["Yoga", "Pilates", "Fitness", "Zumba", "Skateboarding", "Skating", "Cricket", "Football", "Pickle Ball", "Badminston", "Tennis", "Table Tennis", "Chess", "Padel", "Gym", "Strength Training", "Core", "Strength", "Weight Training", "Weights", "Sudoku", "Puzzle"]
-  },
-  "Home Cooking": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Food", "Cook", "Italian", "Indian", "Mexican", "Rajasthani", "Gujrati", "Bengali", "Chinese", "Burgers", "Pizza", "Asian", "Sushi", "Dimsums", "Sushi Cake", "Salads", "Ramen", "Pasta", "Biryani"]
-  },
-  "Home Catering": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Food", "Cook", "Italian", "Indian", "Mexican", "Rajasthani", "Gujrati", "Bengali", "Chinese", "Burgers", "Pizza", "Asian", "Sushi", "Dimsums", "Sushi Cake", "Salads", "Ramen", "Pasta", "Biryani"]
-  },
-  "Home Baker": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Cakes", "Pastry", "Brownie", "Muffins", "Tarts", "Eggless", "Quiche", "Fondant", "Chocolate", "Protein Bar", "Granola", "Bread"]
-  },
-  "Catering": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Food", "Cook", "Italian", "Indian", "Mexican", "Rajasthani", "Gujrati", "Bengali", "Chinese", "Burgers", "Pizza", "Asian", "Sushi", "Dimsums", "Sushi Cake", "Salads", "Ramen", "Pasta", "Biryani"]
-  },
-  "Professional Baker": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Cakes", "Pastry", "Brownie", "Muffins", "Tarts", "Eggless", "Quiche", "Fondant"]
-  },
-  "Workshops": {
-    subCategories: ["Home Workshops", "Online Workshops"],
-    keywords: ["Summer", "Winter", "Story Telling", "Book Reading", "Cooking", "Baking", "Workshop"]
-  },
-  "Photography": {
-    subCategories: ["Academy"],
-    keywords: ["Lens", "Camera", "Video", "Wedding", "Birthday"]
-  },
-  "Technology": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["AI", "Python", "Automation", "Coding", "Image Creation", "Digital Marketing", "Designing", "Scratch", "Prompt", "Chat GPT", "LLM", "Java", "Clone", "Video Generaion"]
-  },
-  "Consulting": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Financial Planning", "Tax Consultancy", "CA", "Chartered Accountant", "Returns", "Human Resource", "Landscaping", "Garden", "Flowers"]
-  },
-  "Finance": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Financial Planning", "Tax Planning", "Accounting", "Investments", "Mutual Finds", "Stocks", "Broker", "Money", "Bonds", "Crypto"]
-  },
-  "Groceries": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Kitchen", "Grocery", "Vegetables", "Fruits", "Sauce", "Milk", "Bread"]
-  },
-  "Home Products": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Candles", "Handicrafts", "Bathroom Products", "Artefacts", "Sculptures", "Show Piece", "Garden", "Furniture", "Flooring", "Marble", "Wooden", "Carpenter", "Electrical", "Plumbing", "Solar", "Gate", "Light", "Paint", "Wall"]
-  },
-  "Apparels & Footwear": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Fashion", "Shoes", "Chappals", "Sandals", "Suits", "Shirts", "Kurti", "Indo western", "Coord Sets"]
-  },
-  "Law": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Tax", "Civil", "Criminal", "Corporate", "Arbitration", "High Court", "Court", "Supreme Court", "District Court", "Judge", "Lawyer", "Advocate", "Bail"]
-  },
-  "Medical": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Doctor", "Nurse", "Medical Equipment"]
-  },
-  "Art & Craft": {
-    subCategories: ["Home Classes", "Academy"],
-    keywords: ["Origami", "Painting", "Drawing", "Colouring"]
-  },
-  "Home Interiors": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Interiros", "Designing"]
-  },
-  "Construction": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["House", "Farm House", "Flat", "Floor", "Marble", "Stone", "Wall"]
-  },
-  "Real Estate": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Real Estate Consultant", "Property", "Buy", "Sell"]
-  },
-  "Event Planner": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Birthday", "Decor", "Wedding", "Anniversary", "Balloon", "Props", "Corporate Event", "Rides"]
-  },
-  "Gifting": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: ["Corporate", "Gift Set"]
-  },
-  "Beauty": {
-    subCategories: ["Salon at Home", "Makeup Artist", "Bridal", "Nail Care", "Skincare", "Spa & Massage"],
-    keywords: ["Haircut", "Hair Styling", "Hair Color", "Blow Dry", "Facial", "Cleanup", "Waxing", "Threading", "Manicure", "Pedicure", "Nails", "Nail Art", "Makeup", "Party Makeup", "Bridal Makeup", "Mehendi", "Massage", "Spa"]
-  },
-  "Other": {
-    subCategories: ["Basic Services", "Premium Services", "Specialized Services"],
-    keywords: []
-  }
-};
+// Categories/subcategories/keywords are DB-driven via `activeCategories`.
 
 const AdminServices = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const { services, servicesPagination, isLoading, error } = useSelector((state) => state.admin);
+  const { services, servicesPagination, isLoading, error, activeCategories } = useSelector((state) => state.admin);
   const [editingService, setEditingService] = useState(null);
   const [editForm, setEditForm] = useState({
     servicename: '',
@@ -160,6 +52,20 @@ const AdminServices = () => {
   const [imageToDelete, setImageToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [savingServiceId, setSavingServiceId] = useState(null);
+
+  useEffect(() => {
+    if (!activeCategories || activeCategories.length === 0) {
+      dispatch(getActiveCategories());
+    }
+  }, [dispatch, activeCategories?.length]);
+
+  const RULES = useMemo(() => {
+    const rules = {};
+    (activeCategories || []).forEach((c) => {
+      rules[c.name] = { subCategories: c.subCategories || [], keywords: c.keywords || [] };
+    });
+    return rules;
+  }, [activeCategories]);
 
   // Debounce search input
   useEffect(() => {
@@ -396,7 +302,7 @@ const AdminServices = () => {
   }
 
   const getCurrentRules = () => {
-    return SERVICE_RULES[editForm.serviceCategory] || { subCategories: [], keywords: [] };
+    return RULES[editForm.serviceCategory] || { subCategories: [], keywords: [] };
   };
 
   return (
@@ -515,7 +421,7 @@ const AdminServices = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                       >
                         <option value="">Select Category</option>
-                        {Object.keys(SERVICE_RULES).map((cat) => (
+                        {Object.keys(RULES).map((cat) => (
                           <option key={cat} value={cat}>{cat}</option>
                         ))}
                       </select>

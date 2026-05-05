@@ -11,7 +11,11 @@ import {
     getCategoryClicks,
     getProviderClicks,
     getAllUsers,
-    updateUserStatus
+    updateUserStatus,
+    getAllCategoriesAdmin,
+    createCategoryAdmin,
+    updateCategoryAdmin,
+    updateCategoryStatusAdmin
 } from "../controllers/admin.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
@@ -101,6 +105,37 @@ router.get(
     protect,
     isAdmin,
     getProviderClicks
+);
+
+// ========================== CATEGORY MANAGEMENT (Admin) ==========================
+router.get(
+    "/categories",
+    protect,
+    isAdmin,
+    getAllCategoriesAdmin
+);
+
+router.post(
+    "/categories",
+    protect,
+    isAdmin,
+    upload.single("image"),
+    createCategoryAdmin
+);
+
+router.put(
+    "/categories/:categoryId",
+    protect,
+    isAdmin,
+    upload.single("image"),
+    updateCategoryAdmin
+);
+
+router.patch(
+    "/categories/:categoryId/status",
+    protect,
+    isAdmin,
+    updateCategoryStatusAdmin
 );
 
 export default router;

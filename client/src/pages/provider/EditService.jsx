@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { getMyProviderProfile } from '../../features/providerSlice';
-import SERVICE_RULES from '../../constants/serviceRules';
+import { getActiveCategories } from '../../features/adminSlice';
 
 const buildServiceState = (service) => ({
   id: service?._id || Date.now(),
@@ -31,6 +31,7 @@ const EditService = () => {
   const navigate = useNavigate();
   const { serviceId } = useParams();
   const { myProviderProfile, isFetchingMyProfile } = useSelector((state) => state.provider);
+  const { activeCategories } = useSelector((state) => state.admin);
 
   const [serviceForm, setServiceForm] = useState(null);
   const [errors, setErrors] = useState({});
@@ -39,6 +40,20 @@ const EditService = () => {
   useEffect(() => {
     dispatch(getMyProviderProfile());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!activeCategories || activeCategories.length === 0) {
+      dispatch(getActiveCategories());
+    }
+  }, [dispatch, activeCategories?.length]);
+
+  const RULES = useMemo(() => {
+    const rules = {};
+    (activeCategories || []).forEach((c) => {
+      rules[c.name] = { subCategories: c.subCategories || [], keywords: c.keywords || [] };
+    });
+    return rules;
+  }, [activeCategories]);
 
   const targetService = useMemo(() => {
     return myProviderProfile?.serviceOfferings?.find((service) => service._id === serviceId);
@@ -146,7 +161,7 @@ const EditService = () => {
 
     if (
       serviceForm?.category &&
-      SERVICE_RULES[serviceForm.category]?.subCategories?.length > 0 &&
+      (RULES[serviceForm.category]?.subCategories?.length || 0) > 0 &&
       !serviceForm.subCategories.length
     ) {
       newErrors.subCategories = 'Pick at least one sub-category.';
@@ -155,7 +170,7 @@ const EditService = () => {
 
     if (
       serviceForm?.category &&
-      SERVICE_RULES[serviceForm.category]?.keywords?.length > 0 &&
+      (RULES[serviceForm.category]?.keywords?.length || 0) > 0 &&
       !serviceForm.keywords.length
     ) {
       newErrors.keywords = 'Select at least one keyword.';
@@ -370,7 +385,7 @@ const EditService = () => {
               }`}
             >
               <option value="">Choose a category</option>
-              {Object.keys(SERVICE_RULES).map((category) => (
+              {Object.keys(RULES).map((category) => (
                 <option key={category} value={category}>
                   {category}
                 </option>
@@ -386,17 +401,17 @@ const EditService = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-3">
                 Sub-categories *
               </label>
-              {renderChips(SERVICE_RULES[serviceForm.category]?.subCategories || [], 'subCategories')}
+              {renderChips(RULES[serviceForm.category]?.subCategories || [], 'subCategories')}
               {errors.subCategories && (
                 <p className="text-red-500 text-sm mt-2 font-medium">{errors.subCategories}</p>
               )}
             </div>
           )}
 
-          {serviceForm?.category && SERVICE_RULES[serviceForm.category]?.keywords?.length > 0 && (
+          {serviceForm?.category && (RULES[serviceForm.category]?.keywords?.length || 0) > 0 && (
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-3">Keywords *</label>
-              {renderChips(SERVICE_RULES[serviceForm.category]?.keywords || [], 'keywords')}
+              {renderChips(RULES[serviceForm.category]?.keywords || [], 'keywords')}
               {errors.keywords && (
                 <p className="text-red-500 text-sm mt-2 font-medium">{errors.keywords}</p>
               )}

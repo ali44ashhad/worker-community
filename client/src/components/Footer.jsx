@@ -103,8 +103,8 @@
 //             <li><Link to="/category/Academics" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Academics</Link></li>
 //             <li><Link to="/category/Music" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Music</Link></li>
 //             <li><Link to="/category/Dance" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Dance</Link></li>
-//             <li><Link to="/category/Fitness%20%26%20Sports" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Fitness & Sports</Link></li>
-//             <li><Link to="/category/Home%20Cooking" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Home Baker</Link></li>
+//             <li><Link to="/category/fitness-&-sports" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Fitness & Sports</Link></li>
+//             <li><Link to="/category/home-cooking" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Home Baker</Link></li>
 //             <li><Link to="/category/Technology" className="text-gray-600 hover:text-gray-900 transition-colors duration-300 text-sm font-medium">Technology</Link></li>
 //           </ul>
 //         </div>
@@ -221,6 +221,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { slugifyCategoryName } from '../utils/slug';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
@@ -366,12 +367,12 @@ const Footer = () => {
           <div>
             <h3 className="text-base font-semibold text-gray-900 mb-6 tracking-tight">Popular Categories</h3>
             <ul className="space-y-3">
-              <li><Link to="/category/Academics" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Academics</Link></li>
-              <li><Link to="/category/Music" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Music</Link></li>
-              <li><Link to="/category/Dance" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Dance</Link></li>
-              <li><Link to="/category/Fitness%20%26%20Sports" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Fitness & Sports</Link></li>
-              <li><Link to="/category/Home%20Cooking" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Home Baker</Link></li>
-              <li><Link to="/category/Technology" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Technology</Link></li>
+              <li><Link to={`/category/${slugifyCategoryName('Academics')}`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Academics</Link></li>
+              <li><Link to={`/category/${slugifyCategoryName('Music')}`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Music</Link></li>
+              <li><Link to={`/category/${slugifyCategoryName('Dance')}`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Dance</Link></li>
+              <li><Link to={`/category/${slugifyCategoryName('Fitness & Sports')}`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Fitness & Sports</Link></li>
+              <li><Link to={`/category/${slugifyCategoryName('Home Cooking')}`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Home Baker</Link></li>
+              <li><Link to={`/category/${slugifyCategoryName('Technology')}`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Technology</Link></li>
             </ul>
           </div>
 

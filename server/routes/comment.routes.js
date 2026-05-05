@@ -1,6 +1,7 @@
 import express from "express";
 import {
     createComment,
+    canReviewService,
     getCommentsForService,
     updateComment,
     deleteComment,
@@ -29,6 +30,15 @@ commentRouter.post(
 commentRouter.get(
     "/get-comments/:serviceId",
     getCommentsForService
+);
+
+// @route   GET /api/comments/can-review/:serviceId
+// @desc    Check if logged-in customer can review this service
+// @access  Private (Customer)
+commentRouter.get(
+    "/can-review/:serviceId",
+    protect,
+    canReviewService
 );
 
 // @route   PUT /api/comments/:commentId

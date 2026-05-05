@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-hot-toast';
 import { FaStar } from 'react-icons/fa';
 import {
   fetchCommentsByService,
+  canReviewService,
   createServiceComment,
   deleteServiceComment,
   updateServiceComment,
@@ -23,6 +24,7 @@ const Comment = ({ serviceId }) => {
   const commentsState = useSelector((state) => state.comments);
   const comments = commentsState.byServiceId[serviceId] || [];
   const serviceProvider = commentsState.serviceProviders[serviceId];
+  const canReview = commentsState.canReviewByServiceId?.[serviceId];
   const isLoading = commentsState.isLoading;
 
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -53,6 +55,12 @@ const Comment = ({ serviceId }) => {
       dispatch(fetchCommentsByService(serviceId));
     }
   }, [dispatch, serviceId]);
+
+  useEffect(() => {
+    if (serviceId && user) {
+      dispatch(canReviewService(serviceId));
+    }
+  }, [dispatch, serviceId, user]);
 
   // Check if current user is the provider of this service
   useEffect(() => {
@@ -167,7 +175,14 @@ const Comment = ({ serviceId }) => {
   };
 
   const onDelete = async (id) => {
-    await dispatch(deleteServiceComment({ commentId: id }));
+    if (!window.confirm('Are you sure you want to delete your review?')) return;
+    const result = await dispatch(deleteServiceComment({ commentId: id }));
+    if (deleteServiceComment.fulfilled.match(result)) {
+      toast.success('Review deleted.');
+      dispatch(fetchCommentsByService(serviceId));
+    } else if (deleteServiceComment.rejected.match(result)) {
+      toast.error(result.payload || 'Failed to delete review');
+    }
   };
 
   const onAddReply = async (commentId) => {
@@ -236,6 +251,8 @@ const Comment = ({ serviceId }) => {
           {user ? (
             hasUserReviewed ? (
               <p className='text-gray-700'>You have already reviewed this service.</p>
+            ) : canReview === false ? (
+              <p className='text-gray-700'>You can review only after you book this service.</p>
             ) : !showReviewForm ? (
               <button
                 onClick={() => setShowReviewForm(true)}

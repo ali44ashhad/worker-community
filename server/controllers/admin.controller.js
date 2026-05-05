@@ -1,8 +1,11 @@
 import User from "../models/user.model.js";
 import ProviderProfile from "../models/providerProfile.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
+import Category from "../models/category.model.js";
 import cloudinary from "../config/cloudinary.js";
 import streamifier from "streamifier";
+import { validateCategorySelection } from "../utils/categoryValidation.js";
+import { deleteCategoryImageFromCloudinary, uploadCategoryImageToCloudinary } from "../utils/categoryImage.js";
 
 // Helper functions for Cloudinary
 const uploadBufferToCloudinary = (buffer) => {
@@ -443,6 +446,26 @@ const updateServiceDetails = async (req, res) => {
         if (description !== undefined) updateData.description = description;
         if (experience !== undefined) updateData.experience = parseInt(experience);
 
+        // Validate against DB-driven categories using the final values that will be saved
+        const nextServiceCategory =
+            updateData.serviceCategory !== undefined
+                ? updateData.serviceCategory
+                : existingService.serviceCategory;
+        const nextSubCategories =
+            updateData.subCategories !== undefined
+                ? updateData.subCategories
+                : existingService.subCategories || [];
+        const nextKeywords =
+            updateData.keywords !== undefined
+                ? updateData.keywords
+                : existingService.keywords || [];
+
+        await validateCategorySelection({
+            serviceCategory: nextServiceCategory,
+            subCategories: nextSubCategories,
+            keywords: nextKeywords,
+        });
+
         // Update regular fields first if there are any
         if (Object.keys(updateData).length > 0) {
             await ServiceOffering.findByIdAndUpdate(
@@ -500,6 +523,191 @@ const updateServiceDetails = async (req, res) => {
     } catch (error) {
         console.error("Error in updateServiceDetails controller:", error.message);
         return res.status(400).json({ success: false, message: error.message || "Internal Server Error" });
+    }
+};
+
+// ========================== CATEGORY MANAGEMENT (Admin) ==========================
+const getAllCategoriesAdmin = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const search = (req.query.search || "").trim();
+        const skip = (page - 1) * limit;
+
+        const query = search
+            ? { name: { $regex: search, $options: "i" } }
+            : {};
+
+        const [total, categories] = await Promise.all([
+            Category.countDocuments(query),
+            Category.find(query)
+                .sort({ name: 1 })
+                .skip(skip)
+                .limit(limit),
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            categories,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalCategories: total,
+                hasNextPage: skip + categories.length < total,
+                hasPrevPage: page > 1,
+                limit,
+            },
+        });
+    } catch (error) {
+        console.error("Error in getAllCategoriesAdmin:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+const createCategoryAdmin = async (req, res) => {
+    try {
+        const { name, subCategories = [], keywords = [], description = "", isActive = true } = req.body;
+        const trimmedName = String(name || "").trim();
+        if (!trimmedName) {
+            return res.status(400).json({ success: false, message: "Category name is required." });
+        }
+
+        const parseJsonArray = (value) => {
+            if (value === undefined || value === null) return [];
+            if (Array.isArray(value)) return value;
+            if (typeof value !== "string") return [];
+            try {
+                const parsed = JSON.parse(value);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
+        };
+
+        const existing = await Category.findOne({ name: trimmedName });
+        if (existing) {
+            return res.status(409).json({ success: false, message: "Category already exists." });
+        }
+
+        let image = { url: "", public_id: "" };
+        if (req.file?.buffer) {
+            image = await uploadCategoryImageToCloudinary(req.file.buffer);
+        }
+
+        const category = await Category.create({
+            name: trimmedName,
+            subCategories: parseJsonArray(subCategories),
+            keywords: parseJsonArray(keywords),
+            description: String(description || "").trim(),
+            image,
+            isActive: String(isActive) === "false" ? false : Boolean(isActive),
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Category created successfully.",
+            category,
+        });
+    } catch (error) {
+        console.error("Error in createCategoryAdmin:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+const updateCategoryAdmin = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const { name, subCategories, keywords, description, isActive } = req.body;
+
+        const parseJsonArray = (value) => {
+            if (value === undefined || value === null) return [];
+            if (Array.isArray(value)) return value;
+            if (typeof value !== "string") return [];
+            try {
+                const parsed = JSON.parse(value);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
+        };
+
+        const category = await Category.findById(categoryId);
+        if (!category) {
+            return res.status(404).json({ success: false, message: "Category not found." });
+        }
+
+        if (name !== undefined) {
+            const trimmedName = String(name || "").trim();
+            if (!trimmedName) {
+                return res.status(400).json({ success: false, message: "Category name cannot be empty." });
+            }
+            // ensure unique
+            const dup = await Category.findOne({ name: trimmedName, _id: { $ne: categoryId } });
+            if (dup) {
+                return res.status(409).json({ success: false, message: "Another category with this name already exists." });
+            }
+            category.name = trimmedName;
+        }
+
+        if (subCategories !== undefined) {
+            category.subCategories = parseJsonArray(subCategories);
+        }
+        if (keywords !== undefined) {
+            category.keywords = parseJsonArray(keywords);
+        }
+        if (description !== undefined) {
+            category.description = String(description || "").trim();
+        }
+        if (isActive !== undefined) {
+            category.isActive = String(isActive) === "false" ? false : Boolean(isActive);
+        }
+
+        if (req.file?.buffer) {
+            if (category.image?.public_id) {
+                await deleteCategoryImageFromCloudinary(category.image.public_id);
+            }
+            const uploaded = await uploadCategoryImageToCloudinary(req.file.buffer);
+            category.image = uploaded;
+        }
+
+        await category.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Category updated successfully.",
+            category,
+        });
+    } catch (error) {
+        console.error("Error in updateCategoryAdmin:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+const updateCategoryStatusAdmin = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const { isActive } = req.body;
+
+        if (isActive === undefined) {
+            return res.status(400).json({ success: false, message: "isActive is required." });
+        }
+
+        const category = await Category.findById(categoryId);
+        if (!category) {
+            return res.status(404).json({ success: false, message: "Category not found." });
+        }
+
+        category.isActive = Boolean(isActive);
+        await category.save();
+
+        return res.status(200).json({
+            success: true,
+            message: `Category ${category.isActive ? "activated" : "deactivated"} successfully.`,
+            category,
+        });
+    } catch (error) {
+        console.error("Error in updateCategoryStatusAdmin:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -922,5 +1130,9 @@ export {
     getCategoryClicks,
     getProviderClicks,
     getAllUsers,
-    updateUserStatus
+    updateUserStatus,
+    getAllCategoriesAdmin,
+    createCategoryAdmin,
+    updateCategoryAdmin,
+    updateCategoryStatusAdmin
 };

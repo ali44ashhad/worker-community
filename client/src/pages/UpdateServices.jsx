@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { X, Plus, Upload, Trash2, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyProviderProfile } from '../features/providerSlice';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import SERVICE_RULES from '../constants/serviceRules';
+import { getActiveCategories } from '../features/adminSlice';
 
 const UpdateServices = () => {
   const PROVIDER_BIO_MAX_CHARS = 500;
@@ -20,6 +20,7 @@ const UpdateServices = () => {
   const [searchParams] = useSearchParams();
   const { myProviderProfile, isFetchingMyProfile } = useSelector((state) => state.provider);
   const { user } = useSelector((state) => state.auth);
+  const { activeCategories } = useSelector((state) => state.admin);
 
   // State for provider bio
   const [providerBio, setProviderBio] = useState('');
@@ -41,6 +42,20 @@ const UpdateServices = () => {
       dispatch(getMyProviderProfile());
     }
   }, [dispatch, user]);
+
+  useEffect(() => {
+    if (!activeCategories || activeCategories.length === 0) {
+      dispatch(getActiveCategories());
+    }
+  }, [dispatch, activeCategories?.length]);
+
+  const RULES = useMemo(() => {
+    const rules = {};
+    (activeCategories || []).forEach((c) => {
+      rules[c.name] = { subCategories: c.subCategories || [], keywords: c.keywords || [] };
+    });
+    return rules;
+  }, [activeCategories]);
 
   // Populate form when profile is fetched
   useEffect(() => {
@@ -406,12 +421,12 @@ const UpdateServices = () => {
         hasErrors = true;
       }
 
-      if (service.category && SERVICE_RULES[service.category].subCategories.length > 0 && service.subCategories.length === 0) {
+      if (service.category && (RULES[service.category]?.subCategories?.length || 0) > 0 && service.subCategories.length === 0) {
         newErrors[`service-${serviceId}-subCategories`] = "Please select at least one sub-category.";
         hasErrors = true;
       }
 
-      if (service.category && SERVICE_RULES[service.category].keywords.length > 0 && service.keywords.length === 0) {
+      if (service.category && (RULES[service.category]?.keywords?.length || 0) > 0 && service.keywords.length === 0) {
         newErrors[`service-${serviceId}-keywords`] = "Please select at least one keyword.";
         hasErrors = true;
       }
@@ -752,7 +767,7 @@ const UpdateServices = () => {
                 }`}
               >
                 <option value="">Choose a category</option>
-                {Object.keys(SERVICE_RULES).map(cat => (
+                {Object.keys(RULES).map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -774,7 +789,7 @@ const UpdateServices = () => {
                   Select Sub-Categories *
                 </label>
                 <div className="flex flex-wrap gap-3">
-                  {SERVICE_RULES[service.category].subCategories.map(subCat => (
+                  {(RULES[service.category]?.subCategories || []).map(subCat => (
                     <motion.button
                       key={subCat}
                       type="button"
@@ -804,13 +819,13 @@ const UpdateServices = () => {
             )}
 
             {/* Keywords */}
-            {service.category && SERVICE_RULES[service.category].keywords.length > 0 && (
+            {service.category && (RULES[service.category]?.keywords?.length || 0) > 0 && (
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
                   Select Keywords/Specializations *
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {SERVICE_RULES[service.category].keywords.map(keyword => (
+                  {(RULES[service.category]?.keywords || []).map(keyword => (
                     <motion.button
                       key={keyword}
                       type="button"

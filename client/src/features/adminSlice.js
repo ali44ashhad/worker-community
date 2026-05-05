@@ -220,6 +220,106 @@ export const getProviderClicks = createAsyncThunk(
   }
 );
 
+// ========================== CATEGORIES (Public) ==========================
+export const getActiveCategories = createAsyncThunk(
+  "admin/getActiveCategories",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/categories`);
+      return res.data.categories;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch categories");
+    }
+  }
+);
+
+// ========================== CATEGORIES (Admin) ==========================
+export const getAllCategoriesAdmin = createAsyncThunk(
+  "admin/getAllCategories",
+  async ({ page = 1, limit = 50, search = "" } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+      if (search.trim()) params.append("search", search.trim());
+      const res = await axios.get(`${API_URL}/api/admin/categories?${params.toString()}`);
+      return { categories: res.data.categories, pagination: res.data.pagination };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch categories");
+    }
+  }
+);
+
+export const createCategoryAdmin = createAsyncThunk(
+  "admin/createCategory",
+  async ({ name, subCategories = [], keywords = [], description = "", isActive = true, imageFile }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("subCategories", JSON.stringify(subCategories));
+      formData.append("keywords", JSON.stringify(keywords));
+      formData.append("description", description);
+      formData.append("isActive", String(Boolean(isActive)));
+      if (imageFile) formData.append("image", imageFile);
+
+      const res = await axios.post(`${API_URL}/api/admin/categories`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success(res.data?.message || "Category created.");
+      return res.data.category;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to create category";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateCategoryAdmin = createAsyncThunk(
+  "admin/updateCategory",
+  async ({ categoryId, patch }, { rejectWithValue }) => {
+    try {
+      let body = patch;
+      let config = undefined;
+
+      if (patch?.imageFile) {
+        const formData = new FormData();
+        if (patch.name !== undefined) formData.append("name", patch.name);
+        if (patch.subCategories !== undefined) formData.append("subCategories", JSON.stringify(patch.subCategories));
+        if (patch.keywords !== undefined) formData.append("keywords", JSON.stringify(patch.keywords));
+        if (patch.description !== undefined) formData.append("description", patch.description);
+        if (patch.isActive !== undefined) formData.append("isActive", String(Boolean(patch.isActive)));
+        formData.append("image", patch.imageFile);
+        body = formData;
+        config = { headers: { "Content-Type": "multipart/form-data" } };
+      }
+
+      const res = await axios.put(`${API_URL}/api/admin/categories/${categoryId}`, body, config);
+      toast.success(res.data?.message || "Category updated.");
+      return res.data.category;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update category";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateCategoryStatusAdmin = createAsyncThunk(
+  "admin/updateCategoryStatus",
+  async ({ categoryId, isActive }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/admin/categories/${categoryId}/status`, { isActive });
+      toast.success(res.data?.message || "Category status updated.");
+      return res.data.category;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update category status";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 /* ----------------- SLICE ----------------- */
 
 const adminSlice = createSlice({
@@ -252,6 +352,16 @@ const adminSlice = createSlice({
       hasNextPage: false,
       hasPrevPage: false,
       limit: 10
+    },
+    activeCategories: [],
+    categoriesAdmin: [],
+    categoriesAdminPagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalCategories: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+      limit: 50,
     },
     categoryClicks: [],
     providerClicks: [],
@@ -423,6 +533,55 @@ const adminSlice = createSlice({
       .addCase(getProviderClicks.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+
+      // Get active categories (public)
+      .addCase(getActiveCategories.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getActiveCategories.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.activeCategories = action.payload || [];
+      })
+      .addCase(getActiveCategories.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
+      // Admin categories list
+      .addCase(getAllCategoriesAdmin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getAllCategoriesAdmin.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.categoriesAdmin = action.payload.categories || [];
+        state.categoriesAdminPagination = action.payload.pagination || state.categoriesAdminPagination;
+      })
+      .addCase(getAllCategoriesAdmin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
+      // Create category
+      .addCase(createCategoryAdmin.fulfilled, (state, action) => {
+        // Prepend so user sees it immediately
+        state.categoriesAdmin = [action.payload, ...state.categoriesAdmin];
+      })
+
+      // Update category
+      .addCase(updateCategoryAdmin.fulfilled, (state, action) => {
+        const updated = action.payload;
+        const idx = state.categoriesAdmin.findIndex((c) => c._id === updated._id);
+        if (idx !== -1) state.categoriesAdmin[idx] = updated;
+      })
+
+      // Update category status
+      .addCase(updateCategoryStatusAdmin.fulfilled, (state, action) => {
+        const updated = action.payload;
+        const idx = state.categoriesAdmin.findIndex((c) => c._id === updated._id);
+        if (idx !== -1) state.categoriesAdmin[idx] = updated;
       });
   },
 });

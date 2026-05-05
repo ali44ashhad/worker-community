@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Trash2, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 
-import SERVICE_RULES from '../../constants/serviceRules';
+import { getActiveCategories } from '../../features/adminSlice';
 
 const initialServiceState = {
   servicename: '',
@@ -22,9 +23,25 @@ const initialServiceState = {
 
 const CreateService = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { activeCategories } = useSelector((state) => state.admin);
   const [form, setForm] = useState(initialServiceState);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!activeCategories || activeCategories.length === 0) {
+      dispatch(getActiveCategories());
+    }
+  }, [dispatch, activeCategories?.length]);
+
+  const RULES = useMemo(() => {
+    const rules = {};
+    (activeCategories || []).forEach((c) => {
+      rules[c.name] = { subCategories: c.subCategories || [], keywords: c.keywords || [] };
+    });
+    return rules;
+  }, [activeCategories]);
 
   const handleCategoryChange = (category) => {
     setForm((prev) => ({
@@ -110,7 +127,7 @@ const CreateService = () => {
 
     if (
       form.category &&
-      SERVICE_RULES[form.category]?.subCategories?.length > 0 &&
+      (RULES[form.category]?.subCategories?.length || 0) > 0 &&
       form.subCategories.length === 0
     ) {
       validationErrors.subCategories = 'Pick at least one sub-category.';
@@ -119,7 +136,7 @@ const CreateService = () => {
 
     if (
       form.category &&
-      SERVICE_RULES[form.category]?.keywords?.length > 0 &&
+      (RULES[form.category]?.keywords?.length || 0) > 0 &&
       form.keywords.length === 0
     ) {
       validationErrors.keywords = 'Select at least one keyword.';
@@ -289,7 +306,7 @@ const CreateService = () => {
               }`}
             >
               <option value="">Choose a category</option>
-              {Object.keys(SERVICE_RULES).map((category) => (
+              {Object.keys(RULES).map((category) => (
                 <option key={category} value={category}>
                   {category}
                 </option>
@@ -305,17 +322,17 @@ const CreateService = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-3">
                 Sub-categories *
               </label>
-              {renderChips(SERVICE_RULES[form.category]?.subCategories || [], 'subCategories')}
+              {renderChips(RULES[form.category]?.subCategories || [], 'subCategories')}
               {errors.subCategories && (
                 <p className="text-red-500 text-sm mt-2 font-medium">{errors.subCategories}</p>
               )}
             </div>
           )}
 
-          {form.category && SERVICE_RULES[form.category]?.keywords?.length > 0 && (
+          {form.category && (RULES[form.category]?.keywords?.length || 0) > 0 && (
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-3">Keywords *</label>
-              {renderChips(SERVICE_RULES[form.category]?.keywords || [], 'keywords')}
+              {renderChips(RULES[form.category]?.keywords || [], 'keywords')}
               {errors.keywords && (
                 <p className="text-red-500 text-sm mt-2 font-medium">{errors.keywords}</p>
               )}

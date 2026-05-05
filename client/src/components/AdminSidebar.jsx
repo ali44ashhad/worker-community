@@ -5,6 +5,7 @@ import {
   HiOutlineHome,
   HiOutlineUserGroup,
   HiOutlineBriefcase,
+  HiOutlineTag,
   HiOutlineUser,
   HiOutlineLogout,
   HiOutlineX,
@@ -51,6 +52,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
       icon: HiOutlineBriefcase,
       label: 'Services',
       path: '/admin/services',
+    },
+    {
+      icon: HiOutlineTag,
+      label: 'Categories',
+      path: '/admin/categories',
     },
     {
       icon: HiOutlineChartBar,

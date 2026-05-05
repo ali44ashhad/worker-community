@@ -2,6 +2,7 @@ import Comment from "../models/comment.model.js";
 import User from "../models/user.model.js";
 import ProviderProfile from "../models/providerProfile.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
+import Booking from "../models/booking.model.js";
 
 // In-memory cache for top services and categories
 // Cache structure: { key: { data: any, expiresAt: number } }
@@ -36,6 +37,10 @@ const createComment = async (req, res) => {
         const { comment, rating } = req.body;
         const customerId = req.user._id; // This is the customer's USER ID
 
+        if (req.user?.role !== "customer") {
+            return res.status(403).json({ success: false, message: "Only customers can post reviews." });
+        }
+
         if (!comment) {
             return res.status(400).json({ success: false, message: "Comment text is required." });
         }
@@ -48,6 +53,21 @@ const createComment = async (req, res) => {
         const serviceOffering = await ServiceOffering.findById(serviceId);
         if (!serviceOffering) {
             return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+
+        // 1.5. Only allow review if customer has an accepted/completed booking with this provider+category.
+        // Note: Booking model doesn't store serviceOffering id, so this is the strongest check available today.
+        const hasBooking = await Booking.exists({
+            customer: customerId,
+            provider: serviceOffering.provider,
+            serviceCategory: serviceOffering.serviceCategory,
+            status: { $in: ["accepted", "completed"] },
+        });
+        if (!hasBooking) {
+            return res.status(403).json({
+                success: false,
+                message: "You can only review a service after you have booked it.",
+            });
         }
 
         // 2. Prevent a user from commenting on their own service (via owning provider profile)
@@ -88,6 +108,39 @@ const createComment = async (req, res) => {
         if (error.name === 'ValidationError') {
              return res.status(400).json({ success: false, message: error.message });
         }
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Check if logged-in customer can review this service
+ * @route GET /api/comments/can-review/:serviceId
+ * @access Private (Customer)
+ */
+const canReviewService = async (req, res) => {
+    try {
+        const { serviceId } = req.params;
+        const user = req.user;
+
+        if (!user || user.role !== "customer") {
+            return res.status(200).json({ success: true, canReview: false });
+        }
+
+        const serviceOffering = await ServiceOffering.findById(serviceId).select("provider serviceCategory");
+        if (!serviceOffering) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+
+        const hasBooking = await Booking.exists({
+            customer: user._id,
+            provider: serviceOffering.provider,
+            serviceCategory: serviceOffering.serviceCategory,
+            status: { $in: ["accepted", "completed"] },
+        });
+
+        return res.status(200).json({ success: true, canReview: Boolean(hasBooking) });
+    } catch (error) {
+        console.error("Error in canReviewService controller:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -473,6 +526,38 @@ const getTopServices = async (req, res) => {
             }
         ]);
 
+        // If there are no reviews yet, fall back to "popular/recent" services so homepage isn't empty.
+        if (!topServices || topServices.length === 0) {
+            const services = await ServiceOffering.find({})
+                .populate({
+                    path: "provider",
+                    select: "user",
+                    populate: {
+                        path: "user",
+                        select: "firstName lastName profileImage email phoneNumber",
+                    },
+                })
+                .sort({ serviceOfferingCount: -1, createdAt: -1 })
+                .limit(limit)
+                .select("servicename serviceCategory description portfolioImages provider experience keywords subCategories serviceOfferingCount");
+
+            const servicesWithRatings = services.map((service) => ({
+                ...service.toObject(),
+                averageRating: 0,
+                reviewCount: 0,
+            }));
+
+            cache.topServices = {
+                data: servicesWithRatings,
+                expiresAt: Date.now() + CACHE_TTL,
+            };
+
+            return res.status(200).json({
+                success: true,
+                services: servicesWithRatings,
+            });
+        }
+
         // Get service offering IDs
         const serviceIds = topServices.map(s => s._id);
 
@@ -627,6 +712,7 @@ const getTopCategories = async (req, res) => {
 
 export {
     createComment,
+    canReviewService,
     getCommentsForService,
     updateComment,
     deleteComment,

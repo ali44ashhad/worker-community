@@ -73,8 +73,7 @@ const userSchema = new Schema({
         type: String,
         default: ""
     },
-    // Wishlist: array of serviceOffering IDs
-    wishlist: [{ type: Schema.Types.ObjectId, ref: 'ServiceOffering', default: [] }]
+     wishlist: [{ type: Schema.Types.ObjectId, ref: 'ServiceOffering', default: [] }]
 }, { timestamps: true });
 
 // Virtual field for backward compatibility - combines firstName and lastName

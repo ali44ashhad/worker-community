@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { slugifyCategoryName } from "../utils/slug";
  
 
 const Hero = () => {
@@ -15,15 +16,15 @@ const Hero = () => {
   const scrollTimeoutRef = useRef(null);
 
   const categories = [
-    { name: "Home Cooking", icon: "cookingIcon1.png", url: "/category/Home%20Cooking" },
-    { name: "Academics", icon: "academicsIcon.png", url: "/category/Academics" },
-    { name: "Fitness & Sports", icon: "fitnessIcon.png", url: "/category/Fitness%20%26%20Sports" },
-    { name: "Dance", icon: "danceIcon.png", url: "/category/Dance" },
-    { name: "Art & Craft", icon: "artIcon.png", url: "/category/Art%20%26%20Craft" },
-    { name: "Groceries", icon: "groceryIcon.png", url: "/category/Groceries" },
-    { name: "Photography", icon: "photographyIcon.png", url: "/category/Photography" },
-    { name: "Event Planner", icon: "eventPlannerIcon.png", url: "/category/Event%20%2F%20Planner" },
-    { name: "Music", icon: "musicIcon.png", url: "/category/Music" },
+    { name: "Home Cooking", icon: "cookingIcon1.png" },
+    { name: "Academics", icon: "academicsIcon.png" },
+    { name: "Fitness & Sports", icon: "fitnessIcon.png" },
+    { name: "Dance", icon: "danceIcon.png" },
+    { name: "Art & Craft", icon: "artIcon.png" },
+    { name: "Groceries", icon: "groceryIcon.png" },
+    { name: "Photography", icon: "photographyIcon.png" },
+    { name: "Event Planner", icon: "eventPlannerIcon.png" },
+    { name: "Music", icon: "musicIcon.png" },
   ];
 
   const carouselImages = [
@@ -280,7 +281,7 @@ const Hero = () => {
                   {categories.map((cat, idx) => (
                     <Link
                       key={idx}
-                      to={cat.url}
+                      to={`/category/${slugifyCategoryName(cat.name)}`}
                       className="category-item flex-shrink-0 flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-center border border-gray-100 bg-white shadow-sm hover:shadow-md transition focus-visible:ring-2 focus-visible:ring-gray-200 w-28 sm:w-32"
                     >
                       <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center ring-1 ring-gray-100 overflow-hidden">
