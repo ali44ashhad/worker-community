@@ -14,8 +14,9 @@ import {
 } from '../features/commentSlice';
 import axios from 'axios';
 import { getFullName, getInitials } from '../utils/userHelpers';
+import { getApiBase } from '../utils/apiBase';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = getApiBase() || "http://localhost:3001";
 axios.defaults.withCredentials = true;
 
 const Comment = ({ serviceId }) => {

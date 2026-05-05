@@ -2,8 +2,9 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { logoutUser } from "./authSlice";
+import { getApiBase } from "../utils/apiBase";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = getApiBase() || "http://localhost:3001";
 axios.defaults.withCredentials = true;
 
 export const fetchWishlist = createAsyncThunk(

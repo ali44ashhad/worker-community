@@ -10,7 +10,7 @@
     },
     {
       "source": "/api/(.*)",
-      "destination": "https://api.commun.in/$1"
+      "destination": "https://api.commun.in/api/$1"
     },
     {
       "source": "/(.*)",
