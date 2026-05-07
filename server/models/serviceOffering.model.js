@@ -133,15 +133,15 @@ const serviceOfferingSchema = new Schema({
     serviceCategory: {
         type: String,
         required: true,
-        // Ensure the category itself is one of the ones you've defined
-        enum: Object.keys(SERVICE_RULES)
     },
     subCategories: [String],
     keywords: [String],
     portfolioImages: [
         {
             url: { type: String, required: true },
-            public_id: { type: String, required: true },
+            // Optional: when service has no uploads we store default local logo (/logo2.png)
+            // which has no Cloudinary public_id.
+            public_id: { type: String, required: false },
         },
     ],
     portfolioPDFs: [
@@ -169,38 +169,8 @@ const serviceOfferingSchema = new Schema({
     }
 }, { timestamps: true });
 
-// --- 2. Add the Pre-Save Hook ---
-serviceOfferingSchema.pre('save', function(next) {
-    // 'this' refers to the document about to be saved
-    const offering = this;
-
-    // Find the rules for the category being saved
-    const rules = SERVICE_RULES[offering.serviceCategory];
-
-    // If there are no rules for this category, something is wrong
-    if (!rules) {
-        return next(new Error(`Invalid service category: ${offering.serviceCategory}`));
-    }
-
-    // --- 3. Validate Subcategories ---
-    for (const subCat of offering.subCategories) {
-        if (!rules.subCategories.includes(subCat)) {
-            // This is the error you were talking about (e.g., "Dance" and "Cakes")
-            return next(new Error(`'${subCat}' is not a valid subcategory for '${offering.serviceCategory}'.`));
-        }
-    }
-
-    // --- 4. Validate Keywords ---
-    for (const keyword of offering.keywords) {
-        if (!rules.keywords.includes(keyword)) {
-            // This is the error (e.g., "Dance" and "Cake")
-            return next(new Error(`'${keyword}' is not a valid keyword for '${offering.serviceCategory}'.`));
-        }
-    }
-
-    // If all checks pass, continue with the save
-    next();
-});
+// Category/subcategory/keyword validation is DB-driven via `validateCategorySelection`
+// in controllers (provider/admin). Do not hardcode rules here.
 
 // Add indexes for performance optimization
 // Index on serviceCategory for fast lookups in top-categories aggregation

@@ -158,7 +158,11 @@ const getCommentsForService = async (req, res) => {
 
         // 1. Find all comments where 'serviceOffering' matches the ServiceOffering ID
         const comments = await Comment.find({ serviceOffering: serviceId })
-            .populate('customer', 'firstName lastName name profileImage') // Get commenter's name and image
+            .populate({
+                path: 'customer',
+                select: 'firstName lastName name profileImage isActive',
+                match: { isActive: { $ne: false } },
+            }) // hide deactivated users' reviews from public
             .populate('provider', 'user') // Get provider info for ownership checking
             .populate({
                 path: 'replyBy',
@@ -170,6 +174,8 @@ const getCommentsForService = async (req, res) => {
             }) // Get reply author's info
             .sort({ createdAt: -1 }); // Show newest comments first
 
+        const visibleComments = comments.filter((c) => Boolean(c.customer));
+
         // Also get the service offering to include provider info
         const serviceOffering = await ServiceOffering.findById(serviceId)
             .populate({
@@ -177,13 +183,14 @@ const getCommentsForService = async (req, res) => {
                 select: 'user',
                 populate: {
                     path: 'user',
-                    select: 'firstName lastName profileImage _id'
+                    select: 'firstName lastName profileImage _id isActive',
+                    match: { isActive: { $ne: false } },
                 }
             });
 
         return res.status(200).json({
             success: true,
-            comments,
+            comments: visibleComments,
             serviceProvider: serviceOffering?.provider || null
         });
 
@@ -534,14 +541,17 @@ const getTopServices = async (req, res) => {
                     select: "user",
                     populate: {
                         path: "user",
-                        select: "firstName lastName profileImage email phoneNumber",
+                        select: "firstName lastName profileImage email phoneNumber isActive",
+                        match: { isActive: { $ne: false } },
                     },
                 })
                 .sort({ serviceOfferingCount: -1, createdAt: -1 })
                 .limit(limit)
                 .select("servicename serviceCategory description portfolioImages provider experience keywords subCategories serviceOfferingCount");
 
-            const servicesWithRatings = services.map((service) => ({
+            const servicesWithRatings = services
+                .filter((s) => s?.provider?.user)
+                .map((service) => ({
                 ...service.toObject(),
                 averageRating: 0,
                 reviewCount: 0,
@@ -568,7 +578,8 @@ const getTopServices = async (req, res) => {
                 select: 'user',
                 populate: {
                     path: 'user',
-                    select: 'firstName lastName profileImage email phoneNumber'
+                    select: 'firstName lastName profileImage email phoneNumber isActive',
+                    match: { isActive: { $ne: false } },
                 }
             })
             .select('servicename serviceCategory description portfolioImages provider experience keywords subCategories /* price */');
@@ -580,7 +591,7 @@ const getTopServices = async (req, res) => {
         });
 
         // Combine with rating data and maintain sort order
-        const servicesWithRatings = services.map(service => {
+        const servicesWithRatings = services.filter((s) => s?.provider?.user).map(service => {
             const ratingData = topServices.find(s => s._id.toString() === service._id.toString());
             
             // Convert to plain object
@@ -649,7 +660,8 @@ const getTopCategories = async (req, res) => {
             });
         }
 
-        // Use aggregation to join comments with service offerings and calculate category stats
+        // Use aggregation to join comments with service offerings and calculate category stats.
+        // Only count services that belong to active providers (user.isActive !== false).
         const categoryStats = await Comment.aggregate([
             {
                 $lookup: {
@@ -665,6 +677,25 @@ const getTopCategories = async (req, res) => {
                     preserveNullAndEmptyArrays: false
                 }
             },
+            {
+                $lookup: {
+                    from: 'providerprofiles',
+                    localField: 'service.provider',
+                    foreignField: '_id',
+                    as: 'provider'
+                }
+            },
+            { $unwind: { path: '$provider', preserveNullAndEmptyArrays: false } },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'provider.user',
+                    foreignField: '_id',
+                    as: 'providerUser'
+                }
+            },
+            { $unwind: { path: '$providerUser', preserveNullAndEmptyArrays: false } },
+            { $match: { 'providerUser.isActive': { $ne: false } } },
             {
                 $group: {
                     _id: '$service.serviceCategory',

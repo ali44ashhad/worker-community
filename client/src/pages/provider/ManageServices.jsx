@@ -147,10 +147,12 @@ const ManageServices = () => {
                     animate={{ scale: 1 }}
                   />
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-2">
-                    <HiOutlinePhotograph size={36} />
-                    <span className="text-sm font-medium">No images yet</span>
-                  </div>
+                  <img
+                    src="/logo2.png"
+                    alt="Default service"
+                    className="w-full h-full object-contain p-10"
+                    loading="lazy"
+                  />
                 )}
                 {/* <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 {coverImage && (

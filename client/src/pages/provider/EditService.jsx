@@ -196,10 +196,7 @@ const EditService = () => {
       (serviceForm?.existingImages?.length || 0) + (serviceForm?.imagePreviews?.length || 0);
     const totalPDFs =
       (serviceForm?.existingPDFs?.length || 0) + (serviceForm?.pdfPreviews?.length || 0);
-    if (totalImages === 0 && totalPDFs === 0) {
-      newErrors.images = 'Upload at least one work image or PDF.';
-      hasErrors = true;
-    }
+    // Work images / PDFs are optional (we show a default logo if none)
 
     setErrors(newErrors);
     return !hasErrors;
@@ -476,7 +473,7 @@ const EditService = () => {
 
           <div className="mt-6">
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Upload Work Images *
+              Upload Work Images (optional)
             </label>
             <motion.div
               className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${

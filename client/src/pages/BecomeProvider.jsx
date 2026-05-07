@@ -6,6 +6,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { checkAuth } from '../features/authSlice';
 import { getActiveCategories } from '../features/adminSlice';
 
+const DRAFT_KEY = 'becomeProviderDraft:v1';
+
 const BecomeProvider = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -40,6 +42,67 @@ const BecomeProvider = () => {
 
   // State for provider bio
   const [providerBio, setProviderBio] = useState('');
+
+  // Restore draft from localStorage on first mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return;
+
+      if (typeof parsed.providerBio === 'string') {
+        setProviderBio(parsed.providerBio);
+      }
+      if (Array.isArray(parsed.services) && parsed.services.length > 0) {
+        // Files/preview blob URLs can't be restored; only keep text/selection fields.
+        const restored = parsed.services.map((s) => ({
+          id: s?.id || Date.now() + Math.random(),
+          servicename: s?.servicename || '',
+          category: s?.category || '',
+          subCategories: Array.isArray(s?.subCategories) ? s.subCategories : [],
+          keywords: Array.isArray(s?.keywords) ? s.keywords : [],
+          images: [],
+          imagePreviews: [],
+          pdfs: [],
+          pdfPreviews: [],
+          bio: s?.bio || '',
+          experience: s?.experience ?? '',
+        }));
+        setServices(restored);
+      }
+    } catch {
+      // ignore corrupted draft
+    }
+  }, []);
+
+  // Auto-save draft (excluding file objects) to survive accidental refresh
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        const safeServices = (services || []).map((s) => ({
+          id: s?.id,
+          servicename: s?.servicename || '',
+          category: s?.category || '',
+          subCategories: Array.isArray(s?.subCategories) ? s.subCategories : [],
+          keywords: Array.isArray(s?.keywords) ? s.keywords : [],
+          bio: s?.bio || '',
+          experience: s?.experience ?? '',
+        }));
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({
+            providerBio: providerBio || '',
+            services: safeServices,
+            savedAt: Date.now(),
+          })
+        );
+      } catch {
+        // ignore quota/blocked storage
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [providerBio, services]);
 
   // New state to hold validation errors
   const [errors, setErrors] = useState({});
@@ -355,11 +418,7 @@ const BecomeProvider = () => {
         hasErrors = true;
       } */
 
-      // 8. Images or PDFs (at least one required)
-      if (service.images.length === 0 && (service.pdfs?.length || 0) === 0) {
-        newErrors[`service-${serviceId}-images`] = "Please upload at least one work image or PDF.";
-        hasErrors = true;
-      }
+      // 8. Work images/PDFs are optional
     });
 
     setErrors(newErrors);
@@ -432,6 +491,12 @@ const BecomeProvider = () => {
 
       if (data?.success) {
         toast.success(data?.message || 'Provider registration submitted successfully!');
+
+        try {
+          localStorage.removeItem(DRAFT_KEY);
+        } catch {
+          // ignore
+        }
         
         // Reset form
         setServices([{
@@ -707,7 +772,7 @@ const BecomeProvider = () => {
             {/* Image Upload */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
-                Upload Work Images *
+                Upload Work Images (optional)
               </label>
               <p className="text-sm text-gray-600 mb-3">
                 Max size: <span className="font-semibold">50MB per file</span> (Images: PNG/JPG/JPEG)

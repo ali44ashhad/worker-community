@@ -47,7 +47,14 @@ const deleteFromCloudinary = (public_id) => {
         }
         const existingProfile = await ProviderProfile.findOne({ user: userId });
         if (existingProfile) {
-            return res.status(400).json({ success: false, message: "You are already a provider." });
+            // If profile exists but role wasn't updated earlier, fix it idempotently
+            await User.findByIdAndUpdate(userId, { role: "provider" });
+            return res.status(200).json({
+                success: true,
+                message: "You are already a provider.",
+                profile: existingProfile,
+                user: { _id: userId, role: "provider" },
+            });
         }
         const newProfile = await ProviderProfile.create({
             user: userId,
@@ -112,9 +119,7 @@ const deleteFromCloudinary = (public_id) => {
         const images = filesArray.filter(file => file.fieldname === 'portfolioImages');
         const pdfs = filesArray.filter(file => file.fieldname === 'portfolioPDFs');
         
-        if (images.length === 0 && pdfs.length === 0) {
-            return res.status(400).json({ success: false, message: "At least one portfolio image or PDF is required for a service." });
-        }
+        // Work images / PDFs are optional; UI will show a default logo when none provided.
         
         const profile = await ProviderProfile.findOne({ user: userId });
         if (!profile) {
@@ -123,7 +128,10 @@ const deleteFromCloudinary = (public_id) => {
 
         // 1. Upload images to Cloudinary
         const imageUploadPromises = images.map(file => uploadBufferToCloudinary(file.buffer));
-        const portfolioImages = await Promise.all(imageUploadPromises);
+        let portfolioImages = await Promise.all(imageUploadPromises);
+        if (!portfolioImages.length) {
+            portfolioImages = [{ url: "/logo2.png" }];
+        }
         
         // 2. Upload PDFs to Cloudinary
         const pdfUploadPromises = pdfs.map(file => uploadBufferToCloudinary(file.buffer));
@@ -220,11 +228,15 @@ const deleteFromCloudinary = (public_id) => {
         }
 
         // 1. Delete associated images from Cloudinary
-        const imageDeletePromises = service.portfolioImages.map(img => deleteFromCloudinary(img.public_id));
+        const imageDeletePromises = (service.portfolioImages || [])
+            .filter((img) => img?.public_id)
+            .map((img) => deleteFromCloudinary(img.public_id));
         await Promise.all(imageDeletePromises);
         
         // 2. Delete associated PDFs from Cloudinary
-        const pdfDeletePromises = service.portfolioPDFs?.map(pdf => deleteFromCloudinary(pdf.public_id)) || [];
+        const pdfDeletePromises = (service.portfolioPDFs || [])
+            .filter((pdf) => pdf?.public_id)
+            .map((pdf) => deleteFromCloudinary(pdf.public_id));
         await Promise.all(pdfDeletePromises);
         
         // 3. Delete the service offering from MongoDB
@@ -371,12 +383,19 @@ const getAllProviders = async (req, res) => {
     try {
         // Find all provider profiles and populate their associated user and service offerings
         const providers = await ProviderProfile.find()
-            .populate('user', 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip') // Get user's public info (name, profile image, phone number)
+            .populate({
+                path: 'user',
+                select: 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip isActive',
+                match: { isActive: { $ne: false } },
+            }) // hide deactivated accounts from public
             .populate('serviceOfferings'); // Get all their service offerings (with images, categories, etc.)
+
+        // Remove providers whose user got filtered out by populate(match)
+        const activeProviders = providers.filter((p) => Boolean(p.user));
         
         // Get all service offering IDs to calculate ratings
         const allServiceIds = [];
-        providers.forEach(provider => {
+        activeProviders.forEach(provider => {
             if (provider.serviceOfferings && Array.isArray(provider.serviceOfferings)) {
                 provider.serviceOfferings.forEach(service => {
                     allServiceIds.push(service._id);
@@ -415,7 +434,7 @@ const getAllProviders = async (req, res) => {
         }
 
         // Add ratings to each service offering
-        const providersWithRatings = providers.map(provider => {
+        const providersWithRatings = activeProviders.map(provider => {
             const providerObj = provider.toObject();
             if (providerObj.serviceOfferings && Array.isArray(providerObj.serviceOfferings)) {
                 providerObj.serviceOfferings = providerObj.serviceOfferings.map(service => {
@@ -482,7 +501,11 @@ const getTopProvidersByServiceClicks = async (req, res) => {
         if (aggregatedProviders.length > 0) {
             const providerIds = aggregatedProviders.map((item) => item._id);
             const providers = await ProviderProfile.find({ _id: { $in: providerIds } })
-                .populate('user', 'firstName lastName profileImage addressLine1 addressLine2 city state zip')
+                .populate({
+                    path: 'user',
+                    select: 'firstName lastName profileImage addressLine1 addressLine2 city state zip isActive',
+                    match: { isActive: { $ne: false } },
+                })
                 .select('user providerProfileCount');
 
             const providerMap = new Map(
@@ -510,7 +533,11 @@ const getTopProvidersByServiceClicks = async (req, res) => {
         } else {
             // Fallback: use provider profile count ordering if no services have clicks yet
             const fallbackProviders = await ProviderProfile.find({})
-                .populate('user', 'firstName lastName profileImage addressLine1 addressLine2 city state zip')
+                .populate({
+                    path: 'user',
+                    select: 'firstName lastName profileImage addressLine1 addressLine2 city state zip isActive',
+                    match: { isActive: { $ne: false } },
+                })
                 .sort({ providerProfileCount: -1 })
                 .limit(limit)
                 .select('user providerProfileCount serviceOfferings');
@@ -547,10 +574,14 @@ const getTopProvidersByServiceClicks = async (req, res) => {
 const getProviderById = async (req, res) => {
     try {
         const provider = await ProviderProfile.findById(req.params.id)
-            .populate('user', 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip createdAt') // Get user's public info
+            .populate({
+                path: 'user',
+                select: 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip createdAt isActive',
+                match: { isActive: { $ne: false } },
+            }) // hide deactivated accounts from public
             .populate('serviceOfferings'); // Get all their service offerings
 
-        if (!provider) {
+        if (!provider || !provider.user) {
             return res.status(404).json({ success: false, message: "Provider not found." });
         }
         
@@ -656,10 +687,14 @@ const becomeProviderWithServices = async (req, res) => {
 
         // Check if user is already a provider
         const existingProfile = await ProviderProfile.findOne({ user: userId });
-        if (existingProfile) {  
-            return res.status(400).json({ 
-                success: false, 
-                message: "You are already a provider." 
+        if (existingProfile) {
+            // If profile exists but role wasn't updated earlier, fix it idempotently
+            await User.findByIdAndUpdate(userId, { role: "provider" });
+            return res.status(200).json({
+                success: true,
+                message: "You are already a provider.",
+                profile: existingProfile,
+                user: { _id: userId, role: "provider" },
             });
         }
 
@@ -738,6 +773,9 @@ const becomeProviderWithServices = async (req, res) => {
             experience: avgExperience
         });
 
+        // Mark user as provider so UI shows provider dashboard immediately
+        await User.findByIdAndUpdate(userId, { role: "provider" });
+
         // Create all service offerings
         const createdServices = [];
         // req.files is an array when using upload.any()
@@ -775,16 +813,14 @@ const becomeProviderWithServices = async (req, res) => {
                 const serviceImages = imagesByService[i] || [];
                 const servicePDFs = pdfsByService[i] || [];
 
-                if (serviceImages.length === 0 && servicePDFs.length === 0) {
-                    return res.status(400).json({ 
-                        success: false, 
-                        message: `Service ${i + 1}: Please upload at least one image or PDF.` 
-                    });
-                }
+                // Work images/PDFs are optional
 
                 // Upload images to Cloudinary
                 const imageUploadPromises = serviceImages.map(file => uploadBufferToCloudinary(file.buffer));
-                const portfolioImages = await Promise.all(imageUploadPromises);
+                let portfolioImages = await Promise.all(imageUploadPromises);
+                if (!portfolioImages.length) {
+                    portfolioImages = [{ url: "/logo2.png" }];
+                }
                 
                 // Upload PDFs to Cloudinary
                 const pdfUploadPromises = servicePDFs.map(file => uploadBufferToCloudinary(file.buffer));
@@ -844,7 +880,11 @@ const becomeProviderWithServices = async (req, res) => {
             success: true,
             message: `Congratulations! You are now a provider`,
             profile: newProfile,
-            services: createdServices
+            services: createdServices,
+            user: {
+                _id: userId,
+                role: "provider",
+            },
         });
 
     } catch (error) {
@@ -991,11 +1031,19 @@ const updateServiceOffering = async (req, res) => {
         
         // Handle new images if uploaded
         if (images.length > 0) {
+            // If the service currently only has the default logo placeholder, remove it
+            service.portfolioImages = (service.portfolioImages || []).filter(
+                (img) => !(img && !img.public_id && img.url === "/logo2.png")
+            );
+
             const imageUploadPromises = images.map(file => uploadBufferToCloudinary(file.buffer));
             const newImages = await Promise.all(imageUploadPromises);
             
             // Add new images to existing ones
             service.portfolioImages = [...service.portfolioImages, ...newImages];
+        }
+        if (!service.portfolioImages || service.portfolioImages.length === 0) {
+            service.portfolioImages = [{ url: "/logo2.png" }];
         }
         
         // Handle new PDFs if uploaded

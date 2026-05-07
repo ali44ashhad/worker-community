@@ -457,13 +457,7 @@ const UpdateServices = () => {
         hasErrors = true;
       } */
 
-      // For existing services, at least one image or PDF must exist
-      const totalImages = (service.existingImages?.length || 0) + (service.imagePreviews?.length || 0);
-      const totalPDFs = (service.existingPDFs?.length || 0) + (service.pdfPreviews?.length || 0);
-      if (totalImages === 0 && totalPDFs === 0) {
-        newErrors[`service-${serviceId}-images`] = "Please upload at least one work image or PDF.";
-        hasErrors = true;
-      }
+      // Work images / PDFs are optional (we show a default logo if none)
     });
 
     setErrors(newErrors);
@@ -941,7 +935,7 @@ const UpdateServices = () => {
             {/* Image Upload */}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-3 tracking-wide">
-                Upload Work Images *
+                Upload Work Images (optional)
               </label>
               <p className="text-sm text-gray-500 mb-3">
                 Max size: <span className="font-semibold text-gray-700">50MB per file</span> (Images: PNG/JPG/JPEG)

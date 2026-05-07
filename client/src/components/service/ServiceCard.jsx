@@ -30,7 +30,7 @@ const ServiceCard = ({ service }) => {
 
   // Get portfolio images
   const portfolioImages = service?.portfolioImages || [];
-  const mainImage = portfolioImages[0]?.url;
+  const mainImage = portfolioImages[0]?.url || '/logo2.png';
 
   // Get provider information
   const provider = service?.provider || {};

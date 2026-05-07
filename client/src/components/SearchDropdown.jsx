@@ -214,7 +214,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
               <div className="space-y-2">
                 {filteredServices.map((service) => {
                   const portfolioImages = service?.portfolioImages || [];
-                  const mainImage = portfolioImages[0]?.url;
+                  const mainImage = portfolioImages[0]?.url || '/logo2.png';
                   const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
                   const description = service?.description || 'No description available.';
                   const truncatedDescription = description.length > 80
@@ -229,17 +229,11 @@ const SearchDropdown = ({ isOpen, onClose }) => {
                     >
                       {/* Service Image */}
                       <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-gray-200 border border-gray-300">
-                        {mainImage ? (
-                          <img
-                            src={mainImage}
-                            alt="Service"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                            No Image
-                          </div>
-                        )}
+                        <img
+                          src={mainImage}
+                          alt="Service"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
 
                       {/* Service Info */}

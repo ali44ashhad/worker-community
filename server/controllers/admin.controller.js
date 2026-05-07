@@ -167,14 +167,22 @@ const getAllProviders = async (req, res) => {
             }
         }
 
-        // Get total count for pagination metadata
-        const totalProviders = await ProviderProfile.countDocuments(searchQuery);
+        // Hide deactivated users even in admin provider/service lists
+        const activeUsers = await User.find({ isActive: { $ne: false } }).select("_id");
+        const activeUserIds = activeUsers.map((u) => u._id);
 
-        // Find providers with pagination
-        const providers = await ProviderProfile.find(searchQuery)
-            .populate('user', 'firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip role createdAt')
+        // Merge searchQuery with active users filter
+        const providerQuery = {
+            ...searchQuery,
+            user: { ...(searchQuery.user || {}), $in: activeUserIds },
+        };
+
+        const totalProviders = await ProviderProfile.countDocuments(providerQuery);
+
+        const providers = await ProviderProfile.find(providerQuery)
+            .populate('user', 'firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip role createdAt isActive')
             .populate('serviceOfferings')
-            .sort({ createdAt: -1 }) // Show newest first
+            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
@@ -348,16 +356,22 @@ const getAllServices = async (req, res) => {
             searchQuery = { $or: searchConditions };
         }
 
-        // Get total count for pagination metadata
-        const totalServices = await ServiceOffering.countDocuments(searchQuery);
+        // Only include services whose provider's user is active
+        const activeUsers = await User.find({ isActive: { $ne: false } }).select("_id");
+        const activeUserIds = activeUsers.map((u) => u._id);
+        const activeProviders = await ProviderProfile.find({ user: { $in: activeUserIds } }).select("_id");
+        const activeProviderIds = activeProviders.map((p) => p._id);
 
-        // Find services with pagination
-        const services = await ServiceOffering.find(searchQuery)
+        const serviceQuery = { ...searchQuery, provider: { ...(searchQuery.provider || {}), $in: activeProviderIds } };
+
+        const totalServices = await ServiceOffering.countDocuments(serviceQuery);
+
+        const services = await ServiceOffering.find(serviceQuery)
             .populate({
                 path: 'provider',
                 populate: {
                     path: 'user',
-                    select: 'firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip'
+                    select: 'firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip isActive'
                 }
             })
             .sort({ createdAt: -1 }) // Show newest first

@@ -16,7 +16,7 @@ const TopServiceCard = ({ service }) => {
   const user = useSelector((s) => s.auth.user);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
 
-  const image = service?.portfolioImages?.[0]?.url;
+  const image = service?.portfolioImages?.[0]?.url || '/logo2.png';
   const serviceName = service?.servicename || '';
   const serviceCategory = service?.serviceCategory || 'Service';
   const description = service?.description || '';
@@ -88,11 +88,7 @@ const TopServiceCard = ({ service }) => {
                 img.removeAttribute('data-loading');
               }}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-black font-bold">
-              No Image
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
 

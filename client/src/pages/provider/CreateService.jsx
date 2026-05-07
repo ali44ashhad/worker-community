@@ -156,10 +156,7 @@ const CreateService = () => {
       invalid = true;
     } */
 
-    if ((form.imagePreviews?.length || 0) === 0 && (form.pdfPreviews?.length || 0) === 0) {
-      validationErrors.images = 'Upload at least one work image or PDF.';
-      invalid = true;
-    }
+    // Work images / PDFs are optional (we show a default logo if none)
 
     setErrors(validationErrors);
     return !invalid;
@@ -390,7 +387,7 @@ const CreateService = () => {
 
           <div className="mt-6">
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Upload Work Images *
+              Upload Work Images (optional)
             </label>
             <motion.div
               className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${
