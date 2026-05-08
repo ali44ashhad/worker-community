@@ -1,8 +1,8 @@
 import Category from "../models/category.model.js";
-import { SERVICE_RULES } from "../models/serviceOffering.model.js";
+import { CATEGORY_DEFAULTS } from "./seedCategoryDefaults.js";
 
 export async function seedCategoriesIfMissing() {
-  const entries = Object.entries(SERVICE_RULES || {});
+  const entries = Object.entries(CATEGORY_DEFAULTS || {});
   if (entries.length === 0) return;
 
   // Only create missing categories. Do not overwrite admin-edited categories.

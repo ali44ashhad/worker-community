@@ -414,15 +414,15 @@ const CreateService = () => {
             )}
 
             {(form.imagePreviews?.length || 0) > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+              <div className="mt-6 columns-2 md:columns-3 gap-4 [column-fill:_balance]">
                 {form.imagePreviews.map((preview, index) => (
                   <motion.div
                     key={`preview-${index}`}
-                    className="relative border border-gray-200 rounded-xl overflow-hidden shadow-sm"
+                    className="relative rounded-xl overflow-hidden mb-4 break-inside-avoid"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                   >
-                    <img src={preview} alt="Preview" className="w-full h-40 object-cover" />
+                    <img src={preview} alt="Preview" className="w-full h-auto object-contain block" />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(index)}

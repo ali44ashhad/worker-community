@@ -447,11 +447,11 @@ const BecomeProvider = () => {
         return sum + imgBytes + pdfBytes;
       }, 0);
       if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
-        toast.error(
-          `Total upload is ${formatBytes(totalBytes)} (max ${formatBytes(MAX_TOTAL_UPLOAD_BYTES)}). Please upload fewer/smaller files.`
+        // Soft warning only (many users still succeed depending on hosting limits)
+        toast(
+          `Warning: total upload is ${formatBytes(totalBytes)}. If submit fails, try fewer/smaller files.`,
+          { icon: '⚠️' }
         );
-        setIsSubmitting(false);
-        return;
       }
 
       // Prepare FormData
@@ -460,8 +460,16 @@ const BecomeProvider = () => {
       // Add provider bio
       formData.append('providerBio', providerBio);
       
-      // Add services as JSON
-      formData.append('services', JSON.stringify(services));
+      // Add services as JSON (IMPORTANT: do NOT include previews/files in JSON, it bloats payload)
+      const servicesPayload = (services || []).map((s) => ({
+        servicename: s?.servicename || '',
+        category: s?.category || '',
+        subCategories: Array.isArray(s?.subCategories) ? s.subCategories : [],
+        keywords: Array.isArray(s?.keywords) ? s.keywords : [],
+        bio: s?.bio || '',
+        experience: s?.experience ?? '',
+      }));
+      formData.append('services', JSON.stringify(servicesPayload));
       
       // Add images with proper fieldnames - images array contains File objects
       services.forEach((service, index) => {
@@ -828,13 +836,16 @@ const BecomeProvider = () => {
 
               {/* Image Preview */}
               {service.imagePreviews.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className="mt-6 columns-2 md:columns-4 gap-4 [column-fill:_balance]">
                   {service.imagePreviews.map((img, imgIndex) => (
-                    <div key={imgIndex} className="relative group border border-gray-300 rounded-lg overflow-hidden">
+                    <div
+                      key={imgIndex}
+                      className="relative group overflow-hidden rounded-lg mb-4 break-inside-avoid"
+                    >
                       <img
                         src={img}
                         alt={`Upload ${imgIndex + 1}`}
-                        className="w-full h-40 object-cover"
+                        className="w-full h-auto object-contain block"
                       />
                       <button
                         type="button"

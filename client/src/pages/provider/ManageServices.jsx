@@ -137,12 +137,12 @@ const ManageServices = () => {
               transition={{ duration: 0.1, delay: index * 0.05 }}
               whileHover={{ y: -6, scale: 1.01, boxShadow: '0px 20px 45px rgba(15,23,42,0.15)' }}
             >
-              <div className="relative aspect-video overflow-hidden rounded-t-2xl bg-gray-100">
+              <div className="relative overflow-hidden rounded-t-2xl bg-gray-100 flex items-center justify-center p-3">
                 {coverImage ? (
                   <motion.img
                     src={coverImage}
                     alt={service.serviceCategory}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-auto h-auto max-w-full max-h-56 object-contain transition-transform duration-500 group-hover:scale-[1.01]"
                     initial={{ scale: 1.05 }}
                     animate={{ scale: 1 }}
                   />
@@ -150,7 +150,7 @@ const ManageServices = () => {
                   <img
                     src="/logo2.png"
                     alt="Default service"
-                    className="w-full h-full object-contain p-10"
+                    className="w-auto h-auto max-w-full max-h-40 object-contain"
                     loading="lazy"
                   />
                 )}

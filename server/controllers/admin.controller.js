@@ -826,35 +826,8 @@ const deleteServicePDF = async (req, res) => {
  */
 const getCategoryClicks = async (req, res) => {
     try {
-        // Get all categories from SERVICE_RULES to ensure we include all categories
-        const SERVICE_RULES = {
-            "Academics": {},
-            "Music": {},
-            "Dance": {},
-            "Fitness & Sports": {},
-            "Home Cooking": {},
-            "Home Catering": {},
-            "Home Baker": {},
-            "Catering": {},
-            "Professional Baker": {},
-            "Workshops": {},
-            "Photography": {},
-            "Technology": {},
-            "Consulting": {},
-            "Finance": {},
-            "Groceries": {},
-            "Home Products": {},
-            "Apparels & Footwear": {},
-            "Law": {},
-            "Medical": {},
-            "Art & Craft": {},
-            "Home Interiors": {},
-            "Construction": {},
-            "Real Estate": {},
-            "Event Planner": {},
-            "Gifting": {},
-            "Other": {}
-        };
+        // Use DB categories (admin-managed). Include categories even if they have 0 clicks.
+        const allCategories = await Category.find({}).select("name").lean();
 
         // Aggregate categories with cumulative clicks
         const categoryData = await ServiceOffering.aggregate([
@@ -879,11 +852,13 @@ const getCategoryClicks = async (req, res) => {
             });
         });
 
-        // Add categories with 0 clicks that exist in SERVICE_RULES
-        Object.keys(SERVICE_RULES).forEach(category => {
-            if (!categoryMap.has(category)) {
-                categoryMap.set(category, {
-                    category: category,
+        // Add categories with 0 clicks that exist in DB
+        allCategories.forEach((c) => {
+            const name = c?.name;
+            if (!name) return;
+            if (!categoryMap.has(name)) {
+                categoryMap.set(name, {
+                    category: name,
                     totalClicks: 0,
                     serviceCount: 0,
                     services: []

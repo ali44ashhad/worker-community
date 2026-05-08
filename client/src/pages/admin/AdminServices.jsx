@@ -574,13 +574,13 @@ const AdminServices = () => {
                     </label>
                     {isEditing ? (
                       <div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="mb-4 columns-2 md:columns-4 gap-4 [column-fill:_balance]">
                           {service.portfolioImages && service.portfolioImages.map((img, idx) => (
-                            <div key={idx} className="relative">
+                            <div key={idx} className="relative mb-4 break-inside-avoid rounded-lg overflow-hidden">
                               <img
                                 src={img.url}
                                 alt={`Portfolio ${idx + 1}`}
-                                className="w-full h-32 object-cover rounded-lg border border-gray-300"
+                                className="w-full h-auto object-contain block"
                               />
                               <button
                                 onClick={() => handleDeleteImage(service._id, img.public_id)}
@@ -601,14 +601,14 @@ const AdminServices = () => {
                         <p className="text-xs text-gray-500 mt-1">Select new images to add</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="columns-2 md:columns-4 gap-4 [column-fill:_balance]">
                         {service.portfolioImages && service.portfolioImages.length > 0 ? (
                           service.portfolioImages.map((img, idx) => (
                             <img
                               key={idx}
                               src={img.url}
                               alt={`Portfolio ${idx + 1}`}
-                              className="w-full h-32 object-cover rounded-lg border border-gray-300"
+                              className="w-full h-auto object-contain block mb-4 break-inside-avoid rounded-lg overflow-hidden"
                             />
                           ))
                         ) : (

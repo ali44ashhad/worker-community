@@ -4,7 +4,6 @@ import "dotenv/config";
 import User from "../models/user.model.js";
 import cloudinary from "../config/cloudinary.js";
 import streamifier from "streamifier";
-import Booking from "../models/booking.model.js";
 import ServiceOffering from '../models/serviceOffering.model.js';
 import crypto from "crypto";
 import nodemailer from "nodemailer";
@@ -462,85 +461,6 @@ const changePassword = async (req, res) => {
     }
 };
 
-const getAdminDashboardStats = async (req, res) => {
-    try {
-        // 1. Get status counts and total bookings in one query
-        const bookingStats = await Booking.aggregate([
-            { $group: { _id: "$status", count: { $sum: 1 } } }
-        ]);
-
-        // Format the stats into a clean object
-        const statusCounts = {
-            pending: 0,
-            accepted: 0,
-            rejected: 0,
-            completed: 0,
-            cancelled: 0
-        };
-        let totalBookings = 0;
-        
-        bookingStats.forEach(stat => {
-            if (statusCounts.hasOwnProperty(stat._id)) {
-                statusCounts[stat._id] = stat.count;
-            }
-            totalBookings += stat.count;
-        });
-
-        // 2. Get 5 Recent Bookings from the entire platform
-        const recentBookings = await Booking.find({})
-            .populate('customer', 'firstName lastName profileImage addressLine1 addressLine2 city state zip') // Populate the customer
-            .populate({ // Nested populate for the provider
-                path: 'provider',
-                populate: {
-                    path: 'user',
-                    select: 'firstName lastName profileImage addressLine1 addressLine2 city state zip'
-                }
-            })
-            .sort({ createdAt: -1 })
-            .limit(5);
-
-        // 3. Send the final response
-        return res.status(200).json({
-            success: true,
-            data: {
-                totalBookings,
-                statusCounts,
-                recentBookings
-            }
-        });
-
-    } catch (error) {
-        console.error("Error in getAdminDashboardStats controller:", error.message);
-        return res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-};
-
-const getAllBookings = async (req, res) => {
-    try {
-        // Find all bookings
-        const bookings = await Booking.find({})
-            .populate('customer', 'firstName lastName profileImage email addressLine1 addressLine2 city state zip') // Populate customer details
-            .populate({ // Nested populate for the provider
-                path: 'provider',
-                select: 'user serviceCategories', // Select fields from ProviderProfile
-                populate: {
-                    path: 'user',
-                    select: 'firstName lastName profileImage email addressLine1 addressLine2 city state zip' // Select fields from User
-                }
-            })
-            .sort({ createdAt: -1 }); // Show newest first
-
-        return res.status(200).json({
-            success: true,
-            bookings
-        });
-
-    } catch (error) {
-        console.error("Error in getAllBookings controller:", error.message);
-        return res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-};
-
 // Add service to wishlist
 export const addServiceToWishlist = async (req, res) => {
   try {
@@ -586,7 +506,5 @@ export {
     updateUserProfile,
     changePassword,
     forgotPassword,
-    resetPassword,
-    getAdminDashboardStats,
-    getAllBookings
+    resetPassword
 };

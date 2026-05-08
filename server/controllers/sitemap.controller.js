@@ -1,13 +1,23 @@
-import { SERVICE_RULES } from '../models/serviceOffering.model.js';
+import Category from "../models/category.model.js";
 
 const BASE_URL = 'https://www.commun.in';
+
+const slugifyCategoryName = (name) => {
+  const raw = String(name || "").trim().toLowerCase();
+  if (!raw) return "";
+  const cleaned = raw
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/[^a-z0-9&-]/g, "");
+  return cleaned.replace(/-+/g, "-").replace(/^-|-$/g, "");
+};
 
 /**
  * Generate XML sitemap for the website
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-export const generateSitemap = (req, res) => {
+export const generateSitemap = async (req, res) => {
   try {
     // Get current date in ISO 8601 format (YYYY-MM-DD)
     const currentDate = new Date().toISOString().split('T')[0];
@@ -35,12 +45,13 @@ export const generateSitemap = (req, res) => {
       xml += '  </url>\n';
     });
 
-    // Add category routes from SERVICE_RULES
-    const categories = Object.keys(SERVICE_RULES);
-    categories.forEach(categoryName => {
-      const encodedCategory = encodeURIComponent(categoryName);
+    // Add category routes from DB (active categories only)
+    const categories = await Category.find({ isActive: { $ne: false } }).select("name").lean();
+    categories.forEach((c) => {
+      const slug = slugifyCategoryName(c?.name);
+      if (!slug) return;
       xml += '  <url>\n';
-      xml += `    <loc>${BASE_URL}/category/${encodedCategory}</loc>\n`;
+      xml += `    <loc>${BASE_URL}/category/${slug}</loc>\n`;
       xml += `    <lastmod>${currentDate}</lastmod>\n`;
       xml += '    <changefreq>monthly</changefreq>\n';
       xml += '    <priority>0.8</priority>\n';

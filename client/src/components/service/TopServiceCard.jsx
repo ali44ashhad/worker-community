@@ -64,12 +64,12 @@ const TopServiceCard = ({ service }) => {
       </button>
 
       <div className="mb-4">
-        <div className="w-full h-48 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center aspect-[4/3]">
+        <div className="w-full h-48 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center aspect-[4/3] p-2">
           {image ? (
             <img 
               src={image} 
               alt={serviceName || serviceCategory} 
-              className="w-full h-full object-cover"
+              className="w-auto h-auto max-w-full max-h-full object-contain"
               loading={undefined}
               decoding="async"
               width="400"

@@ -99,7 +99,7 @@ const ServiceCard = ({ service }) => {
       className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-200 group cursor-pointer"
     >
       {/* Portfolio Image */}
-      <div className="relative h-36 bg-gray-100 overflow-hidden">
+      <div className="relative h-36 bg-gray-100 overflow-hidden flex items-center justify-center p-2">
         {/* Heart Icon */}
         <button
           onClick={onToggleWishlist}
@@ -116,7 +116,7 @@ const ServiceCard = ({ service }) => {
           <img
             src={mainImage}
             alt="Service portfolio"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-auto h-auto max-w-full max-h-full object-contain group-hover:scale-[1.01] transition-transform duration-300"
             onError={handleImageError}
           />
         ) : (

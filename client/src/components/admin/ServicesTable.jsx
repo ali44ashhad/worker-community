@@ -373,13 +373,13 @@ const ServicesTable = ({ services = [], isLoading = false, itemsPerPage = 10 }) 
                               <HiOutlinePhotograph className="text-gray-700" size={20} />
                               Portfolio Images ({service.portfolioImages.length})
                             </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="columns-2 md:columns-4 gap-4 [column-fill:_balance]">
                               {service.portfolioImages.map((image, idx) => (
-                                <div key={idx} className="relative">
+                                <div key={idx} className="relative mb-4 break-inside-avoid rounded-lg overflow-hidden">
                                   <img
                                     src={image.url}
                                     alt={`Portfolio ${idx + 1}`}
-                                    className="w-full h-32 object-cover rounded-lg border border-gray-200 bg-white"
+                                    className="w-full h-auto object-contain block"
                                     loading="lazy"
                                   />
                                 </div>

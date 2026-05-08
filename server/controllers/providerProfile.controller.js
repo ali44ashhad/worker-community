@@ -672,7 +672,14 @@ const becomeProviderWithServices = async (req, res) => {
         // Parse services from body (expecting JSON string or object)
         let services;
         if (typeof req.body.services === 'string') {
-            services = JSON.parse(req.body.services);
+            try {
+                services = JSON.parse(req.body.services);
+            } catch {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid form data. Please refresh the page and try again.",
+                });
+            }
         } else {
             services = req.body.services;
         }
@@ -888,10 +895,10 @@ const becomeProviderWithServices = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error in becomeProviderWithServices:", error.message);
+        console.error(`[${req?.requestId || "no-rid"}] Error in becomeProviderWithServices:`, error?.message || error);
         return res.status(500).json({ 
             success: false, 
-            message: error.message 
+            message: "Unable to submit right now. Please try again in a moment." 
         });
     }
 };

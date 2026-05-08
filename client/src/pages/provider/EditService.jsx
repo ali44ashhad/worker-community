@@ -500,7 +500,7 @@ const EditService = () => {
             )}
 
             {(serviceForm?.existingImages?.length || serviceForm?.imagePreviews?.length) && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+              <div className="mt-6 columns-2 md:columns-3 gap-4 [column-fill:_balance]">
                 {[
                   ...(serviceForm.existingImages || []).map((img, idx) => ({
                     url: img.url,
@@ -515,11 +515,11 @@ const EditService = () => {
                 ].map((imgObj, displayIdx) => (
                   <motion.div
                     key={`img-${displayIdx}-${imgObj.url}`}
-                    className="relative border border-gray-200 rounded-xl overflow-hidden shadow-sm"
+                    className="relative rounded-xl overflow-hidden mb-4 break-inside-avoid"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                   >
-                    <img src={imgObj.url} alt="Portfolio" className="w-full h-40 object-cover" />
+                    <img src={imgObj.url} alt="Portfolio" className="w-full h-auto object-contain block" />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(imgObj.index, imgObj.isExisting)}

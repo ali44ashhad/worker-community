@@ -15,6 +15,14 @@ import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
 
 const app = express();
 
+// Attach a request id to every request for easier debugging
+app.use((req, res, next) => {
+  const rid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  req.requestId = rid;
+  res.setHeader("X-Request-Id", rid);
+  next();
+});
+
 // On serverless/CDN layers, 304 responses may be served without CORS headers.
 // Disable automatic ETag generation so the browser always receives full CORS headers.
 app.set("etag", false);
@@ -87,14 +95,24 @@ app.use('/api', sitemapRouter);
 
 // Global error handler to prevent crashes on unexpected errors
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
+  const rid = req?.requestId;
+  console.error(`[${rid || "no-rid"}] Unhandled error:`, err);
   if (res.headersSent) {
     return next(err);
   }
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Internal server error",
-  });
+
+  // Never return confusing technical errors to end-users
+  const status = err.status || 500;
+  const message =
+    status === 413
+      ? "Upload too large. Please keep each file under 50MB."
+      : status === 401
+        ? "Please login again and retry."
+        : status === 403
+          ? "You are not allowed to do this."
+          : "Something went wrong. Please try again.";
+
+  res.status(status).json({ success: false, message, requestId: rid });
 });
 
 const port = process.env.PORT || 3000;
