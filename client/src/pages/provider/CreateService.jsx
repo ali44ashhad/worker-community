@@ -29,6 +29,13 @@ const CreateService = () => {
   const [form, setForm] = useState(initialServiceState);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const MAX_IMAGES = 10;
+  const MAX_PDFS = 1;
+  const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB per file
+  const formatBytes = (bytes) => {
+    const mb = bytes / (1024 * 1024);
+    return `${mb.toFixed(mb >= 10 ? 1 : 2)}MB`;
+  };
 
   useEffect(() => {
     if (!activeCategories || activeCategories.length === 0) {
@@ -74,26 +81,77 @@ const CreateService = () => {
   const handleImageUpload = (event) => {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
-    const previews = files.map((file) => URL.createObjectURL(file));
+    const remaining = Math.max(0, MAX_IMAGES - (form.images?.length || 0));
+    if (remaining === 0) {
+      toast.error(`You can upload a maximum of ${MAX_IMAGES} images.`);
+      event.target.value = '';
+      return;
+    }
+
+    const selected = files.slice(0, remaining);
+    if (files.length > remaining) {
+      toast.error(`Only ${MAX_IMAGES} images allowed. Extra images were ignored.`);
+    }
+
+    const validFiles = [];
+    const previews = [];
+    selected.forEach((file) => {
+      if (!file?.type?.startsWith('image/')) {
+        toast.error(`${file?.name || 'File'} is not a valid image.`);
+        return;
+      }
+      if ((file.size || 0) > MAX_FILE_BYTES) {
+        toast.error(`${file.name} is ${formatBytes(file.size)} (max 20MB).`);
+        return;
+      }
+      validFiles.push(file);
+      previews.push(URL.createObjectURL(file));
+    });
+    if (!validFiles.length) {
+      event.target.value = '';
+      return;
+    }
     setForm((prev) => ({
       ...prev,
-      images: [...prev.images, ...files],
+      images: [...prev.images, ...validFiles],
       imagePreviews: [...prev.imagePreviews, ...previews],
     }));
     setErrors((prev) => ({ ...prev, images: null }));
+    event.target.value = '';
   };
 
   const handlePDFUpload = (event) => {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
+    if ((form.pdfs?.length || 0) >= MAX_PDFS) {
+      toast.error(`Only ${MAX_PDFS} PDF is allowed.`);
+      event.target.value = '';
+      return;
+    }
+
+    const first = files[0];
+    if (files.length > 1) {
+      toast.error('Only 1 PDF is allowed. Extra PDFs were ignored.');
+    }
+    if (first?.type !== 'application/pdf') {
+      toast.error(`${first?.name || 'File'} is not a valid PDF.`);
+      event.target.value = '';
+      return;
+    }
+    if ((first.size || 0) > MAX_FILE_BYTES) {
+      toast.error(`${first.name} is ${formatBytes(first.size)} (max 20MB).`);
+      event.target.value = '';
+      return;
+    }
     // For PDFs, we'll use the file name as preview
-    const previews = files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) }));
+    const previews = [{ name: first.name, url: URL.createObjectURL(first) }];
     setForm((prev) => ({
       ...prev,
-      pdfs: [...prev.pdfs, ...files],
+      pdfs: [...prev.pdfs, first],
       pdfPreviews: [...prev.pdfPreviews, ...previews],
     }));
     setErrors((prev) => ({ ...prev, pdfs: null }));
+    event.target.value = '';
   };
 
   const handleRemoveImage = (index) => {
@@ -431,7 +489,7 @@ const CreateService = () => {
               <label htmlFor="create-service-images" className="cursor-pointer flex flex-col items-center">
                 <Upload className="text-gray-400 mb-3" size={40} />
                 <span className="text-gray-900 font-semibold">Click to upload images</span>
-                <span className="text-xs text-gray-500">PNG, JPG up to 50MB</span>
+                <span className="text-xs text-gray-500">Max {MAX_IMAGES} images, up to 20MB each (PNG/JPG/JPEG)</span>
               </label>
             </motion.div>
             {errors.images && (
@@ -474,7 +532,6 @@ const CreateService = () => {
               <input
                 id="create-service-pdfs"
                 type="file"
-                multiple
                 accept="application/pdf"
                 onChange={handlePDFUpload}
                 className="hidden"
@@ -482,7 +539,7 @@ const CreateService = () => {
               <label htmlFor="create-service-pdfs" className="cursor-pointer flex flex-col items-center">
                 <FileText className="text-gray-400 mb-3" size={40} />
                 <span className="text-gray-900 font-semibold">Click to upload PDFs</span>
-                <span className="text-xs text-gray-500">PDF files up to 50MB</span>
+                <span className="text-xs text-gray-500">Max 1 PDF, up to 20MB</span>
               </label>
             </motion.div>
             {errors.pdfs && (
