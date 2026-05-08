@@ -827,7 +827,7 @@ const BecomeProvider = () => {
                 >
                   <Upload className="text-black mb-3" size={48} />
                   <span className="text-black font-bold text-lg mb-1">Click to upload images</span>
-                  <span className="text-sm text-gray-600">PNG, JPG up to 50MB</span>
+                  <span className="text-sm text-gray-600">PNG, JPG up to 10MB</span>
                 </label>
               </div>
               {errors[`service-${service.id}-images`] && (
@@ -863,7 +863,7 @@ const BecomeProvider = () => {
             {/* PDF Upload */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
-                Upload PDFs <span className="text-gray-500 normal-case">(optional)</span>
+              Upload PDF <span className="text-gray-500 normal-case">(optional)</span>
               </label>
               <p className="text-sm text-gray-600 mb-3">
                 Max size: <span className="font-semibold">upload only 1 file upto 20MB</span> (Documents: PDF)
@@ -884,8 +884,8 @@ const BecomeProvider = () => {
                   className="cursor-pointer flex flex-col items-center"
                 >
                   <FileText className="text-black mb-3" size={48} />
-                  <span className="text-black font-bold text-lg mb-1">Click to upload PDFs</span>
-                  <span className="text-sm text-gray-600">PDF files up to 50MB</span>
+                  <span className="text-black font-bold text-lg mb-1">Click to upload PDF</span>
+                  <span className="text-sm text-gray-600">PDF files up to 20MB</span>
                 </label>
               </div>
               {/* {errors[`service-${service.id}-pdfs`] && (
