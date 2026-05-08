@@ -495,7 +495,7 @@ const EditService = () => {
 
           <div className="mt-6">
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Upload Work Images (optional)
+              Upload Work Images max upload 5 images upto 10 MB(optional)
             </label>
             <motion.div
               className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${
@@ -557,7 +557,7 @@ const EditService = () => {
 
           <div className="mt-6">
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Upload PDFs <span className="text-gray-400">(optional)</span>
+                Upload PDFs max upload 1 file upto 10 MB <span className="text-gray-400">(optional)</span>
             </label>
             <motion.div
               className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${

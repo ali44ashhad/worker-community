@@ -938,7 +938,7 @@ const UpdateServices = () => {
                 Upload Work Images (optional)
               </label>
               <p className="text-sm text-gray-500 mb-3">
-                Max size: <span className="font-semibold text-gray-700">10 images upto 20 MB</span> (Images: PNG/JPG/JPEG)
+                Max size: <span className="font-semibold text-gray-700">5 images upto 10 MB</span> (Images: PNG/JPG/JPEG)
               </p>
               <motion.div 
                 className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${

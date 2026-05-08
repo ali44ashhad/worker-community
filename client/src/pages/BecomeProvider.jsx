@@ -808,7 +808,7 @@ const BecomeProvider = () => {
                 Upload Work Images (optional)
               </label>
               <p className="text-sm text-gray-600 mb-3">
-                Max size: <span className="font-semibold">10 images upto 20 MB</span> (Images: PNG/JPG/JPEG)
+                Max size: <span className="font-semibold">5 images upto 10 MB</span> (Images: PNG/JPG/JPEG)
               </p>
               <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
                   errors[`service-${service.id}-images`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
