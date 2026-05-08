@@ -7,6 +7,8 @@ import {
     addServiceOffering,
     updateServiceOffering,
     deleteServiceOffering,
+    addServiceOfferingJson,
+    updateServiceOfferingJson,
     getAllProviders,
     getTopProvidersByServiceClicks,
     getProviderById,
@@ -54,6 +56,10 @@ router.post("/service", protect, isProvider, uploadAny, addServiceOffering);
 router.put("/service/:serviceId", protect, isProvider, uploadAny, updateServiceOffering);
 
 router.delete("/service/:serviceId", protect, isProvider, deleteServiceOffering);
+
+// JSON-only service create/update (assets already uploaded to Cloudinary)
+router.post("/service-json", protect, isProvider, addServiceOfferingJson);
+router.put("/service-json/:serviceId", protect, isProvider, updateServiceOfferingJson);
 
 // --- Get provider by ID (must be last to not catch other routes) ---
 router.get("/:id", getProviderById);

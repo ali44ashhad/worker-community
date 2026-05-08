@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { getMyProviderProfile } from '../../features/providerSlice';
 import { getActiveCategories } from '../../features/adminSlice';
+import { getApiBase } from '../../utils/apiBase';
 
 const buildServiceState = (service) => ({
   id: service?._id || Date.now(),
@@ -211,39 +212,60 @@ const EditService = () => {
 
     try {
       setIsSubmitting(true);
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      const formData = new FormData();
+      const base = getApiBase();
 
-      formData.append('servicename', serviceForm.servicename);
-      formData.append('serviceCategory', serviceForm.category);
-      formData.append('subCategories', JSON.stringify(serviceForm.subCategories));
-      formData.append('keywords', JSON.stringify(serviceForm.keywords));
-      formData.append('description', serviceForm.bio);
-      // Send retained existing assets so backend can delete removed ones.
-      formData.append('existingImages', JSON.stringify(serviceForm.existingImages || []));
-      formData.append('existingPDFs', JSON.stringify(serviceForm.existingPDFs || []));
-      // Only append experience if provided
-      if (serviceForm.experience !== '' && serviceForm.experience !== undefined && serviceForm.experience !== null) {
-        formData.append('experience', serviceForm.experience);
-      }
-      // formData.append('price', serviceForm.price);
-
-      serviceForm.images.forEach((file) => {
-        if (file instanceof File) {
-          formData.append('portfolioImages', file);
-        }
-      });
-
-      serviceForm.pdfs.forEach((file) => {
-        if (file instanceof File) {
-          formData.append('portfolioPDFs', file);
-        }
-      });
-
-      const response = await fetch(`${API_URL}/api/provider-profile/service/${serviceForm._id}`, {
-        method: 'PUT',
-        body: formData,
+      // Signed params for direct Cloudinary uploads
+      const sigRes = await fetch(`${base || ''}/api/provider-profile/cloudinary-signature`, {
+        method: 'GET',
         credentials: 'include',
+      });
+      const sigText = await sigRes.text();
+      const sigData = sigText ? (() => { try { return JSON.parse(sigText); } catch { return null; } })() : null;
+      if (!sigRes.ok || !sigData?.success) {
+        throw new Error(sigData?.message || 'Unable to prepare upload. Please try again.');
+      }
+
+      const { cloudName, apiKey, timestamp, folder, signature } = sigData;
+      const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+
+      const uploadOne = async (file) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('api_key', apiKey);
+        fd.append('timestamp', String(timestamp));
+        fd.append('folder', folder);
+        fd.append('signature', signature);
+        const r = await fetch(cloudinaryUploadUrl, { method: 'POST', body: fd });
+        const j = await r.json().catch(() => null);
+        if (!r.ok || !j?.secure_url) {
+          throw new Error(j?.error?.message || 'Upload failed. Please try again.');
+        }
+        return { url: j.secure_url, public_id: j.public_id };
+      };
+
+      const newUploadedImages = [];
+      for (const imgFile of (serviceForm.images || [])) {
+        if (imgFile instanceof File) newUploadedImages.push(await uploadOne(imgFile));
+      }
+      const newUploadedPDFs = [];
+      for (const pdfFile of (serviceForm.pdfs || [])) {
+        if (pdfFile instanceof File) newUploadedPDFs.push(await uploadOne(pdfFile));
+      }
+
+      const response = await fetch(`${base || ''}/api/provider-profile/service-json/${serviceForm._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          servicename: serviceForm.servicename,
+          serviceCategory: serviceForm.category,
+          subCategories: serviceForm.subCategories,
+          keywords: serviceForm.keywords,
+          description: serviceForm.bio,
+          experience: serviceForm.experience,
+          portfolioImages: [...(serviceForm.existingImages || []), ...newUploadedImages],
+          portfolioPDFs: [...(serviceForm.existingPDFs || []), ...newUploadedPDFs],
+        }),
       });
 
       const rawText = await response.text();

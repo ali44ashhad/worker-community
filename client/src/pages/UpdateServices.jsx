@@ -938,7 +938,7 @@ const UpdateServices = () => {
                 Upload Work Images (optional)
               </label>
               <p className="text-sm text-gray-500 mb-3">
-                Max size: <span className="font-semibold text-gray-700">50MB per file</span> (Images: PNG/JPG/JPEG)
+                Max size: <span className="font-semibold text-gray-700">10 images upto 20 MB</span> (Images: PNG/JPG/JPEG)
               </p>
               <motion.div 
                 className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
@@ -1024,7 +1024,7 @@ const UpdateServices = () => {
                 Upload PDFs <span className="text-gray-400">(optional)</span>
               </label>
               <p className="text-sm text-gray-500 mb-3">
-                Max size: <span className="font-semibold text-gray-700">50MB per file</span> (Documents: PDF)
+                Max size: <span className="font-semibold text-gray-700">upload only 1 file upto 20MB</span> (Documents: PDF)
               </p>
               <motion.div 
                 className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${

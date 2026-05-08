@@ -455,69 +455,49 @@ const BecomeProvider = () => {
       }
 
       // Prepare FormData
-      const base = getApiBase();
-
-      // 1) Get signed upload params from backend
-      const sigRes = await fetch(`${base || ''}/api/provider-profile/cloudinary-signature`, {
-        method: 'GET',
-        credentials: 'include',
+      const formData = new FormData();
+      
+      // Add provider bio
+      formData.append('providerBio', providerBio);
+      
+      // Add services as JSON (IMPORTANT: do NOT include previews/files in JSON, it bloats payload)
+      const servicesPayload = (services || []).map((s) => ({
+        servicename: s?.servicename || '',
+        category: s?.category || '',
+        subCategories: Array.isArray(s?.subCategories) ? s.subCategories : [],
+        keywords: Array.isArray(s?.keywords) ? s.keywords : [],
+        bio: s?.bio || '',
+        experience: s?.experience ?? '',
+      }));
+      formData.append('services', JSON.stringify(servicesPayload));
+      
+      // Add images with proper fieldnames - images array contains File objects
+      services.forEach((service, index) => {
+        if (service.images && service.images.length > 0) {
+          service.images.forEach((file) => {
+            if (file instanceof File) {
+              formData.append(`service_${index}_images`, file);
+            }
+          });
+        }
+        // Add PDFs with proper fieldnames
+        if (service.pdfs && service.pdfs.length > 0) {
+          service.pdfs.forEach((file) => {
+            if (file instanceof File) {
+              formData.append(`service_${index}_pdfs`, file);
+            }
+          });
+        }
       });
-      const sigText = await sigRes.text();
-      const sigData = sigText ? (() => { try { return JSON.parse(sigText); } catch { return null; } })() : null;
-      if (!sigRes.ok || !sigData?.success) {
-        throw new Error(sigData?.message || 'Unable to prepare upload. Please try again.');
-      }
 
-      const { cloudName, apiKey, timestamp, folder, signature } = sigData;
-      const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+      // Use normalized API base. If empty, use relative `/api/*` (Vercel rewrite friendly).
+      const base = getApiBase();
+      const url = `${base || ''}/api/provider-profile/become-provider-multi`;
 
-      const uploadOne = async (file) => {
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('api_key', apiKey);
-        fd.append('timestamp', String(timestamp));
-        fd.append('folder', folder);
-        fd.append('signature', signature);
-        const r = await fetch(cloudinaryUploadUrl, { method: 'POST', body: fd });
-        const j = await r.json().catch(() => null);
-        if (!r.ok || !j?.secure_url) {
-          throw new Error(j?.error?.message || 'Upload failed. Please try again.');
-        }
-        return { url: j.secure_url, public_id: j.public_id };
-      };
-
-      // 2) Upload files directly to Cloudinary
-      const servicesPayload = [];
-      for (let i = 0; i < (services || []).length; i++) {
-        const s = services[i];
-        const uploadedImages = [];
-        const uploadedPDFs = [];
-
-        for (const imgFile of (s?.images || [])) {
-          if (imgFile instanceof File) uploadedImages.push(await uploadOne(imgFile));
-        }
-        for (const pdfFile of (s?.pdfs || [])) {
-          if (pdfFile instanceof File) uploadedPDFs.push(await uploadOne(pdfFile));
-        }
-
-        servicesPayload.push({
-          servicename: s?.servicename || '',
-          category: s?.category || '',
-          subCategories: Array.isArray(s?.subCategories) ? s.subCategories : [],
-          keywords: Array.isArray(s?.keywords) ? s.keywords : [],
-          bio: s?.bio || '',
-          experience: s?.experience ?? '',
-          portfolioImages: uploadedImages,
-          portfolioPDFs: uploadedPDFs,
-        });
-      }
-
-      // 3) Submit JSON only (no big multipart body)
-      const response = await fetch(`${base || ''}/api/provider-profile/become-provider-multi-json`, {
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ providerBio, services: servicesPayload }),
+        body: formData,
+        credentials: 'include' // Include cookies for JWT authentication
       });
 
       const rawText = await response.text();
@@ -828,7 +808,7 @@ const BecomeProvider = () => {
                 Upload Work Images (optional)
               </label>
               <p className="text-sm text-gray-600 mb-3">
-                Max size: <span className="font-semibold">50MB per file</span> (Images: PNG/JPG/JPEG)
+                Max size: <span className="font-semibold">10 images upto 20 MB</span> (Images: PNG/JPG/JPEG)
               </p>
               <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
                   errors[`service-${service.id}-images`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
@@ -886,7 +866,7 @@ const BecomeProvider = () => {
                 Upload PDFs <span className="text-gray-500 normal-case">(optional)</span>
               </label>
               <p className="text-sm text-gray-600 mb-3">
-                Max size: <span className="font-semibold">50MB per file</span> (Documents: PDF)
+                Max size: <span className="font-semibold">upload only 1 file upto 20MB</span> (Documents: PDF)
               </p>
               <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
                   errors[`service-${service.id}-pdfs`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'

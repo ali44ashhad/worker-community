@@ -1218,6 +1218,169 @@ const updateServiceOffering = async (req, res) => {
 };
 
 /**
+ * @description Add a new service offering (JSON only, assets already uploaded to Cloudinary)
+ * @route POST /api/provider-profile/service-json
+ * @access Private (Provider)
+ */
+const addServiceOfferingJson = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const {
+            servicename,
+            serviceCategory,
+            subCategories,
+            keywords,
+            description,
+            experience,
+            portfolioImages,
+            portfolioPDFs,
+        } = req.body || {};
+
+        const profile = await ProviderProfile.findOne({ user: userId });
+        if (!profile) {
+            return res.status(404).json({ success: false, message: "Provider profile not found." });
+        }
+
+        const nextSubCategories = Array.isArray(subCategories) ? subCategories : (subCategories ? [subCategories] : []);
+        const nextKeywords = Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []);
+
+        const validated = await validateCategorySelection({
+            serviceCategory,
+            subCategories: nextSubCategories,
+            keywords: nextKeywords,
+        });
+
+        let nextImages = Array.isArray(portfolioImages) ? portfolioImages : [];
+        if (!nextImages.length) nextImages = [{ url: "/logo2.png" }];
+        const nextPDFs = Array.isArray(portfolioPDFs) ? portfolioPDFs : [];
+
+        const newService = new ServiceOffering({
+            provider: profile._id,
+            servicename,
+            serviceCategory: validated.serviceCategory,
+            subCategories: validated.subCategories,
+            keywords: validated.keywords,
+            description,
+            portfolioImages: nextImages,
+            portfolioPDFs: nextPDFs,
+        });
+        if (experience !== undefined && experience !== '' && experience !== null) {
+            newService.experience = parseInt(experience);
+        }
+
+        await newService.save();
+
+        return res.status(201).json({
+            success: true,
+            message: "Service added successfully.",
+            service: newService
+        });
+    } catch (error) {
+        console.error(`[${req?.requestId || "no-rid"}] Error in addServiceOfferingJson:`, error?.message || error);
+        return res.status(400).json({ success: false, message: "Unable to create service. Please try again." });
+    }
+};
+
+/**
+ * @description Update a service offering (JSON only, assets already uploaded to Cloudinary)
+ * @route PUT /api/provider-profile/service-json/:serviceId
+ * @access Private (Provider)
+ */
+const updateServiceOfferingJson = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { serviceId } = req.params;
+        const {
+            servicename,
+            serviceCategory,
+            subCategories,
+            keywords,
+            description,
+            experience,
+            portfolioImages,
+            portfolioPDFs,
+        } = req.body || {};
+
+        const profile = await ProviderProfile.findOne({ user: userId });
+        if (!profile) {
+            return res.status(404).json({ success: false, message: "Provider profile not found." });
+        }
+
+        const service = await ServiceOffering.findById(serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+        if (service.provider.toString() !== profile._id.toString()) {
+            return res.status(403).json({ success: false, message: "You are not authorized to update this service." });
+        }
+
+        if (servicename !== undefined) service.servicename = servicename;
+        if (serviceCategory) service.serviceCategory = serviceCategory;
+        if (description !== undefined) service.description = description;
+
+        if (subCategories !== undefined) {
+            service.subCategories = Array.isArray(subCategories) ? subCategories : (subCategories ? [subCategories] : []);
+        }
+        if (keywords !== undefined) {
+            service.keywords = Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []);
+        }
+
+        await validateCategorySelection({
+            serviceCategory: service.serviceCategory,
+            subCategories: service.subCategories || [],
+            keywords: service.keywords || [],
+        });
+
+        if (experience !== undefined) {
+            if (experience === '' || experience === null) {
+                service.experience = undefined;
+            } else {
+                service.experience = parseInt(experience);
+            }
+        }
+
+        // Replace assets from client-provided lists.
+        // If user provides real images, drop default placeholder.
+        let nextImages = Array.isArray(portfolioImages) ? portfolioImages : [];
+        nextImages = nextImages.filter((img) => img && img.url);
+        const hasRealImage = nextImages.some((img) => img.public_id);
+        if (hasRealImage) {
+            nextImages = nextImages.filter((img) => !(img && !img.public_id && img.url === "/logo2.png"));
+        }
+        if (!nextImages.length) nextImages = [{ url: "/logo2.png" }];
+
+        const nextPDFs = Array.isArray(portfolioPDFs) ? portfolioPDFs : [];
+
+        // Cleanup removed Cloudinary assets
+        const retainedImageIds = new Set(nextImages.map((img) => img?.public_id).filter(Boolean));
+        const imagesToDelete = (service.portfolioImages || []).filter(
+            (img) => img?.public_id && !retainedImageIds.has(img.public_id)
+        );
+        await Promise.all(imagesToDelete.map((img) => deleteFromCloudinary(img.public_id)));
+
+        const retainedPDFIds = new Set(nextPDFs.map((pdf) => pdf?.public_id).filter(Boolean));
+        const pdfsToDelete = (service.portfolioPDFs || []).filter(
+            (pdf) => pdf?.public_id && !retainedPDFIds.has(pdf.public_id)
+        );
+        await Promise.all(pdfsToDelete.map((pdf) => deleteFromCloudinary(pdf.public_id)));
+
+        service.portfolioImages = nextImages;
+        service.portfolioPDFs = nextPDFs;
+
+        await service.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Service updated successfully.",
+            service
+        });
+    } catch (error) {
+        console.error(`[${req?.requestId || "no-rid"}] Error in updateServiceOfferingJson:`, error?.message || error);
+        return res.status(400).json({ success: false, message: "Unable to update service. Please try again." });
+    }
+};
+
+/**
  * @description Increment service offering click count
  * @route POST /api/service-offering/:id/increment-count
  * @access Public
@@ -1283,6 +1446,8 @@ export {
     addServiceOffering,
     updateServiceOffering,
     deleteServiceOffering,
+    addServiceOfferingJson,
+    updateServiceOfferingJson,
     getProviderDashboardStats,
     getAllProviders,
     getTopProvidersByServiceClicks,

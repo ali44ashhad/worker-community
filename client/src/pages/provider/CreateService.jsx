@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { getActiveCategories } from '../../features/adminSlice';
+import { getApiBase } from '../../utils/apiBase';
 
 const initialServiceState = {
   servicename: '',
@@ -171,36 +172,60 @@ const CreateService = () => {
 
     try {
       setIsSubmitting(true);
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      const formData = new FormData();
+      const base = getApiBase();
 
-      formData.append('servicename', form.servicename);
-      formData.append('serviceCategory', form.category);
-      formData.append('subCategories', JSON.stringify(form.subCategories));
-      formData.append('keywords', JSON.stringify(form.keywords));
-      formData.append('description', form.bio);
-      // Only append experience if provided
-      if (form.experience !== '' && form.experience !== undefined && form.experience !== null) {
-        formData.append('experience', form.experience);
-      }
-      // formData.append('price', form.price);
-
-      form.images.forEach((file) => {
-        if (file instanceof File) {
-          formData.append('portfolioImages', file);
-        }
-      });
-
-      form.pdfs.forEach((file) => {
-        if (file instanceof File) {
-          formData.append('portfolioPDFs', file);
-        }
-      });
-
-      const response = await fetch(`${API_URL}/api/provider-profile/service`, {
-        method: 'POST',
-        body: formData,
+      // Signed params for direct Cloudinary uploads (avoid Vercel 413 limits)
+      const sigRes = await fetch(`${base || ''}/api/provider-profile/cloudinary-signature`, {
+        method: 'GET',
         credentials: 'include',
+      });
+      const sigText = await sigRes.text();
+      const sigData = sigText ? (() => { try { return JSON.parse(sigText); } catch { return null; } })() : null;
+      if (!sigRes.ok || !sigData?.success) {
+        throw new Error(sigData?.message || 'Unable to prepare upload. Please try again.');
+      }
+
+      const { cloudName, apiKey, timestamp, folder, signature } = sigData;
+      const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+
+      const uploadOne = async (file) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('api_key', apiKey);
+        fd.append('timestamp', String(timestamp));
+        fd.append('folder', folder);
+        fd.append('signature', signature);
+        const r = await fetch(cloudinaryUploadUrl, { method: 'POST', body: fd });
+        const j = await r.json().catch(() => null);
+        if (!r.ok || !j?.secure_url) {
+          throw new Error(j?.error?.message || 'Upload failed. Please try again.');
+        }
+        return { url: j.secure_url, public_id: j.public_id };
+      };
+
+      const uploadedImages = [];
+      for (const imgFile of (form.images || [])) {
+        if (imgFile instanceof File) uploadedImages.push(await uploadOne(imgFile));
+      }
+      const uploadedPDFs = [];
+      for (const pdfFile of (form.pdfs || [])) {
+        if (pdfFile instanceof File) uploadedPDFs.push(await uploadOne(pdfFile));
+      }
+
+      const response = await fetch(`${base || ''}/api/provider-profile/service-json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          servicename: form.servicename,
+          serviceCategory: form.category,
+          subCategories: form.subCategories,
+          keywords: form.keywords,
+          description: form.bio,
+          experience: form.experience,
+          portfolioImages: uploadedImages,
+          portfolioPDFs: uploadedPDFs,
+        }),
       });
 
       const rawText = await response.text();
