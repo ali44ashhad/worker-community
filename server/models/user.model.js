@@ -73,6 +73,14 @@ const userSchema = new Schema({
         type: String,
         default: ""
     },
+    resetPasswordToken: {
+        type: String,
+        default: ""
+    },
+    resetPasswordExpires: {
+        type: Date,
+        default: null
+    },
      wishlist: [{ type: Schema.Types.ObjectId, ref: 'ServiceOffering', default: [] }]
 }, { timestamps: true });
 

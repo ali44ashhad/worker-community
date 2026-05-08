@@ -6,6 +6,8 @@ import cloudinary from "../config/cloudinary.js";
 import streamifier from "streamifier";
 import Booking from "../models/booking.model.js";
 import ServiceOffering from '../models/serviceOffering.model.js';
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 // Helper function to generate a token and set the cookie.
 const generateToken = (userId, res) => {
@@ -67,6 +69,133 @@ const deleteCloudinaryImageByUrl = async (url) => {
         await cloudinary.uploader.destroy(publicId);
     } catch (error) {
         console.log("Cloudinary profile image cleanup failed:", error?.message || error);
+    }
+};
+
+const sendPasswordResetEmail = async ({ toEmail, resetUrl }) => {
+    const host = (process.env.SMTP_HOST || "").trim();
+    const port = Number(process.env.SMTP_PORT || 587);
+    const user = (process.env.SMTP_USER || "").trim();
+    const pass = (process.env.SMTP_PASS || "").trim();
+    const from = (process.env.SMTP_FROM || process.env.SMTP_USER || "no-reply@commun.in").trim();
+
+    if (!host || !user || !pass) {
+        // No SMTP configured; allow API to succeed without sending.
+        return { sent: false };
+    }
+
+    const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+    });
+
+    await transporter.sendMail({
+        from,
+        to: toEmail,
+        subject: "Reset your password",
+        text: `Reset your password using this link: ${resetUrl}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;line-height:1.5">
+            <h2>Reset your password</h2>
+            <p>Click the button below to set a new password.</p>
+            <p style="margin:16px 0">
+              <a href="${resetUrl}" style="background:#111827;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px;display:inline-block">
+                Reset Password
+              </a>
+            </p>
+            <p>If you did not request this, you can ignore this email.</p>
+          </div>
+        `,
+    });
+
+    return { sent: true };
+};
+
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Email is required." });
+        }
+
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
+        // Always return success to avoid email enumeration
+        if (!user) {
+            return res.status(200).json({
+                success: true,
+                message: "If this email exists, we have sent a password reset link.",
+            });
+        }
+
+        const rawToken = crypto.randomBytes(32).toString("hex");
+        const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+        user.resetPasswordToken = tokenHash;
+        user.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        await user.save();
+
+        const frontendBase = (process.env.FRONTEND_URL || "").trim() || "http://localhost:5173";
+        const resetUrl = `${frontendBase.replace(/\/+$/, "")}/reset-password/${rawToken}`;
+        let sent = false;
+        try {
+            const result = await sendPasswordResetEmail({ toEmail: user.email, resetUrl });
+            sent = Boolean(result?.sent);
+        } catch (mailError) {
+            console.log("Password reset email failed:", mailError?.message || mailError);
+        }
+
+        const payload = {
+            success: true,
+            message: "If this email exists, we have sent a password reset link.",
+        };
+        // Dev-only debug to help diagnose SMTP / URL issues
+        if (String(process.env.NODE_ENV || "").toLowerCase() !== "production") {
+            payload.debug = { email: user.email, sent, resetUrl };
+        }
+        return res.status(200).json(payload);
+    } catch (error) {
+        console.log("Error in forgotPassword:", error.message);
+        return res.status(500).json({ success: false, message: "Internal server error: " + error.message });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { newPassword } = req.body;
+
+        if (!token) {
+            return res.status(400).json({ success: false, message: "Reset token is required." });
+        }
+        if (!newPassword) {
+            return res.status(400).json({ success: false, message: "New password is required." });
+        }
+        if (String(newPassword).length < 8) {
+            return res.status(400).json({ success: false, message: "Password should be at least 8 characters" });
+        }
+
+        const tokenHash = crypto.createHash("sha256").update(String(token)).digest("hex");
+        const user = await User.findOne({
+            resetPasswordToken: tokenHash,
+            resetPasswordExpires: { $gt: new Date() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Invalid or expired reset link." });
+        }
+
+        const hashedPassword = await bcrypt.hash(String(newPassword), 10);
+        user.password = hashedPassword;
+        user.resetPasswordToken = "";
+        user.resetPasswordExpires = null;
+        await user.save();
+
+        return res.status(200).json({ success: true, message: "Password reset successfully. Please login." });
+    } catch (error) {
+        console.log("Error in resetPassword:", error.message);
+        return res.status(500).json({ success: false, message: "Internal server error: " + error.message });
     }
 };
 
@@ -449,4 +578,15 @@ export const removeServiceFromWishlist = async (req, res) => {
 };
 
 // --- Single Export Block ---
-export { register, login, logout, checkAuth, updateUserProfile, changePassword, getAdminDashboardStats, getAllBookings };
+export {
+    register,
+    login,
+    logout,
+    checkAuth,
+    updateUserProfile,
+    changePassword,
+    forgotPassword,
+    resetPassword,
+    getAdminDashboardStats,
+    getAllBookings
+};

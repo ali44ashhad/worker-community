@@ -6,6 +6,8 @@ import About from './pages/About'
 import FAQ from './pages/FAQ'
 import Providers from './pages/Providers'
 import Login from './pages/Login'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import { useDispatch } from 'react-redux'
 import { useEffect } from 'react'
 import { checkAuth } from './features/authSlice'
@@ -91,6 +93,8 @@ const App = () => {
         <Route path='/faq' element={<FAQ></FAQ>}></Route>
         <Route path='/provider' element={<Providers></Providers>}></Route>
         <Route path='/login' element={<Login></Login>}></Route>
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/reset-password/:token' element={<ResetPassword />} />
         <Route 
           path='/become-provider' 
           element={

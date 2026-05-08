@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkAuth } from '../features/authSlice';
 import { getActiveCategories } from '../features/adminSlice';
+import { getApiBase } from '../utils/apiBase';
 
 const DRAFT_KEY = 'becomeProviderDraft:v1';
 
@@ -14,6 +15,9 @@ const BecomeProvider = () => {
   const { activeCategories } = useSelector((state) => state.admin);
   const PROVIDER_BIO_MAX_CHARS = 500;
   const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50MB per file
+  // Many hosts/proxies reject very large multipart bodies even if per-file is ok.
+  // Keep this slightly under common 100MB limits.
+  const MAX_TOTAL_UPLOAD_BYTES = 95 * 1024 * 1024; // 95MB total per submit
   const EXPERIENCE_MAX_YEARS = 80;
   const formatBytes = (bytes) => {
     const mb = bytes / (1024 * 1024);
@@ -436,6 +440,20 @@ const BecomeProvider = () => {
     setIsSubmitting(true);
 
     try {
+      // Total upload size pre-check (prevents confusing "Failed to fetch" on host limits)
+      const totalBytes = (services || []).reduce((sum, s) => {
+        const imgBytes = (s?.images || []).reduce((a, f) => a + (f?.size || 0), 0);
+        const pdfBytes = (s?.pdfs || []).reduce((a, f) => a + (f?.size || 0), 0);
+        return sum + imgBytes + pdfBytes;
+      }, 0);
+      if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
+        toast.error(
+          `Total upload is ${formatBytes(totalBytes)} (max ${formatBytes(MAX_TOTAL_UPLOAD_BYTES)}). Please upload fewer/smaller files.`
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       // Prepare FormData
       const formData = new FormData();
       
@@ -464,10 +482,11 @@ const BecomeProvider = () => {
         }
       });
 
-      // Get API URL from environment
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      
-      const response = await fetch(`${API_URL}/api/provider-profile/become-provider-multi`, {
+      // Use normalized API base. If empty, use relative `/api/*` (Vercel rewrite friendly).
+      const base = getApiBase();
+      const url = `${base || ''}/api/provider-profile/become-provider-multi`;
+
+      const response = await fetch(url, {
         method: 'POST',
         body: formData,
         credentials: 'include' // Include cookies for JWT authentication
@@ -528,7 +547,13 @@ const BecomeProvider = () => {
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast.error(error?.message || 'An error occurred while submitting the form. Please try again.');
+      // Network/CORS errors often appear as "Failed to fetch"
+      const msg = String(error?.message || '');
+      toast.error(
+        msg.includes('Failed to fetch')
+          ? 'Failed to submit. This is usually a network/CORS or upload-size limit issue. Try fewer/smaller files and retry.'
+          : (error?.message || 'An error occurred while submitting the form. Please try again.')
+      );
       setIsSubmitting(false);
     }
   };

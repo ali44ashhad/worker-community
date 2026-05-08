@@ -6,6 +6,8 @@ import {
     register, 
     updateUserProfile, 
     changePassword,
+    forgotPassword,
+    resetPassword,
     addServiceToWishlist, 
     removeServiceFromWishlist 
 } from '../controllers/user.controller.js'; // Remove admin controllers
@@ -28,6 +30,10 @@ userRouter.put(
 );
 
 userRouter.put("/change-password", protect, changePassword);
+
+// Forgot/Reset password
+userRouter.post("/forgot-password", forgotPassword);
+userRouter.post("/reset-password/:token", resetPassword);
 
 // Add service to wishlist
 userRouter.post('/wishlist/:serviceId', protect, addServiceToWishlist);

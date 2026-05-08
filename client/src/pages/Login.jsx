@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginUser, signupUser } from "../features/authSlice";
@@ -219,6 +219,18 @@ const Login = () => {
                 )}
               </button>
             </div>
+
+            {mode === "login" && (
+              <div className="w-full -mt-4 mb-6 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-sm font-semibold text-gray-900 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
 
             {/* Submit Button */}
             <motion.button
