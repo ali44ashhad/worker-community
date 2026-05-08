@@ -30,6 +30,148 @@ const deleteFromCloudinary = (public_id) => {
     });
 };
 
+/**
+ * @description Create a signed Cloudinary upload signature for direct uploads
+ * @route GET /api/provider-profile/cloudinary-signature
+ * @access Private (Auth User)
+ */
+const getCloudinarySignature = async (req, res) => {
+    try {
+        const timestamp = Math.floor(Date.now() / 1000);
+        const folder = "service_offerings";
+        const paramsToSign = { timestamp, folder };
+        const signature = cloudinary.utils.api_sign_request(
+            paramsToSign,
+            process.env.CLOUDINARY_API_SECRET
+        );
+
+        return res.status(200).json({
+            success: true,
+            cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+            apiKey: process.env.CLOUDINARY_API_KEY,
+            timestamp,
+            folder,
+            signature,
+        });
+    } catch (error) {
+        console.error(`[${req?.requestId || "no-rid"}] Error in getCloudinarySignature:`, error?.message || error);
+        return res.status(500).json({ success: false, message: "Unable to prepare upload. Please try again." });
+    }
+};
+
+/**
+ * @description Become a provider with multiple services (JSON only, assets already uploaded to Cloudinary)
+ * @route POST /api/provider-profile/become-provider-multi-json
+ * @access Private (Auth User)
+ */
+const becomeProviderWithServicesJson = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { providerBio, services } = req.body || {};
+
+        if (!providerBio || !String(providerBio).trim()) {
+            return res.status(400).json({ success: false, message: "Provider bio is required." });
+        }
+        if (!services || !Array.isArray(services) || services.length === 0) {
+            return res.status(400).json({ success: false, message: "At least one service is required." });
+        }
+
+        const existingProfile = await ProviderProfile.findOne({ user: userId });
+        if (existingProfile) {
+            await User.findByIdAndUpdate(userId, { role: "provider" });
+            return res.status(200).json({
+                success: true,
+                message: "You are already a provider.",
+                profile: existingProfile,
+                user: { _id: userId, role: "provider" },
+            });
+        }
+
+        // Validate each service required fields
+        for (let i = 0; i < services.length; i++) {
+            const s = services[i] || {};
+            if (!s.servicename || !String(s.servicename).trim()) {
+                return res.status(400).json({ success: false, message: `Service ${i + 1}: Service name is required.` });
+            }
+            if (!s.category) {
+                return res.status(400).json({ success: false, message: `Service ${i + 1}: Category is required.` });
+            }
+            if (!s.subCategories || s.subCategories.length === 0) {
+                return res.status(400).json({ success: false, message: `Service ${i + 1}: At least one sub-category is required.` });
+            }
+            if (!s.keywords || s.keywords.length === 0) {
+                return res.status(400).json({ success: false, message: `Service ${i + 1}: At least one keyword is required.` });
+            }
+            if (!s.bio || !String(s.bio).trim()) {
+                return res.status(400).json({ success: false, message: `Service ${i + 1}: Bio/Description is required.` });
+            }
+        }
+
+        const servicesWithExperience = services.filter(s => s.experience !== undefined && s.experience !== '' && s.experience !== null);
+        const avgExperience = servicesWithExperience.length > 0
+            ? Math.round(
+                servicesWithExperience.reduce((sum, s) => sum + parseInt(s.experience || 0), 0) / servicesWithExperience.length
+            )
+            : 0;
+
+        const newProfile = await ProviderProfile.create({
+            user: userId,
+            bio: String(providerBio).substring(0, 500),
+            experience: avgExperience
+        });
+
+        await User.findByIdAndUpdate(userId, { role: "provider" });
+
+        const createdServices = [];
+        for (let i = 0; i < services.length; i++) {
+            const s = services[i] || {};
+
+            const nextSubCategories = Array.isArray(s.subCategories) ? s.subCategories : [s.subCategories].filter(Boolean);
+            const nextKeywords = Array.isArray(s.keywords) ? s.keywords : [s.keywords].filter(Boolean);
+
+            const validated = await validateCategorySelection({
+                serviceCategory: s.category,
+                subCategories: nextSubCategories,
+                keywords: nextKeywords,
+            });
+
+            let portfolioImages = Array.isArray(s.portfolioImages) ? s.portfolioImages : [];
+            if (!portfolioImages.length) {
+                portfolioImages = [{ url: "/logo2.png" }];
+            }
+            const portfolioPDFs = Array.isArray(s.portfolioPDFs) ? s.portfolioPDFs : [];
+
+            const serviceData = {
+                provider: newProfile._id,
+                servicename: s.servicename,
+                serviceCategory: validated.serviceCategory,
+                subCategories: validated.subCategories,
+                keywords: validated.keywords,
+                description: s.bio,
+                portfolioImages,
+                portfolioPDFs,
+            };
+            if (s.experience !== undefined && s.experience !== '' && s.experience !== null) {
+                serviceData.experience = parseInt(s.experience);
+            }
+
+            const newServiceOffering = new ServiceOffering(serviceData);
+            await newServiceOffering.save();
+            createdServices.push(newServiceOffering);
+        }
+
+        return res.status(201).json({
+            success: true,
+            message: "Congratulations! You are now a provider",
+            profile: newProfile,
+            services: createdServices,
+            user: { _id: userId, role: "provider" },
+        });
+    } catch (error) {
+        console.error(`[${req?.requestId || "no-rid"}] Error in becomeProviderWithServicesJson:`, error?.message || error);
+        return res.status(500).json({ success: false, message: "Unable to submit right now. Please try again." });
+    }
+};
 
 // --- Provider Profile Controllers ---
 
@@ -1135,6 +1277,8 @@ const incrementProviderProfileCount = async (req, res) => {
 export {
     becomeProvider,
     becomeProviderWithServices,
+    becomeProviderWithServicesJson,
+    getCloudinarySignature,
     updateProviderProfile,
     addServiceOffering,
     updateServiceOffering,

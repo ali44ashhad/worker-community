@@ -2,6 +2,7 @@ import express from "express";
 import {
     becomeProvider,
     becomeProviderWithServices,
+    becomeProviderWithServicesJson,
     updateProviderProfile,
     addServiceOffering,
     updateServiceOffering,
@@ -11,7 +12,8 @@ import {
     getProviderById,
     getMyProviderProfile,
     getProviderDashboardStats,
-    incrementProviderProfileCount
+    incrementProviderProfileCount,
+    getCloudinarySignature
 } from "../controllers/providerProfile.controller.js";
 import { protect, isProvider } from "../middlewares/user.middleware.js";
 import upload, { uploadAny } from "../middlewares/multer.js";
@@ -39,6 +41,12 @@ router.put("/", protect, isProvider, updateProviderProfile);
 router.post("/become-provider", protect, becomeProvider);
 
 router.post("/become-provider-multi", protect, upload.any(), becomeProviderWithServices);
+
+// Signed upload helper for direct-to-Cloudinary uploads (avoids Vercel 413 limits)
+router.get("/cloudinary-signature", protect, getCloudinarySignature);
+
+// JSON-only become-provider flow (assets already uploaded to Cloudinary)
+router.post("/become-provider-multi-json", protect, becomeProviderWithServicesJson);
 
 // --- Routes for Managing Services ---
 router.post("/service", protect, isProvider, uploadAny, addServiceOffering);
