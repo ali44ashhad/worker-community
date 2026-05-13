@@ -412,7 +412,7 @@ const CreateService = () => {
 
           <div className="mt-6">
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Upload Work Images max upload 5 images upto 10 MB(optional)
+                Upload Work Images max upload 5 images upto 10 MB each(optional)
             </label>
             <motion.div
               className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${
@@ -431,7 +431,7 @@ const CreateService = () => {
               <label htmlFor="create-service-images" className="cursor-pointer flex flex-col items-center">
                 <Upload className="text-gray-400 mb-3" size={40} />
                 <span className="text-gray-900 font-semibold">Click to upload images</span>
-                <span className="text-xs text-gray-500">PNG, JPG up to 50MB</span>
+                <span className="text-xs text-gray-500">PNG, JPG up to 10MB</span>
               </label>
             </motion.div>
             {errors.images && (
@@ -481,8 +481,8 @@ const CreateService = () => {
               />
               <label htmlFor="create-service-pdfs" className="cursor-pointer flex flex-col items-center">
                 <FileText className="text-gray-400 mb-3" size={40} />
-                <span className="text-gray-900 font-semibold">Click to upload PDFs</span>
-                <span className="text-xs text-gray-500">PDF files up to 50MB</span>
+                <span className="text-gray-900 font-semibold">Click to upload PDF</span>
+                <span className="text-xs text-gray-500">PDF files up to 20MB</span>
               </label>
             </motion.div>
             {errors.pdfs && (

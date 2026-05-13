@@ -575,8 +575,8 @@ const EditService = () => {
               />
               <label htmlFor="edit-service-pdfs" className="cursor-pointer flex flex-col items-center">
                 <FileText className="text-gray-400 mb-3" size={40} />
-                <span className="text-gray-900 font-semibold">Click to upload PDFs</span>
-                <span className="text-xs text-gray-500">PDF files up to 50MB</span>
+                <span className="text-gray-900 font-semibold">Click to upload PDF</span>
+                <span className="text-xs text-gray-500">PDF files up to 20MB</span>
               </label>
             </motion.div>
             {/* {errors.pdfs && (

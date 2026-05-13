@@ -938,7 +938,7 @@ const UpdateServices = () => {
                 Upload Work Images (optional)
               </label>
               <p className="text-sm text-gray-500 mb-3">
-                Max size: <span className="font-semibold text-gray-700">5 images upto 10 MB</span> (Images: PNG/JPG/JPEG)
+                Max size: <span className="font-semibold text-gray-700">5 images upto 10 MB each</span> (Images: PNG/JPG/JPEG)
               </p>
               <motion.div 
                 className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
@@ -964,7 +964,7 @@ const UpdateServices = () => {
                     <Upload className="text-gray-400 mb-4" size={48} />
                   </motion.div>
                   <span className="text-gray-900 font-semibold text-lg mb-2">Click to upload images</span>
-                  <span className="text-sm text-gray-500">PNG, JPG up to 50MB</span>
+                  <span className="text-sm text-gray-500">PNG, JPG up to 10MB</span>
                 </label>
               </motion.div>
               {errors[`service-${service.id}-images`] && (
@@ -1049,8 +1049,8 @@ const UpdateServices = () => {
                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                     <FileText className="text-gray-400 mb-4" size={48} />
                   </motion.div>
-                  <span className="text-gray-900 font-semibold text-lg mb-2">Click to upload PDFs</span>
-                  <span className="text-sm text-gray-500">PDF files up to 50MB</span>
+                  <span className="text-gray-900 font-semibold text-lg mb-2">Click to upload PDF</span>
+                  <span className="text-sm text-gray-500">PDF files up to 20MB</span>
                 </label>
               </motion.div>
               {/* {errors[`service-${service.id}-pdfs`] && (
