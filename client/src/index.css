@@ -213,6 +213,19 @@ body::-webkit-scrollbar,
   @apply bg-white text-gray-900 placeholder:text-gray-400;
 }
 
+/* Lighter placeholder text app-wide (avoids dark/medium-weight placeholder look) */
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af; /* gray-400 */
+  opacity: 1;
+  font-weight: 400;
+}
+
+input,
+textarea {
+  color: #111827; /* gray-900 — placeholder stays lighter via rule above */
+}
+
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 700;

@@ -26,6 +26,19 @@ import {
 import { motion } from 'framer-motion';
 import { getFullName, getInitials } from '../../utils/userHelpers';
 
+const inputClass =
+  'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 font-normal focus:border-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all';
+const labelClass =
+  'mb-1.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500';
+const sectionTitleClass =
+  'mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500';
+const providerCardClass =
+  'overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm';
+const btnPrimary =
+  'inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50';
+const btnSecondary =
+  'inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50';
+
 // Categories/subcategories/keywords are DB-driven via `activeCategories`.
 
 const UpdateProviders = () => {
@@ -363,68 +376,69 @@ const UpdateProviders = () => {
     dispatch(getAllProvidersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
   };
 
-  if (isLoading) {
+  if (isLoading && (!providers || providers.length === 0)) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-[50vh] items-center justify-center px-4">
         <motion.div 
           className="text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          <motion.div 
-            className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          />
-          <p className="text-xl font-semibold text-black">Loading providers...</p>
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+          <p className="text-sm font-medium text-gray-600">Loading providers...</p>
         </motion.div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && (!providers || providers.length === 0)) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <motion.div 
-          className="text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <p className="text-red-600 text-xl font-semibold">Error: {error}</p>
+      <motion.div
+        className="mx-auto max-w-6xl px-4 py-12 sm:px-6"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <motion.div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-center">
+          <p className="font-semibold text-red-700">Could not load providers</p>
+          <p className="mt-1 text-sm text-red-600">{error}</p>
         </motion.div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <motion.div 
-      className="max-w-[1350px] mx-auto px-6 py-8"
+      className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       <motion.div 
-        className="mb-12"
+        className="mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-3">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-black mb-3 tracking-tight">Manage Providers</h1>
-            <p className="text-gray-600 max-w-2xl">View and update provider information</p>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-indigo-600">Admin</p>
+            <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">Manage Providers</h1>
+            <p className="mt-1 text-sm text-gray-600 sm:text-base">View and edit provider profiles, contact details, and services.</p>
+            {pagination?.totalProviders != null && (
+              <p className="mt-2 text-xs font-medium text-gray-500">
+                {pagination.totalProviders} provider{pagination.totalProviders !== 1 ? 's' : ''} total
+              </p>
+            )}
           </div>
-          <div className="flex-shrink-0">
-            <div className="relative">
-              <HiOutlineSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <div className="relative w-full lg:max-w-sm">
+              <HiOutlineSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 placeholder="Search by name or email..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full md:w-80 pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black placeholder-gray-400"
+                className={`${inputClass} pl-10 w-full`}
               />
-            </div>
           </div>
         </div>
       </motion.div>
@@ -437,14 +451,14 @@ const UpdateProviders = () => {
             return (
               <motion.div
                 key={provider._id}
-                className="bg-white border border-gray-300 rounded-2xl p-6 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
+                className={`${providerCardClass} ${isEditing ? 'ring-2 ring-gray-900/15' : ''}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
               >
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                <div className="flex flex-col gap-4 border-b border-gray-100 bg-gray-50/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100">
                       {provider.user?.profileImage ? (
                         <img
                           src={provider.user.profileImage}
@@ -458,17 +472,17 @@ const UpdateProviders = () => {
                       )}
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-black">
+                      <h3 className="text-lg font-bold text-gray-900">
                         {getFullName(provider.user) || 'Unknown Provider'}
                       </h3>
-                      <p className="text-sm text-gray-600">{provider.user?.email || ''}</p>
+                      <p className="text-sm text-gray-500">{provider.user?.email || ''}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
                     {!isEditing ? (
                       <button
                         onClick={() => handleEdit(provider)}
-                        className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                        className={btnPrimary}
                       >
                         <HiOutlinePencil size={18} />
                         <span>Edit</span>
@@ -477,14 +491,14 @@ const UpdateProviders = () => {
                       <>
                         <button
                           onClick={() => handleSave(provider._id)}
-                          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base"
+                          className={btnPrimary}
                         >
                           <HiOutlineCheck size={18} />
                           <span>Save</span>
                         </button>
                         <button
                           onClick={handleCancel}
-                          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white text-black border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base"
+                          className={btnSecondary}
                         >
                           <HiOutlineX size={18} />
                           <span>Cancel</span>
@@ -494,11 +508,12 @@ const UpdateProviders = () => {
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  {/* User Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-6 p-5 sm:p-6">
+                  <div>
+                    <p className={sectionTitleClass}>Contact & address</p>
+                  <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <label className={labelClass}>
                         <HiOutlineUser className="text-gray-500" size={16} />
                         First Name
                       </label>
@@ -507,14 +522,14 @@ const UpdateProviders = () => {
                           type="text"
                           value={editForm.firstName}
                           onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          className={inputClass}
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.firstName || provider.user?.name?.split(' ')[0] || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{provider.user?.firstName || provider.user?.name?.split(' ')[0] || 'N/A'}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <label className={labelClass}>
                         <HiOutlineUser className="text-gray-500" size={16} />
                         Last Name
                       </label>
@@ -523,14 +538,14 @@ const UpdateProviders = () => {
                           type="text"
                           value={editForm.lastName}
                           onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          className={inputClass}
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.lastName || provider.user?.name?.split(' ').slice(1).join(' ') || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{provider.user?.lastName || provider.user?.name?.split(' ').slice(1).join(' ') || 'N/A'}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <label className={labelClass}>
                         <HiOutlineMail className="text-gray-500" size={16} />
                         Email
                       </label>
@@ -539,14 +554,14 @@ const UpdateProviders = () => {
                           type="email"
                           value={editForm.email}
                           onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          className={inputClass}
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.email || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{provider.user?.email || 'N/A'}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <label className={labelClass}>
                         <HiOutlinePhone className="text-gray-500" size={16} />
                         Phone Number
                       </label>
@@ -557,14 +572,14 @@ const UpdateProviders = () => {
                           onChange={(e) =>
                             setEditForm({ ...editForm, phoneNumber: e.target.value })
                           }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          className={inputClass}
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.phoneNumber || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{provider.user?.phoneNumber || 'N/A'}</p>
                       )}
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <label className={labelClass}>
                         <HiOutlineLocationMarker className="text-gray-500" size={16} />
                         Address Line 1
                       </label>
@@ -575,15 +590,15 @@ const UpdateProviders = () => {
                           onChange={(e) =>
                             setEditForm({ ...editForm, addressLine1: e.target.value })
                           }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          className={inputClass}
                           placeholder="Address Line 1"
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.addressLine1 || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{provider.user?.addressLine1 || 'N/A'}</p>
                       )}
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <label className={labelClass}>
                         <HiOutlineLocationMarker className="text-gray-500" size={16} />
                         Address Line 2
                       </label>
@@ -594,15 +609,15 @@ const UpdateProviders = () => {
                           onChange={(e) =>
                             setEditForm({ ...editForm, addressLine2: e.target.value })
                           }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          className={inputClass}
                           placeholder="Address Line 2 (optional)"
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.addressLine2 || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{provider.user?.addressLine2 || 'N/A'}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <label className={labelClass}>
                         <HiOutlineLocationMarker className="text-gray-500" size={16} />
                         City
                       </label>
@@ -613,15 +628,15 @@ const UpdateProviders = () => {
                           onChange={(e) =>
                             setEditForm({ ...editForm, city: e.target.value })
                           }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          className={inputClass}
                           placeholder="City"
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.city || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{provider.user?.city || 'N/A'}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <label className={labelClass}>
                         <HiOutlineLocationMarker className="text-gray-500" size={16} />
                         State
                       </label>
@@ -632,15 +647,15 @@ const UpdateProviders = () => {
                           onChange={(e) =>
                             setEditForm({ ...editForm, state: e.target.value })
                           }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          className={inputClass}
                           placeholder="State"
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.state || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{provider.user?.state || 'N/A'}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
+                      <label className={labelClass}>
                         <HiOutlineLocationMarker className="text-gray-500" size={16} />
                         ZIP Code
                       </label>
@@ -651,19 +666,21 @@ const UpdateProviders = () => {
                           onChange={(e) =>
                             setEditForm({ ...editForm, zip: e.target.value })
                           }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                          className={inputClass}
                           placeholder="ZIP Code"
                         />
                       ) : (
-                        <p className="text-black">{provider.user?.zip || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{provider.user?.zip || 'N/A'}</p>
                       )}
                     </div>
+                  </div>
                   </div>
 
                   {/* Bio */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
-                      <HiOutlineDocumentText className="text-gray-500" size={16} />
+                    <p className={sectionTitleClass}>Provider bio</p>
+                    <label className={`${labelClass} mt-3 normal-case tracking-normal`}>
+                      <HiOutlineDocumentText className="text-gray-400" size={16} />
                       Bio
                     </label>
                     {isEditing ? (
@@ -672,11 +689,11 @@ const UpdateProviders = () => {
                         onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                         rows="4"
                         maxLength={500}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                        className={inputClass}
                         placeholder="Provider bio..."
                       />
                     ) : (
-                      <p className="text-black">{provider.bio || 'No bio provided'}</p>
+                      <p className="text-sm leading-relaxed text-gray-700">{provider.bio || 'No bio provided'}</p>
                     )}
                     {isEditing && (
                       <p className="text-xs text-gray-500 mt-1">
@@ -687,25 +704,22 @@ const UpdateProviders = () => {
 
                   {/* Service Offerings */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-2 flex items-center gap-2">
-                      <HiOutlineBriefcase className="text-gray-500" size={16} />
-                      Service Offerings
-                    </label>
+                    <p className={sectionTitleClass}>Service offerings</p>
                     {provider.serviceOfferings && provider.serviceOfferings.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                         {provider.serviceOfferings.map((service) => (
                           <div
                             key={service._id}
                             onClick={() => handleServiceClick(service)}
-                            className="bg-gray-50 border border-gray-300 rounded-xl p-6 hover:bg-gray-100 cursor-pointer transition-all duration-300 group shadow-sm hover:shadow-md hover:-translate-y-1"
+                            className="group cursor-pointer rounded-xl border border-gray-200 bg-gray-50 p-5 transition-colors hover:border-gray-300 hover:bg-white"
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3">
-                                <div className="bg-gray-200 border border-gray-300 group-hover:bg-gray-300 p-2 rounded-xl">
-                                  <HiOutlineBriefcase className="text-black group-hover:text-black" size={20} />
+                                <div className="rounded-lg bg-white p-2 ring-1 ring-gray-200 group-hover:ring-gray-300">
+                                  <HiOutlineBriefcase className="text-gray-700" size={20} />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-bold text-lg text-black">
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="text-base font-semibold text-gray-900">
                                     {service.servicename || service.serviceCategory || 'Service'}
                                   </h4>
                                   {service.servicename && service.serviceCategory && (
@@ -715,7 +729,7 @@ const UpdateProviders = () => {
                                   )}
                                 </div>
                               </div>
-                              <HiOutlinePencil className="text-gray-500 group-hover:text-black" size={18} />
+                              <HiOutlinePencil className="text-gray-400 group-hover:text-gray-700" size={18} />
                             </div>
                             {service.description && (
                               <p className="text-sm text-gray-600 line-clamp-3 mb-3 min-h-[3.75rem]">
@@ -726,13 +740,13 @@ const UpdateProviders = () => {
                               {service.subCategories && service.subCategories.slice(0, 3).map((subCat, idx) => (
                                 <span
                                   key={idx}
-                                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold border border-gray-300"
+                                  className="rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-600"
                                 >
                                   {subCat}
                                 </span>
                               ))}
                               {service.subCategories && service.subCategories.length > 3 && (
-                                <span className="px-3 py-1 bg-white text-gray-700 rounded-full text-xs font-semibold border border-gray-300">
+                                <span className="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
                                   +{service.subCategories.length - 3}
                                 </span>
                               )}
@@ -754,13 +768,13 @@ const UpdateProviders = () => {
                                 )}
                               </div>
                             )}
-                            <div className="mt-4 pt-3 border-t border-gray-300 flex items-center justify-between">
-                              <div className="text-sm text-gray-500">
-                                <span className="font-semibold text-black">{service.serviceOfferingCount || 0}</span> clicks
+                            <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3">
+                              <div className="text-xs text-gray-500">
+                                <span className="font-semibold text-gray-900">{service.serviceOfferingCount || 0}</span> clicks
                               </div>
                               {service.experience && (
-                                <div className="text-sm text-gray-500">
-                                  <span className="font-semibold text-black">{service.experience}</span> years exp.
+                                <div className="text-xs text-gray-500">
+                                  <span className="font-semibold text-gray-900">{service.experience}</span> years exp.
                                 </div>
                               )}
                             </div>
@@ -777,8 +791,8 @@ const UpdateProviders = () => {
             })}
           </div>
         ) : (
-          <div className="bg-white border border-gray-300 rounded-2xl p-12 text-center shadow-md">
-            <p className="text-gray-600 text-lg">No providers found{searchTerm ? ' matching your search' : ''}</p>
+          <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+            <p className="text-gray-600">No providers found{searchTerm ? ' matching your search' : ''}</p>
           </div>
         )}
 
@@ -797,10 +811,10 @@ const UpdateProviders = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={!pagination.hasPrevPage || isLoading}
-              className={`px-4 py-2 rounded-xl border transition-all duration-300 ${
+              className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                 !pagination.hasPrevPage || isLoading
-                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                  : 'bg-white text-black border-gray-300 hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+                  ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
+                  : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-50'
               }`}
             >
               Previous
@@ -824,10 +838,10 @@ const UpdateProviders = () => {
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
                     disabled={isLoading}
-                    className={`px-3 py-2 rounded-xl border transition-all duration-300 ${
+                    className={`min-w-[2.25rem] rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                       pagination.currentPage === pageNum
-                        ? 'bg-black text-white border-black'
-                        : 'bg-white text-black border-gray-300 hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-50'
                     } ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
                     {pageNum}
@@ -839,10 +853,10 @@ const UpdateProviders = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
               disabled={!pagination.hasNextPage || isLoading}
-              className={`px-4 py-2 rounded-xl border transition-all duration-300 ${
+              className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                 !pagination.hasNextPage || isLoading
-                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                  : 'bg-white text-black border-gray-300 hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
+                  ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
+                  : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-50'
               }`}
             >
               Next
@@ -858,15 +872,15 @@ const UpdateProviders = () => {
           onClick={handleCloseServiceModal}
         >
           <motion.div 
-            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-300"
+            className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-300 px-6 py-4 flex items-center justify-between z-10">
-              <h2 className="text-2xl font-bold text-black tracking-tight">Edit Service</h2>
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+              <h2 className="text-xl font-bold text-gray-900">Edit Service</h2>
               <button
                 onClick={handleCloseServiceModal}
                 className="text-gray-500 hover:text-black transition-colors p-2 rounded-xl hover:bg-gray-50"
@@ -879,27 +893,27 @@ const UpdateProviders = () => {
             <div className="p-6 space-y-6">
               {/* Service Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
+                <label className={labelClass}>
                   Service Name
                 </label>
                 <input
                   type="text"
                   value={serviceEditForm.servicename}
                   onChange={(e) => setServiceEditForm({ ...serviceEditForm, servicename: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                  className={inputClass}
                   placeholder="Enter service name"
                 />
               </div>
 
               {/* Service Category */}
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
+                <label className={labelClass}>
                   Service Category
                 </label>
                 <select
                   value={serviceEditForm.serviceCategory}
                   onChange={(e) => setServiceEditForm({ ...serviceEditForm, serviceCategory: e.target.value, subCategories: [], keywords: [] })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                  className={inputClass}
                 >
                   <option value="">Select Category</option>
                   {(activeCategories || []).map((c) => c.name).map((cat) => (
@@ -911,7 +925,7 @@ const UpdateProviders = () => {
               {/* Subcategories */}
               {serviceEditForm.serviceCategory && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                  <label className={labelClass}>
                     Subcategories
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -922,8 +936,8 @@ const UpdateProviders = () => {
                         onClick={() => handleSubCategoryToggle(subCat)}
                         className={`px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${
                           serviceEditForm.subCategories.includes(subCat)
-                            ? 'bg-black text-white border border-black'
-                            : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+                            ? 'border-gray-900 bg-gray-900 text-white'
+                            : 'border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
                         {subCat}
@@ -936,7 +950,7 @@ const UpdateProviders = () => {
               {/* Keywords */}
               {serviceEditForm.serviceCategory && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                  <label className={labelClass}>
                     Keywords
                   </label>
                   <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
@@ -947,8 +961,8 @@ const UpdateProviders = () => {
                         onClick={() => handleKeywordToggle(keyword)}
                         className={`px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${
                           serviceEditForm.keywords.includes(keyword)
-                            ? 'bg-black text-white border border-black'
-                            : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+                            ? 'border-gray-900 bg-gray-900 text-white'
+                            : 'border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
                         {keyword}
@@ -960,21 +974,21 @@ const UpdateProviders = () => {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
+                <label className={labelClass}>
                   Description
                 </label>
                 <textarea
                   value={serviceEditForm.description}
                   onChange={(e) => setServiceEditForm({ ...serviceEditForm, description: e.target.value })}
                   rows="4"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                  className={inputClass}
                   placeholder="Service description..."
                 />
               </div>
 
               {/* Experience */}
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
+                <label className={labelClass}>
                   Experience (Years)
                 </label>
                 <input
@@ -982,13 +996,13 @@ const UpdateProviders = () => {
                   value={serviceEditForm.experience}
                   onChange={(e) => setServiceEditForm({ ...serviceEditForm, experience: parseInt(e.target.value) || 0 })}
                   min="0"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                  className={inputClass}
                 />
               </div>
 
               {/* Price */}
               {/* <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
+                <label className={labelClass}>
                   Price (₹)
                 </label>
                 <input
@@ -997,13 +1011,13 @@ const UpdateProviders = () => {
                   onChange={(e) => setServiceEditForm({ ...serviceEditForm, price: parseFloat(e.target.value) || 0 })}
                   min="0"
                   step="0.01"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                  className={inputClass}
                 />
               </div> */}
 
               {/* Portfolio Images */}
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
+                <label className={labelClass}>
                   Portfolio Images
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -1028,7 +1042,7 @@ const UpdateProviders = () => {
                   multiple
                   accept="image/*"
                   onChange={handleServiceImageChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                  className={inputClass}
                 />
                 <p className="text-xs text-gray-500 mt-1">Select new images to add</p>
               </div>
@@ -1071,7 +1085,7 @@ const UpdateProviders = () => {
                     multiple
                     accept="application/pdf"
                     onChange={handlePDFChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300 bg-white text-black"
+                    className={inputClass}
                   />
                   <p className="text-xs text-gray-500 mt-1">Select new PDFs to add</p>
                   {serviceEditForm.newPDFs.length > 0 && (
@@ -1086,15 +1100,11 @@ const UpdateProviders = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-300 px-6 py-4 flex items-center justify-end gap-3">
+            <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
               <button
                 onClick={handleCloseServiceModal}
                 disabled={isSaving}
-                className={`flex items-center gap-2 px-4 py-2 bg-white text-black border border-gray-300 rounded-xl transition-all duration-300 ${
-                  isSaving
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98]'
-                }`}
+                className={`${btnSecondary} ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <HiOutlineX size={18} />
                 <span>Cancel</span>
@@ -1102,11 +1112,7 @@ const UpdateProviders = () => {
               <button
                 onClick={handleServiceSave}
                 disabled={isSaving}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
-                  isSaving
-                    ? 'bg-gray-400 text-white cursor-not-allowed'
-                    : 'bg-black text-white hover:bg-gray-800 hover:scale-[1.02] active:scale-[0.98]'
-                }`}
+                className={`${btnPrimary} ${isSaving ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
               >
                 <HiOutlineCheck size={18} />
                 <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>

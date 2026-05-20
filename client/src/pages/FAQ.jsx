@@ -55,7 +55,7 @@ const FAQ = () => {
     },
     {
       question: "How do I update my profile or services?",
-      answer: "If you're a provider, you can update your profile and services by clicking 'Update Profile' or 'Update Services' in the navigation menu. Make sure to keep your information current to help customers find you easily."
+      answer: "If you're a provider, open Provider Dashboard from the menu, then use Update Profile or Manage Services to keep your information current and help customers find you easily."
     }
   ];
 

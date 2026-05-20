@@ -38,18 +38,6 @@ const Cart = () => {
     return out;
   }, [allProviders, wishlistIds]);
 
-  // Calculate total amount
-  const totalAmount = useMemo(() => {
-    return wishlistServices.reduce((sum, service) => {
-      // const price = service?.price;
-      // if (price !== undefined && price !== null) {
-      //   const numPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
-      //   return sum + numPrice;
-      // }
-      return sum;
-    }, 0);
-  }, [wishlistServices]);
-
   const handleRemove = async (serviceId, e) => {
     e.stopPropagation();
     await dispatch(removeFromWishlist(serviceId));
@@ -146,7 +134,6 @@ const Cart = () => {
               const image = service?.portfolioImages?.[0]?.url;
               const title = service?.servicename || service?.serviceCategory || 'Service';
               const description = service?.description || '';
-              // const price = service?.price;
               const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
               const profileImage = service?.provider?.user?.profileImage;
               const providerPhoneNumber = service?.provider?.user?.phoneNumber || '';

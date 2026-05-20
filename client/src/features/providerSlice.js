@@ -6,87 +6,42 @@ import { getApiBase } from "../utils/apiBase";
 const API_URL = getApiBase() || "http://localhost:3001";
 axios.defaults.withCredentials = true;
 
-/* ----------------- THUNKS ----------------- */
-
-// Get all providers (for the public list)
 export const getAllProviders = createAsyncThunk(
   "provider/getAll",
   async (_, { rejectWithValue }) => {
     try {
-      // NOTE: Update this API endpoint to your actual route
-      const res = await axios.get(`${API_URL}/api/provider-profile`); 
-  
-      // Log first provider's service offerings to check for ratings
-      if (res.data.providers && res.data.providers.length > 0 && res.data.providers[0].serviceOfferings) {
-        if (res.data.providers[0].serviceOfferings.length > 0) {
-        }
-      }
-      return res.data.providers; // Assuming the API returns { success: true, providers: [...] }
+      const res = await axios.get(`${API_URL}/api/provider-profile`);
+      return res.data.providers;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch providers");
     }
   }
 );
 
-// Get single provider by ID (for the detail page)
 export const getProviderById = createAsyncThunk(
   "provider/getById",
   async (providerProfileId, { rejectWithValue }) => {
     try {
-      // NOTE: Update this API endpoint to your actual route
       const res = await axios.get(`${API_URL}/api/provider-profile/${providerProfileId}`);
-      return res.data.provider; // Assuming { success: true, provider: {...} }
+      return res.data.provider;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Provider not found");
     }
   }
 );
 
-// Become a provider (submitting the form)
-export const becomeProvider = createAsyncThunk(
-  "provider/become",
-  async (formData, { rejectWithValue }) => {
-    try {
-      const res = await axios.post(`${API_URL}/api/provider-profile/become-provider`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
-      });
-      return res.data; // Return { success, user, profile }
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Profile creation failed");
-    }
-  }
-);
-
-// Update an existing provider profile
-export const updateProviderProfile = createAsyncThunk(
-  "provider/update",
-  async (formData, { rejectWithValue }) => {
-    try {
-      const res = await axios.put(`${API_URL}/api/provider-profile/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      return res.data.profile; // Return { success, profile }
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Profile update failed");
-    }
-  }
-);
-
-// Get current user's provider profile with services
 export const getMyProviderProfile = createAsyncThunk(
   "provider/getMyProfile",
   async (_, { rejectWithValue }) => {
     try {
       const res = await axios.get(`${API_URL}/api/provider-profile/my-profile`);
-      return res.data.provider; // Return { success, provider }
+      return res.data.provider;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch profile");
     }
   }
 );
 
-// Get dashboard stats for logged-in provider
 export const getProviderDashboardStats = createAsyncThunk(
   "provider/getDashboardStats",
   async (_, { rejectWithValue }) => {
@@ -99,19 +54,16 @@ export const getProviderDashboardStats = createAsyncThunk(
   }
 );
 
-/* ----------------- SLICE ----------------- */
-
 const initialState = {
   allProviders: [],
   selectedProvider: null,
-  myProviderProfile: null, // Current user's provider profile
+  myProviderProfile: null,
   dashboardStats: null,
   dashboardError: null,
   isFetchingAll: false,
   isFetchingSelected: false,
   isFetchingMyProfile: false,
   isFetchingDashboard: false,
-  isUpdatingProfile: false,
   error: null,
 };
 
@@ -119,7 +71,6 @@ const providerSlice = createSlice({
   name: "provider",
   initialState,
   reducers: {
-    // Reducer to clear the selected provider when you leave the detail page
     clearSelectedProvider(state) {
       state.selectedProvider = null;
       state.error = null;
@@ -127,7 +78,6 @@ const providerSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Get all providers
       .addCase(getAllProviders.pending, (state) => {
         state.isFetchingAll = true;
         state.error = null;
@@ -140,8 +90,6 @@ const providerSlice = createSlice({
         state.isFetchingAll = false;
         state.error = action.payload;
       })
-
-      // Get provider by ID
       .addCase(getProviderById.pending, (state) => {
         state.isFetchingSelected = true;
         state.error = null;
@@ -154,38 +102,6 @@ const providerSlice = createSlice({
         state.isFetchingSelected = false;
         state.error = action.payload;
       })
-
-      // Become Provider
-      .addCase(becomeProvider.pending, (state) => {
-        state.isUpdatingProfile = true;
-        state.error = null;
-      })
-      .addCase(becomeProvider.fulfilled, (state) => {
-        state.isUpdatingProfile = false;
-        // You might update allProviders or selectedProvider if needed
-        toast.success("Profile created!");
-      })
-      .addCase(becomeProvider.rejected, (state, action) => {
-        state.isUpdatingProfile = false;
-        state.error = action.payload;
-      })
-
-      // Update Provider Profile
-      .addCase(updateProviderProfile.pending, (state) => {
-        state.isUpdatingProfile = true;
-        state.error = null;
-      })
-      .addCase(updateProviderProfile.fulfilled, (state, action) => {
-        state.isUpdatingProfile = false;
-        state.selectedProvider = action.payload; // Update the selected profile
-        toast.success("Profile updated!");
-      })
-      .addCase(updateProviderProfile.rejected, (state, action) => {
-        state.isUpdatingProfile = false;
-        state.error = action.payload;
-      })
-
-      // Get My Provider Profile
       .addCase(getMyProviderProfile.pending, (state) => {
         state.isFetchingMyProfile = true;
         state.error = null;
@@ -198,8 +114,6 @@ const providerSlice = createSlice({
         state.isFetchingMyProfile = false;
         state.error = action.payload;
       })
-      
-      // Get Provider Dashboard Stats
       .addCase(getProviderDashboardStats.pending, (state) => {
         state.isFetchingDashboard = true;
         state.dashboardError = null;
@@ -212,13 +126,9 @@ const providerSlice = createSlice({
         state.isFetchingDashboard = false;
         state.dashboardError = action.payload;
       })
-      
-      // Show toasts only for provider-related rejected actions, but only if we don't have cached data
       .addMatcher(isRejectedWithValue(), (state, action) => {
-        if (action.payload && typeof action.type === 'string' && action.type.startsWith('provider/')) {
-          // Only show error toast if we don't have cached data (to avoid spam on refresh failures)
-          if (action.type === 'provider/getAll/rejected' && state.allProviders.length > 0) {
-            // Don't show error if we already have providers cached
+        if (action.payload && typeof action.type === "string" && action.type.startsWith("provider/")) {
+          if (action.type === "provider/getAll/rejected" && state.allProviders.length > 0) {
             return;
           }
           toast.error(action.payload);

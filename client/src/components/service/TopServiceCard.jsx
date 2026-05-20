@@ -27,8 +27,6 @@ const TopServiceCard = ({ service }) => {
   const providerUser = provider?.user || {};
   const providerName = getFullName(providerUser) || 'Unknown Provider';
   
-  // const price = service?.price;
-
   const goToService = () => navigate(`/service/${service._id}`);
 
   const isInWishlist = wishlistIds?.includes(service._id);

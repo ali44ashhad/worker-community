@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import dbConnect from "./config/database.js";
 import userRouter from "./routes/user.route.js";
@@ -10,7 +11,6 @@ import serviceOfferingRouter from "./routes/serviceOffering.route.js";
 import sitemapRouter from "./routes/sitemap.route.js";
 import categoryRouter from "./routes/category.route.js";
 import cors from "cors";
-import "dotenv/config"
 import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
 
 const app = express();
@@ -76,8 +76,6 @@ app.use(
     optionsSuccessStatus: 204,
   })
 );
-
-// (preflight handled above)
 
 // Increase payload limits for JSON and urlencoded bodies
 app.use(express.json({ limit: '20mb' }));

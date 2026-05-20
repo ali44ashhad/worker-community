@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { X, Plus, Upload, Trash2, FileText } from 'lucide-react';
+import { X, Plus, Upload, Trash2, FileText, PlayCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,6 +9,12 @@ import { getActiveCategories } from '../features/adminSlice';
 import { getApiBase } from '../utils/apiBase';
 
 const DRAFT_KEY = 'becomeProviderDraft:v1';
+const BECOME_PROVIDER_VIDEO_ID = 'x0fy5a018V4';
+
+const fieldClass = (hasError) =>
+  `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 font-normal ${
+    hasError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
+  }`;
 
 const BecomeProvider = () => {
   const navigate = useNavigate();
@@ -567,23 +574,68 @@ const BecomeProvider = () => {
   };
 
   return (
-    <div className='max-w-[1350px] mx-auto mt-20 px-4 pb-12'>
-      <div className=" mb-5">
-        <h1 className="text-4xl md:text-5xl font-bold text-black leading-tight">
-          Become a Provider
-        </h1>
-        <p className=" text-gray-600">Share your expertise with our community</p>
-      </div>
+    <div className="relative min-h-screen bg-gray-50 pb-16">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-24 sm:pt-28">
+      <motion.div
+        className="mb-10 grid items-start gap-8 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px]"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-indigo-600">
+            Provider onboarding
+          </p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+            Become a{' '}
+            <span className="bg-gradient-to-r from-indigo-600 to-pink-500 bg-clip-text text-transparent">
+              Provider
+            </span>
+          </h1>
+          <p className="mt-3 max-w-xl text-base leading-relaxed text-gray-600">
+            Share your skills with neighbours. Watch the guide, then fill in the form below.
+          </p>
+          <ol className="mt-5 space-y-2 text-sm text-gray-700">
+            {['Watch the walkthrough', 'Add your bio', 'List your service(s)'].map((step, i) => (
+              <li key={step} className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-bold text-white">
+                  {i + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </div>
 
-      {/* Changed to a <form> element */}
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Provider Bio Section */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-300 p-8 mb-8 hover:shadow-xl transition-shadow">
-          <h2 className="text-3xl font-bold text-black mb-6">
-            About You
-          </h2>
-          
-          <div className="mb-6">
+        <aside className="mx-auto w-full max-w-[320px] sm:max-w-[360px] lg:max-w-none lg:justify-self-end lg:sticky lg:top-24">
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
+            <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-pink-50 px-3 py-2.5">
+              <PlayCircle className="h-4 w-4 shrink-0 text-indigo-600" aria-hidden />
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Registration guide</p>
+                <p className="text-xs text-gray-500">2 min · before you start</p>
+              </div>
+            </div>
+            <div className="relative aspect-video w-full bg-gray-900">
+              <iframe
+                className="absolute inset-0 h-full w-full"
+                src={`https://www.youtube.com/embed/${BECOME_PROVIDER_VIDEO_ID}`}
+                title="Become a provider — registration guide"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </aside>
+      </motion.div>
+
+      <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="mb-1 text-2xl font-bold text-gray-900 sm:text-3xl">About you</h2>
+          <p className="mb-6 text-sm text-gray-500">Introduce yourself to potential customers.</p>
+
+          <div>
             <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
               Provider Bio *
             </label>
@@ -607,9 +659,7 @@ const BecomeProvider = () => {
               placeholder="Tell us about yourself and your background..."
               maxLength={PROVIDER_BIO_MAX_CHARS}
               rows="4"
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
-                errors['providerBio'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
-              }`}
+              className={`${fieldClass(errors['providerBio'])} resize-none`}
             />
             <div className="mt-2 flex items-center justify-between">
               <p className="text-xs text-gray-500">Max {PROVIDER_BIO_MAX_CHARS} characters</p>
@@ -625,7 +675,7 @@ const BecomeProvider = () => {
 
         {/* Services Section */}
         {services.map((service, index) => (
-          <div key={service.id} className="bg-white rounded-xl shadow-lg border border-gray-300 p-8 relative hover:shadow-xl transition-shadow">
+          <div key={service.id} className="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
             {services.length > 1 && (
               <button
                 type="button"
@@ -655,9 +705,7 @@ const BecomeProvider = () => {
                 value={service.servicename}
                 onChange={(e) => handleInputChange(service.id, 'servicename', e.target.value)}
                 placeholder="Enter a name for your service"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
-                  errors[`service-${service.id}-servicename`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
-                }`}
+                className={fieldClass(errors[`service-${service.id}-servicename`])}
               />
               {errors[`service-${service.id}-servicename`] && (
                 <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-servicename`]}</p>
@@ -672,11 +720,11 @@ const BecomeProvider = () => {
               <select
                 value={service.category}
                 onChange={(e) => handleCategoryChange(service.id, e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
-                  errors[`service-${service.id}-category`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
+                className={`${fieldClass(errors[`service-${service.id}-category`])} ${
+                  service.category ? 'text-gray-900' : 'text-gray-400'
                 }`}
               >
-                <option value="">Choose a category</option>
+                <option value="" className="text-gray-400">Choose a category</option>
                 {Object.keys(RULES).map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -752,9 +800,7 @@ const BecomeProvider = () => {
                 onChange={(e) => handleInputChange(service.id, 'bio', e.target.value)}
                 placeholder="Tell us about your service..."
                 rows="4"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all ${
-                  errors[`service-${service.id}-bio`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
-                }`}
+                className={`${fieldClass(errors[`service-${service.id}-bio`])} resize-none`}
               />
               {errors[`service-${service.id}-bio`] && (
                 <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-bio`]}</p>
@@ -772,9 +818,7 @@ const BecomeProvider = () => {
                 onChange={(e) => handleInputChange(service.id, 'experience', e.target.value)}
                 placeholder="e.g., 5"
                 min="0"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
-                  errors[`service-${service.id}-experience`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
-                }`}
+                className={fieldClass(errors[`service-${service.id}-experience`])}
               />
               {errors[`service-${service.id}-experience`] && (
                 <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-experience`]}</p>
@@ -951,6 +995,7 @@ const BecomeProvider = () => {
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 };

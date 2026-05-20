@@ -26,8 +26,6 @@ const ServiceCard = ({ service }) => {
   : fullDescription;
 
   // Get price
-  // const price = service?.price;
-
   // Get portfolio images
   const portfolioImages = service?.portfolioImages || [];
   const mainImage = portfolioImages[0]?.url || '/logo2.png';

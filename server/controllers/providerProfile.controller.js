@@ -5,30 +5,10 @@ import { validateCategorySelection } from "../utils/categoryValidation.js";
 import Booking from "../models/booking.model.js"; // <-- You need to import Booking model here for dashboard stats
 import Comment from "../models/comment.model.js";
 import cloudinary from "../config/cloudinary.js";
-import streamifier from "streamifier";
-
-// --- (Helper functions for Cloudinary) ---
-const uploadBufferToCloudinary = (buffer) => {
-    return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: "service_offerings" }, // Make sure your Cloudinary folder is set
-            (error, result) => {
-                if (error) return reject(error);
-                resolve({ url: result.secure_url, public_id: result.public_id });
-            }
-        );
-        streamifier.createReadStream(buffer).pipe(uploadStream);
-    });
-};
-
-const deleteFromCloudinary = (public_id) => {
-    return new Promise((resolve, reject) => {
-        cloudinary.uploader.destroy(public_id, (error, result) => {
-            if (error) return reject(error);
-            resolve(result);
-        });
-    });
-};
+import {
+    deleteFromCloudinary,
+    uploadBufferToCloudinary,
+} from "../utils/cloudinaryUpload.js";
 
 /**
  * @description Create a signed Cloudinary upload signature for direct uploads
@@ -56,161 +36,6 @@ const getCloudinarySignature = async (req, res) => {
     } catch (error) {
         console.error(`[${req?.requestId || "no-rid"}] Error in getCloudinarySignature:`, error?.message || error);
         return res.status(500).json({ success: false, message: "Unable to prepare upload. Please try again." });
-    }
-};
-
-/**
- * @description Become a provider with multiple services (JSON only, assets already uploaded to Cloudinary)
- * @route POST /api/provider-profile/become-provider-multi-json
- * @access Private (Auth User)
- */
-const becomeProviderWithServicesJson = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { providerBio, services } = req.body || {};
-
-        if (!providerBio || !String(providerBio).trim()) {
-            return res.status(400).json({ success: false, message: "Provider bio is required." });
-        }
-        if (!services || !Array.isArray(services) || services.length === 0) {
-            return res.status(400).json({ success: false, message: "At least one service is required." });
-        }
-
-        const existingProfile = await ProviderProfile.findOne({ user: userId });
-        if (existingProfile) {
-            await User.findByIdAndUpdate(userId, { role: "provider" });
-            return res.status(200).json({
-                success: true,
-                message: "You are already a provider.",
-                profile: existingProfile,
-                user: { _id: userId, role: "provider" },
-            });
-        }
-
-        // Validate each service required fields
-        for (let i = 0; i < services.length; i++) {
-            const s = services[i] || {};
-            if (!s.servicename || !String(s.servicename).trim()) {
-                return res.status(400).json({ success: false, message: `Service ${i + 1}: Service name is required.` });
-            }
-            if (!s.category) {
-                return res.status(400).json({ success: false, message: `Service ${i + 1}: Category is required.` });
-            }
-            if (!s.subCategories || s.subCategories.length === 0) {
-                return res.status(400).json({ success: false, message: `Service ${i + 1}: At least one sub-category is required.` });
-            }
-            if (!s.keywords || s.keywords.length === 0) {
-                return res.status(400).json({ success: false, message: `Service ${i + 1}: At least one keyword is required.` });
-            }
-            if (!s.bio || !String(s.bio).trim()) {
-                return res.status(400).json({ success: false, message: `Service ${i + 1}: Bio/Description is required.` });
-            }
-        }
-
-        const servicesWithExperience = services.filter(s => s.experience !== undefined && s.experience !== '' && s.experience !== null);
-        const avgExperience = servicesWithExperience.length > 0
-            ? Math.round(
-                servicesWithExperience.reduce((sum, s) => sum + parseInt(s.experience || 0), 0) / servicesWithExperience.length
-            )
-            : 0;
-
-        const newProfile = await ProviderProfile.create({
-            user: userId,
-            bio: String(providerBio).substring(0, 500),
-            experience: avgExperience
-        });
-
-        await User.findByIdAndUpdate(userId, { role: "provider" });
-
-        const createdServices = [];
-        for (let i = 0; i < services.length; i++) {
-            const s = services[i] || {};
-
-            const nextSubCategories = Array.isArray(s.subCategories) ? s.subCategories : [s.subCategories].filter(Boolean);
-            const nextKeywords = Array.isArray(s.keywords) ? s.keywords : [s.keywords].filter(Boolean);
-
-            const validated = await validateCategorySelection({
-                serviceCategory: s.category,
-                subCategories: nextSubCategories,
-                keywords: nextKeywords,
-            });
-
-            let portfolioImages = Array.isArray(s.portfolioImages) ? s.portfolioImages : [];
-            if (!portfolioImages.length) {
-                portfolioImages = [{ url: "/logo2.png" }];
-            }
-            const portfolioPDFs = Array.isArray(s.portfolioPDFs) ? s.portfolioPDFs : [];
-
-            const serviceData = {
-                provider: newProfile._id,
-                servicename: s.servicename,
-                serviceCategory: validated.serviceCategory,
-                subCategories: validated.subCategories,
-                keywords: validated.keywords,
-                description: s.bio,
-                portfolioImages,
-                portfolioPDFs,
-            };
-            if (s.experience !== undefined && s.experience !== '' && s.experience !== null) {
-                serviceData.experience = parseInt(s.experience);
-            }
-
-            const newServiceOffering = new ServiceOffering(serviceData);
-            await newServiceOffering.save();
-            createdServices.push(newServiceOffering);
-        }
-
-        return res.status(201).json({
-            success: true,
-            message: "Congratulations! You are now a provider",
-            profile: newProfile,
-            services: createdServices,
-            user: { _id: userId, role: "provider" },
-        });
-    } catch (error) {
-        console.error(`[${req?.requestId || "no-rid"}] Error in becomeProviderWithServicesJson:`, error?.message || error);
-        return res.status(500).json({ success: false, message: "Unable to submit right now. Please try again." });
-    }
-};
-
-// --- Provider Profile Controllers ---
-
-/**
- * @description Create a basic provider profile (Step 1 of becoming a provider)
- * @route POST /api/provider-profile/become-provider
- * @access Private (Auth User)
- */
- const becomeProvider = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { bio } = req.body; // only take bio
-        if (!bio) {
-            return res.status(400).json({ success: false, message: "Bio is required." });
-        }
-        const existingProfile = await ProviderProfile.findOne({ user: userId });
-        if (existingProfile) {
-            // If profile exists but role wasn't updated earlier, fix it idempotently
-            await User.findByIdAndUpdate(userId, { role: "provider" });
-            return res.status(200).json({
-                success: true,
-                message: "You are already a provider.",
-                profile: existingProfile,
-                user: { _id: userId, role: "provider" },
-            });
-        }
-        const newProfile = await ProviderProfile.create({
-            user: userId,
-            bio
-        });
-        await User.findByIdAndUpdate(userId, { role: "provider" });
-        return res.status(201).json({
-            success: true,
-            message: "Congratulations! You are now a provider. Proceed to add your services.",
-            profile: newProfile
-        });
-    } catch (error) {
-        console.error("Error in becomeProvider:", error.message);
-        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -252,7 +77,7 @@ const becomeProviderWithServicesJson = async (req, res) => {
  const addServiceOffering = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { servicename, serviceCategory, subCategories, keywords, description /* , price */ } = req.body;
+        const { servicename, serviceCategory, subCategories, keywords, description } = req.body;
 
         // When using upload.any(), req.files is an array
         const filesArray = req.files || [];
@@ -325,7 +150,6 @@ const becomeProviderWithServicesJson = async (req, res) => {
             description,
             portfolioImages,
             portfolioPDFs,
-            // price: parseFloat(price) || 0
         });
         
         // 4. Save the new service offering (triggers pre-save validation)
@@ -403,7 +227,7 @@ const getProviderDashboardStats = async (req, res) => {
 
         // 1. Find the provider's profile along with their service offerings
         const providerProfile = await ProviderProfile.findOne({ user: providerUserId })
-            .populate('serviceOfferings', '_id serviceCategory /* price */ serviceOfferingCount');
+            .populate('serviceOfferings', '_id serviceCategory serviceOfferingCount');
 
         if (!providerProfile) {
             return res.status(404).json({ success: false, message: "Provider profile not found." });
@@ -499,7 +323,6 @@ const getProviderDashboardStats = async (req, res) => {
                 serviceClickDetails: providerProfile.serviceOfferings.map(service => ({
                     id: service._id,
                     serviceCategory: service.serviceCategory,
-                    // price: service.price,
                     clicks: service.serviceOfferingCount || 0
                 })),
                 recentBookings,
@@ -880,24 +703,8 @@ const becomeProviderWithServices = async (req, res) => {
                     message: `Service ${i + 1}: Bio/Description is required.` 
                 });
             }
-            /* if (service.price === undefined || service.price === '' || service.price === null) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `Service ${i + 1}: Price is required.` 
-                });
-            }
-            if (parseFloat(service.price) < 0) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `Service ${i + 1}: Price cannot be negative.` 
-                });
-            } */
         }
 
-        // For multi-service, we'll need to handle images differently
-        // Images need to be mapped to the correct service index
-        // Since the frontend uploads preview URLs, we'll need to handle actual file uploads
-        
         // Calculate average experience (only include services with experience values)
         const servicesWithExperience = services.filter(s => s.experience !== undefined && s.experience !== '' && s.experience !== null);
         const avgExperience = servicesWithExperience.length > 0
@@ -989,7 +796,6 @@ const becomeProviderWithServices = async (req, res) => {
                     description: service.bio,
                     portfolioImages: portfolioImages,
                     portfolioPDFs: portfolioPDFs,
-                    // price: parseFloat(service.price) || 0
                 };
                 
                 // Only set experience if provided
@@ -1054,7 +860,7 @@ const updateServiceOffering = async (req, res) => {
     try {
         const userId = req.user._id;
         const { serviceId } = req.params;
-        const { servicename, serviceCategory, subCategories, keywords, description, experience /* , price */ } = req.body;
+        const { servicename, serviceCategory, subCategories, keywords, description, experience } = req.body;
 
         const profile = await ProviderProfile.findOne({ user: userId });
         if (!profile) {
@@ -1121,8 +927,6 @@ const updateServiceOffering = async (req, res) => {
             // Allow clearing experience by setting to undefined
             service.experience = undefined;
         }
-        // if (price !== undefined) service.price = parseFloat(price);
-
         // Keep/remove existing portfolio assets if frontend sent latest retained lists.
         // This allows users to delete old images/PDFs during edit/update flows.
         if (req.body.existingImages !== undefined) {
@@ -1438,9 +1242,7 @@ const incrementProviderProfileCount = async (req, res) => {
 
 // --- Export all functions from this file ---
 export {
-    becomeProvider,
     becomeProviderWithServices,
-    becomeProviderWithServicesJson,
     getCloudinarySignature,
     updateProviderProfile,
     addServiceOffering,

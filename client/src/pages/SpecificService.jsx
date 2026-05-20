@@ -110,7 +110,6 @@ const SpecificService = () => {
   const serviceCategory = service?.serviceCategory || '';
   const subCategories = service?.subCategories || [];
   const keywords = service?.keywords || [];
-  // const price = service?.price || 0;
   const providerBio = service?.provider?.bio || '';
   const providerCreatedAt = service?.provider?.user?.createdAt;
   const serviceExperience = service?.experience || 0;

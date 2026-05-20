@@ -89,7 +89,6 @@ Disallow: /provider/dashboard
 Disallow: /provider/manage-services
 Disallow: /provider/update-profile
 Disallow: /update-profile
-Disallow: /update-services
 Disallow: /become-provider
 Disallow: /login
 Disallow: /cart/

@@ -2,33 +2,13 @@ import User from "../models/user.model.js";
 import ProviderProfile from "../models/providerProfile.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
 import Category from "../models/category.model.js";
-import cloudinary from "../config/cloudinary.js";
-import streamifier from "streamifier";
 import { validateCategorySelection } from "../utils/categoryValidation.js";
-import { deleteCategoryImageFromCloudinary, uploadCategoryImageToCloudinary } from "../utils/categoryImage.js";
-
-// Helper functions for Cloudinary
-const uploadBufferToCloudinary = (buffer) => {
-    return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: "service_offerings" },
-            (error, result) => {
-                if (error) return reject(error);
-                resolve({ url: result.secure_url, public_id: result.public_id });
-            }
-        );
-        streamifier.createReadStream(buffer).pipe(uploadStream);
-    });
-};
-
-const deleteFromCloudinary = (public_id) => {
-    return new Promise((resolve, reject) => {
-        cloudinary.uploader.destroy(public_id, (error, result) => {
-            if (error) return reject(error);
-            resolve(result);
-        });
-    });
-};
+import {
+    CLOUDINARY_FOLDERS,
+    deleteFromCloudinary,
+    deleteFromCloudinarySafe,
+    uploadBufferToCloudinary,
+} from "../utils/cloudinaryUpload.js";
 
 /**
  * @description Get all dashboard statistics for the admin
@@ -605,7 +585,7 @@ const createCategoryAdmin = async (req, res) => {
 
         let image = { url: "", public_id: "" };
         if (req.file?.buffer) {
-            image = await uploadCategoryImageToCloudinary(req.file.buffer);
+            image = await uploadBufferToCloudinary(req.file.buffer, CLOUDINARY_FOLDERS.CATEGORY);
         }
 
         const category = await Category.create({
@@ -678,9 +658,9 @@ const updateCategoryAdmin = async (req, res) => {
 
         if (req.file?.buffer) {
             if (category.image?.public_id) {
-                await deleteCategoryImageFromCloudinary(category.image.public_id);
+                await deleteFromCloudinarySafe(category.image.public_id);
             }
-            const uploaded = await uploadCategoryImageToCloudinary(req.file.buffer);
+            const uploaded = await uploadBufferToCloudinary(req.file.buffer, CLOUDINARY_FOLDERS.CATEGORY);
             category.image = uploaded;
         }
 

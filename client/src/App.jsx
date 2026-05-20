@@ -17,7 +17,6 @@ import { useSelector } from 'react-redux'
 import BecomeProvider from './pages/BecomeProvider'
 import Contact from './pages/Contact'
 import UpdateProfile from './pages/UpdateProfile'
-import UpdateServices from './pages/UpdateServices'
 import Services from './pages/Services'
 import SpecificProvider from './pages/SpecificProvider'
 import SpecificService from './pages/SpecificService'
@@ -51,8 +50,6 @@ const App = () => {
   const isCheckingAuth = useSelector((state) => state.auth.isCheckingAuth);
   const user = useSelector((state) => state.auth.user);
 
-  // const isCheckingAuth = true; 
-
   useEffect(() => {
     dispatch(checkAuth())
   }, [dispatch])
@@ -73,8 +70,7 @@ const App = () => {
   const providerLayoutRoutes = [
     '/provider/dashboard',
     '/provider/manage-services',
-    '/update-services',
-    '/provider/update-profile'
+    '/provider/update-profile',
   ];
   const isProviderLayoutRoute = providerLayoutRoutes.some((path) =>
     location.pathname.startsWith(path)
@@ -106,16 +102,6 @@ const App = () => {
         <Route path='/contact' element={<Contact></Contact>}></Route>
         <Route path='/update-profile' element={<UpdateProfile></UpdateProfile>}></Route>
         <Route path='/update-profile/:id' element={<UpdateProfile></UpdateProfile>}></Route>
-        <Route 
-          path='/update-services' 
-          element={
-            <ProviderProtectedRoute>
-              <ProviderLayout>
-                <UpdateServices></UpdateServices>
-              </ProviderLayout>
-            </ProviderProtectedRoute>
-          }
-        ></Route>
         <Route
           path='/provider/manage-services'
           element={

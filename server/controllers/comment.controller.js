@@ -582,14 +582,8 @@ const getTopServices = async (req, res) => {
                     match: { isActive: { $ne: false } },
                 }
             })
-            .select('servicename serviceCategory description portfolioImages provider experience keywords subCategories /* price */');
+            .select('servicename serviceCategory description portfolioImages provider experience keywords subCategories');
         
-        // Debug: Log user data to see what's actually being returned
-        services.forEach(service => {
-            if (service.provider?.user) {
-            }
-        });
-
         // Combine with rating data and maintain sort order
         const servicesWithRatings = services.filter((s) => s?.provider?.user).map(service => {
             const ratingData = topServices.find(s => s._id.toString() === service._id.toString());

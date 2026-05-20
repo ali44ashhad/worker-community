@@ -11,7 +11,7 @@ import {
     getTopServices,
     getTopCategories
 } from "../controllers/comment.controller.js";
-import { protect, isAdmin } from "../middlewares/user.middleware.js";
+import { protect } from "../middlewares/user.middleware.js";
 
 const commentRouter = express.Router();
 

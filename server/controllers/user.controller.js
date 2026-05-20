@@ -1,12 +1,14 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import "dotenv/config";
 import User from "../models/user.model.js";
-import cloudinary from "../config/cloudinary.js";
-import streamifier from "streamifier";
 import ServiceOffering from '../models/serviceOffering.model.js';
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import {
+    CLOUDINARY_FOLDERS,
+    deleteCloudinaryAssetByUrl,
+    uploadBufferToCloudinary,
+} from "../utils/cloudinaryUpload.js";
 
 // Helper function to generate a token and set the cookie.
 const generateToken = (userId, res) => {
@@ -21,54 +23,6 @@ const generateToken = (userId, res) => {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: "/",
     });
-};
-
-// --- Helper Function to Upload to Cloudinary ---
-/**
- * A helper function to upload a buffer to Cloudinary
- * @param {Buffer} buffer - The image buffer from req.file
- * @returns {Promise<string>} - A promise that resolves with the secure URL
- */
-const uploadBufferToCloudinary = (buffer) => {
-    return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: "profile_images" }, // Organize uploads in a "profile_images" folder
-            (error, result) => {
-                if (error) {
-                    return reject(error);
-                }
-                resolve(result.secure_url);
-            }
-        );
-        streamifier.createReadStream(buffer).pipe(uploadStream);
-    });
-};
-
-const extractCloudinaryPublicIdFromUrl = (url) => {
-    try {
-        if (!url || typeof url !== "string") return null;
-        // Example:
-        // https://res.cloudinary.com/<cloud>/image/upload/v1710000000/profile_images/abc123.jpg
-        const marker = "/upload/";
-        const idx = url.indexOf(marker);
-        if (idx === -1) return null;
-        let path = url.slice(idx + marker.length); // v.../folder/file.jpg
-        path = path.replace(/^v\d+\//, ""); // remove optional version prefix
-        path = path.replace(/\.[^/.]+$/, ""); // remove extension
-        return path || null;
-    } catch {
-        return null;
-    }
-};
-
-const deleteCloudinaryImageByUrl = async (url) => {
-    const publicId = extractCloudinaryPublicIdFromUrl(url);
-    if (!publicId) return;
-    try {
-        await cloudinary.uploader.destroy(publicId);
-    } catch (error) {
-        console.log("Cloudinary profile image cleanup failed:", error?.message || error);
-    }
 };
 
 const sendPasswordResetEmail = async ({ toEmail, resetUrl }) => {
@@ -137,23 +91,16 @@ const forgotPassword = async (req, res) => {
 
         const frontendBase = (process.env.FRONTEND_URL || "").trim() || "http://localhost:5173";
         const resetUrl = `${frontendBase.replace(/\/+$/, "")}/reset-password/${rawToken}`;
-        let sent = false;
         try {
-            const result = await sendPasswordResetEmail({ toEmail: user.email, resetUrl });
-            sent = Boolean(result?.sent);
+            await sendPasswordResetEmail({ toEmail: user.email, resetUrl });
         } catch (mailError) {
             console.log("Password reset email failed:", mailError?.message || mailError);
         }
 
-        const payload = {
+        return res.status(200).json({
             success: true,
             message: "If this email exists, we have sent a password reset link.",
-        };
-        // Dev-only debug to help diagnose SMTP / URL issues
-        if (String(process.env.NODE_ENV || "").toLowerCase() !== "production") {
-            payload.debug = { email: user.email, sent, resetUrl };
-        }
-        return res.status(200).json(payload);
+        });
     } catch (error) {
         console.log("Error in forgotPassword:", error.message);
         return res.status(500).json({ success: false, message: "Internal server error: " + error.message });
@@ -375,15 +322,18 @@ const updateUserProfile = async (req, res) => {
         if (req.file) {
             // If replacing existing profile image, clean up old Cloudinary asset.
             if (user.profileImage) {
-                await deleteCloudinaryImageByUrl(user.profileImage);
+                await deleteCloudinaryAssetByUrl(user.profileImage);
             }
-            const imageUrl = await uploadBufferToCloudinary(req.file.buffer);
+            const { url: imageUrl } = await uploadBufferToCloudinary(
+                req.file.buffer,
+                CLOUDINARY_FOLDERS.PROFILE
+            );
             user.profileImage = imageUrl;
         }
         // Handle profile image removal (only if no new file was uploaded)
         else if (req.body.removeProfileImage === 'true' || req.body.removeProfileImage === true) {
             if (user.profileImage) {
-                await deleteCloudinaryImageByUrl(user.profileImage);
+                await deleteCloudinaryAssetByUrl(user.profileImage);
             }
             user.profileImage = '';
         }

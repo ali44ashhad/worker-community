@@ -20,9 +20,6 @@ const providerProfileSchema = new Schema({
         default: 0,
         min: [0, "Count cannot be negative"]
     },
-    // experience REMOVED
-    // All other fields (serviceCategories, portfolioImages, ratings)
-    // have been moved to the ServiceOffering model or removed per your requests.
 
 }, { 
     timestamps: true,
