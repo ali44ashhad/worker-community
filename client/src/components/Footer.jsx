@@ -91,21 +91,11 @@ const Footer = () => {
           
                 <>
                   <img 
-                    src="/logo2.png" 
+                    src="/CommuN-logo.png" 
                     alt="Commun" 
                     className="h-10 w-auto object-contain max-h-[60px]" 
                   />
-                  <div className="flex flex-col">
-                    {/* <span className="text-2xl font-bold text-gray-900 tracking-tight">CommuN</span>
-                    <span className="text-xs text-gray-600 leading-tight">Connect. Discover. Thrive Local.</span> */}
-                    <span>
-                    <img 
-                    src="/logo-text.png" 
-                    alt="Commun" 
-                    className="h-10 w-auto object-contain max-h-[60px]" 
-                  />
-                    </span>
-                  </div>
+                  
                 </>
           
             </Link>
