@@ -103,19 +103,11 @@ const Navbar = () => {
             
                 <>
                   <img 
-                    src="/logo2.png" 
+                    src="/CommuN-logo.png" 
                     alt="Commun" 
                     className="h-10 w-auto object-contain max-h-[50px]" 
                   />
-                  <div className="flex flex-col">
-                    <span>
-                    <img 
-                    src="/logo-text.png" 
-                    alt="Commun" 
-                    className="h-10 w-auto object-contain max-h-[50px]" 
-                  />
-                    </span>
-                  </div>
+                  
                 </>
             </Link>
           </motion.div>
