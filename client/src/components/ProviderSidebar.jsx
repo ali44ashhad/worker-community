@@ -8,6 +8,8 @@ import {
   HiOutlineUser,
   HiOutlineLogout,
   HiOutlineX,
+  HiOutlineSpeakerphone,
+  HiOutlineCalendar,
 } from 'react-icons/hi';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -33,6 +35,7 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
   const location = useLocation();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
+  const communityFeatures = useSelector((state) => state.community.features);
 
   const menuItems = [
     {
@@ -45,6 +48,12 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
       label: 'Manage Services',
       path: '/provider/manage-services',
     },
+    ...(communityFeatures.broadcast
+      ? [{ icon: HiOutlineSpeakerphone, label: 'Broadcast', path: '/community/broadcast' }]
+      : []),
+    ...(communityFeatures.events
+      ? [{ icon: HiOutlineCalendar, label: 'Events', path: '/community/events' }]
+      : []),
     {
       icon: HiOutlineUser,
       label: 'Update Profile',

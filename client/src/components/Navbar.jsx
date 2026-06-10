@@ -10,6 +10,8 @@ import {
   HiOutlineUserCircle,
   HiOutlineLogout,
   HiOutlineHeart,
+  HiOutlineSpeakerphone,
+  HiOutlineCalendar,
 } from 'react-icons/hi';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -27,6 +29,11 @@ const Navbar = () => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const user = useSelector((state) => state.auth.user);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
+  const communityFeatures = useSelector((state) => state.community.features);
+  const showCommunityBroadcast =
+    user && ['customer', 'provider'].includes(user.role) && communityFeatures.broadcast;
+  const showCommunityEvents =
+    user && ['customer', 'provider'].includes(user.role) && communityFeatures.events;
   const desktopDropdownRef = useRef(null);
   const mobileDropdownRef = useRef(null);
 
@@ -103,19 +110,11 @@ const Navbar = () => {
             
                 <>
                   <img 
-                    src="/logo2.png" 
+                    src="/CommuN-logo.png" 
                     alt="Commun" 
                     className="h-10 w-auto object-contain max-h-[50px]" 
                   />
-                  <div className="flex flex-col">
-                    <span>
-                    <img 
-                    src="/logo-text.png" 
-                    alt="Commun" 
-                    className="h-10 w-auto object-contain max-h-[50px]" 
-                  />
-                    </span>
-                  </div>
+                  
                 </>
             </Link>
           </motion.div>
@@ -281,6 +280,36 @@ const Navbar = () => {
                           <span>Admin Dashboard</span>
                         </Link>
                       )}
+                      {user.role === 'secretary' && (
+                        <Link
+                          to="/secretary/dashboard"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineViewGrid size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Secretary panel</span>
+                        </Link>
+                      )}
+                      {showCommunityBroadcast && (
+                        <Link
+                          to="/community/broadcast"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineSpeakerphone size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Broadcast</span>
+                        </Link>
+                      )}
+                      {showCommunityEvents && (
+                        <Link
+                          to="/community/events"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineCalendar size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Events</span>
+                        </Link>
+                      )}
                       <Link
                         to={`/cart/${user._id}`}
                         onClick={() => setIsUserDropdownOpen(false)}
@@ -428,6 +457,45 @@ const Navbar = () => {
                           <span>Admin Dashboard</span>
                         </Link>
                       )}
+                      {user.role === 'secretary' && (
+                        <Link
+                          to="/secretary/dashboard"
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            closeMenu();
+                          }}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineViewGrid size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Secretary panel</span>
+                        </Link>
+                      )}
+                      {showCommunityBroadcast && (
+                        <Link
+                          to="/community/broadcast"
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            closeMenu();
+                          }}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineSpeakerphone size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Broadcast</span>
+                        </Link>
+                      )}
+                      {showCommunityEvents && (
+                        <Link
+                          to="/community/events"
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            closeMenu();
+                          }}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HiOutlineCalendar size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>Events</span>
+                        </Link>
+                      )}
                       <Link
                         to={`/cart/${user._id}`}
                         onClick={() => {
@@ -564,16 +632,21 @@ const Navbar = () => {
                         <Link to="/admin" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Admin Dashboard</Link>
                       </motion.div>
                     )}
+                    {user.role === 'secretary' && (
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 1) * 0.04 }}>
+                        <Link to="/secretary/dashboard" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Secretary panel</Link>
+                      </motion.div>
+                    )}
                     {user.role === 'provider' && (
                       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 1) * 0.04 }}>
                         <Link to="/provider/dashboard" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Provider Dashboard</Link>
                       </motion.div>
                     )}
-                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + (user.role === 'admin' || user.role === 'provider' ? 2 : 1)) * 0.04 }}>
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + (['admin', 'provider', 'secretary'].includes(user.role) ? 2 : 1)) * 0.04 }}>
                       <Link to={`/update-profile/${user._id}`} onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Update Profile</Link>
                     </motion.div>
                     {user.role === 'customer' && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + (user.role === 'admin' || user.role === 'provider' ? 3 : 2)) * 0.04 }}>
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + (['admin', 'provider', 'secretary'].includes(user.role) ? 3 : 2)) * 0.04 }}>
                         <Link to="/become-provider" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Become Provider</Link>
                       </motion.div>
                     )}

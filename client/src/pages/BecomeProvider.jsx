@@ -20,6 +20,7 @@ const BecomeProvider = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { activeCategories } = useSelector((state) => state.admin);
+  const { user } = useSelector((state) => state.auth);
   const PROVIDER_BIO_MAX_CHARS = 500;
   const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50MB per file
   // Many hosts/proxies reject very large multipart bodies even if per-file is ok.
@@ -56,7 +57,7 @@ const BecomeProvider = () => {
 
   // Restore draft from localStorage on first mount
   useEffect(() => {
-    try {
+    try { 
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
@@ -466,7 +467,7 @@ const BecomeProvider = () => {
       
       // Add provider bio
       formData.append('providerBio', providerBio);
-      
+
       // Add services as JSON (IMPORTANT: do NOT include previews/files in JSON, it bloats payload)
       const servicesPayload = (services || []).map((s) => ({
         servicename: s?.servicename || '',
@@ -551,11 +552,14 @@ const BecomeProvider = () => {
         setErrors({});
         setIsSubmitting(false);
         
-        // Refresh auth state to update user role from 'customer' to 'provider'
+        // Refresh auth state (role may become provider while pending approval)
         await dispatch(checkAuth());
         
-        // Redirect to home page after auth state is refreshed
-        navigate('/');
+        if (data?.pendingApproval) {
+          navigate('/pending-approval');
+        } else {
+          navigate('/');
+        }
       } else {
         toast.error(data?.message || 'Failed to submit provider registration.');
         setIsSubmitting(false);
@@ -634,6 +638,16 @@ const BecomeProvider = () => {
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
           <h2 className="mb-1 text-2xl font-bold text-gray-900 sm:text-3xl">About you</h2>
           <p className="mb-6 text-sm text-gray-500">Introduce yourself to potential customers.</p>
+
+          {user?.communityCommunName && (
+            <div className="mb-6 rounded-lg border border-indigo-100 bg-indigo-50/60 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Your Commun</p>
+              <p className="mt-1 text-sm font-medium text-gray-900">@{user.communityCommunName}</p>
+              <p className="mt-1 text-xs text-gray-600">
+                You joined this community at signup.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
@@ -958,8 +972,7 @@ const BecomeProvider = () => {
               )}
             </div>
           </div>
-        ))}
-
+        ))} 
         {/* Add Another Service Button */}
         <button
           type="button"

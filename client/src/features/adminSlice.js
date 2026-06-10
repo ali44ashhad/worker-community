@@ -321,6 +321,35 @@ export const updateCategoryStatusAdmin = createAsyncThunk(
   }
 );
 
+export const getSecretariesAdmin = createAsyncThunk(
+  "admin/getSecretaries",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/secretaries`);
+      return res.data?.data?.secretaries || [];
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to load secretaries";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const createSecretaryAdmin = createAsyncThunk(
+  "admin/createSecretary",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/admin/secretaries`, payload);
+      toast.success(res.data?.message || "Secretary created.");
+      return res.data.user;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to create secretary";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 /* ----------------- SLICE ----------------- */
 
 const adminSlice = createSlice({
@@ -366,6 +395,8 @@ const adminSlice = createSlice({
     },
     categoryClicks: [],
     providerClicks: [],
+    secretaries: [],
+    secretariesLoading: false,
     isLoading: false,
     error: null,
   },
@@ -401,6 +432,8 @@ const adminSlice = createSlice({
       };
       state.categoryClicks = [];
       state.providerClicks = [];
+      state.secretaries = [];
+      state.secretariesLoading = false;
       state.error = null;
     },
   },
@@ -583,6 +616,33 @@ const adminSlice = createSlice({
         const updated = action.payload;
         const idx = state.categoriesAdmin.findIndex((c) => c._id === updated._id);
         if (idx !== -1) state.categoriesAdmin[idx] = updated;
+      })
+
+      .addCase(getSecretariesAdmin.pending, (state) => {
+        state.secretariesLoading = true;
+        state.error = null;
+      })
+      .addCase(getSecretariesAdmin.fulfilled, (state, action) => {
+        state.secretariesLoading = false;
+        state.secretaries = action.payload;
+      })
+      .addCase(getSecretariesAdmin.rejected, (state, action) => {
+        state.secretariesLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(createSecretaryAdmin.pending, (state) => {
+        state.secretariesLoading = true;
+        state.error = null;
+      })
+      .addCase(createSecretaryAdmin.fulfilled, (state, action) => {
+        state.secretariesLoading = false;
+        if (action.payload) {
+          state.secretaries = [action.payload, ...state.secretaries];
+        }
+      })
+      .addCase(createSecretaryAdmin.rejected, (state, action) => {
+        state.secretariesLoading = false;
+        state.error = action.payload;
       });
   },
 });

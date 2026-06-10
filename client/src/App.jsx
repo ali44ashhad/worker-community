@@ -41,6 +41,20 @@ import ManageServices from './pages/provider/ManageServices'
 import EditService from './pages/provider/EditService'
 import CreateService from './pages/provider/CreateService'
 import ProviderLayout from './layouts/ProviderLayout'
+import SecretaryProtectedRoute from './components/SecretaryProtectedRoute'
+import SecretaryLayout from './layouts/SecretaryLayout'
+import SecretaryDashboard from './pages/secretary/SecretaryDashboard'
+import SecretaryApprovals from './pages/secretary/SecretaryApprovals'
+import SecretaryMembers from './pages/secretary/SecretaryMembers'
+import SecretaryBroadcast from './pages/secretary/SecretaryBroadcast'
+import SecretaryEvents from './pages/secretary/SecretaryEvents'
+import SecretaryManagement from './pages/admin/SecretaryManagement'
+import PendingApproval from './pages/PendingApproval'
+import CommunityBroadcast from './pages/community/CommunityBroadcast'
+import CommunityEvents from './pages/community/CommunityEvents'
+import MemberProtectedRoute from './components/MemberProtectedRoute'
+import ProviderAwareLayout from './components/ProviderAwareLayout'
+import { fetchCommunityFeatures, clearCommunityFeatures } from './features/communitySlice'
 
 const App = () => {
 
@@ -56,8 +70,19 @@ const App = () => {
 
   // Fetch wishlist when user is authenticated
   useEffect(() => {
-    if (!isCheckingAuth && user) {
+    const approved = !user || (user.accountStatus || 'approved') === 'approved';
+    if (!isCheckingAuth && user && approved) {
       dispatch(fetchWishlist());
+    }
+  }, [dispatch, user, isCheckingAuth])
+
+  useEffect(() => {
+    const approved = !user || (user.accountStatus || 'approved') === 'approved';
+    const isMember = user && ['customer', 'provider'].includes(user.role);
+    if (!isCheckingAuth && isMember && approved) {
+      dispatch(fetchCommunityFeatures());
+    } else if (!isCheckingAuth && !isMember) {
+      dispatch(clearCommunityFeatures());
     }
   }, [dispatch, user, isCheckingAuth])
 
@@ -67,15 +92,23 @@ const App = () => {
 
   
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isSecretaryRoute = location.pathname.startsWith('/secretary');
   const providerLayoutRoutes = [
     '/provider/dashboard',
     '/provider/manage-services',
     '/provider/update-profile',
   ];
-  const isProviderLayoutRoute = providerLayoutRoutes.some((path) =>
-    location.pathname.startsWith(path)
-  );
-  const hideGlobalChrome = isAdminRoute || isProviderLayoutRoute;
+  const isMemberCommunityRoute =
+    ['customer', 'provider'].includes(user?.role) &&
+    (location.pathname.startsWith('/community/broadcast') ||
+      location.pathname.startsWith('/community/events'));
+  const isProviderLayoutRoute =
+    providerLayoutRoutes.some((path) => location.pathname.startsWith(path)) ||
+    (user?.role === 'provider' && isMemberCommunityRoute);
+  const isCustomerLayoutRoute =
+    user?.role === 'customer' && isMemberCommunityRoute;
+  const hideGlobalChrome =
+    isAdminRoute || isProviderLayoutRoute || isCustomerLayoutRoute || isSecretaryRoute;
 
   return (
     <div className=''>
@@ -88,6 +121,7 @@ const App = () => {
         <Route path='/about' element={<About></About>}></Route> 
         <Route path='/faq' element={<FAQ></FAQ>}></Route>
         <Route path='/provider' element={<Providers></Providers>}></Route>
+        <Route path="/pending-approval" element={<PendingApproval />} />
         <Route path='/login' element={<Login></Login>}></Route>
         <Route path='/forgot-password' element={<ForgotPassword />} />
         <Route path='/reset-password/:token' element={<ResetPassword />} />
@@ -158,6 +192,26 @@ const App = () => {
         <Route path='/category' element={<AllCategory></AllCategory>}></Route>
         <Route path='/category/:id' element={<SpecificCategory></SpecificCategory>}></Route>
         <Route path='/cart/:id' element={<Cart></Cart>}></Route>
+        <Route
+          path='/community/broadcast'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <CommunityBroadcast />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
+          path='/community/events'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <CommunityEvents />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
         
         {/* Admin Routes */}
         <Route
@@ -176,7 +230,19 @@ const App = () => {
           <Route path="provider-clicks" element={<ProviderClicks />} />
           <Route path="categories" element={<CategoryManagement />} />
           <Route path="users" element={<UserManagement />} />
+          <Route path="secretaries" element={<SecretaryManagement />} />
           <Route path="update-profile" element={<UpdateProfile />} />
+        </Route>
+
+        <Route path="/secretary" element={<SecretaryProtectedRoute />}>
+          <Route element={<SecretaryLayout />}>
+            <Route index element={<Navigate to="/secretary/dashboard" replace />} />
+            <Route path="dashboard" element={<SecretaryDashboard />} />
+            <Route path="approvals" element={<SecretaryApprovals />} />
+            <Route path="members" element={<SecretaryMembers />} />
+            <Route path="broadcast" element={<SecretaryBroadcast />} />
+            <Route path="events" element={<SecretaryEvents />} />
+          </Route>
         </Route>
       </Routes>
 

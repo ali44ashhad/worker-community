@@ -1,10 +1,11 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginUser, signupUser } from "../features/authSlice";
 import { toast} from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
+import { getApiBase } from "../utils/apiBase";
 
 const Login = () => {
   const [mode, setMode] = useState("login");
@@ -16,13 +17,45 @@ const Login = () => {
     email: "",
     password: "",
     phoneNumber: "",
+    communityCommunName: "",
   });
+  const [communities, setCommunities] = useState([]);
+  const [communitiesLoading, setCommunitiesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const passwordRef = useRef(null);
+
+  useEffect(() => {
+    if (mode !== "signup") return;
+    const base = getApiBase() || "";
+    let cancelled = false;
+    setCommunitiesLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(`${base}/api/user/signup-communities`);
+        const json = await res.json();
+        if (cancelled) return;
+        if (json?.success && Array.isArray(json.data?.communities)) {
+          setCommunities(json.data.communities);
+        } else {
+          setCommunities([]);
+        }
+      } catch {
+        if (!cancelled) {
+          setCommunities([]);
+          toast.error("Could not load Commun communities. Refresh and try again.");
+        }
+      } finally {
+        if (!cancelled) setCommunitiesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -58,7 +91,12 @@ const Login = () => {
           setLoading(false);
           return;
         }
-        data = await dispatch(signupUser(formData)).unwrap();
+        if (!formData.communityCommunName) {
+          toast.error("Please select your Commun community.");
+          setLoading(false);
+          return;
+        }
+        data = await dispatch(signupUser({ ...formData })).unwrap();
 
         
       }
@@ -75,17 +113,24 @@ const Login = () => {
       if (success) {
         toast.success(message);
 
-        const userRole = data?.user?.role;
+        const u = data?.user;
+        const userRole = u?.role;
+        const accountStatus = u?.accountStatus || "approved";
+
         if (mode === "login") {
           if (userRole === "admin") {
-            navigate('/admin/dashboard');
+            navigate("/admin/dashboard");
+          } else if (userRole === "secretary") {
+            navigate("/secretary/dashboard");
+          } else if (accountStatus === "pending" || accountStatus === "rejected") {
+            navigate("/pending-approval");
           } else if (userRole === "provider") {
-            navigate('/provider/dashboard');
+            navigate("/provider/dashboard");
           } else {
-            navigate('/');
+            navigate("/");
           }
         } else {
-          navigate('/');
+          navigate("/pending-approval");
         }
       } else {
         toast.error(message);
@@ -177,6 +222,36 @@ const Login = () => {
                   />
                 </div>
 
+                <div className="w-full mb-4">
+                  <label htmlFor="communityCommunName" className="mb-1 block text-xs font-semibold text-gray-700">
+                    Commun<span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    id="communityCommunName"
+                    name="communityCommunName"
+                    value={formData.communityCommunName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 bg-white"
+                    required
+                    disabled={communitiesLoading || communities.length === 0}
+                  >
+                    <option value="">
+                      {communitiesLoading
+                        ? "Loading communities…"
+                        : communities.length === 0
+                          ? "No communities available"
+                          : "Select your Commun"}
+                    </option>
+                    {communities.map((c) => (
+                      <option key={c.communName} value={c.communName}>
+                        {c.communName}
+                        {c.label && c.label !== c.communName ? ` — ${c.label}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  
+                </div>
+
               </>
             )}
 
@@ -236,7 +311,10 @@ const Login = () => {
             <motion.button
               type="submit"
               className="w-full py-3.5 rounded-xl text-white font-semibold bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-all duration-300 shadow-lg"
-              disabled={loading}
+              disabled={
+                loading ||
+                (mode === "signup" && (communitiesLoading || communities.length === 0))
+              }
               whileHover={{ scale: loading ? 1 : 1.02 }}
               whileTap={{ scale: loading ? 1 : 0.98 }}
             >
@@ -254,9 +332,12 @@ const Login = () => {
                 : "Already have an account? "}
               <motion.span
                 className="text-gray-900 font-semibold hover:underline cursor-pointer"
-                onClick={() =>
-                  setMode(mode === "login" ? "signup" : "login")
-                }
+                onClick={() => {
+                  if (mode === "signup") {
+                    setFormData((prev) => ({ ...prev, communityCommunName: "" }));
+                  }
+                  setMode(mode === "login" ? "signup" : "login");
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >

@@ -18,6 +18,11 @@ const ProviderProtectedRoute = ({ children }) => {
     return <Navigate to="/" replace />;
   }
 
+  const accountStatus = user.accountStatus || 'approved';
+  if (accountStatus !== 'approved') {
+    return <Navigate to="/pending-approval" replace />;
+  }
+
   return children;
 };
 

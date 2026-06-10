@@ -23,7 +23,7 @@ const serviceOfferingSchema = new Schema({
         {
             url: { type: String, required: true },
             // Optional: when service has no uploads we store default local logo (/logo2.png)
-            // which has no Cloudinary public_id.
+            // which has no S3 object key in public_id.
             public_id: { type: String, required: false },
         },
     ],

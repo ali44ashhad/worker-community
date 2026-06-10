@@ -5,10 +5,16 @@ import ServiceOffering from '../models/serviceOffering.model.js';
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import {
-    CLOUDINARY_FOLDERS,
-    deleteCloudinaryAssetByUrl,
-    uploadBufferToCloudinary,
-} from "../utils/cloudinaryUpload.js";
+    S3_FOLDERS,
+    deleteS3AssetByUrl,
+    uploadBufferToS3,
+} from "../utils/s3Upload.js";
+import { normalizeCommunName, isValidCommunName } from "../utils/communName.js";
+import { normalizeFeatureToggles } from "../utils/featureToggles.js";
+import Broadcast from "../models/broadcast.model.js";
+import CommunityEvent from "../models/communityEvent.model.js";
+import { validateEventExpiry } from "../utils/communityEvents.js";
+import { buildAttachmentsFromRequest, deleteEventAttachments } from "../utils/eventAttachments.js";
 
 // Helper function to generate a token and set the cookie.
 const generateToken = (userId, res) => {
@@ -145,13 +151,66 @@ const resetPassword = async (req, res) => {
     }
 };
 
-const register = async (req, res) => {
-    const { firstName, lastName, email, password, phoneNumber, addressLine1, addressLine2, city, state, zip } = req.body;
+const listSignupCommunities = async (req, res) => {
     try {
-        if (!firstName || !lastName || !email || !password || !phoneNumber) {
+        const secretaries = await User.find({
+            role: "secretary",
+            isActive: true,
+            communName: { $exists: true, $nin: [null, ""] },
+        })
+            .select("communName firstName lastName")
+            .sort({ communName: 1 })
+            .lean();
+
+        const communities = secretaries.map((s) => ({
+            communName: s.communName,
+            label: [s.firstName, s.lastName].filter(Boolean).join(" ").trim() || s.communName,
+        }));
+
+        return res.status(200).json({
+            success: true,
+            data: { communities },
+        });
+    } catch (error) {
+        console.error("listSignupCommunities:", error.message);
+        return res.status(500).json({ success: false, message: "Could not load Commun communities." });
+    }
+};
+
+const register = async (req, res) => {
+    const {
+        firstName,
+        lastName,
+        email,
+        password,
+        phoneNumber,
+        addressLine1,
+        addressLine2,
+        city,
+        state,
+        zip,
+        communityCommunName,
+        communName,
+    } = req.body;
+    try {
+        const rawCommunity =
+            communityCommunName !== undefined && communityCommunName !== null && String(communityCommunName).trim() !== ""
+                ? communityCommunName
+                : communName;
+
+        if (
+            !firstName ||
+            !lastName ||
+            !email ||
+            !password ||
+            !phoneNumber ||
+            rawCommunity === undefined ||
+            rawCommunity === null ||
+            String(rawCommunity).trim() === ""
+        ) {
             return res.status(400).json({
                 success: false,
-                message: "All required fields must be provided"
+                message: "All required fields must be provided, including Commun community.",
             });
         }
         if (password.length < 8) {
@@ -161,7 +220,16 @@ const register = async (req, res) => {
             });
         }
 
-        const isPresent = await User.findOne({ email });
+        const cn = normalizeCommunName(rawCommunity);
+        if (!isValidCommunName(cn)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Commun community selection.",
+            });
+        }
+
+        const emailNorm = String(email).trim().toLowerCase();
+        const isPresent = await User.findOne({ email: emailNorm });
         if (isPresent) {
             return res.status(409).json({
                 success: false,
@@ -169,14 +237,29 @@ const register = async (req, res) => {
             });
         }
 
+        const secretaryForCommunity = await User.findOne({
+            role: "secretary",
+            isActive: true,
+            communName: cn,
+        });
+        if (!secretaryForCommunity) {
+            return res.status(400).json({
+                success: false,
+                message: "Please choose a valid Commun community from the list.",
+            });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         
         const userPayload = {
-            firstName,
-            lastName,
-            email,
+            firstName: String(firstName).trim(),
+            lastName: String(lastName).trim(),
+            email: emailNorm,
             password: hashedPassword,
-            phoneNumber,
+            phoneNumber: String(phoneNumber).trim(),
+            communityCommunName: cn,
+            accountStatus: "pending",
+            role: "customer",
         };
 
         // Add address fields if provided
@@ -193,11 +276,18 @@ const register = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: "User registered successfully",
+            message: "Account created. A secretary will review your registration shortly.",
             user
         });
     } catch (error) {
         console.log("Error while registering the User", error);
+        if (error.code === 11000) {
+            const field = error.keyPattern?.email ? "email" : error.keyPattern?.communName ? "Commun name" : "field";
+            return res.status(409).json({
+                success: false,
+                message: `That ${field} is already in use.`,
+            });
+        }
         return res.status(500).json({
             success: false,
             message: error.message,
@@ -212,7 +302,7 @@ const login = async (req, res) => {
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: String(email).trim().toLowerCase() });
         if (!user) {
             return res.status(401).json({ success: false, message: "Email is not registered" });
         }
@@ -320,20 +410,19 @@ const updateUserProfile = async (req, res) => {
         // Check for and upload new profile image first
         // req.file comes from multer's upload.single('profileImage')
         if (req.file) {
-            // If replacing existing profile image, clean up old Cloudinary asset.
             if (user.profileImage) {
-                await deleteCloudinaryAssetByUrl(user.profileImage);
+                await deleteS3AssetByUrl(user.profileImage);
             }
-            const { url: imageUrl } = await uploadBufferToCloudinary(
-                req.file.buffer,
-                CLOUDINARY_FOLDERS.PROFILE
+            const { url: imageUrl } = await uploadBufferToS3(
+                req.file,
+                S3_FOLDERS.PROFILE
             );
             user.profileImage = imageUrl;
         }
         // Handle profile image removal (only if no new file was uploaded)
         else if (req.body.removeProfileImage === 'true' || req.body.removeProfileImage === true) {
             if (user.profileImage) {
-                await deleteCloudinaryAssetByUrl(user.profileImage);
+                await deleteS3AssetByUrl(user.profileImage);
             }
             user.profileImage = '';
         }
@@ -447,12 +536,311 @@ export const removeServiceFromWishlist = async (req, res) => {
   }
 };
 
+/**
+ * @route GET /api/user/community-features
+ * Returns broadcast/events visibility for the logged-in member's Commun community.
+ */
+const getCommunityFeatures = async (req, res) => {
+    try {
+        const communityHandle = req.user.communityCommunName
+            ? String(req.user.communityCommunName).trim().toLowerCase()
+            : "";
+
+        if (!communityHandle) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    broadcast: false,
+                    events: false,
+                    communityCommunName: null,
+                    hasCommunity: false,
+                },
+            });
+        }
+
+        const secretary = await User.findOne({
+            role: "secretary",
+            isActive: true,
+            communName: communityHandle,
+        })
+            .select("featureToggles communName")
+            .lean();
+
+        if (!secretary) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    broadcast: false,
+                    events: false,
+                    communityCommunName: communityHandle,
+                    hasCommunity: true,
+                },
+            });
+        }
+
+        const featureToggles = normalizeFeatureToggles(secretary.featureToggles);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                broadcast: Boolean(featureToggles.broadcast),
+                events: Boolean(featureToggles.events),
+                communityCommunName: communityHandle,
+                hasCommunity: true,
+            },
+        });
+    } catch (error) {
+        console.error("getCommunityFeatures:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @route GET /api/user/community-broadcasts
+ */
+const listCommunityBroadcasts = async (req, res) => {
+    try {
+        const communityHandle = req.user.communityCommunName
+            ? String(req.user.communityCommunName).trim().toLowerCase()
+            : "";
+
+        if (!communityHandle) {
+            return res.status(200).json({
+                success: true,
+                data: { broadcasts: [], hasCommunity: false },
+            });
+        }
+
+        const secretary = await User.findOne({
+            role: "secretary",
+            isActive: true,
+            communName: communityHandle,
+        })
+            .select("featureToggles communName")
+            .lean();
+
+        const featureToggles = normalizeFeatureToggles(secretary?.featureToggles);
+        if (!secretary || !featureToggles.broadcast) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    broadcasts: [],
+                    communityCommunName: communityHandle,
+                    hasCommunity: true,
+                    broadcastEnabled: false,
+                },
+            });
+        }
+
+        const broadcasts = await Broadcast.find({ communityCommunName: communityHandle })
+            .sort({ createdAt: -1 })
+            .limit(100)
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                broadcasts,
+                communityCommunName: communityHandle,
+                hasCommunity: true,
+                broadcastEnabled: true,
+            },
+        });
+    } catch (error) {
+        console.error("listCommunityBroadcasts:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+const getMemberCommunityHandle = (user) =>
+    user.communityCommunName ? String(user.communityCommunName).trim().toLowerCase() : "";
+
+const isCommunityEventsEnabled = async (communityHandle) => {
+    if (!communityHandle) return false;
+    const secretary = await User.findOne({
+        role: "secretary",
+        isActive: true,
+        communName: communityHandle,
+    })
+        .select("featureToggles")
+        .lean();
+    return Boolean(normalizeFeatureToggles(secretary?.featureToggles).events);
+};
+
+/**
+ * @route GET /api/user/community-events
+ */
+const listMemberCommunityEvents = async (req, res) => {
+    try {
+        const communityHandle = getMemberCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(200).json({
+                success: true,
+                data: { events: [], hasCommunity: false, eventsEnabled: false },
+            });
+        }
+
+        const eventsEnabled = await isCommunityEventsEnabled(communityHandle);
+        if (!eventsEnabled) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    events: [],
+                    communityCommunName: communityHandle,
+                    hasCommunity: true,
+                    eventsEnabled: false,
+                },
+            });
+        }
+
+        const events = await CommunityEvent.find({
+            communityCommunName: communityHandle,
+            expiresAt: { $gte: new Date() },
+        })
+            .populate("author", "firstName lastName role email phoneNumber")
+            .sort({ expiresAt: 1, createdAt: -1 })
+            .limit(100)
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                events,
+                communityCommunName: communityHandle,
+                hasCommunity: true,
+                eventsEnabled: true,
+            },
+        });
+    } catch (error) {
+        console.error("listMemberCommunityEvents:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @route POST /api/user/community-events
+ */
+const createMemberCommunityEvent = async (req, res) => {
+    try {
+        if (!["customer", "provider"].includes(req.user.role)) {
+            return res.status(403).json({ success: false, message: "Only community members can create events here." });
+        }
+
+        const communityHandle = getMemberCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(400).json({
+                success: false,
+                message: "Join a Commun community before creating events.",
+            });
+        }
+
+        const eventsEnabled = await isCommunityEventsEnabled(communityHandle);
+        if (!eventsEnabled) {
+            return res.status(403).json({
+                success: false,
+                message: "Events are not enabled for your community.",
+            });
+        }
+
+        const title = String(req.body?.title || "").trim();
+        const description = String(req.body?.description || "").trim();
+        const expiryCheck = validateEventExpiry(req.body?.expiresAt);
+
+        if (!title) {
+            return res.status(400).json({ success: false, message: "Title is required." });
+        }
+        if (!description) {
+            return res.status(400).json({ success: false, message: "Description is required." });
+        }
+        if (!expiryCheck.ok) {
+            return res.status(400).json({ success: false, message: expiryCheck.message });
+        }
+        if (title.length > 120) {
+            return res.status(400).json({ success: false, message: "Title must be 120 characters or less." });
+        }
+        if (description.length > 2000) {
+            return res.status(400).json({ success: false, message: "Description must be 2000 characters or less." });
+        }
+
+        const attachmentResult = await buildAttachmentsFromRequest(req);
+        if (!attachmentResult.ok) {
+            return res.status(400).json({ success: false, message: attachmentResult.message });
+        }
+
+        const event = await CommunityEvent.create({
+            communityCommunName: communityHandle,
+            author: req.user._id,
+            title,
+            description,
+            expiresAt: expiryCheck.expiresAt,
+            attachments: attachmentResult.attachments,
+        });
+
+        const populated = await CommunityEvent.findById(event._id)
+            .populate("author", "firstName lastName role email phoneNumber")
+            .lean();
+
+        return res.status(201).json({
+            success: true,
+            message: "Event created.",
+            data: { event: populated },
+        });
+    } catch (error) {
+        console.error("createMemberCommunityEvent:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @route DELETE /api/user/community-events/:eventId
+ */
+const deleteMemberCommunityEvent = async (req, res) => {
+    try {
+        const communityHandle = getMemberCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(400).json({ success: false, message: "No Commun community on this account." });
+        }
+
+        const { eventId } = req.params;
+        const event = await CommunityEvent.findOne({
+            _id: eventId,
+            communityCommunName: communityHandle,
+            author: req.user._id,
+        });
+
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: "Event not found or you can only delete your own events.",
+            });
+        }
+
+        await deleteEventAttachments(event.attachments);
+        await event.deleteOne();
+
+        return res.status(200).json({
+            success: true,
+            message: "Event deleted.",
+            data: { eventId },
+        });
+    } catch (error) {
+        console.error("deleteMemberCommunityEvent:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 // --- Single Export Block ---
 export {
+    listSignupCommunities,
     register,
     login,
     logout,
     checkAuth,
+    getCommunityFeatures,
+    listCommunityBroadcasts,
+    listMemberCommunityEvents,
+    createMemberCommunityEvent,
+    deleteMemberCommunityEvent,
     updateUserProfile,
     changePassword,
     forgotPassword,

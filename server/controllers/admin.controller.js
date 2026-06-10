@@ -1,14 +1,16 @@
 import User from "../models/user.model.js";
+import bcrypt from "bcrypt";
 import ProviderProfile from "../models/providerProfile.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
 import Category from "../models/category.model.js";
 import { validateCategorySelection } from "../utils/categoryValidation.js";
 import {
-    CLOUDINARY_FOLDERS,
-    deleteFromCloudinary,
-    deleteFromCloudinarySafe,
-    uploadBufferToCloudinary,
-} from "../utils/cloudinaryUpload.js";
+    S3_FOLDERS,
+    deleteFromS3,
+    deleteFromS3Safe,
+    uploadBufferToS3,
+} from "../utils/s3Upload.js";
+import { isValidCommunName, normalizeCommunName } from "../utils/communName.js";
 
 /**
  * @description Get all dashboard statistics for the admin
@@ -27,7 +29,8 @@ const getAdminDashboardStats = async (req, res) => {
         const roleCounts = {
             customer: 0,
             provider: 0,
-            admin: 0
+            admin: 0,
+            secretary: 0
         };
         let totalUsers = 0;
         
@@ -477,7 +480,7 @@ const updateServiceDetails = async (req, res) => {
             
             // Handle new images if uploaded
             if (images.length > 0) {
-                const imageUploadPromises = images.map(file => uploadBufferToCloudinary(file.buffer));
+                const imageUploadPromises = images.map(file => uploadBufferToS3(file));
                 const newImages = await Promise.all(imageUploadPromises);
                 await ServiceOffering.findByIdAndUpdate(
                     serviceId,
@@ -488,7 +491,7 @@ const updateServiceDetails = async (req, res) => {
             
             // Handle new PDFs if uploaded
             if (pdfs.length > 0) {
-                const pdfUploadPromises = pdfs.map(file => uploadBufferToCloudinary(file.buffer));
+                const pdfUploadPromises = pdfs.map(file => uploadBufferToS3(file));
                 const newPDFs = await Promise.all(pdfUploadPromises);
                 await ServiceOffering.findByIdAndUpdate(
                     serviceId,
@@ -585,7 +588,7 @@ const createCategoryAdmin = async (req, res) => {
 
         let image = { url: "", public_id: "" };
         if (req.file?.buffer) {
-            image = await uploadBufferToCloudinary(req.file.buffer, CLOUDINARY_FOLDERS.CATEGORY);
+            image = await uploadBufferToS3(req.file, S3_FOLDERS.CATEGORY);
         }
 
         const category = await Category.create({
@@ -658,9 +661,9 @@ const updateCategoryAdmin = async (req, res) => {
 
         if (req.file?.buffer) {
             if (category.image?.public_id) {
-                await deleteFromCloudinarySafe(category.image.public_id);
+                await deleteFromS3Safe(category.image.public_id);
             }
-            const uploaded = await uploadBufferToCloudinary(req.file.buffer, CLOUDINARY_FOLDERS.CATEGORY);
+            const uploaded = await uploadBufferToS3(req.file, S3_FOLDERS.CATEGORY);
             category.image = uploaded;
         }
 
@@ -733,8 +736,8 @@ const deleteServiceImage = async (req, res) => {
             return res.status(404).json({ success: false, message: "Image not found." });
         }
 
-        // Delete from Cloudinary
-        await deleteFromCloudinary(imagePublicId);
+        // Delete from S3
+        await deleteFromS3(imagePublicId);
 
         // Remove from array
         service.portfolioImages.splice(imageIndex, 1);
@@ -780,8 +783,8 @@ const deleteServicePDF = async (req, res) => {
             return res.status(404).json({ success: false, message: "PDF not found." });
         }
 
-        // Delete from Cloudinary
-        await deleteFromCloudinary(pdfPublicId);
+        // Delete from S3
+        await deleteFromS3(pdfPublicId);
 
         // Remove from array
         service.portfolioPDFs.splice(pdfIndex, 1);
@@ -1087,6 +1090,108 @@ const updateUserStatus = async (req, res) => {
     }
 };
 
+/**
+ * @description List all secretary-role users (admin)
+ * @route GET /api/admin/secretaries
+ */
+const getSecretaries = async (req, res) => {
+    try {
+        const secretaries = await User.find({ role: "secretary" })
+            .select("-password")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            data: { secretaries }
+        });
+    } catch (error) {
+        console.error("Error in getSecretaries:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Onboard a new secretary account (admin)
+ * @route POST /api/admin/secretaries
+ * @body firstName, lastName, phoneNumber, email, communName, password
+ */
+const createSecretary = async (req, res) => {
+    try {
+        const { firstName, lastName, phoneNumber, email, communName, password } = req.body;
+
+        const fn = String(firstName || "").trim();
+        const ln = String(lastName || "").trim();
+        const phone = String(phoneNumber || "").trim();
+        const em = String(email || "").trim().toLowerCase();
+        const cnRaw = normalizeCommunName(communName);
+        const pwd = String(password || "");
+
+        if (!fn || !ln || !phone || !em || !cnRaw || !pwd) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required: first name, last name, phone, email, Commun name, and password."
+            });
+        }
+
+        if (pwd.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 8 characters."
+            });
+        }
+
+        if (!isValidCommunName(cnRaw)) {
+            return res.status(400).json({
+                success: false,
+                message: "Commun name must be 2–40 characters, start and end with a letter or number; hyphens and underscores allowed in between."
+            });
+        }
+
+        const emailTaken = await User.findOne({ email: em });
+        if (emailTaken) {
+            return res.status(409).json({ success: false, message: "Email is already registered." });
+        }
+
+        const nameTaken = await User.findOne({ communName: cnRaw });
+        if (nameTaken) {
+            return res.status(409).json({ success: false, message: "This Commun name is already taken." });
+        }
+
+        const hashedPassword = await bcrypt.hash(pwd, 10);
+
+        const user = await User.create({
+            firstName: fn,
+            lastName: ln,
+            phoneNumber: phone,
+            email: em,
+            communName: cnRaw,
+            password: hashedPassword,
+            role: "secretary",
+            accountStatus: "approved",
+        });
+
+        const safe = user.toObject();
+        delete safe.password;
+
+        return res.status(201).json({
+            success: true,
+            message: "Secretary onboarded successfully.",
+            user: safe
+        });
+    } catch (error) {
+        console.error("Error in createSecretary:", error.message);
+        if (error.code === 11000) {
+            const key = error.keyPattern?.email ? "email" : error.keyPattern?.communName ? "Commun name" : "field";
+            return res.status(409).json({
+                success: false,
+                message: `That ${key} is already in use.`
+            });
+        }
+        return res.status(500).json({ success: false, message: error.message || "Internal Server Error" });
+    }
+};
+
 export { 
     getAdminDashboardStats,
     getAllProviders,
@@ -1103,5 +1208,7 @@ export {
     getAllCategoriesAdmin,
     createCategoryAdmin,
     updateCategoryAdmin,
-    updateCategoryStatusAdmin
+    updateCategoryStatusAdmin,
+    getSecretaries,
+    createSecretary
 };

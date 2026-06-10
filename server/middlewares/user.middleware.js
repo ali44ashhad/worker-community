@@ -37,6 +37,27 @@ const protect = async (req, res, next) => {
             });
         }
 
+        const accountStatus = user.accountStatus || "approved";
+        if (user.role !== "admin" && user.role !== "secretary") {
+            const url = req.originalUrl || "";
+            const isCheckAuth = url.includes("/user/check-auth");
+
+            if (accountStatus === "rejected" && !isCheckAuth) {
+                return res.status(403).json({
+                    success: false,
+                    code: "ACCOUNT_REJECTED",
+                    message: "Your registration was not approved. Please contact support if you need help.",
+                });
+            }
+            if (accountStatus === "pending" && !isCheckAuth) {
+                return res.status(403).json({
+                    success: false,
+                    code: "ACCOUNT_PENDING",
+                    message: "Your account is pending secretary approval.",
+                });
+            }
+        }
+
         req.user = user;
         next();
 
@@ -78,10 +99,40 @@ const isProvider = (req, res, next) => {
                 message: "Unauthorized. Provider access required."
             });
         }
+        const accountStatus = user.accountStatus || "approved";
+        if (accountStatus !== "approved") {
+            return res.status(403).json({
+                success: false,
+                code: accountStatus === "pending" ? "ACCOUNT_PENDING" : "ACCOUNT_REJECTED",
+                message:
+                    accountStatus === "pending"
+                        ? "Your provider profile is pending secretary approval."
+                        : "Your provider access is not available.",
+            });
+        }
         next();
     }
     catch (error) {
         console.log("Error in isProvider middleware:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+const isSecretary = (req, res, next) => {
+    const user = req.user;
+    try {
+        if (user.role !== "secretary") {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized. Secretary access required."
+            });
+        }
+        next();
+    } catch (error) {
+        console.log("Error in isSecretary middleware:", error);
         return res.status(500).json({
             success: false,
             message: error.message
@@ -110,4 +161,4 @@ const isCustomer = (req, res, next) => {
 };
 
 // Export all middleware functions
-export { protect, isAdmin, isProvider, isCustomer };
+export { protect, isAdmin, isProvider, isSecretary, isCustomer };

@@ -60,10 +60,36 @@ const userSchema = new Schema({
         trim: true,
         default: ""
     },
+    /** Unique handle for Commun (secretaries; providers who claimed a unique handle). */
+    communName: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        sparse: true,
+        unique: true,
+        maxlength: 40,
+    },
+    /**
+     * Commun community chosen at signup: must match an active secretary's `communName`.
+     * Many members can share the same value (not globally unique).
+     */
+    communityCommunName: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        maxlength: 40,
+        default: "",
+    },
     role: {
         type: String,
-        enum: ["customer", "provider", "admin"],
+        enum: ["customer", "provider", "admin", "secretary"],
         default: "customer"
+    },
+    /** Signup / provider application must be approved by a secretary (legacy users: treat missing as approved). */
+    accountStatus: {
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+        default: "approved",
     },
     isActive: {
         type: Boolean,
@@ -81,7 +107,20 @@ const userSchema = new Schema({
         type: Date,
         default: null
     },
-     wishlist: [{ type: Schema.Types.ObjectId, ref: 'ServiceOffering', default: [] }]
+     wishlist: [{ type: Schema.Types.ObjectId, ref: 'ServiceOffering', default: [] }],
+    /** Secretary-only: show broadcast/events to community members. */
+    featureToggles: {
+        broadcast: { type: Boolean, default: false },
+        events: { type: Boolean, default: false },
+    },
+    /** Secretary-only: which community event types are visible to members. */
+    eventToggles: {
+        communityMeetup: { type: Boolean, default: true },
+        marketDay: { type: Boolean, default: false },
+        workshop: { type: Boolean, default: false },
+        sports: { type: Boolean, default: false },
+        fundraiser: { type: Boolean, default: false },
+    },
 }, { timestamps: true });
 
 // Virtual field for backward compatibility - combines firstName and lastName

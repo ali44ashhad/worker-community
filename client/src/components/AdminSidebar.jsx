@@ -11,6 +11,7 @@ import {
   HiOutlineX,
   HiOutlineChartBar,
   HiOutlineUsers,
+  HiOutlineClipboardList,
 } from 'react-icons/hi';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -45,17 +46,17 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
     },
     {
       icon: HiOutlineUserGroup,
-      label: 'Providers',
+      label: 'Providers Mgnt',
       path: '/admin/providers',
     },
     {
       icon: HiOutlineBriefcase,
-      label: 'Services',
+      label: 'Services Mgnt',
       path: '/admin/services',
     },
     {
       icon: HiOutlineTag,
-      label: 'Categories',
+      label: 'Categories Mgnt',
       path: '/admin/categories',
     },
     {
@@ -70,8 +71,13 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
     },
     {
       icon: HiOutlineUsers,
-      label: 'User Management',
+      label: 'User Mgmt',
       path: '/admin/users',
+    },
+    {
+      icon: HiOutlineClipboardList,
+      label: 'Secretary Mgmt',
+      path: '/admin/secretaries',
     },
     {
       icon: HiOutlineUser,

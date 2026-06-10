@@ -13,7 +13,7 @@ import {
     getMyProviderProfile,
     getProviderDashboardStats,
     incrementProviderProfileCount,
-    getCloudinarySignature
+    getS3PresignedUpload
 } from "../controllers/providerProfile.controller.js";
 import { protect, isProvider } from "../middlewares/user.middleware.js";
 import upload, { uploadAny } from "../middlewares/multer.js";
@@ -39,7 +39,7 @@ router.put("/", protect, isProvider, updateProviderProfile);
 
 router.post("/become-provider-multi", protect, upload.any(), becomeProviderWithServices);
 
-router.get("/cloudinary-signature", protect, getCloudinarySignature);
+router.post("/s3-presign", protect, getS3PresignedUpload);
 
 // --- Routes for Managing Services ---
 router.post("/service", protect, isProvider, uploadAny, addServiceOffering);
@@ -48,7 +48,7 @@ router.put("/service/:serviceId", protect, isProvider, uploadAny, updateServiceO
 
 router.delete("/service/:serviceId", protect, isProvider, deleteServiceOffering);
 
-// JSON-only service create/update (assets already uploaded to Cloudinary)
+// JSON-only service create/update (assets already uploaded to S3)
 router.post("/service-json", protect, isProvider, addServiceOfferingJson);
 router.put("/service-json/:serviceId", protect, isProvider, updateServiceOfferingJson);
 

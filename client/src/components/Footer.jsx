@@ -91,21 +91,11 @@ const Footer = () => {
           
                 <>
                   <img 
-                    src="/logo2.png" 
+                    src="/CommuN-logo.png" 
                     alt="Commun" 
-                    className="h-10 w-auto object-contain max-h-[60px]" 
+                    className="h-10 w-auto object-contain max-h-[50px]" 
                   />
-                  <div className="flex flex-col">
-                    {/* <span className="text-2xl font-bold text-gray-900 tracking-tight">CommuN</span>
-                    <span className="text-xs text-gray-600 leading-tight">Connect. Discover. Thrive Local.</span> */}
-                    <span>
-                    <img 
-                    src="/logo-text.png" 
-                    alt="Commun" 
-                    className="h-10 w-auto object-contain max-h-[60px]" 
-                  />
-                    </span>
-                  </div>
+                  
                 </>
           
             </Link>
@@ -118,7 +108,7 @@ const Footer = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <p className="text-gray-600 max-w-2xl">Need help? Visit our Help Center or contact our support team — we're here for neighbours.</p>
+              <p className="text-gray-600 pt-4 max-w-2xl">Need help? Visit our Help Center or contact our support team — we're here for neighbours.</p>
               <div className="mt-4">
                 <Link to="/contact" className="inline-flex items-center px-5 py-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-sm hover:shadow-lg transition">Contact Us</Link>
               </div>

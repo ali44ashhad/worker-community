@@ -4,6 +4,8 @@ import providerReducer from '../features/providerSlice.js';
 import commentReducer from '../features/commentSlice.js';
 import wishlistReducer from '../features/wishlistSlice.js';
 import adminReducer from '../features/adminSlice.js';
+import secretaryReducer from '../features/secretarySlice.js';
+import communityReducer from '../features/communitySlice.js';
 
 export const store = configureStore({
     reducer: {
@@ -13,5 +15,7 @@ export const store = configureStore({
         comments: commentReducer,
         wishlist: wishlistReducer,
         admin: adminReducer,
+        secretary: secretaryReducer,
+        community: communityReducer,
     },
 });

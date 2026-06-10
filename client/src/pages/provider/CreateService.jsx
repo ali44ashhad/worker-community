@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { getActiveCategories } from '../../features/adminSlice';
 import { getApiBase } from '../../utils/apiBase';
+import { uploadFileToS3 } from '../../utils/s3DirectUpload';
 
 const initialServiceState = {
   servicename: '',
@@ -174,42 +175,13 @@ const CreateService = () => {
       setIsSubmitting(true);
       const base = getApiBase();
 
-      // Signed params for direct Cloudinary uploads (avoid Vercel 413 limits)
-      const sigRes = await fetch(`${base || ''}/api/provider-profile/cloudinary-signature`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-      const sigText = await sigRes.text();
-      const sigData = sigText ? (() => { try { return JSON.parse(sigText); } catch { return null; } })() : null;
-      if (!sigRes.ok || !sigData?.success) {
-        throw new Error(sigData?.message || 'Unable to prepare upload. Please try again.');
-      }
-
-      const { cloudName, apiKey, timestamp, folder, signature } = sigData;
-      const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
-
-      const uploadOne = async (file) => {
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('api_key', apiKey);
-        fd.append('timestamp', String(timestamp));
-        fd.append('folder', folder);
-        fd.append('signature', signature);
-        const r = await fetch(cloudinaryUploadUrl, { method: 'POST', body: fd });
-        const j = await r.json().catch(() => null);
-        if (!r.ok || !j?.secure_url) {
-          throw new Error(j?.error?.message || 'Upload failed. Please try again.');
-        }
-        return { url: j.secure_url, public_id: j.public_id };
-      };
-
       const uploadedImages = [];
       for (const imgFile of (form.images || [])) {
-        if (imgFile instanceof File) uploadedImages.push(await uploadOne(imgFile));
+        if (imgFile instanceof File) uploadedImages.push(await uploadFileToS3(base, imgFile));
       }
       const uploadedPDFs = [];
       for (const pdfFile of (form.pdfs || [])) {
-        if (pdfFile instanceof File) uploadedPDFs.push(await uploadOne(pdfFile));
+        if (pdfFile instanceof File) uploadedPDFs.push(await uploadFileToS3(base, pdfFile));
       }
 
       const response = await fetch(`${base || ''}/api/provider-profile/service-json`, {

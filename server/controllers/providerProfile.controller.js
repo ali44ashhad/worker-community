@@ -4,37 +4,43 @@ import ServiceOffering from "../models/serviceOffering.model.js";
 import { validateCategorySelection } from "../utils/categoryValidation.js";
 import Booking from "../models/booking.model.js"; // <-- You need to import Booking model here for dashboard stats
 import Comment from "../models/comment.model.js";
-import cloudinary from "../config/cloudinary.js";
 import {
-    deleteFromCloudinary,
-    uploadBufferToCloudinary,
-} from "../utils/cloudinaryUpload.js";
+    S3_FOLDERS,
+    createPresignedUploadUrl,
+    deleteFromS3,
+    uploadBufferToS3,
+} from "../utils/s3Upload.js";
+
+/** Public provider listings only include users approved by secretary (legacy: missing status = approved). */
+const USER_PUBLIC_POPULATE_MATCH = {
+    isActive: { $ne: false },
+    $or: [{ accountStatus: { $exists: false } }, { accountStatus: "approved" }],
+};
 
 /**
- * @description Create a signed Cloudinary upload signature for direct uploads
- * @route GET /api/provider-profile/cloudinary-signature
+ * @description Create a presigned S3 upload URL for direct browser uploads
+ * @route POST /api/provider-profile/s3-presign
  * @access Private (Auth User)
  */
-const getCloudinarySignature = async (req, res) => {
+const getS3PresignedUpload = async (req, res) => {
     try {
-        const timestamp = Math.floor(Date.now() / 1000);
-        const folder = "service_offerings";
-        const paramsToSign = { timestamp, folder };
-        const signature = cloudinary.utils.api_sign_request(
-            paramsToSign,
-            process.env.CLOUDINARY_API_SECRET
-        );
+        const filename = String(req.body?.filename || "upload").trim();
+        const contentType = String(req.body?.contentType || "application/octet-stream").trim();
+
+        const presigned = await createPresignedUploadUrl({
+            folder: S3_FOLDERS.SERVICE,
+            contentType,
+            filename,
+        });
 
         return res.status(200).json({
             success: true,
-            cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-            apiKey: process.env.CLOUDINARY_API_KEY,
-            timestamp,
-            folder,
-            signature,
+            uploadUrl: presigned.uploadUrl,
+            publicUrl: presigned.publicUrl,
+            public_id: presigned.public_id,
         });
     } catch (error) {
-        console.error(`[${req?.requestId || "no-rid"}] Error in getCloudinarySignature:`, error?.message || error);
+        console.error(`[${req?.requestId || "no-rid"}] Error in getS3PresignedUpload:`, error?.message || error);
         return res.status(500).json({ success: false, message: "Unable to prepare upload. Please try again." });
     }
 };
@@ -93,15 +99,15 @@ const getCloudinarySignature = async (req, res) => {
             return res.status(404).json({ success: false, message: "Provider profile not found." });
         }
 
-        // 1. Upload images to Cloudinary
-        const imageUploadPromises = images.map(file => uploadBufferToCloudinary(file.buffer));
+        // 1. Upload images to S3
+        const imageUploadPromises = images.map(file => uploadBufferToS3(file));
         let portfolioImages = await Promise.all(imageUploadPromises);
         if (!portfolioImages.length) {
             portfolioImages = [{ url: "/logo2.png" }];
         }
         
-        // 2. Upload PDFs to Cloudinary
-        const pdfUploadPromises = pdfs.map(file => uploadBufferToCloudinary(file.buffer));
+        // 2. Upload PDFs to S3
+        const pdfUploadPromises = pdfs.map(file => uploadBufferToS3(file));
         const portfolioPDFs = await Promise.all(pdfUploadPromises); 
 
         // Parse subCategories if it's a JSON string
@@ -193,16 +199,16 @@ const getCloudinarySignature = async (req, res) => {
             return res.status(403).json({ success: false, message: "You are not authorized to delete this service." });
         }
 
-        // 1. Delete associated images from Cloudinary
+        // 1. Delete associated images from S3
         const imageDeletePromises = (service.portfolioImages || [])
             .filter((img) => img?.public_id)
-            .map((img) => deleteFromCloudinary(img.public_id));
+            .map((img) => deleteFromS3(img.public_id));
         await Promise.all(imageDeletePromises);
         
-        // 2. Delete associated PDFs from Cloudinary
+        // 2. Delete associated PDFs from S3
         const pdfDeletePromises = (service.portfolioPDFs || [])
             .filter((pdf) => pdf?.public_id)
-            .map((pdf) => deleteFromCloudinary(pdf.public_id));
+            .map((pdf) => deleteFromS3(pdf.public_id));
         await Promise.all(pdfDeletePromises);
         
         // 3. Delete the service offering from MongoDB
@@ -350,9 +356,9 @@ const getAllProviders = async (req, res) => {
         const providers = await ProviderProfile.find()
             .populate({
                 path: 'user',
-                select: 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip isActive',
-                match: { isActive: { $ne: false } },
-            }) // hide deactivated accounts from public
+                select: 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip isActive accountStatus communName communityCommunName',
+                match: USER_PUBLIC_POPULATE_MATCH,
+            }) // hide deactivated / pending-approval accounts from public
             .populate('serviceOfferings'); // Get all their service offerings (with images, categories, etc.)
 
         // Remove providers whose user got filtered out by populate(match)
@@ -468,8 +474,8 @@ const getTopProvidersByServiceClicks = async (req, res) => {
             const providers = await ProviderProfile.find({ _id: { $in: providerIds } })
                 .populate({
                     path: 'user',
-                    select: 'firstName lastName profileImage addressLine1 addressLine2 city state zip isActive',
-                    match: { isActive: { $ne: false } },
+                    select: 'firstName lastName profileImage addressLine1 addressLine2 city state zip isActive accountStatus',
+                    match: USER_PUBLIC_POPULATE_MATCH,
                 })
                 .select('user providerProfileCount');
 
@@ -500,8 +506,8 @@ const getTopProvidersByServiceClicks = async (req, res) => {
             const fallbackProviders = await ProviderProfile.find({})
                 .populate({
                     path: 'user',
-                    select: 'firstName lastName profileImage addressLine1 addressLine2 city state zip isActive',
-                    match: { isActive: { $ne: false } },
+                    select: 'firstName lastName profileImage addressLine1 addressLine2 city state zip isActive accountStatus',
+                    match: USER_PUBLIC_POPULATE_MATCH,
                 })
                 .sort({ providerProfileCount: -1 })
                 .limit(limit)
@@ -541,9 +547,9 @@ const getProviderById = async (req, res) => {
         const provider = await ProviderProfile.findById(req.params.id)
             .populate({
                 path: 'user',
-                select: 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip createdAt isActive',
-                match: { isActive: { $ne: false } },
-            }) // hide deactivated accounts from public
+                select: 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip createdAt isActive accountStatus communName communityCommunName',
+                match: USER_PUBLIC_POPULATE_MATCH,
+            }) // hide deactivated / pending from public
             .populate('serviceOfferings'); // Get all their service offerings
 
         if (!provider || !provider.user) {
@@ -657,16 +663,50 @@ const becomeProviderWithServices = async (req, res) => {
             });
         }
 
-        // Check if user is already a provider
+        const authUser = await User.findById(userId);
+        if (!authUser) {
+            return res.status(401).json({ success: false, message: "User not found." });
+        }
+
         const existingProfile = await ProviderProfile.findOne({ user: userId });
         if (existingProfile) {
-            // If profile exists but role wasn't updated earlier, fix it idempotently
+            const acctExisting = authUser.accountStatus || "approved";
+            if (acctExisting === "pending") {
+                return res.status(200).json({
+                    success: true,
+                    pendingApproval: true,
+                    message: "Your provider application is waiting for secretary approval.",
+                    profile: existingProfile,
+                    user: {
+                        _id: userId,
+                        role: authUser.role,
+                        accountStatus: acctExisting,
+                    },
+                });
+            }
             await User.findByIdAndUpdate(userId, { role: "provider" });
             return res.status(200).json({
                 success: true,
                 message: "You are already a provider.",
                 profile: existingProfile,
                 user: { _id: userId, role: "provider" },
+            });
+        }
+
+        const acct = authUser.accountStatus || "approved";
+        if (acct !== "approved") {
+            return res.status(403).json({
+                success: false,
+                message:
+                    acct === "pending"
+                        ? "Your account is not approved yet. Please wait for a secretary to approve your registration."
+                        : "You cannot apply as a provider with this account.",
+            });
+        }
+        if (authUser.role !== "customer") {
+            return res.status(403).json({
+                success: false,
+                message: "Only approved customer accounts can submit a provider application.",
             });
         }
 
@@ -729,9 +769,6 @@ const becomeProviderWithServices = async (req, res) => {
             experience: avgExperience
         });
 
-        // Mark user as provider so UI shows provider dashboard immediately
-        await User.findByIdAndUpdate(userId, { role: "provider" });
-
         // Create all service offerings
         const createdServices = [];
         // req.files is an array when using upload.any()
@@ -771,15 +808,15 @@ const becomeProviderWithServices = async (req, res) => {
 
                 // Work images/PDFs are optional
 
-                // Upload images to Cloudinary
-                const imageUploadPromises = serviceImages.map(file => uploadBufferToCloudinary(file.buffer));
+                // Upload images to S3
+                const imageUploadPromises = serviceImages.map(file => uploadBufferToS3(file));
                 let portfolioImages = await Promise.all(imageUploadPromises);
                 if (!portfolioImages.length) {
                     portfolioImages = [{ url: "/logo2.png" }];
                 }
                 
-                // Upload PDFs to Cloudinary
-                const pdfUploadPromises = servicePDFs.map(file => uploadBufferToCloudinary(file.buffer));
+                // Upload PDFs to S3
+                const pdfUploadPromises = servicePDFs.map(file => uploadBufferToS3(file));
                 const portfolioPDFs = await Promise.all(pdfUploadPromises);
 
                 // Create the service offering
@@ -828,17 +865,21 @@ const becomeProviderWithServices = async (req, res) => {
             });
         }
 
-        // Update user role to provider
-        await User.findByIdAndUpdate(userId, { role: "provider" });
+        await User.findByIdAndUpdate(userId, { role: "provider", accountStatus: "pending" });
+        const updatedUser = await User.findById(userId).select("role accountStatus communName communityCommunName");
 
         return res.status(201).json({
             success: true,
-            message: `Congratulations! You are now a provider`,
+            message: "Application submitted. A secretary will review your provider profile shortly.",
+            pendingApproval: true,
             profile: newProfile,
             services: createdServices,
             user: {
                 _id: userId,
-                role: "provider",
+                role: updatedUser.role,
+                accountStatus: updatedUser.accountStatus,
+                communName: updatedUser.communName,
+                communityCommunName: updatedUser.communityCommunName,
             },
         });
 
@@ -948,7 +989,7 @@ const updateServiceOffering = async (req, res) => {
             const imagesToDelete = (service.portfolioImages || []).filter(
                 (img) => img?.public_id && !retainedImageIds.has(img.public_id)
             );
-            await Promise.all(imagesToDelete.map((img) => deleteFromCloudinary(img.public_id)));
+            await Promise.all(imagesToDelete.map((img) => deleteFromS3(img.public_id)));
             service.portfolioImages = Array.isArray(retainedImages) ? retainedImages : [];
         }
 
@@ -971,7 +1012,7 @@ const updateServiceOffering = async (req, res) => {
             const pdfsToDelete = (service.portfolioPDFs || []).filter(
                 (pdf) => pdf?.public_id && !retainedPDFIds.has(pdf.public_id)
             );
-            await Promise.all(pdfsToDelete.map((pdf) => deleteFromCloudinary(pdf.public_id)));
+            await Promise.all(pdfsToDelete.map((pdf) => deleteFromS3(pdf.public_id)));
             service.portfolioPDFs = Array.isArray(retainedPDFs) ? retainedPDFs : [];
         }
 
@@ -989,7 +1030,7 @@ const updateServiceOffering = async (req, res) => {
                 (img) => !(img && !img.public_id && img.url === "/logo2.png")
             );
 
-            const imageUploadPromises = images.map(file => uploadBufferToCloudinary(file.buffer));
+            const imageUploadPromises = images.map(file => uploadBufferToS3(file));
             const newImages = await Promise.all(imageUploadPromises);
             
             // Add new images to existing ones
@@ -1001,7 +1042,7 @@ const updateServiceOffering = async (req, res) => {
         
         // Handle new PDFs if uploaded
         if (pdfs.length > 0) {
-            const pdfUploadPromises = pdfs.map(file => uploadBufferToCloudinary(file.buffer));
+            const pdfUploadPromises = pdfs.map(file => uploadBufferToS3(file));
             const newPDFs = await Promise.all(pdfUploadPromises);
             
             // Add new PDFs to existing ones
@@ -1022,7 +1063,7 @@ const updateServiceOffering = async (req, res) => {
 };
 
 /**
- * @description Add a new service offering (JSON only, assets already uploaded to Cloudinary)
+ * @description Add a new service offering (JSON only, assets already uploaded to S3)
  * @route POST /api/provider-profile/service-json
  * @access Private (Provider)
  */
@@ -1086,7 +1127,7 @@ const addServiceOfferingJson = async (req, res) => {
 };
 
 /**
- * @description Update a service offering (JSON only, assets already uploaded to Cloudinary)
+ * @description Update a service offering (JSON only, assets already uploaded to S3)
  * @route PUT /api/provider-profile/service-json/:serviceId
  * @access Private (Provider)
  */
@@ -1155,18 +1196,18 @@ const updateServiceOfferingJson = async (req, res) => {
 
         const nextPDFs = Array.isArray(portfolioPDFs) ? portfolioPDFs : [];
 
-        // Cleanup removed Cloudinary assets
+        // Cleanup removed S3 assets
         const retainedImageIds = new Set(nextImages.map((img) => img?.public_id).filter(Boolean));
         const imagesToDelete = (service.portfolioImages || []).filter(
             (img) => img?.public_id && !retainedImageIds.has(img.public_id)
         );
-        await Promise.all(imagesToDelete.map((img) => deleteFromCloudinary(img.public_id)));
+        await Promise.all(imagesToDelete.map((img) => deleteFromS3(img.public_id)));
 
         const retainedPDFIds = new Set(nextPDFs.map((pdf) => pdf?.public_id).filter(Boolean));
         const pdfsToDelete = (service.portfolioPDFs || []).filter(
             (pdf) => pdf?.public_id && !retainedPDFIds.has(pdf.public_id)
         );
-        await Promise.all(pdfsToDelete.map((pdf) => deleteFromCloudinary(pdf.public_id)));
+        await Promise.all(pdfsToDelete.map((pdf) => deleteFromS3(pdf.public_id)));
 
         service.portfolioImages = nextImages;
         service.portfolioPDFs = nextPDFs;
@@ -1243,7 +1284,7 @@ const incrementProviderProfileCount = async (req, res) => {
 // --- Export all functions from this file ---
 export {
     becomeProviderWithServices,
-    getCloudinarySignature,
+    getS3PresignedUpload,
     updateProviderProfile,
     addServiceOffering,
     updateServiceOffering,
