@@ -6,6 +6,7 @@ import { toast} from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { getApiBase } from "../utils/apiBase";
+import { formatCommunDisplayName } from '../utils/communName';
 
 const Login = () => {
   const [mode, setMode] = useState("login");
@@ -242,11 +243,11 @@ const Login = () => {
                           ? "No communities available"
                           : "Select your Community"}
                     </option>
-                    {communities.map((c) => (
-                      <option key={c.communName} value={c.communName}>
-                        {c.communName}
-                      </option>
-                    ))}
+                   {communities.map((c) => (
+                        <option key={c.communName} value={c.communName}>
+                          {formatCommunDisplayName(c.communName)}
+                        </option>
+                      ))}
                   </select>
                   
                 </div>
