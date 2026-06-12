@@ -224,7 +224,7 @@ const Login = () => {
 
                 <div className="w-full mb-4">
                   <label htmlFor="communityCommunName" className="mb-1 block text-xs font-semibold text-gray-700">
-                    Commun<span className="text-red-600">*</span>
+                    Community<span className="text-red-600">*</span>
                   </label>
                   <select
                     id="communityCommunName"
@@ -240,12 +240,11 @@ const Login = () => {
                         ? "Loading communities…"
                         : communities.length === 0
                           ? "No communities available"
-                          : "Select your Commun"}
+                          : "Select your Community"}
                     </option>
                     {communities.map((c) => (
                       <option key={c.communName} value={c.communName}>
                         {c.communName}
-                        {c.label && c.label !== c.communName ? ` — ${c.label}` : ""}
                       </option>
                     ))}
                   </select>
