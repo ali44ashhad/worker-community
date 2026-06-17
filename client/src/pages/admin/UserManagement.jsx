@@ -1,9 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { HiOutlineSearch } from 'react-icons/hi';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAllUsersAdmin, updateUserStatusAdmin } from '../../features/adminSlice';
-import { getFullName, getInitials } from '../../utils/userHelpers';
+import ProfileAvatar from '../../components/ProfileAvatar';
+import { getFullName } from '../../utils/userHelpers';
+
+const inputClass =
+  'w-full pl-9 pr-3 py-2.5 text-sm border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 focus:border-[var(--purple-primary)] transition-all';
+
+const StatusBadge = ({ isActive }) => (
+  <span
+    className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+      isActive === false ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+    }`}
+  >
+    {isActive === false ? 'Inactive' : 'Active'}
+  </span>
+);
+
+const ActionButton = ({ user, updatingUserId, authUserId, onToggle }) => {
+  const isSelf = authUserId === user._id;
+  const isUpdating = updatingUserId === user._id;
+  const isInactive = user.isActive === false;
+
+  return (
+    <button
+      type="button"
+      disabled={isUpdating || isSelf}
+      onClick={() => onToggle(user)}
+      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+        isInactive
+          ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+          : 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
+      }`}
+      title={isSelf ? 'You cannot change your own status' : undefined}
+    >
+      {isUpdating ? 'Updating…' : isInactive ? 'Activate' : 'Deactivate'}
+    </button>
+  );
+};
 
 const UserManagement = () => {
   const dispatch = useDispatch();
@@ -46,109 +82,170 @@ const UserManagement = () => {
         transition={{ duration: 0.25 }}
         className="mb-6"
       >
-        <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">User Management</h1>
-        <p className="text-gray-600 mt-2">Activate or deactivate user accounts.</p>
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--purple-primary)]">
+          Admin
+        </p>
+        <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">User Management</h1>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          Activate or deactivate user accounts.
+        </p>
       </motion.div>
 
-      <div className="mb-5 relative max-w-md">
-        <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+      <div className="relative mb-5 max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]" />
         <input
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search by name, email, role, phone"
-          className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
+          className={inputClass}
         />
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+      {/* Mobile cards */}
+      <div className="space-y-3 lg:hidden">
+        {isLoading ? (
+          <div className="rounded-2xl border border-purple-100/50 bg-white/80 p-10 text-center">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
+            <p className="text-sm text-[var(--text-secondary)]">Loading users…</p>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="rounded-2xl border border-purple-100/50 bg-white/80 p-10 text-center text-sm text-[var(--text-secondary)]">
+            No users found.
+          </div>
+        ) : (
+          users.map((user) => (
+            <div
+              key={user._id}
+              className="rounded-2xl border border-purple-100/50 bg-white/80 p-4 shadow-sm shadow-purple-500/5"
+            >
+              <div className="mb-3 flex items-center gap-3">
+                <ProfileAvatar
+                  user={user}
+                  alt={getFullName(user)}
+                  size="lg"
+                  className="border border-[var(--purple-primary)]/20"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                    {getFullName(user)}
+                  </p>
+                  <p className="truncate text-xs text-[var(--text-secondary)]">{user.email}</p>
+                </div>
+                <StatusBadge isActive={user.isActive} />
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-purple-100 pt-3">
+                <span className="text-xs capitalize text-[var(--text-secondary)]">{user.role}</span>
+                <ActionButton
+                  user={user}
+                  updatingUserId={updatingUserId}
+                  authUserId={authUser?._id}
+                  onToggle={onToggleStatus}
+                />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden overflow-hidden rounded-2xl border border-purple-100/50 bg-white/80 shadow-sm shadow-purple-500/5 lg:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="border-b border-purple-100 bg-purple-50/40">
               <tr>
-                <th className="text-left text-xs uppercase tracking-wide text-gray-500 px-4 py-3">User</th>
-                <th className="text-left text-xs uppercase tracking-wide text-gray-500 px-4 py-3">Email</th>
-                <th className="text-left text-xs uppercase tracking-wide text-gray-500 px-4 py-3">Role</th>
-                <th className="text-left text-xs uppercase tracking-wide text-gray-500 px-4 py-3">Status</th>
-                <th className="text-right text-xs uppercase tracking-wide text-gray-500 px-4 py-3">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  User
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Email
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Role
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
+              {isLoading && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-12 text-center">
+                    <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
+                    <p className="text-sm text-[var(--text-secondary)]">Loading users…</p>
+                  </td>
+                </tr>
+              )}
               {!isLoading && users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-10 text-center text-sm text-[var(--text-secondary)]">
                     No users found.
                   </td>
                 </tr>
               )}
-              {users.map((user) => (
-                <tr key={user._id} className="border-b border-gray-100 last:border-b-0">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {user.profileImage ? (
-                        <img src={user.profileImage} alt={getFullName(user)} className="w-9 h-9 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-gray-900 text-white text-sm font-semibold flex items-center justify-center">
-                          {getInitials(user)}
+              {!isLoading &&
+                users.map((user) => (
+                  <tr key={user._id} className="border-b border-purple-50 last:border-b-0 hover:bg-purple-50/30">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <ProfileAvatar
+                          user={user}
+                          alt={getFullName(user)}
+                          size="md"
+                          className="border border-[var(--purple-primary)]/20"
+                        />
+                        <div className="text-sm font-medium text-[var(--text-primary)]">
+                          {getFullName(user)}
                         </div>
-                      )}
-                      <div className="text-sm font-medium text-gray-900">{getFullName(user)}</div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{user.email}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700 capitalize">{user.role}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        user.isActive === false
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-green-100 text-green-700'
-                      }`}
-                    >
-                      {user.isActive === false ? 'Inactive' : 'Active'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      disabled={updatingUserId === user._id || authUser?._id === user._id}
-                      onClick={() => onToggleStatus(user)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                        user.isActive === false
-                          ? 'bg-green-600 hover:bg-green-700 text-white'
-                          : 'bg-red-600 hover:bg-red-700 text-white'
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {updatingUserId === user._id
-                        ? 'Updating...'
-                        : user.isActive === false
-                          ? 'Activate'
-                          : 'Deactivate'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{user.email}</td>
+                    <td className="px-4 py-3 text-sm capitalize text-[var(--text-secondary)]">
+                      {user.role}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge isActive={user.isActive} />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <ActionButton
+                        user={user}
+                        updatingUserId={updatingUserId}
+                        authUserId={authUser?._id}
+                        onToggle={onToggleStatus}
+                      />
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
-        <p className="text-sm text-gray-600">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-[var(--text-secondary)] sm:text-sm">
           Page {usersPagination?.currentPage || 1} of {usersPagination?.totalPages || 1}
         </p>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={!usersPagination?.hasPrevPage}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-xl border border-purple-100 px-3 py-1.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            <ChevronLeft className="h-4 w-4" />
             Previous
           </button>
           <button
+            type="button"
             onClick={() => setCurrentPage((p) => p + 1)}
             disabled={!usersPagination?.hasNextPage}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-xl border border-purple-100 px-3 py-1.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -157,4 +254,3 @@ const UserManagement = () => {
 };
 
 export default UserManagement;
-

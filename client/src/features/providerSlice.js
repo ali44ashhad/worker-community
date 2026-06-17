@@ -8,10 +8,15 @@ axios.defaults.withCredentials = true;
 
 export const getAllProviders = createAsyncThunk(
   "provider/getAll",
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 12 } = {}, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/api/provider-profile`);
-      return res.data.providers;
+      const res = await axios.get(`${API_URL}/api/provider-profile`, {
+        params: { page, limit },
+      });
+      return {
+        providers: res.data.providers || [],
+        pagination: res.data.pagination || null,
+      };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch providers");
     }
@@ -56,6 +61,7 @@ export const getProviderDashboardStats = createAsyncThunk(
 
 const initialState = {
   allProviders: [],
+  pagination: null,
   selectedProvider: null,
   myProviderProfile: null,
   dashboardStats: null,
@@ -84,7 +90,8 @@ const providerSlice = createSlice({
       })
       .addCase(getAllProviders.fulfilled, (state, action) => {
         state.isFetchingAll = false;
-        state.allProviders = action.payload;
+        state.allProviders = action.payload?.providers || [];
+        state.pagination = action.payload?.pagination || null;
       })
       .addCase(getAllProviders.rejected, (state, action) => {
         state.isFetchingAll = false;

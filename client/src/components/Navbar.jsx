@@ -19,7 +19,8 @@ import { logoutUser } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchDropdown from './SearchDropdown';
-import { getFullName, getFirstName, getInitials } from '../utils/userHelpers';
+import { getFullName } from '../utils/userHelpers';
+import ProfileAvatar from './ProfileAvatar';
 
 const Navbar = () => {
   const location = useLocation();
@@ -82,127 +83,90 @@ const Navbar = () => {
 
   // Get user's first name and initial
 
-  const navLinks = [
+  const primaryNavLinks = [ 
+    { to: '/about', text: 'About Us' },
+    { to: '/service', text: 'Services' },
+  ];
+
+  const mobileNavLinks = [
     { to: '/', text: 'Home' },
-    { to: '/about', text: 'About' }, 
+    { to: location.pathname === '/' ? '/#categories' : '/category', text: 'Categories' },
+    { to: '/about', text: 'About Us' },
+    { to: '/service', text: 'Services' },
     { to: '/faq', text: 'FAQ' },
     { to: '/contact', text: 'Contact' },
-    { to: '/service', text: 'Service' },
-    { to: '/category', text: 'Categories' },
   ];
 
   return (
     <>
-      <motion.header
-        className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-xl z-[60] h-16 shadow-sm border-b border-gray-100"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-      >
-        {/* nav container uses min-w-0 so flex children can shrink without creating overflow */}
-        <nav className="max-w-[1370px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
-          {/* Left: Logo */}
-          <motion.div className="flex items-center min-w-0" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-            <Link
-              to="/"
-              className="flex items-center gap-3 min-w-0"
-            >
-            
-                <>
-                  <img 
-                    src="/CommuN-logo.png" 
-                    alt="Commun" 
-                    className="h-10 w-auto object-contain max-h-[50px]" 
-                  />
-                  
-                </>
-            </Link>
-          </motion.div>
+      <header className="fixed top-0 inset-x-0 z-[60] h-20 overflow-visible bg-white/95 backdrop-blur-md shadow-sm border-b border-purple-100/50">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center shrink-0">
+            <img src="/CommuN-logo.png" alt="CommuN" className="site-logo" />
+          </Link>
 
-          {/* Center nav (only show on xl to avoid crowding smaller screens) */}
-          {!user && (
-            <div className="hidden xl:flex flex-1 justify-center items-center space-x-1 min-w-0">
-              <div className="flex items-center space-x-1 overflow-hidden">
-                {navLinks.map((link, index) => (
-                  <motion.div
-                    key={link.to}
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: index * 0.04 }}
-                  >
-                    <Link
-                      to={link.to}
-                      className={`relative px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors duration-300 tracking-wide text-sm font-medium rounded-xl hover:bg-gray-50`}
-                    >
-                      {link.text}
-                      {location.pathname === link.to && (
-                        <motion.div
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 rounded-full"
-                          layoutId="navbar-indicator"
-                          transition={{ duration: 0.25 }}
-                        />
-                      )}
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Center nav — Figma: Categories + About Us */}
+          <div className="hidden md:flex flex-1 justify-center items-center gap-10 min-w-0">
+            {primaryNavLinks.map((link, index) => (
+              <motion.div
+                key={link.text}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: index * 0.04 }}
+              >
+                <Link
+                  to={link.to}
+                  className="text-[var(--text-secondary)] hover:text-[var(--purple-primary)] transition-colors font-medium"
+                >
+                  {link.text}
+                </Link>
+              </motion.div>
+            ))}
+          </div>
 
           {/* Right side - actions */}
-          <div className="hidden xl:flex items-center gap-4 min-w-0">
-            {/* Search */}
-            <motion.div className="relative min-w-0" whileHover={{ scale: 1.02 }}>
-              <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Search services..."
-                onClick={() => setIsSearchOpen(true)}
-                className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl pl-10 pr-4 py-2.5 w-40 md:w-56 lg:w-64 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300"
-                readOnly
-              />
-              <AnimatePresence>
-                {isSearchOpen && (
-                  <SearchDropdown
-                    isOpen={isSearchOpen}
-                    onClose={() => setIsSearchOpen(false)}
-                  />
-                )}
-              </AnimatePresence>
+          <div className="hidden md:flex items-center gap-3 min-w-0">
+            <motion.div whileHover={{ scale: 1.02 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsUserDropdownOpen(false);
+                  setIsSearchOpen(true);
+                }}
+                className="flex items-center gap-2 rounded-xl border border-purple-200/80 bg-white/70 px-5 py-2.5 font-medium text-[var(--text-secondary)] shadow-sm shadow-purple-500/5 transition-all hover:border-[var(--purple-primary)]/35 hover:bg-purple-50 hover:text-[var(--purple-primary)]"
+              >
+                <HiOutlineSearch className="h-4 w-4 text-[var(--purple-primary)]/80" />
+                <span>Search</span>
+              </button>
             </motion.div>
 
-            {/* Auth / role buttons */}
             {!user ? (
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   to="/login"
-                  className="px-5 py-2.5 bg-gray-900 text-white rounded-xl transition-all duration-300 shadow font-semibold text-sm hover:bg-gray-800"
+                  className="px-6 py-2.5 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium text-sm"
                 >
-                  Login
+                  Sign In
                 </Link>
               </motion.div>
             ) : (
               <div className="relative" ref={desktopDropdownRef}>
                 <motion.button
-                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                  className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-50 transition-all duration-200"
+                  type="button"
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setIsUserDropdownOpen((open) => !open);
+                  }}
+                  className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-purple-50 transition-all duration-200"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {/* Avatar */}
-                  <div className="relative">
-                    {user.profileImage ? (
-                      <img
-                        src={user.profileImage}
-                        alt={getFullName(user)}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-sm border-2 border-gray-200">
-                        {getInitials(user)}
-                      </div>
-                    )}
-                  </div>
+                  <ProfileAvatar
+                    user={user}
+                    size="lg"
+                    alt={getFullName(user)}
+                    className="border-2 border-purple-200"
+                  />
                   <HiChevronDown 
                     className={`text-gray-600 transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`}
                     size={18}
@@ -217,25 +181,17 @@ const Navbar = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
+                      className="absolute right-0 z-[70] mt-2 w-64 rounded-xl border border-purple-100/50 bg-white py-2 shadow-lg shadow-purple-500/10"
                     >
                       {/* User Info Section */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <div className="flex items-center gap-3">
-                          {/* Avatar */}
-                          <div className="relative flex-shrink-0">
-                            {user.profileImage ? (
-                              <img
-                                src={user.profileImage}
-                                alt={getFullName(user)}
-                                className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-base border-2 border-gray-200">
-                                {getInitials(user)}
-                              </div>
-                            )}
-                          </div>
+                          <ProfileAvatar
+                            user={user}
+                            size="xl"
+                            alt={getFullName(user)}
+                            className="shrink-0 border-2 border-purple-200"
+                          />
                           {/* Name and Email */}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
@@ -311,7 +267,7 @@ const Navbar = () => {
                         </Link>
                       )}
                       <Link
-                        to={`/cart/${user._id}`}
+                        to="/cart"
                         onClick={() => setIsUserDropdownOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
@@ -324,7 +280,7 @@ const Navbar = () => {
                         )} */}
                       </Link>
                       <Link
-                        to={`/update-profile/${user._id}`}
+                        to="/update-profile"
                         onClick={() => setIsUserDropdownOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
@@ -347,30 +303,26 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile actions (shown on smaller than xl) */}
-          <div className="flex items-center gap-4 xl:hidden">
+          {/* Mobile actions */}
+          <div className="flex items-center gap-3 md:hidden">
             {user && (
               <div className="relative" ref={mobileDropdownRef}>
                 <motion.button
-                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  type="button"
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setIsUserDropdownOpen((open) => !open);
+                  }}
                   className="flex items-center gap-2"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  {/* Avatar */}
-                  <div className="relative">
-                    {user.profileImage ? (
-                      <img
-                        src={user.profileImage}
-                        alt={getFullName(user)}
-                        className="w-9 h-9 rounded-full object-cover border-2 border-gray-200"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-sm border-2 border-gray-200">
-                        {getInitials(user)}
-                      </div>
-                    )}
-                  </div>
+                  <ProfileAvatar
+                    user={user}
+                    size="md"
+                    alt={getFullName(user)}
+                    className="border-2 border-purple-200"
+                  />
                   <HiChevronDown 
                     className={`text-gray-600 transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`}
                     size={18}
@@ -385,25 +337,17 @@ const Navbar = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-[90]"
+                      className="absolute right-0 z-[90] mt-2 w-64 rounded-xl border border-purple-100/50 bg-white py-2 shadow-lg shadow-purple-500/10"
                     >
                       {/* User Info Section */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <div className="flex items-center gap-3">
-                          {/* Avatar */}
-                          <div className="relative flex-shrink-0">
-                            {user.profileImage ? (
-                              <img
-                                src={user.profileImage}
-                                alt={getFullName(user)}
-                                className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-base border-2 border-gray-200">
-                                {getInitials(user)}
-                              </div>
-                            )}
-                          </div>
+                          <ProfileAvatar
+                            user={user}
+                            size="xl"
+                            alt={getFullName(user)}
+                            className="shrink-0 border-2 border-purple-200"
+                          />
                           {/* Name and Email */}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
@@ -497,7 +441,7 @@ const Navbar = () => {
                         </Link>
                       )}
                       <Link
-                        to={`/cart/${user._id}`}
+                        to="/cart"
                         onClick={() => {
                           setIsUserDropdownOpen(false);
                           closeMenu();
@@ -513,7 +457,7 @@ const Navbar = () => {
                         )}
                       </Link>
                       <Link
-                        to={`/update-profile/${user._id}`}
+                        to="/update-profile"
                         onClick={() => {
                           setIsUserDropdownOpen(false);
                           closeMenu();
@@ -539,22 +483,46 @@ const Navbar = () => {
             )}
 
             <motion.button
-              className="text-gray-700 relative focus:outline-none"
+              className="p-2 text-[var(--purple-primary)] hover:bg-purple-50 rounded-lg transition-colors focus:outline-none"
               onClick={() => setIsMobileMenuOpen((s) => !s)}
               aria-label="Toggle menu"
               whileTap={{ scale: 0.95 }}
             >
-              {isMobileMenuOpen ? <HiOutlineX size={26} /> : <HiOutlineMenu size={26} />}
+              {isMobileMenuOpen ? <HiOutlineX size={24} /> : <HiOutlineMenu size={24} />}
             </motion.button>
           </div>
         </nav>
-      </motion.header>
+      </header>
+
+      {/* Search overlay — rendered outside header so it is not clipped */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-[55] bg-black/20 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSearchOpen(false)}
+            />
+            <motion.div
+              className="fixed left-0 right-0 top-20 z-[65] flex justify-center px-4 sm:px-6"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <SearchDropdown isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Backdrop */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            className="xl:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[70]"
+            className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[70]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -567,86 +535,76 @@ const Navbar = () => {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.aside
-            className="xl:hidden fixed top-0 right-0 bottom-0 w-full sm:w-[85%] max-w-sm bg-white z-[80] shadow-2xl"
+            className="md:hidden fixed top-0 right-0 bottom-0 w-full sm:w-[85%] max-w-sm bg-white z-[80] shadow-2xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
           >
-            <div className="flex items-center justify-between px-6 py-6 border-b">
-              {/* <Link to="/" onClick={closeMenu} className="flex items-center gap-2">
-                <img 
-                  src="/logo2.png" 
-                  alt="Commun" 
-                  className="h-8 w-auto object-contain"
-                />
-                <div className="flex flex-col">
-                  <span className="text-xl font-bold text-gray-900 tracking-tight">CommuN</span>
-                  <span className="text-xs text-gray-600 leading-tight">Connect. Discover. Thrive Local.</span>
-                </div>
-              </Link> */}
-               <Link
-              to="/"
-              className="flex items-center gap-3 min-w-0"
-            >
-          
-                <>
-                  <img 
-                    src="/logo2.png" 
-                    alt="Commun" 
-                    className="h-10 w-auto object-contain max-h-[50px]" 
-                  />
-                  <div className="flex flex-col">
-                    {/* <span className="text-2xl font-bold text-gray-900 tracking-tight">CommuN</span>
-                    <span className="text-xs text-gray-600 leading-tight">Connect. Discover. Thrive Local.</span> */}
-                    <span>
-                    <img 
-                    src="/logo-text.png" 
-                    alt="Commun" 
-                    className="h-10 w-auto object-contain max-h-[50px]" 
-                  />
-                    </span>
-                  </div>
-                </>
-          
-            </Link>
-              <motion.button onClick={closeMenu} className="text-gray-600" aria-label="Close menu">
+            <div className="flex items-center justify-between px-6 py-6 border-b border-purple-100">
+              <Link to="/" onClick={closeMenu} className="flex items-center gap-3 min-w-0">
+                <img src="/CommuN-logo.png" alt="CommuN" className="site-logo" />
+              </Link>
+              <motion.button onClick={closeMenu} className="text-[var(--purple-primary)] p-2 hover:bg-purple-50 rounded-lg" aria-label="Close menu">
                 <HiOutlineX size={22} />
               </motion.button>
             </div>
 
             <div className="flex flex-col h-[calc(100%-73px)] overflow-y-auto">
               <div className="py-6 px-6 space-y-2">
-                {navLinks.map((link, i) => (
-                  <motion.div key={link.to} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                    <Link to={link.to} onClick={closeMenu} className={`block px-4 py-3 rounded-xl transition-all duration-200 font-medium ${location.pathname === link.to ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'}`}>
+                {mobileNavLinks.map((link, i) => (
+                  <motion.div key={link.text} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
+                    <Link
+                      to={link.to}
+                      onClick={closeMenu}
+                      className={`block px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                        location.pathname === link.to || (link.to.includes('#categories') && location.pathname === '/')
+                          ? 'bg-purple-50 text-[var(--purple-primary)]'
+                          : 'text-[var(--text-secondary)] hover:bg-purple-50 hover:text-[var(--purple-primary)]'
+                      }`}
+                    >
                       {link.text}
                     </Link>
                   </motion.div>
                 ))}
 
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: mobileNavLinks.length * 0.04 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserDropdownOpen(false);
+                      setIsSearchOpen(true);
+                      closeMenu();
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl border border-purple-200/80 bg-purple-50/30 px-4 py-3 font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--purple-primary)]/35 hover:bg-purple-50 hover:text-[var(--purple-primary)]"
+                  >
+                    <HiOutlineSearch size={18} className="text-[var(--purple-primary)]/80" />
+                    Search
+                  </button>
+                </motion.div>
+
                 {user && (
                   <>
                     {user.role === 'admin' && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 1) * 0.04 }}>
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (mobileNavLinks.length + 1) * 0.04 }}>
                         <Link to="/admin" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Admin Dashboard</Link>
                       </motion.div>
                     )}
                     {user.role === 'secretary' && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 1) * 0.04 }}>
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (mobileNavLinks.length + 1) * 0.04 }}>
                         <Link to="/secretary/dashboard" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Secretary panel</Link>
                       </motion.div>
                     )}
                     {user.role === 'provider' && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 1) * 0.04 }}>
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (mobileNavLinks.length + 1) * 0.04 }}>
                         <Link to="/provider/dashboard" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Provider Dashboard</Link>
                       </motion.div>
                     )}
-                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + (['admin', 'provider', 'secretary'].includes(user.role) ? 2 : 1)) * 0.04 }}>
-                      <Link to={`/update-profile/${user._id}`} onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Update Profile</Link>
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (mobileNavLinks.length + (['admin', 'provider', 'secretary'].includes(user.role) ? 2 : 1)) * 0.04 }}>
+                      <Link to="/update-profile" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Update Profile</Link>
                     </motion.div>
                     {user.role === 'customer' && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + (['admin', 'provider', 'secretary'].includes(user.role) ? 3 : 2)) * 0.04 }}>
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (mobileNavLinks.length + (['admin', 'provider', 'secretary'].includes(user.role) ? 3 : 2)) * 0.04 }}>
                         <Link to="/become-provider" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Become Provider</Link>
                       </motion.div>
                     )}
@@ -654,28 +612,25 @@ const Navbar = () => {
                 )}
               </div>
 
-              <div className="px-6 py-6 border-t space-y-3">
+              <div className="px-6 py-6 border-t border-purple-100 space-y-3">
                 {!user ? (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    <div className="mb-3 text-center">
-                      <p className="text-sm text-gray-500 mb-3">Not signed in</p>
-                    </div>
-                    <Link 
-                      to="/login" 
-                      onClick={closeMenu} 
-                      className="block text-center text-white rounded-xl px-4 py-3 bg-gray-900 font-semibold hover:bg-gray-800 transition-colors"
+                    <Link
+                      to="/login"
+                      onClick={closeMenu}
+                      className="block text-center text-white rounded-xl px-4 py-3 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] font-semibold hover:shadow-lg transition-all"
                     >
-                      Login
+                      Sign In
                     </Link>
                   </motion.div>
                 ) : (
-                  <button 
-                    onClick={handleLogout} 
-                    className="block w-full text-center text-white rounded-xl px-4 py-3 bg-gray-900 font-semibold hover:bg-gray-800 transition-colors"
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-center text-white rounded-xl px-4 py-3 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] font-semibold hover:shadow-lg transition-all"
                   >
                     Logout
                   </button>

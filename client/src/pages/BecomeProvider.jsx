@@ -2,22 +2,48 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { X, Plus, Upload, Trash2, FileText, PlayCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkAuth } from '../features/authSlice';
 import { getActiveCategories } from '../features/adminSlice';
 import { getApiBase } from '../utils/apiBase';
+import { formatCommunDisplayName } from '../utils/communName';
 
 const DRAFT_KEY = 'becomeProviderDraft:v1';
 const BECOME_PROVIDER_VIDEO_ID = 'x0fy5a018V4';
 
-const fieldClass = (hasError) =>
-  `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 font-normal ${
-    hasError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
+const inputBase =
+  'w-full rounded-xl border bg-white px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 transition-all focus:outline-none focus:ring-2';
+const inputOk = `${inputBase} border-purple-100 focus:border-[var(--purple-primary)] focus:ring-[var(--purple-primary)]/25`;
+const inputErr = `${inputBase} border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-400/25`;
+const labelClass = 'mb-2 block text-xs font-medium text-[var(--text-secondary)]';
+const cardClass =
+  'rounded-2xl border border-purple-100/50 bg-white/80 p-6 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-8';
+const btnPrimary =
+  'inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
+const btnDashed =
+  'flex w-full items-center justify-center gap-3 rounded-xl border border-dashed border-purple-200 py-4 text-base font-semibold text-[var(--purple-primary)] transition-all hover:border-purple-300 hover:bg-purple-50/50';
+
+const fieldClass = (hasError) => (hasError ? inputErr : inputOk);
+
+const chipClass = (selected, pill = true) =>
+  `${pill ? 'rounded-full px-4 py-2' : 'rounded-lg px-5 py-2.5 font-semibold'} border text-sm font-medium transition-all ${
+    selected
+      ? 'border-transparent bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white shadow-sm shadow-purple-500/20'
+      : 'border-purple-100 bg-white text-[var(--text-secondary)] hover:bg-purple-50 hover:text-[var(--purple-primary)]'
+  }`;
+
+const uploadZoneClass = (hasError) =>
+  `rounded-xl border-2 border-dashed p-8 text-center transition-colors sm:p-10 ${
+    hasError
+      ? 'border-red-300 bg-red-50'
+      : 'border-purple-100 bg-purple-50/20 hover:border-purple-200'
   }`;
 
 const BecomeProvider = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isPanelRoute = location.pathname.startsWith('/community/');
   const dispatch = useDispatch();
   const { activeCategories } = useSelector((state) => state.admin);
   const { user } = useSelector((state) => state.auth);
@@ -578,8 +604,10 @@ const BecomeProvider = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-gray-50 pb-16">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-24 sm:pt-28">
+    <div className="relative min-h-screen bg-[var(--background-subtle)] pb-16">
+      <div
+        className={`mx-auto max-w-6xl px-4 sm:px-6 ${isPanelRoute ? 'pt-6' : 'pt-24 sm:pt-28'}`}
+      >
       <motion.div
         className="mb-10 grid items-start gap-8 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px]"
         initial={{ opacity: 0, y: 10 }}
@@ -587,22 +615,22 @@ const BecomeProvider = () => {
         transition={{ duration: 0.4 }}
       >
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-indigo-600">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--purple-primary)]">
             Provider onboarding
           </p>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-4xl">
             Become a{' '}
-            <span className="bg-gradient-to-r from-indigo-600 to-pink-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
               Provider
             </span>
           </h1>
-          <p className="mt-3 max-w-xl text-base leading-relaxed text-gray-600">
+          <p className="mt-3 max-w-xl text-base leading-relaxed text-[var(--text-secondary)]">
             Share your skills with neighbours. Watch the guide, then fill in the form below.
           </p>
-          <ol className="mt-5 space-y-2 text-sm text-gray-700">
+          <ol className="mt-5 space-y-2 text-sm text-[var(--text-secondary)]">
             {['Watch the walkthrough', 'Add your bio', 'List your service(s)'].map((step, i) => (
               <li key={step} className="flex items-center gap-2.5">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-bold text-white">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-xs font-bold text-white">
                   {i + 1}
                 </span>
                 {step}
@@ -611,13 +639,13 @@ const BecomeProvider = () => {
           </ol>
         </div>
 
-        <aside className="mx-auto w-full max-w-[320px] sm:max-w-[360px] lg:max-w-none lg:justify-self-end lg:sticky lg:top-24">
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
-            <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-pink-50 px-3 py-2.5">
-              <PlayCircle className="h-4 w-4 shrink-0 text-indigo-600" aria-hidden />
+        <aside className="mx-auto w-full max-w-[320px] sm:max-w-[360px] lg:sticky lg:top-24 lg:max-w-none lg:justify-self-end">
+          <div className="overflow-hidden rounded-2xl border border-purple-100/50 bg-white/80 shadow-md shadow-purple-500/5">
+            <div className="flex items-center gap-2 border-b border-purple-100/60 bg-gradient-to-r from-purple-50/80 to-fuchsia-50/40 px-3 py-2.5">
+              <PlayCircle className="h-4 w-4 shrink-0 text-[var(--purple-primary)]" aria-hidden />
               <div>
-                <p className="text-sm font-semibold text-gray-900">Registration guide</p>
-                <p className="text-xs text-gray-500">2 min · before you start</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Registration guide</p>
+                <p className="text-xs text-[var(--text-secondary)]">2 min · before you start</p>
               </div>
             </div>
             <div className="relative aspect-video w-full bg-gray-900">
@@ -635,22 +663,24 @@ const BecomeProvider = () => {
       </motion.div>
 
       <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="mb-1 text-2xl font-bold text-gray-900 sm:text-3xl">About you</h2>
-          <p className="mb-6 text-sm text-gray-500">Introduce yourself to potential customers.</p>
+        <div className={cardClass}>
+          <h2 className="mb-1 text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">About you</h2>
+          <p className="mb-6 text-sm text-[var(--text-secondary)]">Introduce yourself to potential customers.</p>
 
           {user?.communityCommunName && (
-            <div className="mb-6 rounded-lg border border-indigo-100 bg-indigo-50/60 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Your Commun</p>
-              <p className="mt-1 text-sm font-medium text-gray-900">@{user.communityCommunName}</p>
-              <p className="mt-1 text-xs text-gray-600">
+            <div className="mb-6 rounded-xl border border-purple-100 bg-purple-50/40 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--purple-primary)]">Your Commun</p>
+              <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
+                {formatCommunDisplayName(user.communityCommunName)}
+              </p>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">
                 You joined this community at signup.
               </p>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+            <label className={labelClass}>
               Provider Bio *
             </label>
             <textarea
@@ -676,8 +706,8 @@ const BecomeProvider = () => {
               className={`${fieldClass(errors['providerBio'])} resize-none`}
             />
             <div className="mt-2 flex items-center justify-between">
-              <p className="text-xs text-gray-500">Max {PROVIDER_BIO_MAX_CHARS} characters</p>
-              <p className={`text-xs ${providerBio.length >= PROVIDER_BIO_MAX_CHARS ? 'text-red-600' : 'text-gray-500'}`}>
+              <p className="text-xs text-[var(--text-secondary)]">Max {PROVIDER_BIO_MAX_CHARS} characters</p>
+              <p className={`text-xs ${providerBio.length >= PROVIDER_BIO_MAX_CHARS ? 'text-red-600' : 'text-[var(--text-secondary)]'}`}>
                 {providerBio.length}/{PROVIDER_BIO_MAX_CHARS}
               </p>
             </div>
@@ -689,29 +719,29 @@ const BecomeProvider = () => {
 
         {/* Services Section */}
         {services.map((service, index) => (
-          <div key={service.id} className="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+          <div key={service.id} className={`relative ${cardClass}`}>
             {services.length > 1 && (
               <button
                 type="button"
                 onClick={() => removeService(service.id)}
-                className="absolute top-4 right-4 text-white bg-black hover:bg-gray-800 transition-all rounded-full p-2 border border-gray-300"
+                className="absolute right-4 top-4 rounded-full border border-red-200 bg-red-50 p-2 text-red-600 transition-all hover:bg-red-100"
               >
                 <X size={20} />
               </button>
             )}
 
-            <div className="flex items-center gap-3 mb-8">
-              <div className="bg-black text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg">
+            <div className="mb-8 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-lg font-bold text-white">
                 {index + 1}
               </div>
-              <h2 className="text-3xl font-bold text-black">
-                Service 
+              <h2 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
+                Service
               </h2>
             </div>
 
             {/* Service Name */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+              <label className={labelClass}>
                 Service Name *
               </label>
               <input
@@ -728,17 +758,15 @@ const BecomeProvider = () => {
 
             {/* Category Selection */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+              <label className={labelClass}>
                 Select Category *
               </label>
               <select
                 value={service.category}
                 onChange={(e) => handleCategoryChange(service.id, e.target.value)}
-                className={`${fieldClass(errors[`service-${service.id}-category`])} ${
-                  service.category ? 'text-gray-900' : 'text-gray-400'
-                }`}
+                className={fieldClass(errors[`service-${service.id}-category`])}
               >
-                <option value="" className="text-gray-400">Choose a category</option>
+                <option value="">Choose a category</option>
                 {Object.keys(RULES).map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -751,7 +779,7 @@ const BecomeProvider = () => {
             {/* Sub-categories */}
             {service.category && (
               <div className="mb-6">
-                <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+                <label className={labelClass}>
                   Select Sub-Categories *
                 </label>
                 <div className="flex flex-wrap gap-3">
@@ -760,11 +788,7 @@ const BecomeProvider = () => {
                       key={subCat}
                       type="button"
                       onClick={() => handleSubCategoryToggle(service.id, subCat)}
-                      className={`px-5 py-2.5 rounded-lg border font-semibold transition-all ${
-                        service.subCategories.includes(subCat)
-                          ? 'bg-gray-800 text-white border-gray-300 shadow-md'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-800 hover:text-white hover:shadow-md'
-                      }`}
+                      className={chipClass(service.subCategories.includes(subCat), false)}
                     >
                       {subCat}
                     </button>
@@ -779,7 +803,7 @@ const BecomeProvider = () => {
             {/* Keywords */}
             {service.category && (RULES[service.category]?.keywords?.length || 0) > 0 && (
               <div className="mb-6">
-                <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+                <label className={labelClass}>
                   Select Keywords/Specializations *
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -788,11 +812,7 @@ const BecomeProvider = () => {
                       key={keyword}
                       type="button"
                       onClick={() => handleKeywordToggle(service.id, keyword)}
-                      className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-                        service.keywords.includes(keyword)
-                          ? 'bg-gray-800 text-white border-gray-300 shadow-md'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-800 hover:text-white hover:shadow-md'
-                      }`}
+                      className={chipClass(service.keywords.includes(keyword))}
                     >
                       {keyword}
                     </button>
@@ -806,7 +826,7 @@ const BecomeProvider = () => {
 
             {/* Bio */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
+              <label className={labelClass}>
                 Service Description *
               </label>
               <textarea
@@ -823,8 +843,9 @@ const BecomeProvider = () => {
 
             {/* Experience */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
-                Experience (in years) (optional)
+              <label className={labelClass}>
+                Experience (in years){' '}
+                <span className="text-[var(--text-secondary)]/70">(optional)</span>
               </label>
               <input
                 type="number"
@@ -862,15 +883,14 @@ const BecomeProvider = () => {
 
             {/* Image Upload */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
-                Upload Work Images (optional)
+              <label className={labelClass}>
+                Upload Work Images{' '}
+                <span className="text-[var(--text-secondary)]/70">(optional)</span>
               </label>
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="mb-3 text-sm text-[var(--text-secondary)]">
                 Max size: <span className="font-semibold">5 images upto 10 MB each</span> (Images: PNG/JPG/JPEG)
               </p>
-              <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
-                  errors[`service-${service.id}-images`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
-                }`}>
+              <div className={uploadZoneClass(errors[`service-${service.id}-images`])}>
                 <input
                   type="file"
                   id={`images-${service.id}`}
@@ -881,11 +901,11 @@ const BecomeProvider = () => {
                 />
                 <label
                   htmlFor={`images-${service.id}`}
-                  className="cursor-pointer flex flex-col items-center"
+                  className="flex cursor-pointer flex-col items-center"
                 >
-                  <Upload className="text-black mb-3" size={48} />
-                  <span className="text-black font-bold text-lg mb-1">Click to upload images</span>
-                  <span className="text-sm text-gray-600">PNG, JPG up to 10MB</span>
+                  <Upload className="mb-3 text-[var(--purple-primary)]" size={40} />
+                  <span className="mb-1 text-base font-semibold text-[var(--text-primary)]">Click to upload images</span>
+                  <span className="text-sm text-[var(--text-secondary)]">PNG, JPG up to 10MB</span>
                 </label>
               </div>
               {errors[`service-${service.id}-images`] && (
@@ -898,17 +918,17 @@ const BecomeProvider = () => {
                   {service.imagePreviews.map((img, imgIndex) => (
                     <div
                       key={imgIndex}
-                      className="relative group overflow-hidden rounded-lg mb-4 break-inside-avoid"
+                      className="group relative mb-4 break-inside-avoid overflow-hidden rounded-xl border border-purple-100/50"
                     >
                       <img
                         src={img}
                         alt={`Upload ${imgIndex + 1}`}
-                        className="w-full h-auto object-contain block"
+                        className="block h-auto w-full object-contain"
                       />
                       <button
                         type="button"
                         onClick={() => handleRemoveImage(service.id, imgIndex)}
-                        className="absolute top-2 right-2 bg-black text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all border-2 border-white"
+                        className="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white opacity-0 shadow-md transition-all group-hover:opacity-100 hover:bg-red-600"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -920,15 +940,13 @@ const BecomeProvider = () => {
 
             {/* PDF Upload */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
-              Upload PDF <span className="text-gray-500 normal-case">(optional)</span>
+              <label className={labelClass}>
+                Upload PDF <span className="text-[var(--text-secondary)]/70">(optional)</span>
               </label>
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="mb-3 text-sm text-[var(--text-secondary)]">
                 Max size: <span className="font-semibold">upload only 1 file upto 20MB</span> (Documents: PDF)
               </p>
-              <div className={`border border-dashed rounded-lg p-8 text-center transition-all hover:shadow-lg ${
-                  errors[`service-${service.id}-pdfs`] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:bg-gray-50'
-                }`}>
+              <div className={uploadZoneClass(errors[`service-${service.id}-pdfs`])}>
                 <input
                   type="file"
                   id={`pdfs-${service.id}`}
@@ -939,11 +957,11 @@ const BecomeProvider = () => {
                 />
                 <label
                   htmlFor={`pdfs-${service.id}`}
-                  className="cursor-pointer flex flex-col items-center"
+                  className="flex cursor-pointer flex-col items-center"
                 >
-                  <FileText className="text-black mb-3" size={48} />
-                  <span className="text-black font-bold text-lg mb-1">Click to upload PDF</span>
-                  <span className="text-sm text-gray-600">PDF files up to 20MB</span>
+                  <FileText className="mb-3 text-[var(--purple-primary)]" size={40} />
+                  <span className="mb-1 text-base font-semibold text-[var(--text-primary)]">Click to upload PDF</span>
+                  <span className="text-sm text-[var(--text-secondary)]">PDF files up to 20MB</span>
                 </label>
               </div>
               {/* {errors[`service-${service.id}-pdfs`] && (
@@ -954,15 +972,15 @@ const BecomeProvider = () => {
               {service.pdfPreviews && service.pdfPreviews.length > 0 && (
                 <div className="flex flex-wrap gap-4 mt-6">
                   {service.pdfPreviews.map((pdf, pdfIndex) => (
-                    <div key={pdfIndex} className="relative group border border-gray-300 rounded-lg p-4 bg-gray-50 flex items-center gap-3 min-w-[200px]">
-                      <FileText className="text-red-500" size={24} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{pdf.name}</p>
+                    <div key={pdfIndex} className="group relative flex min-w-[200px] items-center gap-3 rounded-xl border border-purple-100/60 bg-purple-50/30 p-4">
+                      <FileText className="text-[var(--purple-primary)]" size={24} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-[var(--text-primary)]">{pdf.name}</p>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemovePDF(service.id, pdfIndex)}
-                        className="bg-black text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                        className="rounded-full bg-red-500 p-1.5 text-white opacity-0 transition-all group-hover:opacity-100 hover:bg-red-600"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -974,32 +992,17 @@ const BecomeProvider = () => {
           </div>
         ))} 
         {/* Add Another Service Button */}
-        <button
-          type="button"
-          onClick={addNewService}
-          className="w-full py-4 border border-dashed border-gray-300 rounded-xl text-black font-bold text-lg hover:bg-gray-800 hover:text-white transition-all flex items-center justify-center gap-3 group"
-        >
-          <Plus size={24} className="group-hover:rotate-90 transition-transform" />
+        <button type="button" onClick={addNewService} className={`${btnDashed} group`}>
+          <Plus size={24} className="transition-transform group-hover:rotate-90" />
           Add Another Service
         </button>
 
         {/* Submit Button */}
-        <div className="flex justify-end mt-8">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`px-6 py-3 bg-black text-white font-bold text-lg rounded-xl transition-all shadow-xl tracking-wide ${
-              isSubmitting 
-                ? 'opacity-50 cursor-not-allowed' 
-                : 'hover:bg-gray-800 hover:shadow-2xl'
-            }`}
-          >
+        <div className="mt-8 flex justify-end">
+          <button type="submit" disabled={isSubmitting} className={btnPrimary}>
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                 Submitting...
               </span>
             ) : (

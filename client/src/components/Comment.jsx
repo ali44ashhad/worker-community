@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-hot-toast';
 import { FaStar } from 'react-icons/fa';
@@ -13,11 +13,35 @@ import {
   deleteReplyToComment,
 } from '../features/commentSlice';
 import axios from 'axios';
-import { getFullName, getInitials } from '../utils/userHelpers';
+import { getFullName } from '../utils/userHelpers';
 import { getApiBase } from '../utils/apiBase';
+import ProfileAvatar from './ProfileAvatar';
 
-const API_URL = getApiBase() || "http://localhost:3001";
+const API_URL = getApiBase() || 'http://localhost:3001';
 axios.defaults.withCredentials = true;
+
+const cardClass =
+  'rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-6';
+const inputClass =
+  'w-full rounded-xl border border-purple-100 bg-white px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:border-[var(--purple-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25';
+const btnPrimary =
+  'rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90';
+const btnSecondary =
+  'rounded-xl border border-purple-100 bg-white px-5 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-purple-200 hover:bg-purple-50';
+const btnPrimarySm =
+  'rounded-lg bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-3 py-1 text-xs font-semibold text-white transition-all hover:opacity-90';
+const btnSecondarySm =
+  'rounded-lg border border-purple-100 bg-white px-3 py-1 text-xs font-medium text-[var(--text-secondary)] transition-all hover:border-purple-200 hover:bg-purple-50';
+
+const starClass = (filled) =>
+  filled ? 'text-amber-400' : 'text-purple-100';
+
+const getReplyUser = (comment) => {
+  if (typeof comment.replyBy === 'object' && comment.replyBy?.user) {
+    return typeof comment.replyBy.user === 'object' ? comment.replyBy.user : null;
+  }
+  return null;
+};
 
 const Comment = ({ serviceId }) => {
   const dispatch = useDispatch();
@@ -42,13 +66,13 @@ const Comment = ({ serviceId }) => {
   const [editingReplyId, setEditingReplyId] = useState(null);
   const [editingReplyText, setEditingReplyText] = useState('');
 
-  // Check if current user has already reviewed
-  const hasUserReviewed = user && comments.some(c => {
-    const customerId = typeof c.customer === 'object' ? c.customer?._id : c.customer;
-    return customerId === user._id;
-  });
+  const hasUserReviewed =
+    user &&
+    comments.some((c) => {
+      const customerId = typeof c.customer === 'object' ? c.customer?._id : c.customer;
+      return customerId === user._id;
+    });
 
-  // Check if current user is the provider of this service
   const isProvider = user && serviceProviderUserId && user._id === serviceProviderUserId;
 
   useEffect(() => {
@@ -63,19 +87,16 @@ const Comment = ({ serviceId }) => {
     }
   }, [dispatch, serviceId, user]);
 
-  // Check if current user is the provider of this service
   useEffect(() => {
     if (!serviceId || !user || user.role !== 'provider') {
       setServiceProviderUserId(null);
       return;
     }
 
-    // Check from serviceProvider data from comments fetch
     if (serviceProvider) {
-      const providerUserId = typeof serviceProvider.user === 'object' 
-        ? serviceProvider.user._id 
-        : serviceProvider.user;
-      
+      const providerUserId =
+        typeof serviceProvider.user === 'object' ? serviceProvider.user._id : serviceProvider.user;
+
       if (providerUserId === user._id) {
         setServiceProviderUserId(providerUserId);
       } else {
@@ -84,50 +105,49 @@ const Comment = ({ serviceId }) => {
       return;
     }
 
-    // Fallback: check from comments if serviceProvider not available
     if (comments.length > 0) {
-      // Check if any comment has a provider field populated
-      const commentWithProvider = comments.find(c => c.provider && c.provider.user);
+      const commentWithProvider = comments.find((c) => c.provider && c.provider.user);
       if (commentWithProvider?.provider?.user) {
-        const providerUserId = typeof commentWithProvider.provider.user === 'object' 
-          ? commentWithProvider.provider.user._id 
-          : commentWithProvider.provider.user;
+        const providerUserId =
+          typeof commentWithProvider.provider.user === 'object'
+            ? commentWithProvider.provider.user._id
+            : commentWithProvider.provider.user;
         if (providerUserId === user._id) {
           setServiceProviderUserId(providerUserId);
           return;
         }
       }
-      
-      // Check if any comment has a reply with replyBy populated
-      const commentWithReply = comments.find(c => c.replyBy && c.replyBy.user);
+
+      const commentWithReply = comments.find((c) => c.replyBy && c.replyBy.user);
       if (commentWithReply?.replyBy?.user) {
-        const providerUserId = typeof commentWithReply.replyBy.user === 'object' 
-          ? commentWithReply.replyBy.user._id 
-          : commentWithReply.replyBy.user;
+        const providerUserId =
+          typeof commentWithReply.replyBy.user === 'object'
+            ? commentWithReply.replyBy.user._id
+            : commentWithReply.replyBy.user;
         if (providerUserId === user._id) {
           setServiceProviderUserId(providerUserId);
           return;
         }
       }
     }
-    
+
     setServiceProviderUserId(null);
   }, [serviceId, user, serviceProvider, comments]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
     const trimmed = text.trim();
-    
+
     if (!rating || rating < 1 || rating > 5) {
       toast.error('Please select a rating (1-5 stars)');
       return;
     }
-    
+
     if (!trimmed) {
       toast.error('Please write a review comment');
       return;
     }
-    
+
     const result = await dispatch(createServiceComment({ serviceId, comment: trimmed, rating }));
     if (createServiceComment.fulfilled.match(result)) {
       setText('');
@@ -146,23 +166,24 @@ const Comment = ({ serviceId }) => {
 
   const onSaveEdit = async () => {
     const trimmed = editingText.trim();
-    
+
     if (!editingRating || editingRating < 1 || editingRating > 5) {
       toast.error('Please select a rating (1-5 stars)');
       return;
     }
-    
+
     if (!trimmed) {
       toast.error('Please write a review comment');
       return;
     }
-    
-    const result = await dispatch(updateServiceComment({ commentId: editingId, comment: trimmed, rating: editingRating }));
+
+    const result = await dispatch(
+      updateServiceComment({ commentId: editingId, comment: trimmed, rating: editingRating })
+    );
     if (updateServiceComment.fulfilled.match(result)) {
       setEditingId(null);
       setEditingText('');
       setEditingRating(0);
-      // Refetch comments to ensure all populated data is up to date
       dispatch(fetchCommentsByService(serviceId));
     } else if (updateServiceComment.rejected.match(result)) {
       toast.error(result.payload || 'Failed to update comment');
@@ -196,7 +217,6 @@ const Comment = ({ serviceId }) => {
     if (addReplyToComment.fulfilled.match(result)) {
       setReplyText('');
       setReplyingToId(null);
-      // Refetch comments to ensure all populated data is up to date
       dispatch(fetchCommentsByService(serviceId));
     } else if (addReplyToComment.rejected.match(result)) {
       toast.error(result.payload || 'Failed to add reply');
@@ -218,7 +238,6 @@ const Comment = ({ serviceId }) => {
     if (updateReplyToComment.fulfilled.match(result)) {
       setEditingReplyId(null);
       setEditingReplyText('');
-      // Refetch comments to ensure all populated data is up to date
       dispatch(fetchCommentsByService(serviceId));
     } else if (updateReplyToComment.rejected.match(result)) {
       toast.error(result.payload || 'Failed to update reply');
@@ -234,7 +253,6 @@ const Comment = ({ serviceId }) => {
     if (window.confirm('Are you sure you want to delete this reply?')) {
       const result = await dispatch(deleteReplyToComment({ commentId }));
       if (deleteReplyToComment.fulfilled.match(result)) {
-        // Refetch comments to ensure all populated data is up to date
         dispatch(fetchCommentsByService(serviceId));
       } else if (deleteReplyToComment.rejected.match(result)) {
         toast.error(result.payload || 'Failed to delete reply');
@@ -242,355 +260,310 @@ const Comment = ({ serviceId }) => {
     }
   };
 
-  return (
-    <div className='mt-10'>
-      <div className='bg-white border border-gray-300 rounded-2xl p-5'>
-        <h2 className='text-2xl font-bold text-black mb-4'>Reviews</h2>
+  const renderStarPicker = (value, hovered, onSelect, onHover, onLeave, size = 'text-2xl') => (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onSelect(star)}
+          onMouseEnter={() => onHover(star)}
+          onMouseLeave={onLeave}
+          className="focus:outline-none"
+        >
+          <FaStar className={`${size} transition-colors ${starClass(star <= (hovered || value))}`} />
+        </button>
+      ))}
+    </div>
+  );
 
-        {/* Form at top */}
-        <div className='pb-4 border-b border-gray-300'>
+  return (
+    <div className="mt-10">
+      <div className={cardClass}>
+        <h2 className="mb-4 text-2xl font-bold text-[var(--text-primary)]">Reviews</h2>
+
+        <div className="border-b border-purple-100/60 pb-4">
           {user ? (
             hasUserReviewed ? (
-              <p className='text-gray-700'>You have already reviewed this service.</p>
+              <p className="text-sm text-[var(--text-secondary)]">
+                You have already reviewed this service.
+              </p>
             ) : canReview === false ? (
-              <p className='text-gray-700'>You can review only after you book this service.</p>
+              <p className="text-sm text-[var(--text-secondary)]">
+                You can review only after you book this service.
+              </p>
             ) : !showReviewForm ? (
-              <button
-                onClick={() => setShowReviewForm(true)}
-                className='px-5 py-2 bg-gray-800 text-white rounded-xl border border-gray-300 hover:bg-gray-700 hover:text-white transition-all'
-              >
+              <button type="button" onClick={() => setShowReviewForm(true)} className={btnPrimary}>
                 Write Review
               </button>
             ) : (
-              <form onSubmit={onSubmit} className='flex flex-col gap-3'>
-                <div className='flex flex-col gap-2'>
-                  <label className='text-sm font-medium text-gray-700'>Rating</label>
-                  <div className='flex gap-1'>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type='button'
-                        onClick={() => setRating(star)}
-                        onMouseEnter={() => setHoveredRating(star)}
-                        onMouseLeave={() => setHoveredRating(0)}
-                        className='focus:outline-none'
-                      >
-                        <FaStar
-                          className={`text-2xl transition-colors ${
-                            star <= (hoveredRating || rating)
-                              ? 'text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
+              <form onSubmit={onSubmit} className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Rating</label>
+                  {renderStarPicker(rating, hoveredRating, setRating, setHoveredRating, () =>
+                    setHoveredRating(0)
+                  )}
                   {rating > 0 && (
-                    <p className='text-xs text-gray-500'>{rating} out of 5 stars</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{rating} out of 5 stars</p>
                   )}
                 </div>
                 <textarea
-                  className='w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-white text-black'
+                  className={inputClass}
                   rows={3}
-                  placeholder='Write your review...'
+                  placeholder="Write your review..."
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                 />
-                <div className='flex gap-2 self-end'>
+                <div className="flex gap-2 self-end">
                   <button
-                    type='button'
+                    type="button"
                     onClick={() => {
                       setShowReviewForm(false);
                       setText('');
                       setRating(0);
                     }}
-                    className='px-5 py-2 bg-white text-gray-700 rounded-xl border border-gray-300 hover:bg-gray-100 hover:text-gray-900 transition-all'
+                    className={btnSecondary}
                   >
                     Cancel
                   </button>
-                  <button
-                    type='submit'
-                    className='px-5 py-2 bg-gray-800 text-white rounded-xl border border-gray-300 hover:bg-gray-700 hover:text-white transition-all'
-                  >
+                  <button type="submit" className={btnPrimary}>
                     Submit Review
                   </button>
                 </div>
               </form>
             )
           ) : (
-            <p className='text-gray-700'>Please login to post a review.</p>
+            <p className="text-sm text-[var(--text-secondary)]">Please login to post a review.</p>
           )}
         </div>
 
-        {/* Comments below */}
-        <div className='mt-4'>
+        <div className="mt-4">
           {isLoading && (
-            <div className='mb-4 text-gray-700'>Loading comments...</div>
+            <div className="mb-4 flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
+              Loading comments...
+            </div>
           )}
 
           {!isLoading && comments.length === 0 && (
-            <div className='mb-4 text-gray-700'>No comments yet. Be the first!</div>
+            <p className="mb-4 rounded-xl border border-dashed border-purple-100 bg-purple-50/30 py-8 text-center text-sm text-[var(--text-secondary)]">
+              No comments yet. Be the first!
+            </p>
           )}
 
-          <ul className='space-y-4'>
-            {comments.map((c) => (
-              <li key={c._id} className='border border-gray-300 rounded-xl p-4 bg-white'>
-                <div className='flex items-start justify-between gap-3'>
-                  <div className='flex items-center gap-3'>
-                    {c.customer?.profileImage ? (
-                      <img
-                        src={c.customer.profileImage}
-                        alt={getFullName(c.customer) || 'User'}
-                        className='w-10 h-10 rounded-full border border-gray-300 object-cover'
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          if (e.target.nextSibling) {
-                            e.target.nextSibling.style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
-                    <div
-                      className='w-10 h-10 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold'
-                      style={{ display: c.customer?.profileImage ? 'none' : 'flex' }}
-                    >
-                      {getInitials(c.customer)}
-                    </div>
-                    <div>
-                      <p className='font-semibold text-black'>
-                        {getFullName(c.customer) || 'User'}
-                      </p>
-                      <div className='flex items-center gap-2'>
-                        {c.rating && (
-                          <div className='flex items-center gap-1'>
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <FaStar
-                                key={star}
-                                className={`text-sm ${
-                                  star <= c.rating ? 'text-yellow-400' : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        )}
-                        <p className='text-xs text-gray-500'>
-                          {new Date(c.createdAt).toLocaleString()}
+          <ul className="space-y-4">
+            {comments.map((c) => {
+              const replyUser = getReplyUser(c);
+              const customerId =
+                typeof c.customer === 'object' ? c.customer?._id : c.customer;
+              const isOwnReview = user && c.customer && customerId && user._id === customerId;
+
+              return (
+                <li
+                  key={c._id}
+                  className="rounded-xl border border-purple-100/60 bg-white/60 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <ProfileAvatar user={c.customer} size="lg" className="shrink-0" />
+                      <div>
+                        <p className="font-semibold text-[var(--text-primary)]">
+                          {getFullName(c.customer) || 'User'}
                         </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {c.rating && (
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <FaStar
+                                  key={star}
+                                  className={`text-sm ${starClass(star <= c.rating)}`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          <p className="text-xs text-[var(--text-secondary)]">
+                            {new Date(c.createdAt).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {user && c.customer && (() => {
-                    const customerId = typeof c.customer === 'object' ? c.customer?._id : c.customer;
-                    return customerId && user._id === customerId;
-                  })() && (
-                    <div className='flex gap-2'>
-                      {editingId === c._id ? (
-                        <>
-                          <button
-                            onClick={onSaveEdit}
-                            className='px-3 py-1 bg-gray-800 text-white rounded-lg border border-gray-300 hover:bg-gray-700 hover:text-white'
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={onCancelEdit}
-                            className='px-3 py-1 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => onStartEdit(c)}
-                            className='px-3 py-1 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => onDelete(c._id)}
-                            className='px-3 py-1 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className='mt-3 text-gray-800'>
-                  {editingId === c._id ? (
-                    <div className='flex flex-col gap-3'>
-                      <div className='flex flex-col gap-2'>
-                        <label className='text-sm font-medium text-gray-700'>Rating</label>
-                        <div className='flex gap-1'>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type='button'
-                              onClick={() => setEditingRating(star)}
-                              onMouseEnter={() => setEditingHoveredRating(star)}
-                              onMouseLeave={() => setEditingHoveredRating(0)}
-                              className='focus:outline-none'
-                            >
-                              <FaStar
-                                className={`text-2xl transition-colors ${
-                                  star <= (editingHoveredRating || editingRating)
-                                    ? 'text-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
+                    {isOwnReview && (
+                      <div className="flex gap-2">
+                        {editingId === c._id ? (
+                          <>
+                            <button type="button" onClick={onSaveEdit} className={btnPrimarySm}>
+                              Save
                             </button>
-                          ))}
-                        </div>
-                        {editingRating > 0 && (
-                          <p className='text-xs text-gray-500'>{editingRating} out of 5 stars</p>
+                            <button type="button" onClick={onCancelEdit} className={btnSecondarySm}>
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => onStartEdit(c)}
+                              className={btnSecondarySm}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onDelete(c._id)}
+                              className={btnSecondarySm}
+                            >
+                              Delete
+                            </button>
+                          </>
                         )}
                       </div>
-                      <textarea
-                        className='w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-white text-black'
-                        rows={3}
-                        value={editingText}
-                        onChange={(e) => setEditingText(e.target.value)}
-                      />
-                    </div>
-                  ) : (
-                    <p className='whitespace-pre-wrap'>{c.comment}</p>
-                  )}
-                </div>
-
-                {/* Reply Section */}
-                {c.reply ? (
-                  <div className='mt-4 ml-4 pl-4 border-l-2 border-gray-300'>
-                    <div className='flex items-start justify-between gap-3'>
-                      <div className='flex items-center gap-3'>
-                        {(() => {
-                          // Handle both populated and unpopulated replyBy structures
-                          const replyUser = typeof c.replyBy === 'object' && c.replyBy?.user 
-                            ? (typeof c.replyBy.user === 'object' ? c.replyBy.user : null)
-                            : null;
-                          const profileImage = replyUser?.profileImage;
-                          const userName = getFullName(replyUser) || 'Provider';
-                          
-                          return profileImage ? (
-                            <img
-                              src={profileImage}
-                              alt={userName}
-                              className='w-8 h-8 rounded-full border border-gray-300 object-cover'
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                if (e.target.nextSibling) {
-                                  e.target.nextSibling.style.display = 'flex';
-                                }
-                              }}
-                            />
-                          ) : (
-                            <div className='w-8 h-8 rounded-full border border-gray-300 bg-gray-700 text-white flex items-center justify-center font-bold text-sm'>
-                              {getInitials(replyUser)}
-                            </div>
-                          );
-                        })()}
-                        <div>
-                          <p className='font-semibold text-black text-sm'>
-                            {(() => {
-                              const replyUser = typeof c.replyBy === 'object' && c.replyBy?.user 
-                                ? (typeof c.replyBy.user === 'object' ? c.replyBy.user : null)
-                                : null;
-                              return getFullName(replyUser) || 'Provider';
-                            })()}
-                          </p>
-                          <p className='text-xs text-gray-500'>
-                            {c.replyCreatedAt && new Date(c.replyCreatedAt).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                      {isProvider && editingReplyId !== c._id && (
-                        <div className='flex gap-2'>
-                          <button
-                            onClick={() => onStartEditReply(c)}
-                            className='px-2 py-1 text-xs bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => onDeleteReply(c._id)}
-                            className='px-2 py-1 text-xs bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    {editingReplyId === c._id ? (
-                      <div className='mt-3 flex flex-col gap-2'>
-                        <textarea
-                          className='w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-white text-black text-sm'
-                          rows={2}
-                          value={editingReplyText}
-                          onChange={(e) => setEditingReplyText(e.target.value)}
-                        />
-                        <div className='flex gap-2 self-end'>
-                          <button
-                            onClick={onCancelEditReply}
-                            className='px-3 py-1 text-xs bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => onSaveReply(c._id)}
-                            className='px-3 py-1 text-xs bg-gray-800 text-white rounded-lg border border-gray-300 hover:bg-gray-700 hover:text-white'
-                          >
-                            Save
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className='mt-2 text-sm text-gray-800 whitespace-pre-wrap'>{c.reply}</p>
                     )}
                   </div>
-                ) : isProvider && replyingToId !== c._id ? (
-                  <div className='mt-4 ml-4'>
-                    <button
-                      onClick={() => setReplyingToId(c._id)}
-                      className='text-sm text-gray-600 hover:text-gray-800 underline'
-                    >
-                      Reply
-                    </button>
+
+                  <div className="mt-3 text-[var(--text-primary)]">
+                    {editingId === c._id ? (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-sm font-medium text-[var(--text-secondary)]">
+                            Rating
+                          </label>
+                          {renderStarPicker(
+                            editingRating,
+                            editingHoveredRating,
+                            setEditingRating,
+                            setEditingHoveredRating,
+                            () => setEditingHoveredRating(0)
+                          )}
+                          {editingRating > 0 && (
+                            <p className="text-xs text-[var(--text-secondary)]">
+                              {editingRating} out of 5 stars
+                            </p>
+                          )}
+                        </div>
+                        <textarea
+                          className={inputClass}
+                          rows={3}
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
+                        {c.comment}
+                      </p>
+                    )}
                   </div>
-                ) : isProvider && replyingToId === c._id ? (
-                  <div className='mt-4 ml-4 pl-4 border-l-2 border-gray-300'>
-                    <div className='flex flex-col gap-2'>
-                      <textarea
-                        className='w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-white text-black text-sm'
-                        rows={2}
-                        placeholder='Write your reply...'
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                      />
-                      <div className='flex gap-2 self-end'>
-                        <button
-                          onClick={() => {
-                            setReplyingToId(null);
-                            setReplyText('');
-                          }}
-                          className='px-3 py-1 text-xs bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-900'
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => onAddReply(c._id)}
-                          className='px-3 py-1 text-xs bg-gray-800 text-white rounded-lg border border-gray-300 hover:bg-gray-700 hover:text-white'
-                        >
-                          Submit Reply
-                        </button>
+
+                  {c.reply ? (
+                    <div className="ml-4 mt-4 border-l-2 border-purple-200 pl-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <ProfileAvatar user={replyUser} size="smd" className="shrink-0" />
+                          <div>
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">
+                              {getFullName(replyUser) || 'Provider'}
+                            </p>
+                            <p className="text-xs text-[var(--text-secondary)]">
+                              {c.replyCreatedAt && new Date(c.replyCreatedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        {isProvider && editingReplyId !== c._id && (
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => onStartEditReply(c)}
+                              className={btnSecondarySm}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onDeleteReply(c._id)}
+                              className={btnSecondarySm}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {editingReplyId === c._id ? (
+                        <div className="mt-3 flex flex-col gap-2">
+                          <textarea
+                            className={inputClass}
+                            rows={2}
+                            value={editingReplyText}
+                            onChange={(e) => setEditingReplyText(e.target.value)}
+                          />
+                          <div className="flex gap-2 self-end">
+                            <button
+                              type="button"
+                              onClick={onCancelEditReply}
+                              className={btnSecondarySm}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onSaveReply(c._id)}
+                              className={btnPrimarySm}
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
+                          {c.reply}
+                        </p>
+                      )}
+                    </div>
+                  ) : isProvider && replyingToId !== c._id ? (
+                    <div className="ml-4 mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setReplyingToId(c._id)}
+                        className="text-sm font-medium text-[var(--purple-primary)] transition-colors hover:text-[var(--magenta)]"
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  ) : isProvider && replyingToId === c._id ? (
+                    <div className="ml-4 mt-4 border-l-2 border-purple-200 pl-4">
+                      <div className="flex flex-col gap-2">
+                        <textarea
+                          className={inputClass}
+                          rows={2}
+                          placeholder="Write your reply..."
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                        />
+                        <div className="flex gap-2 self-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReplyingToId(null);
+                              setReplyText('');
+                            }}
+                            className={btnSecondarySm}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onAddReply(c._id)}
+                            className={btnPrimarySm}
+                          >
+                            Submit Reply
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : null}
-              </li>
-            ))}
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>

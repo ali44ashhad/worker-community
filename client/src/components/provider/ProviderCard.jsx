@@ -1,152 +1,106 @@
 import React, { useState } from 'react';
-import { HiOutlineUserCircle, HiArrowRight } from 'react-icons/hi';
+import { ArrowRight, ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getFullName, formatAddress, getInitials } from '../../utils/userHelpers';
+import { getFullName, formatAddress } from '../../utils/userHelpers';
+import ProfileAvatar from '../ProfileAvatar';
+
+const chipClass =
+  'rounded-full border border-purple-100 bg-purple-50/50 px-2.5 py-1 text-xs font-medium text-[var(--purple-primary)]';
 
 const ProviderCard = ({ provider }) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
-  
-  // Get provider info
+
   const userName = getFullName(provider?.user) || 'Unknown Provider';
-  const profileImage = provider?.user?.profileImage;
   const bio = provider?.bio || 'No bio available.';
-  const experience = provider?.experience || 0; 
+  const experience = provider?.experience || 0;
   const services = provider?.serviceOfferings || [];
   const address = formatAddress(provider?.user) || '';
-  
-  // Get first service portfolio images
+
   const firstService = services[0];
   const portfolioImage = firstService?.portfolioImages?.[0]?.url;
-  
-  // Get all unique categories from services
-  const categories = [...new Set(services.map(s => s.serviceCategory))];
+
+  const categories = [...new Set(services.map((s) => s.serviceCategory))];
   const primaryCategory = categories[0] || 'Provider';
-  
-  // Get some keywords from services
-  const keywords = services
-    .flatMap(s => s.keywords || [])
-    .slice(0, 4);
-  
-  const handleImageError = () => {
-    setImageError(true);
-  };
+
+  const keywords = services.flatMap((s) => s.keywords || []).slice(0, 4);
 
   return (
-    <div className="bg-white border-2 border-black rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
-      {/* Portfolio Image */}
-      <div className="relative h-48 bg-gray-100 overflow-hidden">
+    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-purple-100/50 bg-white/80 shadow-md shadow-purple-500/5 backdrop-blur-sm transition-all duration-200 hover:border-purple-200 hover:shadow-lg hover:shadow-purple-500/10">
+      <div className="relative flex h-44 shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-purple-50 to-fuchsia-50/50 p-3">
         {portfolioImage && !imageError ? (
           <img
             src={portfolioImage}
             alt={`${userName}'s portfolio`}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            onError={handleImageError}
+            className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+            onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-            <HiOutlineUserCircle className="w-24 h-24 text-gray-400" />
+          <ImageIcon className="h-14 w-14 text-purple-200" />
+        )}
+
+        {experience > 0 && (
+          <div className="absolute right-3 top-3 rounded-full border border-purple-100/80 bg-white/95 px-3 py-1 text-xs font-semibold text-[var(--purple-primary)] shadow-sm backdrop-blur-sm">
+            {experience}+ Years
           </div>
         )}
-        
-        {/* Experience Badge */}
-        <div className="absolute top-3 right-3 bg-black text-white px-3 py-1.5 rounded-full font-semibold text-sm border-2 border-white">
-          {experience}+ Years
-        </div>
-        
-        {/* Category Badge */}
-        <div className="absolute top-3 left-3 bg-white text-black px-3 py-1.5 rounded-full font-semibold text-sm border-2 border-black">
+
+        <div className="absolute left-3 top-3 max-w-[calc(100%-6rem)] truncate rounded-full border border-purple-100/80 bg-white/95 px-3 py-1 text-xs font-semibold text-[var(--text-primary)] shadow-sm backdrop-blur-sm">
           {primaryCategory}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-6">
-        {/* User Info */}
-        <div className="flex items-start gap-4 mb-4">
-          <div className="flex-shrink-0">
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt={userName}
-                className="w-12 h-12 rounded-full border-2 border-black object-cover"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-            ) : null}
-            <div
-              className="w-12 h-12 rounded-full border-2 border-black bg-black text-white flex items-center justify-center font-bold text-lg"
-              style={{ display: profileImage ? 'none' : 'flex' }}
-            >
-              {getInitials(provider?.user)}
-            </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-black truncate">
+      <div className="flex flex-1 flex-col p-5">
+        <div className="mb-4 flex min-h-[4.5rem] items-start gap-3">
+          <ProfileAvatar user={provider?.user} size="lg" className="shrink-0" />
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-lg font-semibold text-[var(--text-primary)] transition-colors group-hover:text-[var(--purple-primary)]">
               {userName}
             </h3>
-            <p className="text-sm text-gray-600 truncate">
+            <p className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm leading-snug text-[var(--text-secondary)]">
               {bio}
             </p>
-            {address && (
-              <p className="text-xs text-gray-500 truncate mt-1">
-                {address}
-              </p>
-            )}
+            <p className="mt-1 truncate text-xs text-[var(--text-secondary)]">{address || '\u00A0'}</p>
           </div>
         </div>
 
-        {/* Services Count */}
-        {services.length > 0 && (
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-sm font-semibold text-black">
-              {services.length} {services.length === 1 ? 'Service' : 'Services'}
+        <p className="mb-3 min-h-[1.25rem] text-sm font-medium text-[var(--text-primary)]">
+          {services.length > 0
+            ? `${services.length} ${services.length === 1 ? 'Service' : 'Services'}`
+            : '\u00A0'}
+        </p>
+
+        <div className="mb-3 flex min-h-[3.25rem] flex-wrap content-start gap-1.5">
+          {keywords.map((keyword, index) => (
+            <span key={`${keyword}-${index}`} className={chipClass}>
+              {keyword}
             </span>
-          </div>
-        )}
+          ))}
+          {services.length > 0 && keywords.length > 0 && (
+            <span className="rounded-full border border-purple-100/60 bg-white px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]">
+              +{services.length} more
+            </span>
+          )}
+        </div>
 
-        {/* Keywords */}
-        {keywords.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {keywords.map((keyword, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-black text-white text-xs font-semibold rounded-full border border-black hover:bg-white hover:text-black transition-all"
-              >
-                {keyword}
-              </span>
-            ))}
-            {services.length > 0 && (
-              <span className="px-3 py-1 bg-white text-black text-xs font-semibold rounded-full border-2 border-black hover:bg-black hover:text-white transition-all">
-                +{services.length} more
-              </span>
-            )}
-          </div>
-        )}
+        <div className="mb-4 flex min-h-[1.75rem] flex-wrap gap-1.5">
+          {categories.slice(0, 3).map((category) => (
+            <span
+              key={category}
+              className="rounded-full border border-purple-100/60 bg-white px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]"
+            >
+              {category}
+            </span>
+          ))}
+        </div>
 
-        {/* Categories */}
-        {categories.length > 0 && categories.length <= 3 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {categories.slice(0, 3).map((category, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-white text-black text-xs font-semibold rounded-full border-2 border-gray-300"
-              >
-                {category}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* View Profile Button */}
-        <button 
+        <button
+          type="button"
           onClick={() => navigate(`/provider/${provider._id}`)}
-          className="w-full bg-black text-white py-3 px-4 rounded-lg font-semibold hover:bg-white hover:text-black border-2 border-black transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-lg"
+          className="mt-auto flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90"
         >
           View Profile
-          <HiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </button>
       </div>
     </div>

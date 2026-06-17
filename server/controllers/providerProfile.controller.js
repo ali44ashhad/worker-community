@@ -41,7 +41,13 @@ const getS3PresignedUpload = async (req, res) => {
         });
     } catch (error) {
         console.error(`[${req?.requestId || "no-rid"}] Error in getS3PresignedUpload:`, error?.message || error);
-        return res.status(500).json({ success: false, message: "Unable to prepare upload. Please try again." });
+        const isDev = process.env.NODE_ENV !== "production";
+        return res.status(500).json({
+            success: false,
+            message: isDev
+                ? `Upload setup failed: ${error?.message || "unknown error"}`
+                : "Unable to prepare upload. Please try again.",
+        });
     }
 };
 
@@ -83,7 +89,7 @@ const getS3PresignedUpload = async (req, res) => {
  const addServiceOffering = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { servicename, serviceCategory, subCategories, keywords, description } = req.body;
+        const { servicename, serviceCategory, subCategories, keywords, description, experience } = req.body;
 
         // When using upload.any(), req.files is an array
         const filesArray = req.files || [];
@@ -103,7 +109,7 @@ const getS3PresignedUpload = async (req, res) => {
         const imageUploadPromises = images.map(file => uploadBufferToS3(file));
         let portfolioImages = await Promise.all(imageUploadPromises);
         if (!portfolioImages.length) {
-            portfolioImages = [{ url: "/logo2.png" }];
+            portfolioImages = [{ url: "/CommuN-logo.png" }];
         }
         
         // 2. Upload PDFs to S3
@@ -157,6 +163,9 @@ const getS3PresignedUpload = async (req, res) => {
             portfolioImages,
             portfolioPDFs,
         });
+        if (experience !== undefined && experience !== "" && experience !== null) {
+            newService.experience = parseInt(experience, 10);
+        }
         
         // 4. Save the new service offering (triggers pre-save validation)
         await newService.save();
@@ -352,89 +361,79 @@ const getProviderDashboardStats = async (req, res) => {
  */
 const getAllProviders = async (req, res) => {
     try {
-        // Find all provider profiles and populate their associated user and service offerings
-        const providers = await ProviderProfile.find()
-            .populate({
-                path: 'user',
-                select: 'firstName lastName profileImage phoneNumber addressLine1 addressLine2 city state zip isActive accountStatus communName communityCommunName',
-                match: USER_PUBLIC_POPULATE_MATCH,
-            }) // hide deactivated / pending-approval accounts from public
-            .populate('serviceOfferings'); // Get all their service offerings (with images, categories, etc.)
+        const pageParam = parseInt(req.query.page, 10);
+        const limitParam = parseInt(req.query.limit, 10);
+        const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+        const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 50) : 12;
+        const skip = (page - 1) * limit;
 
-        // Remove providers whose user got filtered out by populate(match)
-        const activeProviders = providers.filter((p) => Boolean(p.user));
-        
-        // Get all service offering IDs to calculate ratings
-        const allServiceIds = [];
-        activeProviders.forEach(provider => {
-            if (provider.serviceOfferings && Array.isArray(provider.serviceOfferings)) {
-                provider.serviceOfferings.forEach(service => {
-                    allServiceIds.push(service._id);
-                });
-            }
-        });
+        // NOTE: Providers page doesn't need per-service ratings. Services page uses a separate paginated endpoint.
+        const userMatch = {
+            isActive: { $ne: false },
+            $or: [{ accountStatus: { $exists: false } }, { accountStatus: "approved" }],
+        };
 
-        // Calculate average ratings for all services using aggregation
-        let serviceRatingsMap = {};
-        if (allServiceIds.length > 0) {
-            const ratingStats = await Comment.aggregate([
-                {
-                    $match: {
-                        serviceOffering: { $in: allServiceIds }
-                    }
+        const pipeline = [
+            {
+                $lookup: {
+                    from: "users",
+                    let: { userId: "$user" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+                        { $match: userMatch },
+                        {
+                            $project: {
+                                firstName: 1,
+                                lastName: 1,
+                                profileImage: 1,
+                                phoneNumber: 1,
+                                addressLine1: 1,
+                                addressLine2: 1,
+                                city: 1,
+                                state: 1,
+                                zip: 1,
+                                isActive: 1,
+                                accountStatus: 1,
+                                communName: 1,
+                                communityCommunName: 1,
+                            },
+                        },
+                    ],
+                    as: "user",
                 },
-                {
-                    $group: {
-                        _id: "$serviceOffering",
-                        averageRating: { $avg: "$rating" },
-                        reviewCount: { $sum: 1 }
-                    }
-                }
-            ]);
+            },
+            { $unwind: "$user" },
+            {
+                $lookup: {
+                    from: "serviceofferings",
+                    localField: "_id",
+                    foreignField: "provider",
+                    as: "serviceOfferings",
+                },
+            },
+            { $sort: { createdAt: -1 } },
+            {
+                $facet: {
+                    data: [{ $skip: skip }, { $limit: limit }],
+                    meta: [{ $count: "total" }],
+                },
+            },
+        ];
 
+        const [result] = await ProviderProfile.aggregate(pipeline);
+        const providers = result?.data || [];
+        const total = result?.meta?.[0]?.total || 0;
+        const totalPages = Math.max(1, Math.ceil(total / limit));
 
-            // Convert to map for easy lookup - handle both ObjectId and string IDs
-            ratingStats.forEach(stat => {
-                const serviceId = stat._id.toString();
-                serviceRatingsMap[serviceId] = {
-                    averageRating: parseFloat(stat.averageRating.toFixed(2)),
-                    reviewCount: stat.reviewCount
-                };
-            });
-            
-        }
-
-        // Add ratings to each service offering
-        const providersWithRatings = activeProviders.map(provider => {
-            const providerObj = provider.toObject();
-            if (providerObj.serviceOfferings && Array.isArray(providerObj.serviceOfferings)) {
-                providerObj.serviceOfferings = providerObj.serviceOfferings.map(service => {
-                    // Ensure service is a plain object
-                    const serviceObj = service && typeof service.toObject === 'function' 
-                        ? service.toObject() 
-                        : service;
-                    
-                    // Handle both ObjectId and string IDs
-                    const serviceId = serviceObj._id 
-                        ? (serviceObj._id.toString ? serviceObj._id.toString() : String(serviceObj._id))
-                        : null;
-                    
-                    const ratingData = serviceId && serviceRatingsMap[serviceId] 
-                        ? serviceRatingsMap[serviceId] 
-                        : { averageRating: 0, reviewCount: 0 };
-                    return {
-                        ...serviceObj,
-                        averageRating: ratingData.averageRating,
-                        reviewCount: ratingData.reviewCount
-                    };
-                });
-            }
-            return providerObj;
-        });
-        
         return res.status(200).json({
             success: true,
-            providers: providersWithRatings
+            providers,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+            },
         });
     } catch (error) {
         console.error("Error in getAllProviders:", error.message);
@@ -812,7 +811,7 @@ const becomeProviderWithServices = async (req, res) => {
                 const imageUploadPromises = serviceImages.map(file => uploadBufferToS3(file));
                 let portfolioImages = await Promise.all(imageUploadPromises);
                 if (!portfolioImages.length) {
-                    portfolioImages = [{ url: "/logo2.png" }];
+                    portfolioImages = [{ url: "/CommuN-logo.png" }];
                 }
                 
                 // Upload PDFs to S3
@@ -1027,7 +1026,7 @@ const updateServiceOffering = async (req, res) => {
         if (images.length > 0) {
             // If the service currently only has the default logo placeholder, remove it
             service.portfolioImages = (service.portfolioImages || []).filter(
-                (img) => !(img && !img.public_id && img.url === "/logo2.png")
+                (img) => !(img && !img.public_id && img.url === "/CommuN-logo.png")
             );
 
             const imageUploadPromises = images.map(file => uploadBufferToS3(file));
@@ -1037,7 +1036,7 @@ const updateServiceOffering = async (req, res) => {
             service.portfolioImages = [...service.portfolioImages, ...newImages];
         }
         if (!service.portfolioImages || service.portfolioImages.length === 0) {
-            service.portfolioImages = [{ url: "/logo2.png" }];
+            service.portfolioImages = [{ url: "/CommuN-logo.png" }];
         }
         
         // Handle new PDFs if uploaded
@@ -1096,7 +1095,7 @@ const addServiceOfferingJson = async (req, res) => {
         });
 
         let nextImages = Array.isArray(portfolioImages) ? portfolioImages : [];
-        if (!nextImages.length) nextImages = [{ url: "/logo2.png" }];
+        if (!nextImages.length) nextImages = [{ url: "/CommuN-logo.png" }];
         const nextPDFs = Array.isArray(portfolioPDFs) ? portfolioPDFs : [];
 
         const newService = new ServiceOffering({
@@ -1190,9 +1189,9 @@ const updateServiceOfferingJson = async (req, res) => {
         nextImages = nextImages.filter((img) => img && img.url);
         const hasRealImage = nextImages.some((img) => img.public_id);
         if (hasRealImage) {
-            nextImages = nextImages.filter((img) => !(img && !img.public_id && img.url === "/logo2.png"));
+            nextImages = nextImages.filter((img) => !(img && !img.public_id && img.url === "/CommuN-logo.png"));
         }
-        if (!nextImages.length) nextImages = [{ url: "/logo2.png" }];
+        if (!nextImages.length) nextImages = [{ url: "/CommuN-logo.png" }];
 
         const nextPDFs = Array.isArray(portfolioPDFs) ? portfolioPDFs : [];
 

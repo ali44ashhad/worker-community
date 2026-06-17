@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { getApiBase } from '../utils/apiBase';
+import { appendEventAttachmentsToFormData } from '../utils/eventAttachmentForm';
 
 const API_URL = getApiBase() || 'http://localhost:3001';
 axios.defaults.withCredentials = true;
@@ -44,16 +45,7 @@ export const createCommunityEvent = createAsyncThunk(
       formData.append('title', title);
       formData.append('description', description);
       formData.append('expiresAt', expiresAt);
-      files.forEach((file) => formData.append('attachments', file));
-      const validLinks = links
-        .filter((item) => String(item?.url || '').trim())
-        .map((item) => ({
-          url: String(item.url).trim(),
-          label: String(item.label || '').trim(),
-        }));
-      if (validLinks.length > 0) {
-        formData.append('attachmentLinks', JSON.stringify(validLinks));
-      }
+      appendEventAttachmentsToFormData(formData, { files, links });
 
       const res = await axios.post(`${API_URL}/api/user/community-events`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },

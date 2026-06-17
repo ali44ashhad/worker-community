@@ -6,12 +6,13 @@ import wishlistReducer from '../features/wishlistSlice.js';
 import adminReducer from '../features/adminSlice.js';
 import secretaryReducer from '../features/secretarySlice.js';
 import communityReducer from '../features/communitySlice.js';
+import servicesReducer from '../features/serviceSlice.js';
 
 export const store = configureStore({
     reducer: {
-        // Add your reducers here
         auth:authReducer,
         provider: providerReducer,
+        services: servicesReducer,
         comments: commentReducer,
         wishlist: wishlistReducer,
         admin: adminReducer,

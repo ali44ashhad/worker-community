@@ -9,7 +9,12 @@ import {
 } from '../utils/communityEventDates';
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-gray-400';
+  'w-full rounded-xl border border-purple-100 bg-white px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:border-[var(--purple-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 transition-all disabled:cursor-not-allowed disabled:opacity-50';
+const labelClass = 'mb-1.5 block text-xs font-medium text-[var(--text-secondary)]';
+const btnPrimary =
+  'rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
+const btnSecondary =
+  'rounded-xl border border-purple-100 bg-white px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition-all hover:border-purple-200 hover:bg-purple-50 disabled:opacity-50';
 
 const emptyForm = () => ({
   title: '',
@@ -69,14 +74,14 @@ const CreateEventModal = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl"
+            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-purple-100/50 bg-white/95 shadow-xl shadow-purple-500/10 backdrop-blur-sm"
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.98 }}
@@ -86,18 +91,20 @@ const CreateEventModal = ({
             aria-modal="true"
             aria-labelledby="create-event-title"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+            <div className="flex items-start justify-between gap-3 border-b border-purple-100/60 px-5 py-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Event</p>
-                <h2 id="create-event-title" className="text-lg font-bold text-gray-900">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--purple-primary)]">
+                  Event
+                </p>
+                <h2 id="create-event-title" className="text-lg font-bold text-[var(--text-primary)]">
                   {heading}
                 </h2>
-                <p className="mt-1 text-sm text-gray-500">{subheading}</p>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">{subheading}</p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100"
+                className="rounded-lg p-2 text-[var(--text-secondary)] transition-colors hover:bg-purple-50 hover:text-[var(--purple-primary)]"
                 aria-label="Close"
               >
                 <HiOutlineX size={20} />
@@ -113,7 +120,7 @@ const CreateEventModal = ({
                 )}
 
                 <div>
-                  <label htmlFor="create-event-title-input" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <label htmlFor="create-event-title-input" className={labelClass}>
                     Title *
                   </label>
                   <input
@@ -130,7 +137,7 @@ const CreateEventModal = ({
                 </div>
 
                 <div>
-                  <label htmlFor="create-event-description" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <label htmlFor="create-event-description" className={labelClass}>
                     Description *
                   </label>
                   <textarea
@@ -143,11 +150,13 @@ const CreateEventModal = ({
                     required
                     disabled={disabled || isSubmitting}
                   />
-                  <p className="mt-1 text-right text-xs text-gray-400">{form.description.length}/2000</p>
+                  <p className="mt-1 text-right text-xs text-[var(--text-secondary)]">
+                    {form.description.length}/2000
+                  </p>
                 </div>
 
                 <div>
-                  <label htmlFor="create-event-expires" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <label htmlFor="create-event-expires" className={labelClass}>
                     Expiry date *
                   </label>
                   <input
@@ -165,19 +174,23 @@ const CreateEventModal = ({
 
                 <EventAttachmentFields
                   files={form.attachmentFiles}
-                  onFilesChange={(attachmentFiles) => setForm((prev) => ({ ...prev, attachmentFiles }))}
+                  onFilesChange={(attachmentFiles) =>
+                    setForm((prev) => ({ ...prev, attachmentFiles }))
+                  }
                   links={form.attachmentLinks}
-                  onLinksChange={(attachmentLinks) => setForm((prev) => ({ ...prev, attachmentLinks }))}
+                  onLinksChange={(attachmentLinks) =>
+                    setForm((prev) => ({ ...prev, attachmentLinks }))
+                  }
                   disabled={disabled || isSubmitting}
                 />
               </div>
 
-              <div className="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-5 py-4 sm:flex-row sm:justify-end">
+              <div className="flex flex-col-reverse gap-2 border-t border-purple-100/60 bg-purple-50/30 px-5 py-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={onClose}
                   disabled={isSubmitting}
-                  className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  className={btnSecondary}
                 >
                   Cancel
                 </button>
@@ -190,7 +203,7 @@ const CreateEventModal = ({
                     !form.description.trim() ||
                     !form.expiresAt
                   }
-                  className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={btnPrimary}
                 >
                   {isSubmitting ? 'Creating…' : submitLabel}
                 </button>

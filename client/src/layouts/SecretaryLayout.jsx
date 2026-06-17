@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
-import { HiOutlineMenu, HiChevronDown, HiOutlineUserCircle, HiOutlineLogout } from 'react-icons/hi';
+import { ChevronDown, LogOut, Menu, UserCircle } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import SecretarySidebar from '../components/SecretarySidebar';
-import { getFullName, getInitials } from '../utils/userHelpers';
+import ProfileAvatar from '../components/ProfileAvatar';
+import { getFullName } from '../utils/userHelpers';
+import { formatCommunDisplayName } from '../utils/communName';
 
 const SecretaryLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -58,12 +60,12 @@ const SecretaryLayout = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-[var(--background-subtle)]">
       <SecretarySidebar isOpen={isDesktop ? true : isSidebarOpen} onClose={closeSidebar} />
 
       <main className="relative z-10 min-h-screen lg:ml-64">
         <div
-          className={`sticky top-0 z-20 border-b border-gray-200 bg-white/90 backdrop-blur shadow-sm lg:hidden ${
+          className={`sticky top-0 z-20 border-b border-purple-100/60 bg-white/90 shadow-sm shadow-purple-500/5 backdrop-blur-md transition-opacity duration-300 lg:hidden ${
             isSidebarOpen ? 'hidden' : ''
           }`}
         >
@@ -72,66 +74,80 @@ const SecretaryLayout = () => {
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(true)}
-                className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-purple-100 bg-white text-[var(--purple-primary)] shadow-sm transition-colors hover:bg-purple-50"
                 aria-label="Open navigation"
               >
-                <HiOutlineMenu size={20} />
+                <Menu className="h-5 w-5" />
               </button>
-              <Link to="/secretary/dashboard" className="truncate text-sm font-semibold text-gray-900">
-                Secretary panel
+              <Link
+                to="/secretary/dashboard"
+                className="truncate text-sm font-semibold text-[var(--text-primary)]"
+              >
+                Secretary
               </Link>
             </div>
+
             {user && (
-              <div className="relative flex-shrink-0" ref={dropdownRef}>
+              <div className="relative shrink-0" ref={dropdownRef}>
                 <motion.button
                   type="button"
                   onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1.5 rounded-xl p-1 transition-colors hover:bg-purple-50"
+                  whileTap={{ scale: 0.97 }}
                 >
-                  {user.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt={getFullName(user)}
-                      className="h-9 w-9 rounded-full border-2 border-gray-200 object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-900 text-sm font-semibold text-white">
-                      {getInitials(user)}
-                    </div>
-                  )}
-                  <HiChevronDown
-                    className={`text-gray-600 transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`}
-                    size={18}
+                  <ProfileAvatar user={user} size="md" />
+                  <ChevronDown
+                    className={`h-4 w-4 text-[var(--text-secondary)] transition-transform duration-200 ${
+                      isUserDropdownOpen ? 'rotate-180' : ''
+                    }`}
                   />
                 </motion.button>
+
                 <AnimatePresence>
                   {isUserDropdownOpen && (
                     <motion.div
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
-                      className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-100 bg-white py-2 shadow-lg"
+                      transition={{ duration: 0.18 }}
+                      className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-purple-100/50 bg-white/95 py-2 shadow-lg shadow-purple-500/10 backdrop-blur-sm"
                     >
-                      <Link
-                        to={`/update-profile/${user._id}`}
-                        onClick={() => setIsUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        <HiOutlineUserCircle size={18} className="text-gray-500" />
-                        Update profile
-                      </Link>
-                      <div className="my-1 border-t border-gray-100" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsUserDropdownOpen(false);
-                          handleLogout();
-                        }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                      >
-                        <HiOutlineLogout size={18} />
-                        Logout
-                      </button>
+                      <div className="border-b border-purple-100/60 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <ProfileAvatar user={user} size="lg" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                              {getFullName(user)}
+                            </p>
+                            <p className="truncate text-xs text-[var(--text-secondary)]">
+                              {user.communName ? formatCommunDisplayName(user.communName) : user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="py-1.5">
+                        <Link
+                          to="/secretary/update-profile"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--text-primary)] transition-colors hover:bg-purple-50"
+                        >
+                          <UserCircle className="h-4 w-4 shrink-0 text-[var(--purple-primary)]" />
+                          <span>Update profile</span>
+                        </Link>
+                        <div className="my-1 border-t border-purple-100/60" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            handleLogout();
+                          }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+                        >
+                          <LogOut className="h-4 w-4 shrink-0 text-red-500" />
+                          <span>Logout</span>
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

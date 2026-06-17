@@ -1,19 +1,22 @@
-import React, { useEffect, useMemo } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
-import { getAllProviders } from '../features/providerSlice'
-import { fetchWishlist, removeFromWishlist } from '../features/wishlistSlice'
-import { HiOutlinePhotograph, HiX, HiArrowRight } from 'react-icons/hi'
-import { getFullName, getInitials } from '../utils/userHelpers'
-import { toast } from 'react-hot-toast'
-import axios from 'axios'
+import React, { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { getAllProviders } from '../features/providerSlice';
+import { fetchWishlist, removeFromWishlist } from '../features/wishlistSlice';
+import { ArrowRight, Heart, ImageIcon, MessageCircle, X } from 'lucide-react';
+import { getFullName, getInitials } from '../utils/userHelpers';
+import { toast } from 'react-hot-toast';
+import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 axios.defaults.withCredentials = true;
 
 const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isPanelRoute = location.pathname.startsWith('/community/');
   const { allProviders, isFetchingAll } = useSelector((s) => s.provider);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
   const user = useSelector((s) => s.auth.user);
@@ -47,89 +50,123 @@ const Cart = () => {
     navigate(`/service/${serviceId}`);
   };
 
-  const handleContactProvider = async (serviceId, providerId, providerName, providerPhoneNumber) => {
-    // Check if user is logged in
+  const handleContactProvider = async (
+    serviceId,
+    providerId,
+    providerName,
+    providerPhoneNumber
+  ) => {
     if (!user) {
       toast.error('Please login to continue with your order');
       navigate('/login');
       return;
     }
 
-    // Increment service offering count
     try {
       await axios.post(`${API_URL}/api/service-offering/${serviceId}/increment-count`);
     } catch (error) {
       console.error('Failed to increment service offering count:', error);
-      // Continue even if increment fails
     }
 
-    // Increment provider profile count
     try {
       await axios.post(`${API_URL}/api/provider-profile/${providerId}/increment-count`);
     } catch (error) {
       console.error('Failed to increment provider profile count:', error);
-      // Continue even if increment fails
     }
 
-    // Redirect to WhatsApp with provider's phone number
     if (providerPhoneNumber) {
-      // Clean the phone number - remove spaces, +, and special characters
       const cleanPhoneNumber = providerPhoneNumber.replace(/\D/g, '');
-      
-      // Create WhatsApp message
       const loggedInUserName = getFullName(user);
       const message = `Hi ${providerName}, this is ${loggedInUserName}! I viewed your profile on Commun and would like to know more about your services. Could you please provide more details?`;
       const encodedMessage = encodeURIComponent(message);
-      
-      // Open WhatsApp
       window.open(`https://wa.me/${cleanPhoneNumber}?text=${encodedMessage}`, '_blank');
     } else {
-      // Fallback to contact page if no phone number
-      navigate(`/contact`);
+      navigate('/contact');
     }
   };
 
   if (!user) {
     return (
-      <div className='min-h-screen bg-gray-50 pt-24 pb-12'>
-        <div className='max-w-[1350px] mx-auto px-4'>
-          <h1 className='text-2xl font-bold text-gray-900 mb-2'>Wishlist</h1>
-          <p className='text-sm text-gray-600'>Please login to view your wishlist.</p>
+      <div className="home-page flex min-h-screen items-center justify-center bg-[var(--background-subtle)] px-4 pt-20">
+        <div className="w-full max-w-sm rounded-2xl border border-purple-100/50 bg-white/80 p-8 text-center shadow-lg shadow-purple-500/5">
+          <Heart className="mx-auto mb-4 h-10 w-10 text-purple-300" />
+          <h1 className="mb-2 text-lg font-semibold text-[var(--text-primary)]">Wishlist</h1>
+          <p className="mb-6 text-sm text-[var(--text-secondary)]">
+            Please sign in to view your saved services.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="w-full rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-all"
+          >
+            Go to Login
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 pt-24 pb-12'>
-      <div className='max-w-[1350px] mx-auto px-4'>
-        <h1 className='text-2xl font-bold text-gray-900 mb-6'>Your Wishlist ({wishlistServices.length})</h1>
-        
-      {isFetchingAll ? (
-          <div className='relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-gray-50 to-indigo-50 p-10 text-center shadow-sm'>
-            <div className='pointer-events-none absolute inset-0 opacity-30 blur-3xl bg-gradient-to-r from-indigo-100/80 via-pink-100/60 to-purple-100/80' />
-            <p className='relative text-base font-semibold text-gray-900 tracking-tight'>Curating your wishlist experience...</p>
-            <p className='relative mt-2 text-sm text-gray-600'>Hang tight while we load the best services for you.</p>
+    <motion.div
+      className="home-page min-h-screen bg-[var(--background-subtle)]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
+      <section
+        className={`border-b border-purple-100/60 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20 pb-8 ${
+          isPanelRoute ? 'pt-6' : 'pt-24 sm:pt-28'
+        }`}
+      >
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <div className="mb-2 inline-block rounded-full bg-gradient-to-r from-purple-100 to-fuchsia-100 px-3 py-1.5">
+            <span className="text-xs font-semibold bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
+              Saved for later
+            </span>
           </div>
-      ) : wishlistServices.length === 0 ? (
-          <div className='relative overflow-hidden rounded-2xl border border-gray-200 bg-white/90 p-12 text-center shadow-sm'>
-            <div className='pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-indigo-100 via-pink-100 to-amber-100 opacity-70 blur-3xl' />
-            <div className='pointer-events-none absolute -bottom-12 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-rose-100 via-purple-100 to-indigo-100 opacity-60 blur-3xl' />
-            <div className='relative'>
-              <p className='text-lg font-semibold text-gray-900 mb-2'>Your wishlist is feeling lonely</p>
-              <p className='text-sm text-gray-600 mb-6'>Discover top-rated neighbours and add services you love to keep them handy.</p>
-              <button
-                onClick={() => navigate('/service')}
-                className='inline-flex items-center justify-center gap-2 rounded-full bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800'
-              >
-                Explore Services
-                <HiArrowRight className='w-4 h-4' />
-              </button>
-            </div>
+          <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">
+            Your Wishlist
+            {!isFetchingAll && (
+              <span className="ml-2 text-lg font-medium text-[var(--purple-primary)]">
+                ({wishlistServices.length})
+              </span>
+            )}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            Services you&apos;ve saved — reach out to providers when you&apos;re ready.
+          </p>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+        {isFetchingAll ? (
+          <div className="rounded-2xl border border-purple-100/50 bg-white/80 p-10 text-center shadow-sm shadow-purple-500/5">
+            <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
+            <p className="text-sm font-medium text-[var(--text-primary)]">Loading your wishlist…</p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              Fetching your saved services.
+            </p>
+          </div>
+        ) : wishlistServices.length === 0 ? (
+          <div className="rounded-2xl border border-purple-100/50 bg-white/80 p-10 text-center shadow-lg shadow-purple-500/5 sm:p-12">
+            <Heart className="mx-auto mb-4 h-12 w-12 text-purple-200" />
+            <p className="mb-2 text-lg font-semibold text-[var(--text-primary)]">
+              Your wishlist is empty
+            </p>
+            <p className="mb-6 text-sm text-[var(--text-secondary)]">
+              Browse local services and tap the heart to save ones you like.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/service')}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 hover:opacity-90 transition-all"
+            >
+              Explore Services
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
         ) : (
-          <div className='space-y-4'>
-            {/* Wishlist Items */}
+          <div className="space-y-4">
             {wishlistServices.map((service) => {
               const image = service?.portfolioImages?.[0]?.url;
               const title = service?.servicename || service?.serviceCategory || 'Service';
@@ -138,135 +175,121 @@ const Cart = () => {
               const profileImage = service?.provider?.user?.profileImage;
               const providerPhoneNumber = service?.provider?.user?.phoneNumber || '';
               const providerId = service?.provider?._id;
-              const truncatedDescription = description.length > 100 
-                ? description.substring(0, 100) + '...' 
-                : description;
+              const truncatedDescription =
+                description.length > 100 ? `${description.substring(0, 100)}...` : description;
 
               return (
                 <div
                   key={service._id}
-                  className='relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200'
+                  className="relative rounded-2xl border border-purple-100/50 bg-white/80 p-4 shadow-sm shadow-purple-500/5 transition-all hover:border-purple-200 hover:shadow-md sm:p-5"
                 >
-                  {/* Remove Button - Positioned absolutely in top right on mobile */}
                   <button
+                    type="button"
                     onClick={(e) => handleRemove(service._id, e)}
-                    className='absolute top-4 right-4 sm:hidden flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors z-10'
-                    title='Remove from wishlist'
+                    className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-purple-100 bg-white text-[var(--text-secondary)] transition-colors hover:bg-red-50 hover:text-red-500 sm:right-4 sm:top-4"
+                    title="Remove from wishlist"
                   >
-                    <HiX className='w-5 h-5 text-gray-600' />
+                    <X className="h-4 w-4" />
                   </button>
 
-                  <div className='flex flex-col sm:flex-row gap-4'>
-                    {/* Image */}
-                    <div 
-                      className='flex-shrink-0 w-32 h-32 bg-gray-100 rounded-lg overflow-hidden cursor-pointer'
+                  <div className="flex flex-col gap-4 sm:flex-row sm:pr-10">
+                    <button
+                      type="button"
                       onClick={() => handleServiceClick(service._id)}
+                      className="service-image-zoom h-28 w-full shrink-0 rounded-xl bg-gradient-to-br from-purple-50 to-fuchsia-50/50 sm:h-32 sm:w-32"
                     >
                       {image ? (
-                        <img 
-                          src={image} 
-                          alt={title} 
-                          className='w-full h-full object-cover'
-                        />
+                        <img src={image} alt={title} className="service-image-zoom__img h-full w-full object-cover" />
                       ) : (
-                        <div className='w-full h-full flex items-center justify-center'>
-                          <HiOutlinePhotograph className='w-8 h-8 text-gray-400' />
+                        <div className="flex h-full w-full items-center justify-center">
+                          <ImageIcon className="h-8 w-8 text-purple-200" />
                         </div>
                       )}
-                    </div>
+                    </button>
 
-                    {/* Content */}
-                    <div className='flex-1 min-w-0'>
-                      <div className='flex items-start justify-between gap-4'>
-                        <div className='flex-1 min-w-0'>
-                          <h3 
-                            className='text-sm font-semibold text-gray-900 mb-1 cursor-pointer hover:text-gray-700 line-clamp-1'
-                            onClick={() => handleServiceClick(service._id)}
-                          >
-                            {title}
-                          </h3>
-                          <p className='text-xs text-gray-600 mb-2 line-clamp-2'>
-                            {truncatedDescription}
-                          </p>
-                          
-                          {/* Provider Info */}
-                          <div className='flex items-center gap-2 mb-2'>
-                            {profileImage ? (
-                              <img
-                                src={profileImage}
-                                alt={providerName}
-                                className='w-5 h-5 rounded-full border border-gray-200 object-cover'
-                              />
-                            ) : (
-                              <div className='w-5 h-5 rounded-full border border-gray-200 bg-gray-700 text-white flex items-center justify-center font-semibold text-[10px]'>
-                                {getInitials(service?.provider?.user)}
-                              </div>
-                            )}
-                            <span className='text-xs text-gray-600'>{providerName}</span>
+                    <div className="min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => handleServiceClick(service._id)}
+                        className="mb-1 line-clamp-1 text-left text-sm font-semibold text-[var(--text-primary)] hover:text-[var(--purple-primary)] transition-colors"
+                      >
+                        {title}
+                      </button>
+                      <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+                        {truncatedDescription}
+                      </p>
+
+                      <div className="mb-4 flex items-center gap-2">
+                        {profileImage ? (
+                          <img
+                            src={profileImage}
+                            alt={providerName}
+                            className="h-6 w-6 rounded-full border border-[var(--purple-primary)]/30 object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[var(--purple-primary)] to-[var(--magenta)] text-[10px] font-semibold text-white">
+                            {getInitials(service?.provider?.user)}
                           </div>
-
-                          {/* Contact Provider Button - Desktop */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleContactProvider(service._id, providerId, providerName, providerPhoneNumber);
-                            }}
-                            className='hidden sm:block mt-8 w-auto bg-gray-900 text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-gray-800 transition-all'
-                          >
-                            Contact Provider
-                          </button>
-
-                          {/* Price */}
-                          {/* {price !== undefined && price !== null && (
-                            <div className='mt-2'>
-                              <span className='text-base font-semibold text-gray-900'>
-                                ₹{typeof price === 'number' ? price.toLocaleString('en-IN') : price}
-                              </span>
-                            </div>
-                          )} */}
-                        </div>
-
-                        {/* Remove Button - Desktop */}
-                        <button
-                          onClick={(e) => handleRemove(service._id, e)}
-                          className='hidden sm:flex flex-shrink-0 w-8 h-8 items-center justify-center rounded-full hover:bg-gray-100 transition-colors'
-                          title='Remove from wishlist'
-                        >
-                          <HiX className='w-5 h-5 text-gray-600' />
-                        </button>
+                        )}
+                        <span className="truncate text-xs text-[var(--text-secondary)]">
+                          {providerName}
+                        </span>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleContactProvider(
+                            service._id,
+                            providerId,
+                            providerName,
+                            providerPhoneNumber
+                          );
+                        }}
+                        className="hidden w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-2 px-4 text-xs font-semibold text-white shadow-sm shadow-purple-500/20 hover:opacity-90 transition-all sm:inline-flex sm:w-auto"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        Contact Provider
+                      </button>
                     </div>
                   </div>
 
-                  {/* Contact Provider Button - Mobile (below image and description) */}
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleContactProvider(service._id, providerId, providerName, providerPhoneNumber);
+                      handleContactProvider(
+                        service._id,
+                        providerId,
+                        providerName,
+                        providerPhoneNumber
+                      );
                     }}
-                    className='sm:hidden mt-4 w-full bg-gray-900 text-white py-2 px-4 rounded-lg text-xs font-semibold hover:bg-gray-800 transition-all'
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-2.5 px-4 text-xs font-semibold text-white shadow-sm shadow-purple-500/20 hover:opacity-90 transition-all sm:hidden"
                   >
+                    <MessageCircle className="h-3.5 w-3.5" />
                     Contact Provider
                   </button>
                 </div>
               );
             })}
 
-            {/* Continue Shopping Button */}
-            <div className='pt-4'>
+            <div className="pt-2">
               <button
+                type="button"
                 onClick={() => navigate('/service')}
-                className='w-full bg-gray-900 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-gray-800 transition-all flex items-center justify-center gap-2'
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-100 bg-white py-2.5 px-4 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-purple-50"
               >
-                Shopping
-                <HiArrowRight className='w-4 h-4' />
+                Continue browsing
+                <ArrowRight className="h-4 w-4 text-[var(--purple-primary)]" />
               </button>
             </div>
           </div>
-      )}
+        )}
       </div>
-    </div>
-  )
-}
+    </motion.div>
+  );
+};
 
-export default Cart
+export default Cart;

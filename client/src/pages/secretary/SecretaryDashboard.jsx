@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  HiOutlineClipboardCheck,
-  HiOutlineUsers,
-  HiOutlineSpeakerphone,
-  HiOutlineCalendar,
-} from 'react-icons/hi';
+  Calendar,
+  ClipboardCheck,
+  LayoutDashboard,
+  Megaphone,
+  Users,
+} from 'lucide-react';
 import {
   fetchPendingRegistrations,
   fetchCommunityMembers,
@@ -15,34 +16,35 @@ import {
   fetchBroadcasts,
 } from '../../features/secretarySlice';
 import { isEventActive } from '../../utils/communityEventDates';
+import { formatCommunDisplayName } from '../../utils/communName';
 
 const quickLinks = [
   {
     to: '/secretary/approvals',
     label: 'Approve / reject',
     description: 'Review pending signups and provider applications',
-    icon: HiOutlineClipboardCheck,
+    icon: ClipboardCheck,
     statKey: 'pending',
   },
   {
     to: '/secretary/members',
     label: 'Member list',
     description: 'View everyone in your Commun community',
-    icon: HiOutlineUsers,
+    icon: Users,
     statKey: 'members',
   },
   {
     to: '/secretary/broadcast',
     label: 'Broadcast',
     description: 'Send neighbourhood updates to your community',
-    icon: HiOutlineSpeakerphone,
+    icon: Megaphone,
     statKey: 'broadcastCount',
   },
   {
     to: '/secretary/events',
     label: 'Events',
     description: 'Create and manage community events',
-    icon: HiOutlineCalendar,
+    icon: Calendar,
     statKey: 'activeEvents',
   },
 ];
@@ -78,50 +80,82 @@ const SecretaryDashboard = () => {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-        <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">Secretary</p>
-        <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">Dashboard</h1>
-        <p className="mt-2 text-sm text-gray-600 sm:text-base">
-          Welcome to your secretary workspace
-          {membersMeta.communityCommunName ? (
-            <span className="font-medium text-indigo-600"> (@{membersMeta.communityCommunName})</span>
-          ) : null}
-          . Use the sidebar to open each section.
-        </p>
-      </motion.div>
+    <motion.div
+      className="min-h-screen bg-[var(--background-subtle)]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
+    >
+      <section className="border-b border-purple-100/60 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20 py-6 sm:py-8">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--purple-primary)]">
+            Secretary
+          </p>
+          <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">Dashboard</h1>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            Welcome to your secretary workspace
+            {membersMeta.communityCommunName ? (
+              <span className="font-medium text-[var(--purple-primary)]">
+                {' '}
+                ({formatCommunDisplayName(membersMeta.communityCommunName)})
+              </span>
+            ) : null}
+            . Use the sidebar to open each section.
+          </p>
+        </div>
+      </section>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {quickLinks.map((item, index) => {
-          const Icon = item.icon;
-          const count = item.statKey ? stats[item.statKey] : null;
-          return (
-            <motion.div
-              key={item.to}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.06 }}
-            >
-              <Link
-                to={item.to}
-                className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+        <div className="mb-5 flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-fuchsia-100 text-[var(--purple-primary)]">
+            <LayoutDashboard className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] sm:text-base">
+              Quick access
+            </h2>
+            <p className="mt-0.5 text-xs leading-relaxed text-[var(--text-secondary)]">
+              Jump to approvals, members, broadcasts, or events.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {quickLinks.map((item, index) => {
+            const Icon = item.icon;
+            const count = item.statKey ? stats[item.statKey] : null;
+            return (
+              <motion.div
+                key={item.to}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="inline-flex rounded-xl bg-gray-100 p-2.5 text-gray-800">
-                    <Icon size={22} />
-                  </span>
-                  {count !== null && (
-                    <span className="text-2xl font-bold tabular-nums text-gray-900">{count}</span>
-                  )}
-                </div>
-                <h2 className="mt-4 font-bold text-gray-900">{item.label}</h2>
-                <p className="mt-1 flex-1 text-sm text-gray-600">{item.description}</p>
-              </Link>
-            </motion.div>
-          );
-        })}
+                <Link
+                  to={item.to}
+                  className="group flex h-full flex-col rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm transition-all hover:border-purple-200/80 hover:shadow-md hover:shadow-purple-500/10"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="inline-flex rounded-xl bg-gradient-to-br from-purple-100 to-fuchsia-100 p-2.5 text-[var(--purple-primary)] transition-transform group-hover:scale-105">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    {count !== null && (
+                      <span className="text-2xl font-semibold tabular-nums text-[var(--text-primary)]">
+                        {count}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mt-4 font-semibold text-[var(--text-primary)]">{item.label}</h3>
+                  <p className="mt-1 flex-1 text-sm leading-relaxed text-[var(--text-secondary)]">
+                    {item.description}
+                  </p>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

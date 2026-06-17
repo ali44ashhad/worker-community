@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { getApiBase } from "../utils/apiBase";
+import { appendEventAttachmentsToFormData } from "../utils/eventAttachmentForm";
 
 const API_URL = getApiBase() || "http://localhost:3001";
 axios.defaults.withCredentials = true;
@@ -67,6 +68,21 @@ export const fetchCommunityMembers = createAsyncThunk(
   }
 );
 
+export const updateCommunityMemberStatus = createAsyncThunk(
+  "secretary/updateMemberStatus",
+  async ({ userId, accountStatus }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/secretary/members/${userId}/status`, { accountStatus });
+      toast.success(res.data?.message || "Member updated.");
+      return res.data?.data?.user;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update member";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 export const fetchFeatureToggles = createAsyncThunk(
   "secretary/fetchFeatureToggles",
   async (_, { rejectWithValue }) => {
@@ -124,16 +140,7 @@ export const createCommunityEvent = createAsyncThunk(
       formData.append("title", title);
       formData.append("description", description);
       formData.append("expiresAt", expiresAt);
-      files.forEach((file) => formData.append("attachments", file));
-      const validLinks = links
-        .filter((item) => String(item?.url || "").trim())
-        .map((item) => ({
-          url: String(item.url).trim(),
-          label: String(item.label || "").trim(),
-        }));
-      if (validLinks.length > 0) {
-        formData.append("attachmentLinks", JSON.stringify(validLinks));
-      }
+      appendEventAttachmentsToFormData(formData, { files, links });
 
       const res = await axios.post(`${API_URL}/api/secretary/events`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -286,6 +293,11 @@ const secretarySlice = createSlice({
       .addCase(fetchCommunityMembers.rejected, (state, action) => {
         state.membersLoading = false;
         state.membersError = action.payload;
+      })
+      .addCase(updateCommunityMemberStatus.fulfilled, (state, action) => {
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.members = state.members.map((u) => (u._id === updated._id ? { ...u, ...updated } : u));
       })
       .addCase(fetchFeatureToggles.pending, (state) => {
         state.featureTogglesLoading = true;

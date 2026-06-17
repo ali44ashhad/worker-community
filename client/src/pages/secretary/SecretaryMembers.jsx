@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCommunityMembers } from '../../features/secretarySlice';
+import { fetchCommunityMembers, updateCommunityMemberStatus } from '../../features/secretarySlice';
 import { getFullName } from '../../utils/userHelpers';
+import { formatCommunDisplayName } from '../../utils/communName';
 
 const SecretaryMembers = () => {
   const dispatch = useDispatch();
@@ -20,7 +21,10 @@ const SecretaryMembers = () => {
         <p className="mt-2 text-sm text-gray-600 sm:text-base">
           People who signed up under your Commun community
           {membersMeta.communityCommunName ? (
-            <span className="font-medium text-indigo-600"> (@{membersMeta.communityCommunName})</span>
+            <span className="font-medium text-indigo-600">
+              {' '}
+              ({formatCommunDisplayName(membersMeta.communityCommunName)})
+            </span>
           ) : null}
           . Up to 500 shown, newest first.
         </p>
@@ -59,7 +63,8 @@ const SecretaryMembers = () => {
                   <th className="pb-3 pr-4">Role</th>
                   <th className="pb-3 pr-4">Status</th>
                   <th className="pb-3 pr-4">Provider @</th>
-                  <th className="pb-3">Joined</th>
+                  <th className="pb-3 pr-4">Joined</th>
+                  <th className="pb-3 text-right">Change status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -92,9 +97,25 @@ const SecretaryMembers = () => {
                         </span>
                       </td>
                       <td className="py-3 pr-4 text-indigo-600">
-                        {u.role === 'provider' && u.communName ? `@${u.communName}` : '—'}
+                        {u.role === 'provider' && u.communName
+                          ? formatCommunDisplayName(u.communName)
+                          : '—'}
                       </td>
-                      <td className="py-3 text-gray-500">{joined}</td>
+                      <td className="py-3 pr-4 text-gray-500">{joined}</td>
+                      <td className="py-3 text-right">
+                        <select
+                          className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                          value={status}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            dispatch(updateCommunityMemberStatus({ userId: u._id, accountStatus: next }));
+                          }}
+                        >
+                          <option value="approved">approved</option>
+                          <option value="pending">pending</option>
+                          <option value="rejected">rejected</option>
+                        </select>
+                      </td>
                     </tr>
                   );
                 })}

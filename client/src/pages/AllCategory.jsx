@@ -1,153 +1,177 @@
-import React, { useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { HiArrowRight } from 'react-icons/hi';
+import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ChevronRight } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getActiveCategories } from '../features/adminSlice';
 import { slugifyCategoryName } from '../utils/slug';
+import CommunityCta from '../components/home/CommunityCta';
+
+const GRADIENTS = [
+  'from-blue-500 to-cyan-500',
+  'from-purple-500 to-fuchsia-500',
+  'from-pink-500 to-rose-500',
+  'from-indigo-500 to-purple-500',
+  'from-emerald-500 to-teal-500',
+  'from-orange-500 to-amber-500',
+];
+
+const fadeUp = {
+  initial: { opacity: 0, y: 16 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-40px' },
+  transition: { duration: 0.45 },
+};
+
+const getCategoryDescription = (category) => {
+  if (category.description?.trim()) return category.description;
+  if (category.subCategories?.length) {
+    return category.subCategories.slice(0, 4).join(', ');
+  }
+  if (category.keywords?.length) {
+    return category.keywords.slice(0, 4).join(', ');
+  }
+  return 'Explore services in this category';
+};
 
 const AllCategory = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { activeCategories } = useSelector((state) => state.admin);
 
   useEffect(() => {
-    if (!activeCategories || activeCategories.length === 0) {
+    if (!activeCategories?.length) {
       dispatch(getActiveCategories());
     }
   }, [dispatch, activeCategories?.length]);
 
-  const RULES = useMemo(() => {
-    const rules = {};
-    (activeCategories || []).forEach((c) => {
-      rules[c.name] = {
-        description: c.description || '',
-        subCategories: c.subCategories || [],
-        keywords: c.keywords || [],
-        image: c.image || { url: '', public_id: '' },
-      };
-    });
-    return rules;
-  }, [activeCategories]);
-
-  const categories = Object.entries(RULES);
-
-  const handleCategoryClick = (categoryName) => {
-    navigate(`/category/${slugifyCategoryName(categoryName)}`);
-  };
-
   return (
-    <div className='min-h-screen bg-gray-50 pb-16'>
-      <div className='max-w-[1350px] mx-auto px-4 pt-24'>
-        {/* Header */}
-        <div className='text-center mb-12'>
-          <h1 className='text-4xl md:text-5xl font-bold text-black mb-4'>
-            All Categories
-          </h1>
-          <p className='text-gray-600 text-center max-w-3xl mx-auto text-base md:text-lg'>
-            Explore all available service categories. Each category offers a variety of specialized services from talented community providers.
-          </p>
-        </div>
+    <motion.div
+      className="home-page min-h-screen bg-[var(--background-subtle)]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Hero */}
+      <section className="relative overflow-hidden pt-28 pb-16 lg:pt-32 lg:pb-20 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(217,70,239,0.05),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(107,70,193,0.05),transparent_50%)]" />
 
-        {/* Categories Grid */}
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-          {categories.map(([categoryName, categoryData]) => {
-            const imagePath = categoryData?.image?.url || '';
-            const displayedKeywords = categoryData.keywords.slice(0, 5);
-
-            return (
-              <div
-                key={categoryName}
-                onClick={() => handleCategoryClick(categoryName)}
-                className='bg-white border border-gray-300 rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group cursor-pointer'
-              >
-                {/* Image */}
-                <div className='mb-4 flex justify-center'>
-                  <div className='w-full h-48 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center'>
-                    {imagePath ? (
-                      <img
-                        src={imagePath}
-                        alt={categoryName}
-                        className='w-full h-full object-cover'
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          if (e.target.nextSibling) {
-                            e.target.nextSibling.style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
-                    <div
-                      className='w-full h-full flex items-center justify-center text-black font-bold text-lg'
-                      style={{ display: imagePath ? 'none' : 'flex' }}
-                    >
-                      {categoryName.charAt(0).toUpperCase()}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category Name */}
-                <h3 className='text-2xl font-bold text-black text-center mb-3 group-hover:text-gray-700 transition-colors'>
-                  {categoryName}
-                </h3>
-
-                {/* Description */}
-                <div className='text-gray-600 text-center text-sm mb-4 min-h-[2.5rem] flex items-center justify-center'>
-                  <p className='line-clamp-2'>
-                    {categoryData.description}
-                  </p>
-                </div>
-
-                {/* Keywords */}
-                <div className='flex flex-wrap gap-2 justify-center mb-4'>
-                  {displayedKeywords.map((keyword, index) => (
-                    <span
-                      key={index}
-                      className='px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full border border-gray-300 hover:bg-gray-200 hover:border-gray-400 transition-all'
-                    >
-                      {keyword}
-                    </span>
-                  ))}
-                  {categoryData.keywords.length > 5 && (
-                    <span className='px-3 py-1 bg-white text-gray-700 text-xs font-semibold rounded-full border border-gray-300 hover:bg-gray-100 hover:border-gray-400 transition-all'>
-                      +{categoryData.keywords.length - 5} more
-                    </span>
-                  )}
-                </div>
-
-                {/* View Services Button */}
-                <div className='mt-4 flex items-center justify-center gap-2 text-black group-hover:text-gray-700 transition-colors'>
-                  <span className='font-semibold text-sm'>View Services</span>
-                  <HiArrowRight className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Footer Info */}
-        <div className='mt-12 text-center'>
-          <div className='bg-white border border-gray-300 rounded-xl p-6 max-w-2xl mx-auto'>
-            <p className='text-gray-600 text-sm'>
-              Can't find what you're looking for? Try browsing by{' '}
-              <button
-                onClick={() => navigate('/service')}
-                className='text-black font-semibold underline hover:text-gray-700 transition-colors'
-              >
-                all services
-              </button>
-              {' '}or{' '}
-              <button
-                onClick={() => navigate('/provider')}
-                className='text-black font-semibold underline hover:text-gray-700 transition-colors'
-              >
-                providers
-              </button>
-              .
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-block px-4 py-2 bg-gradient-to-r from-purple-100 to-fuchsia-100 rounded-full mb-6">
+              <span className="text-sm font-semibold bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
+                Explore Local Services
+              </span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-[var(--text-primary)] via-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent mb-6 leading-[1.1]">
+              All Categories
+            </h1>
+            <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
+              Explore all available service categories. Each category offers specialized services
+              from talented community providers in your neighbourhood.
             </p>
-          </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      {/* Categories grid */}
+      <section className="py-16 bg-gradient-to-b from-white to-purple-50/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {!activeCategories?.length ? (
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--purple-primary)] mx-auto mb-4" />
+              <p className="text-lg font-semibold text-[var(--text-secondary)]">Loading categories...</p>
+            </div>
+          ) : (
+            <div className="grid items-stretch gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {activeCategories.map((category, i) => {
+                const gradient = GRADIENTS[i % GRADIENTS.length];
+                const slug = slugifyCategoryName(category.name);
+                const displayedKeywords = (category.keywords || []).slice(0, 4);
+
+                return (
+                  <motion.div
+                    key={category._id || category.name}
+                    className="h-full"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4, delay: (i % 6) * 0.05 }}
+                    viewport={{ once: true }}
+                    whileHover={{ y: -8, scale: 1.02 }}
+                  >
+                    <Link
+                      to={`/category/${slug}`}
+                      className="group relative flex h-full flex-col rounded-3xl border border-purple-100/50 bg-white/80 p-8 shadow-lg backdrop-blur-sm transition-all hover:border-purple-300 hover:shadow-2xl hover:shadow-purple-500/10"
+                    >
+                      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-50/0 to-fuchsia-50/0 transition-all group-hover:from-purple-50/50 group-hover:to-fuchsia-50/30" />
+                      <div className="relative flex flex-1 flex-col">
+                        <div
+                          className={`mb-5 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-2xl font-bold text-white shadow-lg transition-all group-hover:scale-110 group-hover:rotate-3`}
+                        >
+                          {category.name.charAt(0).toUpperCase()}
+                        </div>
+                        <h3 className="mb-2 line-clamp-1 min-h-[1.75rem] text-xl font-bold text-[var(--text-primary)] group-hover:text-[var(--purple-primary)] transition-colors">
+                          {category.name}
+                        </h3>
+                        <p className="mb-4 line-clamp-2 min-h-[2.5rem] text-sm leading-snug text-[var(--text-secondary)]">
+                          {getCategoryDescription(category)}
+                        </p>
+                        <div className="mb-4 flex min-h-[3.25rem] flex-wrap content-start gap-1.5">
+                          {displayedKeywords.map((keyword) => (
+                            <span
+                              key={keyword}
+                              className="rounded-full border border-purple-100 bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-[var(--purple-primary)]"
+                            >
+                              {keyword}
+                            </span>
+                          ))}
+                          {(category.keywords || []).length > 4 && (
+                            <span className="rounded-full border border-fuchsia-100 bg-fuchsia-50 px-2.5 py-0.5 text-xs font-medium text-fuchsia-600">
+                              +{category.keywords.length - 4}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-[var(--purple-primary)] transition-all group-hover:gap-2">
+                          Explore
+                          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Footer hint */}
+      <section className="pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div {...fadeUp} className="max-w-2xl mx-auto text-center">
+            <div className="bg-white/80 backdrop-blur-sm border border-purple-100/50 rounded-3xl p-6 sm:p-8 shadow-lg shadow-purple-500/5">
+              <p className="text-[var(--text-secondary)] text-sm sm:text-base">
+                Can&apos;t find what you&apos;re looking for? Try browsing{' '}
+                <Link to="/service" className="text-[var(--purple-primary)] font-semibold hover:underline">
+                  all services
+                </Link>{' '}
+                or{' '}
+                <Link to="/provider" className="text-[var(--purple-primary)] font-semibold hover:underline">
+                  providers
+                </Link>
+                .
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <CommunityCta />
+    </motion.div>
   );
 };
 

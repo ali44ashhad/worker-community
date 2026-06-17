@@ -1,63 +1,48 @@
 import React, { useState } from 'react';
-import { HiOutlinePhotograph, HiArrowRight } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FaRegHeart } from "react-icons/fa6";
-import { IoIosHeart } from "react-icons/io";
-import { FaStar } from 'react-icons/fa';
+import { ArrowRight, Heart, ImageIcon, Star } from 'lucide-react';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlistSlice';
 import { toast } from 'react-hot-toast';
-import { getFullName, getInitials } from '../../utils/userHelpers';
+import { getFullName } from '../../utils/userHelpers';
+import ProfileAvatar from '../ProfileAvatar';
 
 const ServiceCard = ({ service }) => {
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
   const [imageError, setImageError] = useState(false);
 
-  // Get service information
   const serviceName = service?.servicename || '';
   const fullDescription = service?.description || 'No description available.';
 
-  const truncatedDescription = fullDescription.length > 80
-  ? fullDescription.substring(0, 80) + '...'
-  : fullDescription;
-
-  // Get price
-  // Get portfolio images
   const portfolioImages = service?.portfolioImages || [];
-  const mainImage = portfolioImages[0]?.url || '/logo2.png';
+  const mainImage = portfolioImages[0]?.url || '/CommuN-logo.png';
 
-  // Get provider information
   const provider = service?.provider || {};
   const providerUser = provider?.user || {};
   const providerName = getFullName(providerUser) || 'Unknown Provider';
-  const profileImage = providerUser?.profileImage;
-//   const providerId = provider?._id;
 
-  // Get rating information
   const averageRating = service?.averageRating || 0;
   const reviewCount = service?.reviewCount || 0;
-  
-  // Debug: Log service data to check ratings
 
-  
-  // Render stars for rating
   const renderStars = () => {
     const stars = [];
     const fullStars = Math.floor(averageRating);
     const hasHalfStar = averageRating % 1 >= 0.5;
-    
+
     for (let i = 0; i < 5; i++) {
-      if (i < fullStars) {
-        stars.push(<FaStar key={i} className="text-yellow-400" size={12} />);
-      } else if (i === fullStars && hasHalfStar) {
-        stars.push(<FaStar key={i} className="text-yellow-400" size={12} style={{ opacity: 0.5 }} />);
-      } else {
-        stars.push(<FaStar key={i} className="text-gray-300" size={12} />);
-      }
+      const filled = i < fullStars || (i === fullStars && hasHalfStar);
+      stars.push(
+        <Star
+          key={i}
+          className={`h-3 w-3 ${
+            filled ? 'fill-amber-400 text-amber-400' : 'fill-purple-100 text-purple-100'
+          }`}
+          style={i === fullStars && hasHalfStar ? { opacity: 0.5 } : undefined}
+        />
+      );
     }
     return stars;
   };
@@ -65,12 +50,6 @@ const ServiceCard = ({ service }) => {
   const handleImageError = () => {
     setImageError(true);
   };
-
-//   const handleCardClick = () => {
-//     if (providerId) {
-//       navigate(`/provider/${providerId}`);
-//     }
-//   };
 
   const handleCardClick = () => {
     navigate(`/service/${service._id}`);
@@ -92,120 +71,71 @@ const ServiceCard = ({ service }) => {
   };
 
   return (
-    <div 
+    <div
       onClick={handleCardClick}
-      className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-200 group cursor-pointer"
+      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-purple-100/50 bg-white/80 shadow-md shadow-purple-500/5 backdrop-blur-sm transition-all duration-200 hover:border-purple-200 hover:shadow-lg hover:shadow-purple-500/10"
     >
-      {/* Portfolio Image */}
-      <div className="relative h-36 bg-gray-100 overflow-hidden flex items-center justify-center p-2">
-        {/* Heart Icon */}
+      <div className="service-image-zoom relative h-44 shrink-0 overflow-hidden bg-gradient-to-br from-purple-50 to-fuchsia-50/50">
         <button
+          type="button"
           onClick={onToggleWishlist}
-          className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center bg-white border border-gray-300 shadow-md hover:scale-110 transition-all duration-200 z-10"
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-purple-100 bg-white/90 shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:border-purple-200"
         >
-          {isInWishlist ? (
-            <IoIosHeart className="text-red-600" size={18} />
-          ) : (
-            <FaRegHeart className="text-red-600" size={16} />
-          )}
+          <Heart
+            className={`h-4 w-4 ${
+              isInWishlist ? 'fill-red-500 text-red-500' : 'text-[var(--purple-primary)]'
+            }`}
+          />
         </button>
-        
+
         {mainImage && !imageError ? (
           <img
             src={mainImage}
             alt="Service portfolio"
-            className="w-auto h-auto max-w-full max-h-full object-contain group-hover:scale-[1.01] transition-transform duration-300"
+            className="service-image-zoom__img h-full w-full object-contain p-3"
             onError={handleImageError}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-            <HiOutlinePhotograph className="w-12 h-12 text-gray-400" />
+          <div className="flex h-full w-full items-center justify-center">
+            <ImageIcon className="h-14 w-14 text-purple-200" />
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-4">
-        {/* Service Name */}
-        <div className="mb-2">
-          <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">
-            {serviceName || service?.serviceCategory || 'Service'}
-          </h3>
-        </div>
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="mb-2 line-clamp-1 min-h-[1.25rem] text-sm font-semibold text-[var(--text-primary)] transition-colors group-hover:text-[var(--purple-primary)]">
+          {serviceName || service?.serviceCategory || 'Service'}
+        </h3>
 
-        {/* Rating Display */}
-        <div className="flex items-center gap-1.5 mb-2">
-          <div className="flex items-center gap-0.5">
-            {renderStars()}
-          </div>
-          <span className="text-xs font-semibold text-gray-700">
+        <div className="mb-2 flex min-h-[1.25rem] items-center gap-1.5">
+          <div className="flex items-center gap-0.5">{renderStars()}</div>
+          <span className="text-xs font-semibold text-[var(--text-primary)]">
             {averageRating.toFixed(1)}
           </span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-[var(--text-secondary)]">
             ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
           </span>
         </div>
 
-        {/* Service Description */}
-        <div className="mb-3">
-          <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed" style={{ minHeight: '2.5rem' }}>
-            {truncatedDescription}
-          </p>
+        <p className="mb-3 line-clamp-2 min-h-[2.5rem] text-xs leading-relaxed text-[var(--text-secondary)]">
+          {fullDescription}
+        </p>
+
+        <div className="mb-3 flex min-h-[1.75rem] items-center gap-2">
+          <ProfileAvatar user={providerUser} size="smd" className="shrink-0" />
+          <p className="min-w-0 truncate text-xs text-[var(--text-secondary)]">{providerName}</p>
         </div>
 
-        {/* Price and Provider Row */}
-        <div className="flex items-center justify-between gap-3 mb-3">
-          {/* Price Display */}
-          {/* {price !== undefined && price !== null && (
-            <span className="text-base font-semibold text-gray-900">
-              ₹{typeof price === 'number' ? price.toLocaleString('en-IN') : price}
-            </span>
-          )} */}
-
-          {/* Provider Info */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Provider Profile Image */}
-            <div className="flex-shrink-0">
-              {profileImage ? (
-                <img
-                  src={profileImage}
-                  alt={providerName}
-                  className="w-7 h-7 rounded-full border border-gray-200 object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    if (e.target.nextSibling) {
-                      e.target.nextSibling.style.display = 'flex';
-                    }
-                  }}
-                />
-              ) : null}
-              <div
-                className="w-7 h-7 rounded-full border border-gray-200 bg-gray-700 text-white flex items-center justify-center font-semibold text-xs"
-                style={{ display: profileImage ? 'none' : 'flex' }}
-              >
-                {getInitials(providerUser)}
-              </div>
-            </div>
-
-            {/* Provider Name */}
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-600 truncate">
-                {providerName}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Order Button */}
-        <button 
+        <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/service/${service._id}`);
           }}
-          className="w-full mt-3 bg-gray-900 text-white py-2 px-3 rounded-md text-xs font-medium hover:bg-gray-800 transition-all duration-200 flex items-center justify-center gap-1.5"
+          className="mt-auto flex w-full shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-3 py-2.5 text-xs font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90"
         >
           View Details
-          <HiArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
         </button>
       </div>
     </div>

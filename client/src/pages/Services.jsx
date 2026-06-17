@@ -1,15 +1,27 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAllProviders } from '../features/providerSlice';
+import { motion } from 'framer-motion';
 import ServiceCard from '../components/service/ServiceCard';
 import HomePageLoader from '../components/loaders/HomePageLoader';
-import { HiOutlineSearch, HiOutlineRefresh } from 'react-icons/hi';
+import CommunityCta from '../components/home/CommunityCta';
+import { Search, RefreshCw } from 'lucide-react';
 import { getFullName } from '../utils/userHelpers';
+import Pagination from '../components/Pagination';
+import { getPublicServices } from '../features/serviceSlice';
+
+const chipClass = (active) =>
+  `px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+    active
+      ? 'bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white border-transparent shadow-sm'
+      : 'bg-white text-[var(--text-secondary)] border-purple-100 hover:bg-purple-50 hover:border-purple-200'
+  }`;
 
 const Services = () => {
   const dispatch = useDispatch();
-  const { allProviders, isFetchingAll, error } = useSelector((state) => state.provider);
+  const { services, isFetching, error, pagination } = useSelector((state) => state.services);
 
+  const ITEMS_PER_PAGE = 12;
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
@@ -17,105 +29,71 @@ const Services = () => {
   const [filteredServices, setFilteredServices] = useState([]);
   const [allServices, setAllServices] = useState([]);
 
-  // Fetch providers on component mount
   useEffect(() => {
-    dispatch(getAllProviders());
-  }, [dispatch]);
+    dispatch(getPublicServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
+  }, [dispatch, currentPage]);
 
-  // Extract all services from providers
   useEffect(() => {
-    const extractedServices = [];
-    allProviders.forEach(provider => {
-      if (provider?.serviceOfferings && Array.isArray(provider.serviceOfferings)) {
-        provider.serviceOfferings.forEach(service => {
-          // Add provider info to each service
-          extractedServices.push({
-            ...service,
-            provider: {
-              ...provider,
-              user: provider.user,
-              _id: provider._id,
-              bio: provider.bio,
-              experience: provider.experience
-            }
-          });
-        });
-      }
-    });
-    setAllServices(extractedServices);
-  }, [allProviders]);
+    setAllServices(services || []);
+  }, [services]);
 
   useEffect(() => {
     let filtered = [...allServices];
 
-    // Apply search filter
     if (searchQuery.trim()) {
-      filtered = filtered.filter(service => {
+      filtered = filtered.filter((service) => {
         const servicename = service?.servicename?.toLowerCase() || '';
         const category = service?.serviceCategory?.toLowerCase() || '';
         const description = service?.description?.toLowerCase() || '';
-        const keywords = (service?.keywords || []).map(k => k?.toLowerCase()).join(' ');
-        const subCategories = (service?.subCategories || []).map(s => s?.toLowerCase()).join(' ');
+        const keywords = (service?.keywords || []).map((k) => k?.toLowerCase()).join(' ');
+        const subCategories = (service?.subCategories || []).map((s) => s?.toLowerCase()).join(' ');
         const providerName = getFullName(service?.provider?.user)?.toLowerCase() || '';
-        
         const query = searchQuery.toLowerCase();
-        return servicename.includes(query) ||
-               category.includes(query) || 
-               description.includes(query) || 
-               keywords.includes(query) ||
-               subCategories.includes(query) ||
-               providerName.includes(query);
+
+        return (
+          servicename.includes(query) ||
+          category.includes(query) ||
+          description.includes(query) ||
+          keywords.includes(query) ||
+          subCategories.includes(query) ||
+          providerName.includes(query)
+        );
       });
     }
 
-    // Apply category filter
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(service => {
-        return service?.serviceCategory === selectedCategory;
-      });
+      filtered = filtered.filter((service) => service?.serviceCategory === selectedCategory);
     }
 
-    // Apply subcategory filter (only when category is selected)
     if (selectedCategory !== 'All' && selectedSubcategory !== 'All') {
-      filtered = filtered.filter(service => {
-        const subCategories = service?.subCategories || [];
-        return subCategories.includes(selectedSubcategory);
-      });
+      filtered = filtered.filter((service) =>
+        (service?.subCategories || []).includes(selectedSubcategory)
+      );
     }
 
-    // Apply rating filter
     if (minRating > 0) {
-      filtered = filtered.filter(service => {
-        const rating = service?.averageRating || 0;
-        return rating >= minRating;
-      });
+      filtered = filtered.filter((service) => (service?.averageRating || 0) >= minRating);
     }
 
     setFilteredServices(filtered);
   }, [searchQuery, selectedCategory, selectedSubcategory, minRating, allServices]);
 
-  // Get unique categories from all services
   const getUniqueCategories = () => {
     const categories = new Set();
-    allServices.forEach(service => {
-      if (service?.serviceCategory) {
-        categories.add(service.serviceCategory);
-      }
+    allServices.forEach((service) => {
+      if (service?.serviceCategory) categories.add(service.serviceCategory);
     });
     return Array.from(categories).sort();
   };
 
-  // Get unique subcategories for the selected category
   const getUniqueSubcategories = () => {
     if (selectedCategory === 'All') return [];
-    
+
     const subcategories = new Set();
-    allServices.forEach(service => {
+    allServices.forEach((service) => {
       if (service?.serviceCategory === selectedCategory && service?.subCategories) {
-        service.subCategories.forEach(subCat => {
-          if (subCat) {
-            subcategories.add(subCat);
-          }
+        service.subCategories.forEach((subCat) => {
+          if (subCat) subcategories.add(subCat);
         });
       }
     });
@@ -124,14 +102,15 @@ const Services = () => {
 
   const categories = getUniqueCategories();
   const subcategories = getUniqueSubcategories();
+  const hasActiveFilters =
+    searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || minRating > 0;
 
-  // Reset subcategory when category changes
   useEffect(() => {
     setSelectedSubcategory('All');
   }, [selectedCategory]);
 
   const handleRefresh = () => {
-    dispatch(getAllProviders());
+    dispatch(getPublicServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
   };
 
   const handleClearFilters = () => {
@@ -141,250 +120,241 @@ const Services = () => {
     setMinRating(0);
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedSubcategory, minRating]);
+
   return (
-    <div className='min-h-screen bg-gray-50 pb-16'>
-      <div className='max-w-[1350px] mx-auto px-4 pt-24'>
-        {/* Main Content: Filters on Left, Services on Right */}
-        <div className='flex flex-col lg:flex-row gap-6'>
-          {/* Left Sidebar - Everything */}
-          <div className='lg:w-80 flex-shrink-0'>
-            <div className='bg-white border border-gray-300 rounded-xl overflow-hidden sticky top-24 max-h-[calc(100vh-6rem)] flex flex-col'>
-              {/* Fixed Top Section */}
-              <div className='p-4 space-y-4 flex-shrink-0 border-b border-gray-200'>
-                {/* Header */}
-                <div className='mb-3'>
-                  <h1 className='text-2xl font-bold text-black mb-1'>
-                    All Services
-                  </h1>
-                  <p className='text-gray-600 text-xs leading-tight'>
-                    Browse through all available services from our talented community providers. 
-                    Find exactly what you need, from tutoring to baking, fitness to technology and more.
-                  </p>
-                </div>
+    <motion.div
+      className="home-page min-h-screen bg-[var(--background-subtle)]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Hero */}
+      <section className="relative overflow-hidden pt-28 pb-12 lg:pt-32 lg:pb-14 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(217,70,239,0.05),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(107,70,193,0.05),transparent_50%)]" />
 
-                {/* Search Bar */}
-                <div className='relative'>
-                  <HiOutlineSearch className='absolute left-2 top-1/2 -translate-y-1/2 text-gray-400' size={16} />
-                  <input
-                    type='text'
-                    placeholder='Search...'
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className='w-full bg-white border border-gray-300 rounded-lg pl-8 pr-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400'
-                  />
-                </div>
-              </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-block px-4 py-2 bg-gradient-to-r from-purple-100 to-fuchsia-100 rounded-full mb-6">
+              <span className="text-sm font-semibold bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
+                Find Local Help
+              </span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-[var(--text-primary)] via-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent mb-4 leading-[1.1]">
+              All Services
+            </h1>
+            <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
+              Browse services from talented community providers — tutoring, baking, fitness,
+              technology and more, right in your neighbourhood.
+            </p>
+          </motion.div>
+        </div>
+      </section>
 
-              {/* Scrollable Filters Section */}
-              <div className='p-4 space-y-4 overflow-y-auto flex-1'>
-                <div>
-                  <h2 className='text-base font-bold text-black mb-3'>Filters</h2>
-                </div>
+      {/* Main content */}
+      <section className="pb-16 bg-gradient-to-b from-white to-purple-50/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Sidebar filters */}
+            <div className="lg:w-80 shrink-0">
+              <div className="bg-white/80 backdrop-blur-sm border border-purple-100/50 rounded-3xl overflow-hidden shadow-lg shadow-purple-500/5 sticky top-24 max-h-[calc(100vh-6rem)] flex flex-col">
+                <div className="p-5 space-y-4 shrink-0 border-b border-purple-100">
+                  <div>
+                    <h2 className="text-lg font-bold text-[var(--text-primary)] mb-1">Search &amp; Filter</h2>
+                    <p className="text-[var(--text-secondary)] text-xs leading-relaxed">
+                      Narrow down services by category, rating, or keyword.
+                    </p>
+                  </div>
 
-                {/* Category Filters */}
-                <div className='space-y-2'>
-                  <h3 className='text-xs font-semibold text-gray-700'>Categories</h3>
-                  <div className='flex flex-wrap gap-1.5'>
-                    <button
-                      onClick={() => setSelectedCategory('All')}
-                      className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all border ${
-                        selectedCategory === 'All'
-                          ? 'bg-gray-600 text-white border-gray-600'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                      }`}
-                    >
-                      All
-                    </button>
-                    {categories.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => setSelectedCategory(category)}
-                        className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
-                          selectedCategory === category
-                            ? 'bg-gray-600 text-white border-gray-600'
-                            : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
+                    <input
+                      type="text"
+                      placeholder="Search services..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-white border border-purple-100 rounded-xl pl-9 pr-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all"
+                    />
                   </div>
                 </div>
 
-                {/* Subcategory Filters - Only show when a category is selected */}
-                {selectedCategory !== 'All' && subcategories.length > 0 && (
-                  <div className='space-y-2'>
-                    <h3 className='text-xs font-semibold text-gray-700'>Subcategories</h3>
-                    <div className='flex flex-wrap gap-1.5'>
-                      <button
-                        onClick={() => setSelectedSubcategory('All')}
-                        className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all border ${
-                          selectedSubcategory === 'All'
-                            ? 'bg-gray-600 text-white border-gray-600'
-                            : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                        }`}
-                      >
+                <div className="p-5 space-y-5 overflow-y-auto flex-1">
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wide">
+                      Categories
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button type="button" onClick={() => setSelectedCategory('All')} className={chipClass(selectedCategory === 'All')}>
                         All
                       </button>
-                      {subcategories.map((subcategory) => (
+                      {categories.map((category) => (
                         <button
-                          key={subcategory}
-                          onClick={() => setSelectedSubcategory(subcategory)}
-                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
-                            selectedSubcategory === subcategory
-                              ? 'bg-gray-600 text-white border-gray-600'
-                              : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                          }`}
+                          key={category}
+                          type="button"
+                          onClick={() => setSelectedCategory(category)}
+                          className={chipClass(selectedCategory === category)}
                         >
-                          {subcategory}
+                          {category}
                         </button>
                       ))}
                     </div>
                   </div>
-                )}
 
-                {/* Rating Filter */}
-                <div className='space-y-2'>
-                  <h3 className='text-xs font-semibold text-gray-700'>Minimum Rating</h3>
-                  <div className='flex flex-wrap gap-1.5'>
-                    <button
-                      onClick={() => setMinRating(0)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all border ${
-                        minRating === 0
-                          ? 'bg-gray-600 text-white border-gray-600'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                      }`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => setMinRating(4)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
-                        minRating === 4
-                          ? 'bg-gray-600 text-white border-gray-600'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                      }`}
-                    >
-                      4+ ⭐
-                    </button>
-                    <button
-                      onClick={() => setMinRating(3)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
-                        minRating === 3
-                          ? 'bg-gray-600 text-white border-gray-600'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                      }`}
-                    >
-                      3+ ⭐
-                    </button>
-                    <button
-                      onClick={() => setMinRating(2)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
-                        minRating === 2
-                          ? 'bg-gray-600 text-white border-gray-600'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                      }`}
-                    >
-                      2+ ⭐
-                    </button>
-                    <button
-                      onClick={() => setMinRating(1)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
-                        minRating === 1
-                          ? 'bg-gray-600 text-white border-gray-600'
-                          : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                      }`}
-                    >
-                      1+ ⭐
-                    </button>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className='space-y-1.5 pt-3 border-t border-gray-200'>
-                  <button
-                    onClick={handleRefresh}
-                    className='w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded text-xs font-semibold hover:bg-gray-100 transition-all'
-                  >
-                    <HiOutlineRefresh size={14} />
-                    Refresh
-                  </button>
-                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || minRating > 0) && (
-                    <button
-                      onClick={handleClearFilters}
-                      className='w-full px-3 py-1.5 bg-gray-600 text-white border border-gray-600 rounded text-xs font-semibold hover:bg-gray-700 transition-all'
-                    >
-                      Clear Filters
-                    </button>
+                  {selectedCategory !== 'All' && subcategories.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wide">
+                        Subcategories
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        <button type="button" onClick={() => setSelectedSubcategory('All')} className={chipClass(selectedSubcategory === 'All')}>
+                          All
+                        </button>
+                        {subcategories.map((subcategory) => (
+                          <button
+                            key={subcategory}
+                            type="button"
+                            onClick={() => setSelectedSubcategory(subcategory)}
+                            className={chipClass(selectedSubcategory === subcategory)}
+                          >
+                            {subcategory}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   )}
+
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wide">
+                      Minimum Rating
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: 'All', value: 0 },
+                        { label: '4+ ⭐', value: 4 },
+                        { label: '3+ ⭐', value: 3 },
+                        { label: '2+ ⭐', value: 2 },
+                        { label: '1+ ⭐', value: 1 },
+                      ].map(({ label, value }) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => setMinRating(value)}
+                          className={chipClass(minRating === value)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-3 border-t border-purple-100">
+                    <button
+                      type="button"
+                      onClick={handleRefresh}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-white border border-purple-100 rounded-xl text-xs font-semibold text-[var(--text-secondary)] hover:bg-purple-50 hover:border-purple-200 transition-all"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Refresh
+                    </button>
+                    {hasActiveFilters && (
+                      <button
+                        type="button"
+                        onClick={handleClearFilters}
+                        className="w-full px-3 py-2.5 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white rounded-xl text-xs font-semibold hover:shadow-lg transition-all"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Right Side - Services Grid */}
-          <div className='flex-1'>
+            {/* Services grid */}
+            <div className="flex-1 min-w-0">
+              {!isFetching && !error && filteredServices.length > 0 && (
+                <p className="mb-5 text-sm font-medium text-[var(--text-secondary)]">
+                  Showing{' '}
+                  <span className="text-[var(--purple-primary)] font-semibold">{filteredServices.length}</span>
+                  {filteredServices.length === 1 ? ' service' : ' services'}
+                </p>
+              )}
 
-            {/* Loading State */}
-            {isFetchingAll && (
-              <div className='mt-12'>
-                <HomePageLoader />
-              </div>
-            )}
-
-            {/* Error State */}
-            {error && !isFetchingAll && (
-              <div className='text-center py-12'>
-                <div className='bg-red-50 border-2 border-red-200 rounded-xl p-6 max-w-md mx-auto'>
-                  <p className='text-red-600 font-semibold'>Error loading services</p>
-                  <p className='text-gray-600 text-sm mt-2'>{error}</p>
-                  <button
-                    onClick={handleRefresh}
-                    className='mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'
-                  >
-                    Try Again
-                  </button>
+              {isFetching && (
+                <div className="mt-8">
+                  <HomePageLoader />
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* No Results State */}
-            {!isFetchingAll && !error && filteredServices.length === 0 && (
-              <div className='text-center py-12'>
-                <div className='bg-white border-2 border-black rounded-xl p-8 max-w-md mx-auto'>
-                  <HiOutlineSearch className='mx-auto mb-4 text-gray-400' size={48} />
-                  <p className='text-xl font-semibold text-black mb-2'>
-                    No services found
-                  </p>
-                  <p className='text-gray-600 text-sm'>
-                    {searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || minRating > 0
-                      ? 'Try adjusting your search or filter criteria.'
-                      : 'No services available at the moment.'}
-                  </p>
-                  {(searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || minRating > 0) && (
+              {error && !isFetching && (
+                <div className="text-center py-12">
+                  <div className="bg-red-50 border border-red-200 rounded-3xl p-8 max-w-md mx-auto">
+                    <p className="text-red-600 font-semibold">Error loading services</p>
+                    <p className="text-[var(--text-secondary)] text-sm mt-2">{error}</p>
                     <button
-                      onClick={handleClearFilters}
-                      className='mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'
+                      type="button"
+                      onClick={handleRefresh}
+                      className="mt-5 px-6 py-2.5 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white rounded-xl font-semibold hover:shadow-lg transition-all"
                     >
-                      Clear Filters
+                      Try Again
                     </button>
-                  )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Services Grid */}
-            {!isFetchingAll && !error && filteredServices.length > 0 && (
-              <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
-                {filteredServices.map((service) => (
-                  <ServiceCard key={service._id} service={service} />
-                ))}
-              </div>
-            )}
+              {!isFetching && !error && filteredServices.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="bg-white/80 backdrop-blur-sm border border-purple-100/50 rounded-3xl p-8 max-w-md mx-auto shadow-lg shadow-purple-500/5">
+                    <Search className="mx-auto mb-4 w-12 h-12 text-purple-300" />
+                    <p className="text-xl font-semibold text-[var(--text-primary)] mb-2">No services found</p>
+                    <p className="text-[var(--text-secondary)] text-sm">
+                      {hasActiveFilters
+                        ? 'Try adjusting your search or filter criteria.'
+                        : 'No services available at the moment.'}
+                    </p>
+                    {hasActiveFilters && (
+                      <button
+                        type="button"
+                        onClick={handleClearFilters}
+                        className="mt-5 px-6 py-2.5 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {!isFetching && !error && filteredServices.length > 0 && (
+                <>
+                  <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {filteredServices.map((service) => (
+                      <ServiceCard key={service._id} service={service} />
+                    ))}
+                  </div>
+
+                  <Pagination
+                    totalItems={pagination?.total || filteredServices.length}
+                    itemsPerPage={ITEMS_PER_PAGE}
+                    currentPage={pagination?.page || currentPage}
+                    onPageChange={setCurrentPage}
+                  />
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <CommunityCta />
+    </motion.div>
   );
 };
 

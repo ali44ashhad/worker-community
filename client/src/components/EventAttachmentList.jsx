@@ -1,5 +1,10 @@
 import React from 'react';
-import { HiOutlineDocument, HiOutlineExternalLink, HiOutlineLink, HiOutlinePhotograph } from 'react-icons/hi';
+import {
+  HiOutlineDocument,
+  HiOutlineExternalLink,
+  HiOutlineLink,
+  HiOutlinePhotograph,
+} from 'react-icons/hi';
 
 const kindLabel = {
   image: 'Image',
@@ -13,7 +18,7 @@ const EventAttachmentList = ({ attachments = [] }) => {
 
   return (
     <div className="mt-4 space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Attachments</p>
+      <p className="text-xs font-medium text-[var(--text-secondary)]">Attachments</p>
       <ul className="space-y-2">
         {attachments.map((item, index) => {
           const label = item.name || kindLabel[item.kind] || 'Attachment';
@@ -23,37 +28,39 @@ const EventAttachmentList = ({ attachments = [] }) => {
           return (
             <li
               key={`${item.url}-${index}`}
-              className="rounded-xl border border-gray-100 bg-gray-50 p-3"
+              className="rounded-xl border border-purple-100/60 bg-purple-50/30 p-3"
             >
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 text-gray-500">
-                  {item.kind === 'link' && <HiOutlineLink size={18} />}
-                  {item.kind === 'pdf' && <HiOutlineDocument size={18} />}
-                  {isImage && <HiOutlinePhotograph size={18} />}
-                  {isVideo && <HiOutlineExternalLink size={18} />}
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-100 to-fuchsia-100 text-[var(--purple-primary)]">
+                  {item.kind === 'link' && <HiOutlineLink size={16} />}
+                  {item.kind === 'pdf' && <HiOutlineDocument size={16} />}
+                  {isImage && <HiOutlinePhotograph size={16} />}
+                  {isVideo && <HiOutlineExternalLink size={16} />}
                 </span>
                 <div className="min-w-0 flex-1">
                   <a
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                    className="text-sm font-medium text-[var(--purple-primary)] transition-colors hover:text-[var(--magenta)]"
                   >
                     {label}
                   </a>
-                  <p className="text-xs capitalize text-gray-500">{kindLabel[item.kind] || item.kind}</p>
+                  <p className="text-xs capitalize text-[var(--text-secondary)]">
+                    {kindLabel[item.kind] || item.kind}
+                  </p>
                   {isImage && (
                     <img
                       src={item.url}
                       alt={label}
-                      className="mt-2 max-h-40 rounded-lg border border-gray-200 object-cover"
+                      className="mt-2 max-h-40 rounded-lg border border-purple-100 object-cover"
                     />
                   )}
                   {isVideo && (
                     <video
                       src={item.url}
                       controls
-                      className="mt-2 max-h-48 w-full rounded-lg border border-gray-200"
+                      className="mt-2 max-h-48 w-full rounded-lg border border-purple-100"
                     />
                   )}
                 </div>

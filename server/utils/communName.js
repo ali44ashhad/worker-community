@@ -12,3 +12,17 @@ export function isValidCommunName(cn) {
   if (!cn || cn.length < 2 || cn.length > 40) return false;
   return COMMUN_NAME_REGEX.test(cn);
 }
+
+// Display helper: converts slug (e.g. "sainik-farms") -> "Sainik Farms"
+export function formatCommunDisplayName(cn) {
+  const raw = String(cn || "").trim();
+  if (!raw) return "";
+
+  return raw
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
+    .join(" ");
+}

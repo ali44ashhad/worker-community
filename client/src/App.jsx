@@ -4,6 +4,7 @@ import { Routes,Route, useLocation, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import About from './pages/About' 
 import FAQ from './pages/FAQ'
+import Testimonials from './pages/Testimonials'
 import Providers from './pages/Providers'
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
@@ -24,6 +25,10 @@ import Footer from './components/Footer'
 import AllCategory from './pages/AllCategory'
 import SpecificCategory from './pages/SpecificCategory'
 import Cart from './pages/Cart'
+import KnowMoreProviders from './pages/KnowMoreProviders'
+import KnowMoreSeekers from './pages/KnowMoreSeekers'
+import TopServices from './pages/TopServices'
+import TopCategories from './pages/TopCategories'
 import { fetchWishlist } from './features/wishlistSlice'
 import AdminLayout from './layouts/AdminLayout'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
@@ -55,6 +60,8 @@ import CommunityEvents from './pages/community/CommunityEvents'
 import MemberProtectedRoute from './components/MemberProtectedRoute'
 import ProviderAwareLayout from './components/ProviderAwareLayout'
 import { fetchCommunityFeatures, clearCommunityFeatures } from './features/communitySlice'
+import Terms from './pages/Terms'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 const App = () => {
 
@@ -87,7 +94,7 @@ const App = () => {
   }, [dispatch, user, isCheckingAuth])
 
   if(isCheckingAuth){
-    return < HomePageLoader></HomePageLoader>;
+    return <HomePageLoader fullScreen label="Loading CommuN…" sublabel="Checking your session." />;
   }
 
   
@@ -98,15 +105,24 @@ const App = () => {
     '/provider/manage-services',
     '/provider/update-profile',
   ];
+  const customerPanelPaths = [
+    '/community/update-profile',
+    '/community/wishlist',
+    '/community/become-provider',
+  ];
   const isMemberCommunityRoute =
     ['customer', 'provider'].includes(user?.role) &&
     (location.pathname.startsWith('/community/broadcast') ||
       location.pathname.startsWith('/community/events'));
   const isProviderLayoutRoute =
     providerLayoutRoutes.some((path) => location.pathname.startsWith(path)) ||
-    (user?.role === 'provider' && isMemberCommunityRoute);
+    (user?.role === 'provider' &&
+      (isMemberCommunityRoute ||
+        customerPanelPaths.some((path) => location.pathname.startsWith(path))));
   const isCustomerLayoutRoute =
-    user?.role === 'customer' && isMemberCommunityRoute;
+    user?.role === 'customer' &&
+    (isMemberCommunityRoute ||
+      customerPanelPaths.some((path) => location.pathname.startsWith(path)));
   const hideGlobalChrome =
     isAdminRoute || isProviderLayoutRoute || isCustomerLayoutRoute || isSecretaryRoute;
 
@@ -120,6 +136,9 @@ const App = () => {
         <Route path='/' element={<Home></Home>}></Route>
         <Route path='/about' element={<About></About>}></Route> 
         <Route path='/faq' element={<FAQ></FAQ>}></Route>
+        <Route path='/testimonials' element={<Testimonials />} />
+        <Route path='/terms' element={<Terms />} />
+        <Route path='/privacy-policy' element={<PrivacyPolicy />} />
         <Route path='/provider' element={<Providers></Providers>}></Route>
         <Route path="/pending-approval" element={<PendingApproval />} />
         <Route path='/login' element={<Login></Login>}></Route>
@@ -135,7 +154,6 @@ const App = () => {
         ></Route>
         <Route path='/contact' element={<Contact></Contact>}></Route>
         <Route path='/update-profile' element={<UpdateProfile></UpdateProfile>}></Route>
-        <Route path='/update-profile/:id' element={<UpdateProfile></UpdateProfile>}></Route>
         <Route
           path='/provider/manage-services'
           element={
@@ -191,7 +209,11 @@ const App = () => {
         <Route path='/provider/:id' element={<SpecificProvider></SpecificProvider>}></Route>
         <Route path='/category' element={<AllCategory></AllCategory>}></Route>
         <Route path='/category/:id' element={<SpecificCategory></SpecificCategory>}></Route>
-        <Route path='/cart/:id' element={<Cart></Cart>}></Route>
+        <Route path='/cart' element={<Cart></Cart>}></Route>
+        <Route path="/top-services" element={<TopServices />} />
+        <Route path="/top-categories" element={<TopCategories />} />
+        <Route path="/know-more/providers" element={<KnowMoreProviders />} />
+        <Route path="/know-more/seekers" element={<KnowMoreSeekers />} />
         <Route
           path='/community/broadcast'
           element={
@@ -208,6 +230,36 @@ const App = () => {
             <MemberProtectedRoute>
               <ProviderAwareLayout>
                 <CommunityEvents />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
+          path='/community/update-profile'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <UpdateProfile />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
+          path='/community/wishlist'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <Cart />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
+          path='/community/become-provider'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <BecomeProvider />
               </ProviderAwareLayout>
             </MemberProtectedRoute>
           }
@@ -242,6 +294,7 @@ const App = () => {
             <Route path="members" element={<SecretaryMembers />} />
             <Route path="broadcast" element={<SecretaryBroadcast />} />
             <Route path="events" element={<SecretaryEvents />} />
+            <Route path="update-profile" element={<UpdateProfile />} />
           </Route>
         </Route>
       </Routes>

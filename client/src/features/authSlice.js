@@ -194,5 +194,4 @@ const authSlice = createSlice({
   },
 });
 
-// export { updateProfile };
 export default authSlice.reducer;

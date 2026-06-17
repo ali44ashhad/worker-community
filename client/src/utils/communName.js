@@ -12,3 +12,12 @@ export function isValidCommunName(cn) {
   if (!cn || cn.length < 2 || cn.length > 40) return false;
   return COMMUN_NAME_REGEX.test(cn);
 }
+
+/** Display label: "green-park-colony" → "Green Park Colony" */
+export function formatCommunDisplayName(raw) {
+  return String(raw || "")
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}

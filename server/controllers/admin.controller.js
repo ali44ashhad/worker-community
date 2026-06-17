@@ -893,9 +893,24 @@ const getCategoryClicks = async (req, res) => {
         const result = Array.from(categoryMap.values())
             .sort((a, b) => b.totalClicks - a.totalClicks);
 
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+        const skip = (page - 1) * limit;
+        const totalCategories = result.length;
+        const totalPages = Math.max(Math.ceil(totalCategories / limit), 1);
+        const paginatedResult = result.slice(skip, skip + limit);
+
         return res.status(200).json({
             success: true,
-            data: result
+            data: paginatedResult,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalCategories,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+                limit,
+            },
         });
 
     } catch (error) {
@@ -980,9 +995,24 @@ const getProviderClicks = async (req, res) => {
         // Sort providers by total clicks descending
         result.sort((a, b) => b.totalClicks - a.totalClicks);
 
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+        const skip = (page - 1) * limit;
+        const totalProviders = result.length;
+        const totalPages = Math.max(Math.ceil(totalProviders / limit), 1);
+        const paginatedResult = result.slice(skip, skip + limit);
+
         return res.status(200).json({
             success: true,
-            data: result
+            data: paginatedResult,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalProviders,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+                limit,
+            },
         });
 
     } catch (error) {

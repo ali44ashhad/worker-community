@@ -1,14 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Upload, Trash2, FileText } from 'lucide-react';
+import { ArrowLeft, FileText, Pencil, Save, Trash2, Upload } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { getMyProviderProfile } from '../../features/providerSlice';
 import { getActiveCategories } from '../../features/adminSlice';
 import { getApiBase } from '../../utils/apiBase';
-import { uploadFileToS3 } from '../../utils/s3DirectUpload';
+
+const inputBase =
+  'w-full rounded-xl border bg-white px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 transition-all focus:outline-none focus:ring-2';
+const inputOk = `${inputBase} border-purple-100 focus:border-[var(--purple-primary)] focus:ring-[var(--purple-primary)]/25`;
+const inputErr = `${inputBase} border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-400/25`;
+const labelClass = 'mb-2 block text-xs font-medium text-[var(--text-secondary)]';
+const cardClass =
+  'rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-8';
+const btnPrimary =
+  'inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-8 py-3.5 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
 
 const buildServiceState = (service) => ({
   id: service?._id || Date.now(),
@@ -19,7 +28,6 @@ const buildServiceState = (service) => ({
   keywords: service?.keywords || [],
   bio: service?.description || '',
   experience: service?.experience ?? '',
-  // price: service?.price ?? '',
   existingImages: service?.portfolioImages || [],
   images: [],
   imagePreviews: [],
@@ -184,22 +192,6 @@ const EditService = () => {
       hasErrors = true;
     }
 
-    // Experience is optional - no validation needed
-
-    /* if (serviceForm?.price === '' || serviceForm?.price === null || serviceForm?.price === undefined) {
-      newErrors.price = 'Price is required.';
-      hasErrors = true;
-    } else if (parseFloat(serviceForm.price) < 0) {
-      newErrors.price = 'Price cannot be negative.';
-      hasErrors = true;
-    } */
-
-    const totalImages =
-      (serviceForm?.existingImages?.length || 0) + (serviceForm?.imagePreviews?.length || 0);
-    const totalPDFs =
-      (serviceForm?.existingPDFs?.length || 0) + (serviceForm?.pdfPreviews?.length || 0);
-    // Work images / PDFs are optional (we show a default logo if none)
-
     setErrors(newErrors);
     return !hasErrors;
   };
@@ -215,33 +207,40 @@ const EditService = () => {
       setIsSubmitting(true);
       const base = getApiBase();
 
-      const newUploadedImages = [];
-      for (const imgFile of (serviceForm.images || [])) {
-        if (imgFile instanceof File) newUploadedImages.push(await uploadFileToS3(base, imgFile));
+      const formData = new FormData();
+      formData.append('servicename', serviceForm.servicename);
+      formData.append('serviceCategory', serviceForm.category);
+      formData.append('subCategories', JSON.stringify(serviceForm.subCategories || []));
+      formData.append('keywords', JSON.stringify(serviceForm.keywords || []));
+      formData.append('description', serviceForm.bio || '');
+      if (serviceForm.experience !== undefined && serviceForm.experience !== '') {
+        formData.append('experience', String(serviceForm.experience));
       }
-      const newUploadedPDFs = [];
-      for (const pdfFile of (serviceForm.pdfs || [])) {
-        if (pdfFile instanceof File) newUploadedPDFs.push(await uploadFileToS3(base, pdfFile));
-      }
+      formData.append('existingImages', JSON.stringify(serviceForm.existingImages || []));
+      formData.append('existingPDFs', JSON.stringify(serviceForm.existingPDFs || []));
+      (serviceForm.images || []).forEach((file) => {
+        if (file instanceof File) formData.append('portfolioImages', file);
+      });
+      (serviceForm.pdfs || []).forEach((file) => {
+        if (file instanceof File) formData.append('portfolioPDFs', file);
+      });
 
-      const response = await fetch(`${base || ''}/api/provider-profile/service-json/${serviceForm._id}`, {
+      const response = await fetch(`${base || ''}/api/provider-profile/service/${serviceForm._id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          servicename: serviceForm.servicename,
-          serviceCategory: serviceForm.category,
-          subCategories: serviceForm.subCategories,
-          keywords: serviceForm.keywords,
-          description: serviceForm.bio,
-          experience: serviceForm.experience,
-          portfolioImages: [...(serviceForm.existingImages || []), ...newUploadedImages],
-          portfolioPDFs: [...(serviceForm.existingPDFs || []), ...newUploadedPDFs],
-        }),
+        body: formData,
       });
 
       const rawText = await response.text();
-      const data = rawText ? (() => { try { return JSON.parse(rawText); } catch { return null; } })() : null;
+      const data = rawText
+        ? (() => {
+            try {
+              return JSON.parse(rawText);
+            } catch {
+              return null;
+            }
+          })()
+        : null;
       if (!response.ok) {
         const message =
           data?.message ||
@@ -265,115 +264,148 @@ const EditService = () => {
 
   const renderChips = (items = [], key) => (
     <div className="flex flex-wrap gap-2">
-      {items.map((item) => (
-        <motion.button
-          key={item}
-          type="button"
-          onClick={() => handleToggleValue(key, item)}
-          className={`px-4 py-2 rounded-full border text-sm font-medium transition-all duration-300 ${
-            serviceForm?.[key]?.includes(item)
-              ? 'bg-gray-900 text-white border-gray-900 shadow-md'
-              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-          }`}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          {item}
-        </motion.button>
-      ))}
+      {items.map((item) => {
+        const selected = serviceForm?.[key]?.includes(item);
+        return (
+          <motion.button
+            key={item}
+            type="button"
+            onClick={() => handleToggleValue(key, item)}
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
+              selected
+                ? 'border-transparent bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white shadow-sm shadow-purple-500/20'
+                : 'border-purple-100 bg-white text-[var(--text-secondary)] hover:bg-purple-50 hover:text-[var(--purple-primary)]'
+            }`}
+            whileTap={{ scale: 0.97 }}
+          >
+            {item}
+          </motion.button>
+        );
+      })}
     </div>
   );
 
   if (isFetchingMyProfile) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <motion.div className="text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <motion.div
-            className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          />
-          <p className="text-xl font-semibold text-black">Loading service details...</p>
-        </motion.div>
-      </div>
+      <motion.div
+        className="flex min-h-screen items-center justify-center bg-[var(--background-subtle)] px-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <div className="w-full max-w-sm rounded-2xl border border-purple-100/50 bg-white/80 p-8 text-center shadow-sm shadow-purple-500/5">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
+          <p className="text-sm font-medium text-[var(--text-primary)]">Loading service details…</p>
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">Fetching your service offering.</p>
+        </div>
+      </motion.div>
     );
   }
 
   if (!targetService) {
     return (
       <motion.div
-        className="max-w-3xl mx-auto text-center py-24"
-        initial={{ opacity: 0, y: 20 }}
+        className="flex min-h-screen items-center justify-center bg-[var(--background-subtle)] px-4"
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-4xl font-bold text-black mb-4">Service not found</h1>
-        <p className="text-gray-500 mb-8">
-          We couldn’t find the service you’re trying to edit. It might have been removed.
-        </p>
-        <button
-          onClick={() => navigate('/provider/manage-services')}
-          className="px-5 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-900 transition"
-        >
-          Back to Manage Services
-        </button>
+        <div className="w-full max-w-md rounded-2xl border border-purple-100/50 bg-white/80 p-8 text-center shadow-sm shadow-purple-500/5">
+          <h1 className="text-lg font-semibold text-[var(--text-primary)] sm:text-xl">Service not found</h1>
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            We couldn&apos;t find the service you&apos;re trying to edit. It might have been removed.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/provider/manage-services')}
+            className={`mt-6 ${btnPrimary}`}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Manage Services
+          </button>
+        </div>
       </motion.div>
     );
   }
 
   return (
     <motion.div
-      className="max-w-4xl mx-auto mt-10 mb-20"
+      className="min-h-screen bg-[var(--background-subtle)]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
     >
-      <div className="mb-10">
-        <button
-          type="button"
-          onClick={() => navigate('/provider/manage-services')}
-          className="text-sm font-semibold text-gray-600 hover:text-black transition"
-        >
-          ← Back to Manage Services
-        </button>
-        <h1 className="text-4xl font-bold text-black tracking-tight mt-4 mb-2">Edit Service</h1>
-        <p className="text-gray-600">
-          Update details for <span className="font-semibold">{targetService?.serviceCategory}</span>
-        </p>
-      </div>
+      <section className="border-b border-purple-100/60 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20 py-6 sm:py-8">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => navigate('/provider/manage-services')}
+            className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--purple-primary)]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Manage Services
+          </button>
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--purple-primary)]">
+            Provider
+          </p>
+          <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">Edit Service</h1>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            Update details for{' '}
+            <span className="font-medium text-[var(--purple-primary)]">
+              {targetService?.servicename || targetService?.serviceCategory}
+            </span>
+          </p>
+        </div>
+      </section>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form
+        onSubmit={handleSubmit}
+        className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 sm:py-10"
+      >
         <motion.div
-          className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8"
-          initial={{ opacity: 0, y: 20 }}
+          className={cardClass}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
         >
+          <div className="mb-6 flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-fuchsia-100 text-[var(--purple-primary)]">
+              <Pencil className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)] sm:text-base">
+                Service details
+              </h2>
+              <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                Update name, category, description, and portfolio files.
+              </p>
+            </div>
+          </div>
+
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Service Name *</label>
+            <label className={labelClass} htmlFor="servicename">
+              Service Name *
+            </label>
             <input
+              id="servicename"
               type="text"
               value={serviceForm?.servicename || ''}
               onChange={(event) => handleInputChange('servicename', event.target.value)}
               placeholder="Enter a name for your service"
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
-                errors.servicename
-                  ? 'border-red-300 focus:ring-red-400 bg-red-50'
-                  : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
-              }`}
+              className={errors.servicename ? inputErr : inputOk}
             />
             {errors.servicename && (
-              <p className="text-red-500 text-sm mt-2 font-medium">{errors.servicename}</p>
+              <p className="mt-2 text-sm font-medium text-red-600">{errors.servicename}</p>
             )}
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Category *</label>
+            <label className={labelClass} htmlFor="category">
+              Category *
+            </label>
             <select
+              id="category"
               value={serviceForm?.category}
               onChange={(event) => handleCategoryChange(event.target.value)}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
-                errors.category
-                  ? 'border-red-300 focus:ring-red-400 bg-red-50'
-                  : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
-              }`}
+              className={errors.category ? inputErr : inputOk}
             >
               <option value="">Choose a category</option>
               {Object.keys(RULES).map((category) => (
@@ -383,97 +415,74 @@ const EditService = () => {
               ))}
             </select>
             {errors.category && (
-              <p className="text-red-500 text-sm mt-2 font-medium">{errors.category}</p>
+              <p className="mt-2 text-sm font-medium text-red-600">{errors.category}</p>
             )}
           </div>
 
           {serviceForm?.category && (
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Sub-categories *
-              </label>
+              <label className={labelClass}>Sub-categories *</label>
               {renderChips(RULES[serviceForm.category]?.subCategories || [], 'subCategories')}
               {errors.subCategories && (
-                <p className="text-red-500 text-sm mt-2 font-medium">{errors.subCategories}</p>
+                <p className="mt-2 text-sm font-medium text-red-600">{errors.subCategories}</p>
               )}
             </div>
           )}
 
           {serviceForm?.category && (RULES[serviceForm.category]?.keywords?.length || 0) > 0 && (
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Keywords *</label>
+              <label className={labelClass}>Keywords *</label>
               {renderChips(RULES[serviceForm.category]?.keywords || [], 'keywords')}
               {errors.keywords && (
-                <p className="text-red-500 text-sm mt-2 font-medium">{errors.keywords}</p>
+                <p className="mt-2 text-sm font-medium text-red-600">{errors.keywords}</p>
               )}
             </div>
           )}
 
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Description *</label>
+            <label className={labelClass} htmlFor="bio">
+              Description *
+            </label>
             <textarea
+              id="bio"
               value={serviceForm?.bio}
               onChange={(event) => handleInputChange('bio', event.target.value)}
               rows="4"
               placeholder="Describe your service..."
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none resize-none font-medium transition-all duration-300 ${
-                errors.bio
-                  ? 'border-red-300 focus:ring-red-400 bg-red-50'
-                  : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
-              }`}
+              className={`${errors.bio ? inputErr : inputOk} resize-none`}
             />
-            {errors.bio && <p className="text-red-500 text-sm mt-2 font-medium">{errors.bio}</p>}
+            {errors.bio && <p className="mt-2 text-sm font-medium text-red-600">{errors.bio}</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Experience (years) (optional)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={serviceForm?.experience}
-                onChange={(event) => handleInputChange('experience', event.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
-                  errors.experience
-                    ? 'border-red-300 focus:ring-red-400 bg-red-50'
-                    : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
-                }`}
-              />
-              {errors.experience && (
-                <p className="text-red-500 text-sm mt-2 font-medium">{errors.experience}</p>
-              )}
-            </div>
-            {/* <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Price (₹) *</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={serviceForm?.price}
-                onChange={(event) => handleInputChange('price', event.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all duration-300 font-medium ${
-                  errors.price
-                    ? 'border-red-300 focus:ring-red-400 bg-red-50'
-                    : 'border-gray-200 focus:ring-gray-400 focus:bg-white'
-                }`}
-              />
-              {errors.price && (
-                <p className="text-red-500 text-sm mt-2 font-medium">{errors.price}</p>
-              )}
-            </div> */}
-          </div>
-
-          <div className="mt-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Upload Work Images max upload 5 images upto 10 MB(optional)
+          <div>
+            <label className={labelClass} htmlFor="experience">
+              Experience (years){' '}
+              <span className="text-[var(--text-secondary)]/70">(optional)</span>
             </label>
-            <motion.div
-              className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${
-                errors.images ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300'
+            <input
+              id="experience"
+              type="number"
+              min="0"
+              value={serviceForm?.experience}
+              onChange={(event) => handleInputChange('experience', event.target.value)}
+              className={errors.experience ? inputErr : inputOk}
+            />
+            {errors.experience && (
+              <p className="mt-2 text-sm font-medium text-red-600">{errors.experience}</p>
+            )}
+          </div>
+
+          <div className="mt-8">
+            <label className={labelClass}>
+              Upload Work Images — max 5 images, up to 10 MB each{' '}
+              <span className="text-[var(--text-secondary)]/70">(optional)</span>
+            </label>
+            <div
+              className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors sm:p-10 ${
+                errors.images
+                  ? 'border-red-300 bg-red-50'
+                  : 'border-purple-100 bg-purple-50/20 hover:border-purple-200'
               }`}
-              whileHover={{ scale: 1.01 }}
             >
               <input
                 id="edit-service-images"
@@ -483,18 +492,21 @@ const EditService = () => {
                 onChange={handleImageUpload}
                 className="hidden"
               />
-              <label htmlFor="edit-service-images" className="cursor-pointer flex flex-col items-center">
-                <Upload className="text-gray-400 mb-3" size={40} />
-                <span className="text-gray-900 font-semibold">Click to upload images</span>
-                <span className="text-xs text-gray-500">PNG, JPG up to 50MB</span>
+              <label
+                htmlFor="edit-service-images"
+                className="flex cursor-pointer flex-col items-center"
+              >
+                <Upload className="mb-3 h-10 w-10 text-[var(--purple-primary)]" />
+                <span className="font-semibold text-[var(--text-primary)]">Click to upload images</span>
+                <span className="mt-1 text-xs text-[var(--text-secondary)]">PNG, JPG up to 10MB</span>
               </label>
-            </motion.div>
+            </div>
             {errors.images && (
-              <p className="text-red-500 text-sm mt-2 font-medium">{errors.images}</p>
+              <p className="mt-2 text-sm font-medium text-red-600">{errors.images}</p>
             )}
 
-            {(serviceForm?.existingImages?.length || serviceForm?.imagePreviews?.length) && (
-              <div className="mt-6 columns-2 md:columns-3 gap-4 [column-fill:_balance]">
+            {(serviceForm?.existingImages?.length || serviceForm?.imagePreviews?.length) > 0 && (
+              <div className="mt-6 columns-2 gap-4 [column-fill:_balance] md:columns-3">
                 {[
                   ...(serviceForm.existingImages || []).map((img, idx) => ({
                     url: img.url,
@@ -509,17 +521,17 @@ const EditService = () => {
                 ].map((imgObj, displayIdx) => (
                   <motion.div
                     key={`img-${displayIdx}-${imgObj.url}`}
-                    className="relative rounded-xl overflow-hidden mb-4 break-inside-avoid"
+                    className="relative mb-4 break-inside-avoid overflow-hidden rounded-xl border border-purple-100/50"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                   >
-                    <img src={imgObj.url} alt="Portfolio" className="w-full h-auto object-contain block" />
+                    <img src={imgObj.url} alt="Portfolio" className="block h-auto w-full object-contain" />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(imgObj.index, imgObj.isExisting)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 shadow-md hover:bg-red-600 transition"
+                      className="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white shadow-md transition hover:bg-red-600"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </motion.div>
                 ))}
@@ -527,15 +539,17 @@ const EditService = () => {
             )}
           </div>
 
-          <div className="mt-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Upload PDFs max upload 1 file upto 10 MB <span className="text-gray-400">(optional)</span>
+          <div className="mt-8">
+            <label className={labelClass}>
+              Upload PDFs — max 1 file, up to 20 MB{' '}
+              <span className="text-[var(--text-secondary)]/70">(optional)</span>
             </label>
-            <motion.div
-              className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${
-                errors.pdfs ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300'
+            <div
+              className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors sm:p-10 ${
+                errors.pdfs
+                  ? 'border-red-300 bg-red-50'
+                  : 'border-purple-100 bg-purple-50/20 hover:border-purple-200'
               }`}
-              whileHover={{ scale: 1.01 }}
             >
               <input
                 id="edit-service-pdfs"
@@ -545,18 +559,17 @@ const EditService = () => {
                 onChange={handlePDFUpload}
                 className="hidden"
               />
-              <label htmlFor="edit-service-pdfs" className="cursor-pointer flex flex-col items-center">
-                <FileText className="text-gray-400 mb-3" size={40} />
-                <span className="text-gray-900 font-semibold">Click to upload PDF</span>
-                <span className="text-xs text-gray-500">PDF files up to 20MB</span>
+              <label htmlFor="edit-service-pdfs" className="flex cursor-pointer flex-col items-center">
+                <FileText className="mb-3 h-10 w-10 text-[var(--purple-primary)]" />
+                <span className="font-semibold text-[var(--text-primary)]">Click to upload PDF</span>
+                <span className="mt-1 text-xs text-[var(--text-secondary)]">PDF files up to 20MB</span>
               </label>
-            </motion.div>
-            {/* {errors.pdfs && (
-              <p className="text-red-500 text-sm mt-2 font-medium">{errors.pdfs}</p>
-            )} */}
+            </div>
+            {errors.pdfs && <p className="mt-2 text-sm font-medium text-red-600">{errors.pdfs}</p>}
 
-            {((serviceForm?.existingPDFs && serviceForm.existingPDFs.length > 0) || (serviceForm?.pdfPreviews && serviceForm.pdfPreviews.length > 0)) && (
-              <div className="flex flex-wrap gap-4 mt-6">
+            {((serviceForm?.existingPDFs && serviceForm.existingPDFs.length > 0) ||
+              (serviceForm?.pdfPreviews && serviceForm.pdfPreviews.length > 0)) && (
+              <div className="mt-6 flex flex-wrap gap-4">
                 {[
                   ...(serviceForm.existingPDFs || []).map((pdf, idx) => ({
                     name: pdf.url.split('/').pop() || 'PDF',
@@ -573,20 +586,22 @@ const EditService = () => {
                 ].map((pdfObj, displayIdx) => (
                   <motion.div
                     key={`pdf-${displayIdx}-${pdfObj.url}`}
-                    className="relative border border-gray-200 rounded-xl p-4 shadow-sm bg-gray-50 flex items-center gap-3 min-w-[200px]"
+                    className="relative flex min-w-[200px] items-center gap-3 rounded-xl border border-purple-100/50 bg-purple-50/20 p-4"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                   >
-                    <FileText className="text-red-500" size={24} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{pdfObj.name}</p>
+                    <FileText className="h-6 w-6 shrink-0 text-[var(--purple-primary)]" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                        {pdfObj.name}
+                      </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemovePDF(pdfObj.index, pdfObj.isExisting)}
-                      className="bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition"
+                      className="rounded-full bg-red-500 p-1.5 text-white shadow-md transition hover:bg-red-600"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </motion.div>
                 ))}
@@ -600,14 +615,9 @@ const EditService = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`px-8 py-4 bg-gray-900 text-white font-semibold text-lg rounded-xl transition-all duration-300 shadow-lg tracking-wide ${
-              isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800 hover:shadow-xl'
-            }`}
-          >
-            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          <button type="submit" disabled={isSubmitting} className={btnPrimary}>
+            <Save className="h-4 w-4" />
+            {isSubmitting ? 'Saving…' : 'Save Changes'}
           </button>
         </motion.div>
       </form>
@@ -616,5 +626,3 @@ const EditService = () => {
 };
 
 export default EditService;
-
-

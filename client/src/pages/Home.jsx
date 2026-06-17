@@ -1,30 +1,27 @@
-import React from 'react'
-import Hero from '../components/Hero'
-import TopCategory from '../components/home/TopCategory'
-import TopServices from '../components/home/TopServices' 
-import { motion } from 'framer-motion'
+import React from 'react';
+import { motion } from 'framer-motion';
+import HomeHero from '../components/home/HomeHero';
+import LocalitiesSection from '../components/home/LocalitiesSection';
+import BrowseCategories from '../components/home/BrowseCategories';
+import AudienceSection from '../components/home/AudienceSection';
+import CommunityCta from '../components/home/CommunityCta';
 
 const Home = () => {
+  
   return (
-    <motion.div 
-      className=''
+    <motion.div
+      className="home-page min-h-screen bg-[var(--background-subtle)]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      style={{
-        // Force GPU acceleration for smooth scrolling
-        transform: 'translateZ(0)',
-        WebkitTransform: 'translateZ(0)',
-        willChange: 'auto',
-        // Enable smooth scrolling on iOS
-        WebkitOverflowScrolling: 'touch'
-      }}
     >
-      <Hero />
-      <TopCategory />
-      <TopServices /> 
+      <HomeHero />
+      <LocalitiesSection />
+      <BrowseCategories />
+      <AudienceSection />
+      <CommunityCta />
     </motion.div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

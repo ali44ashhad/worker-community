@@ -4,6 +4,7 @@ import CommunityEvent from "../models/communityEvent.model.js";
 import { FEATURE_TOGGLE_KEYS, normalizeFeatureToggles } from "../utils/featureToggles.js";
 import { validateEventExpiry } from "../utils/communityEvents.js";
 import { buildAttachmentsFromRequest, deleteEventAttachments } from "../utils/eventAttachments.js";
+import { sendUserRegistrationApprovedEmail, sendUserRegistrationRejectedEmail } from "../utils/email.js";
 
 const getSecretaryCommunityHandle = (secretary) =>
     secretary.communName ? String(secretary.communName).trim().toLowerCase() : "";
@@ -49,6 +50,17 @@ const approveRegistration = async (req, res) => {
         user.isActive = true;
         await user.save();
 
+        try {
+            if (user.email) {
+                await sendUserRegistrationApprovedEmail({
+                    toEmail: String(user.email).trim().toLowerCase(),
+                    communityCommunName: user.communityCommunName || "",
+                });
+            }
+        } catch (mailError) {
+            console.error("approveRegistration email failed:", mailError?.message || mailError);
+        }
+
         const safe = user.toObject();
         delete safe.password;
         return res.status(200).json({
@@ -82,6 +94,17 @@ const rejectRegistration = async (req, res) => {
         user.accountStatus = "rejected";
         user.isActive = false;
         await user.save();
+
+        try {
+            if (user.email) {
+                await sendUserRegistrationRejectedEmail({
+                    toEmail: String(user.email).trim().toLowerCase(),
+                    communityCommunName: user.communityCommunName || "",
+                });
+            }
+        } catch (mailError) {
+            console.error("rejectRegistration email failed:", mailError?.message || mailError);
+        }
 
         return res.status(200).json({
             success: true,
@@ -126,6 +149,82 @@ const listCommunityMembers = async (req, res) => {
         });
     } catch (error) {
         console.error("listCommunityMembers:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * Update a member's account status within this secretary's community.
+ * @route PATCH /api/secretary/members/:userId/status
+ * @body { accountStatus: "pending" | "approved" | "rejected", isActive?: boolean }
+ */
+const updateMemberStatus = async (req, res) => {
+    try {
+        const communityHandle = getSecretaryCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(400).json({ success: false, message: "No Commun handle on this account." });
+        }
+
+        const { userId } = req.params;
+        const { accountStatus, isActive } = req.body || {};
+
+        const allowed = ["pending", "approved", "rejected"];
+        if (accountStatus !== undefined && !allowed.includes(accountStatus)) {
+            return res.status(400).json({ success: false, message: "Invalid accountStatus." });
+        }
+        if (isActive !== undefined && typeof isActive !== "boolean") {
+            return res.status(400).json({ success: false, message: "Invalid isActive." });
+        }
+
+        const user = await User.findOne({
+            _id: userId,
+            communityCommunName: communityHandle,
+            role: { $nin: ["admin", "secretary"] },
+        });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Member not found in your community." });
+        }
+
+        const prevStatus = user.accountStatus || "approved";
+
+        if (accountStatus !== undefined) {
+            user.accountStatus = accountStatus;
+            // Keep isActive aligned with rejection unless explicitly overridden
+            if (accountStatus === "rejected" && isActive === undefined) user.isActive = false;
+            if (accountStatus === "approved" && isActive === undefined) user.isActive = true;
+        }
+        if (isActive !== undefined) user.isActive = isActive;
+
+        await user.save();
+
+        try {
+            // Send email only for meaningful transitions
+            if (user.email && accountStatus && accountStatus !== prevStatus) {
+                if (accountStatus === "approved") {
+                    await sendUserRegistrationApprovedEmail({
+                        toEmail: String(user.email).trim().toLowerCase(),
+                        communityCommunName: user.communityCommunName || "",
+                    });
+                } else if (accountStatus === "rejected") {
+                    await sendUserRegistrationRejectedEmail({
+                        toEmail: String(user.email).trim().toLowerCase(),
+                        communityCommunName: user.communityCommunName || "",
+                    });
+                }
+            }
+        } catch (mailError) {
+            console.error("updateMemberStatus email failed:", mailError?.message || mailError);
+        }
+
+        const safe = user.toObject();
+        delete safe.password;
+        return res.status(200).json({
+            success: true,
+            message: "Member updated.",
+            data: { user: safe },
+        });
+    } catch (error) {
+        console.error("updateMemberStatus:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -427,6 +526,7 @@ export {
     approveRegistration,
     rejectRegistration,
     listCommunityMembers,
+    updateMemberStatus,
     getFeatureToggles,
     updateFeatureToggle,
     listCommunityEvents,

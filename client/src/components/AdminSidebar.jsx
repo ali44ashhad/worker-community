@@ -2,94 +2,57 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  HiOutlineHome,
-  HiOutlineUserGroup,
-  HiOutlineBriefcase,
-  HiOutlineTag,
-  HiOutlineUser,
-  HiOutlineLogout,
-  HiOutlineX,
-  HiOutlineChartBar,
-  HiOutlineUsers,
-  HiOutlineClipboardList,
-} from 'react-icons/hi';
+  BarChart3,
+  Briefcase,
+  ClipboardList,
+  Home,
+  Layers,
+  LayoutDashboard,
+  LogOut,
+  Tag,
+  User,
+  UserCog,
+  Users,
+  X,
+} from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { motion } from 'framer-motion';
+import SidebarPanelGreeting from './SidebarPanelGreeting';
+
+const menuItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+  { icon: UserCog, label: 'Providers Mgmt', path: '/admin/providers' },
+  { icon: Briefcase, label: 'Services Mgmt', path: '/admin/services' },
+  { icon: Tag, label: 'Categories Mgnt', path: '/admin/categories' },
+  { icon: Layers, label: 'Category Clicks', path: '/admin/category-clicks' },
+  { icon: BarChart3, label: 'Provider Clicks', path: '/admin/provider-clicks' },
+  { icon: Users, label: 'User Mgmt', path: '/admin/users' },
+  { icon: ClipboardList, label: 'Secretary Mgmt', path: '/admin/secretaries' },
+  { icon: User, label: 'Update Profile', path: '/admin/update-profile' },
+  { icon: Home, label: 'Home Page', path: '/' },
+];
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
   const portalContainerRef = useRef(null);
-
-  useEffect(() => {
-    // Create a container for the sidebar that doesn't have transforms
-    const container = document.createElement('div');
-    container.id = 'admin-sidebar-portal';
-    container.style.cssText = 'position: static; transform: none; -webkit-transform: none; isolation: isolate; will-change: auto;';
-    document.body.appendChild(container);
-    portalContainerRef.current = container;
-
-    return () => {
-      if (portalContainerRef.current && portalContainerRef.current.parentNode) {
-        portalContainerRef.current.parentNode.removeChild(portalContainerRef.current);
-      }
-    };
-  }, []);
   const location = useLocation();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
 
-  const menuItems = [
-    {
-      icon: HiOutlineHome,
-      label: 'Dashboard',
-      path: '/admin/dashboard',
-    },
-    {
-      icon: HiOutlineUserGroup,
-      label: 'Providers Mgnt',
-      path: '/admin/providers',
-    },
-    {
-      icon: HiOutlineBriefcase,
-      label: 'Services Mgnt',
-      path: '/admin/services',
-    },
-    {
-      icon: HiOutlineTag,
-      label: 'Categories Mgnt',
-      path: '/admin/categories',
-    },
-    {
-      icon: HiOutlineChartBar,
-      label: 'Category Clicks',
-      path: '/admin/category-clicks',
-    },
-    {
-      icon: HiOutlineChartBar,
-      label: 'Provider Clicks',
-      path: '/admin/provider-clicks',
-    },
-    {
-      icon: HiOutlineUsers,
-      label: 'User Mgmt',
-      path: '/admin/users',
-    },
-    {
-      icon: HiOutlineClipboardList,
-      label: 'Secretary Mgmt',
-      path: '/admin/secretaries',
-    },
-    {
-      icon: HiOutlineUser,
-      label: 'Update Profile',
-      path: '/admin/update-profile',
-    },
-    {
-      icon: HiOutlineHome,
-      label: 'Home Page',
-      path: '/',
-    },
-  ];
+  useEffect(() => {
+    const container = document.createElement('div');
+    container.id = 'admin-sidebar-portal';
+    container.style.cssText =
+      'position: static; transform: none; -webkit-transform: none; isolation: isolate; will-change: auto;';
+    document.body.appendChild(container);
+    portalContainerRef.current = container;
+
+    return () => {
+      if (portalContainerRef.current?.parentNode) {
+        portalContainerRef.current.parentNode.removeChild(portalContainerRef.current);
+      }
+    };
+  }, []);
 
   const handleLogout = () => {
     dispatch(logoutUser());
@@ -103,8 +66,8 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
 
   const sidebarContent = (
     <div
-      className="w-64 bg-white border-r border-gray-300 fixed left-0 top-0 flex flex-col shadow-lg z-50 overflow-hidden"
-      style={{ 
+      className="fixed left-0 top-0 z-50 flex w-64 flex-col overflow-hidden border-r border-purple-100/60 bg-white/95 shadow-lg shadow-purple-500/5 backdrop-blur-sm"
+      style={{
         position: 'fixed',
         top: 0,
         left: 0,
@@ -115,46 +78,37 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
         WebkitTransform: isOpen ? 'translateX(0) translateZ(0)' : 'translateX(-100%) translateZ(0)',
         transition: 'transform 0.3s ease-in-out',
         WebkitTransition: 'transform 0.3s ease-in-out',
-        WebkitFontSmoothing: 'antialiased',
-        MozOsxFontSmoothing: 'grayscale',
-        textRendering: 'optimizeLegibility',
-        imageRendering: 'crisp-edges',
-        filter: 'none !important',
-        WebkitFilter: 'none !important',
-        backdropFilter: 'none !important',
-        WebkitBackdropFilter: 'none !important',
-        isolation: 'isolate',
-        opacity: 1
       }}
     >
-      {/* Logo/Header */}
       <motion.div
-        className="p-6 border-b border-gray-300 flex items-center justify-between gap-3"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        className="flex items-center justify-between gap-3 border-b border-purple-100/60 p-5"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.25 }}
       >
-        <div>
-          <h1 className="text-2xl font-bold text-black tracking-tight">Admin Panel</h1>
-          {user && (
-            <p className="text-sm text-gray-600 mt-2">Welcome, {user.name}</p>
-          )}
+        <div className="min-w-0">
+          <Link to="/admin/dashboard" onClick={handleNavClick} className="inline-flex items-center gap-2">
+            <img src="/CommuN-logo.png" alt="CommuN" className="sidebar-logo" />
+          </Link>
+          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-[var(--purple-primary)]">
+            Admin Panel
+          </p>
+          <SidebarPanelGreeting user={user} />
         </div>
         {onClose && (
           <button
             type="button"
-            className="lg:hidden p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-black hover:bg-gray-50 transition-all"
+            className="rounded-xl border border-purple-100 p-2 text-[var(--text-secondary)] transition-colors hover:bg-purple-50 hover:text-[var(--purple-primary)] lg:hidden"
             onClick={onClose}
             aria-label="Close sidebar"
           >
-            <HiOutlineX size={18} />
+            <X className="h-4 w-4" />
           </button>
         )}
       </motion.div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto">
-        <ul className="space-y-2">
+      <nav className="flex-1 overflow-y-auto p-3">
+        <ul className="space-y-1">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -162,24 +116,21 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
             return (
               <motion.li
                 key={item.path}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
+                transition={{ duration: 0.2, delay: index * 0.04 }}
               >
                 <Link
                   to={item.path}
                   onClick={handleNavClick}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
+                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-all ${
                     isActive
-                      ? 'bg-black text-white font-semibold shadow-md'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-black'
+                      ? 'bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] font-semibold text-white shadow-sm shadow-purple-500/20'
+                      : 'font-medium text-[var(--text-secondary)] hover:bg-purple-50 hover:text-[var(--purple-primary)]'
                   }`}
                 >
-                  <Icon
-                    size={20}
-                    className={isActive ? 'text-white' : 'text-gray-600 group-hover:text-black'}
-                  />
-                  <span className="font-medium">{item.label}</span>
+                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : ''}`} />
+                  <span>{item.label}</span>
                 </Link>
               </motion.li>
             );
@@ -187,21 +138,21 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
         </ul>
       </nav>
 
-      {/* Logout */}
       <motion.div
-        className="p-4 border-t border-gray-300"
-        initial={{ opacity: 0, y: 20 }}
+        className="border-t border-purple-100/60 p-3"
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.3 }}
+        transition={{ duration: 0.25, delay: 0.2 }}
       >
         <button
+          type="button"
           onClick={() => {
             handleLogout();
             handleNavClick();
           }}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 hover:text-black transition-all duration-300 font-medium border border-gray-300 hover:border-gray-400"
+          className="flex w-full items-center gap-3 rounded-xl border border-purple-100 px-3.5 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
         >
-          <HiOutlineLogout size={20} />
+          <LogOut className="h-4 w-4" />
           <span>Logout</span>
         </button>
       </motion.div>

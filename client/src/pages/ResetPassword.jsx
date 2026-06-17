@@ -1,100 +1,143 @@
-import React, { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "react-hot-toast";
-import { Eye, EyeOff } from "lucide-react";
-import { getApiBase } from "../utils/apiBase";
+import React, { useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Eye, EyeOff, LockKeyhole } from 'lucide-react';
+import { getApiBase } from '../utils/apiBase';
+
+const inputClass =
+  'w-full px-4 py-3 border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all duration-300';
 
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  const API_URL = useMemo(() => getApiBase() || "http://localhost:3001", []);
+  const API_URL = useMemo(() => getApiBase() || 'http://localhost:3001', []);
 
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 8) {
-      toast.error("Password should be at least 8 characters.");
+      toast.error('Password should be at least 8 characters.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match.");
+      toast.error('Passwords do not match.');
       return;
     }
 
     try {
       setLoading(true);
       const res = await fetch(`${API_URL}/api/user/reset-password/${token}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newPassword }),
       });
       const rawText = await res.text();
-      const data = rawText ? (() => { try { return JSON.parse(rawText); } catch { return null; } })() : null;
+      const data = rawText
+        ? (() => {
+            try {
+              return JSON.parse(rawText);
+            } catch {
+              return null;
+            }
+          })()
+        : null;
       if (!res.ok) {
         throw new Error(data?.message || `Failed (${res.status}).`);
       }
-      toast.success(data?.message || "Password reset successfully. Please login.");
-      navigate("/login");
+      toast.success(data?.message || 'Password reset successfully. Please login.');
+      navigate('/login');
     } catch (err) {
-      toast.error(err?.message || "Unable to reset password.");
+      toast.error(err?.message || 'Unable to reset password.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex mt-20 items-center justify-center p-6 bg-gray-50">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Reset password</h2>
-        <p className="text-sm text-gray-600 mb-6">
-          Set a new password for your account.
-        </p>
+    <div className="home-page min-h-screen bg-[var(--background-subtle)] relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/40 via-white to-fuchsia-50/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(217,70,239,0.06),transparent_45%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(107,70,193,0.06),transparent_45%)] pointer-events-none" />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <input
-              type={show ? "text" : "password"}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password"
-              className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShow((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200 focus:outline-none"
-              aria-label={show ? "Hide password" : "Show password"}
-            >
-              {show ? <Eye size={20} /> : <EyeOff size={20} />}
-            </button>
+      <div className="relative min-h-screen flex items-center justify-center px-4 py-28 sm:px-6">
+        <motion.div
+          className="w-full max-w-md rounded-3xl border border-purple-100/50 bg-white/80 p-8 shadow-xl shadow-purple-500/10 backdrop-blur-sm sm:p-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-100 to-fuchsia-100 text-[var(--purple-primary)]">
+            <LockKeyhole className="h-6 w-6" />
           </div>
 
-          <input
-            type={show ? "text" : "password"}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm password"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder:text-gray-400"
-            required
-          />
+          <div className="mb-6 inline-block rounded-full bg-gradient-to-r from-purple-100 to-fuchsia-100 px-3 py-1.5">
+            <span className="text-xs font-semibold bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
+              Set new password
+            </span>
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 rounded-xl text-white font-semibold bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-all duration-300 shadow-lg"
-          >
-            {loading ? "Please wait..." : "Update password"}
-          </button>
-        </form>
+          <h2 className="mb-2 text-3xl font-bold text-[var(--text-primary)]">Reset password</h2>
+          <p className="mb-8 text-sm text-[var(--text-secondary)] leading-relaxed">
+            Choose a strong new password for your account.
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
+              <input
+                type={show ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+                className={`${inputClass} pr-12`}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShow((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] transition-colors hover:text-[var(--purple-primary)] focus:outline-none"
+                aria-label={show ? 'Hide password' : 'Show password'}
+              >
+                {show ? <Eye size={20} /> : <EyeOff size={20} />}
+              </button>
+            </div>
+
+            <input
+              type={show ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm password"
+              className={inputClass}
+              required
+            />
+
+            <motion.button
+              type="submit"
+              disabled={loading}
+              className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-3.5 font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
+            >
+              {loading ? 'Please wait...' : 'Update password'}
+            </motion.button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-100 py-3 font-semibold text-[var(--text-primary)] transition-all hover:bg-purple-50"
+            >
+              <ArrowLeft className="h-4 w-4 text-[var(--purple-primary)]" />
+              Back to login
+            </button>
+          </form>
+        </motion.div>
       </div>
     </div>
   );
 };
 
 export default ResetPassword;
-

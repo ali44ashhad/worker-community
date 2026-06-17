@@ -1,16 +1,95 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  User,
+  Mail,
+  Phone,
+  Camera,
+  Check,
+  Eye,
+  EyeOff,
+  MapPin,
+  LockKeyhole,
+  ArrowLeft,
+} from 'lucide-react';
 import { changePasswordUser, updateProfile } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
-import { HiOutlineUser, HiOutlineMail, HiOutlinePhone, HiOutlineCamera, HiOutlineCheck, HiX } from 'react-icons/hi';
+import { getInitials } from '../utils/userHelpers';
+
+const inputClass =
+  'w-full px-3.5 py-2.5 text-sm border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 focus:border-[var(--purple-primary)] transition-all';
+
+const inputDisabled =
+  'w-full px-3.5 py-2.5 text-sm border border-purple-100 rounded-xl bg-purple-50/50 text-[var(--text-secondary)] cursor-not-allowed';
+
+const Section = ({ title, description, children, icon: Icon }) => (
+  <div className="rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-6">
+    {(title || description) && (
+      <div className="mb-5 flex items-start gap-3">
+        {Icon && (
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-fuchsia-100 text-[var(--purple-primary)]">
+            <Icon className="h-4 w-4" />
+          </div>
+        )}
+        <div className="min-w-0">
+          {title && <h2 className="text-sm font-semibold text-[var(--text-primary)] sm:text-base">{title}</h2>}
+          {description && (
+            <p className="mt-0.5 text-xs leading-relaxed text-[var(--text-secondary)]">{description}</p>
+          )}
+        </div>
+      </div>
+    )}
+    {children}
+  </div>
+);
+
+const Field = ({ label, htmlFor, optional, hint, children }) => (
+  <div>
+    <label htmlFor={htmlFor} className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">
+      {label}
+      {optional && <span className="font-normal text-[var(--text-secondary)]/70"> (optional)</span>}
+    </label>
+    {children}
+    {hint && <p className="mt-1 text-[11px] text-[var(--text-secondary)]/80">{hint}</p>}
+  </div>
+);
+
+const PasswordField = ({ id, label, value, onChange, show, onToggle, autoComplete }) => (
+  <Field label={label} htmlFor={id}>
+    <div className="relative">
+      <input
+        id={id}
+        type={show ? 'text' : 'password'}
+        name={id}
+        value={value}
+        onChange={onChange}
+        className={`${inputClass} pr-10`}
+        autoComplete={autoComplete}
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-[var(--text-secondary)] transition-colors hover:text-[var(--purple-primary)]"
+        aria-label={show ? 'Hide password' : 'Show password'}
+      >
+        {show ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+      </button>
+    </div>
+  </Field>
+);
 
 const UpdateProfile = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useSelector((state) => state.auth.user);
   const isLoading = useSelector((state) => state.auth.isLoading);
-  
+  const isPanelRoute =
+    /^\/(admin|provider|secretary)\//.test(location.pathname) ||
+    location.pathname === '/community/update-profile';
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -57,7 +136,9 @@ const UpdateProfile = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'phoneNumber') {
-      const digitsOnly = String(value || '').replace(/\D/g, '').slice(0, 10);
+      const digitsOnly = String(value || '')
+        .replace(/\D/g, '')
+        .slice(0, 10);
       setFormData((prev) => ({ ...prev, phoneNumber: digitsOnly }));
       return;
     }
@@ -67,26 +148,20 @@ const UpdateProfile = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         toast.error('Please upload an image file');
         return;
       }
-      
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Image size should be less than 5MB');
         return;
       }
 
       setProfileImage(file);
-      setRemoveProfileImage(false); // Clear removal flag when uploading new image
-      
-      // Create preview
+      setRemoveProfileImage(false);
+
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-      };
+      reader.onloadend = () => setPreviewImage(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -107,17 +182,14 @@ const UpdateProfile = () => {
       toast.error('Please fill all password fields.');
       return;
     }
-
     if (newPassword.length < 8) {
       toast.error('New password should be at least 8 characters.');
       return;
     }
-
     if (newPassword !== confirmNewPassword) {
       toast.error('New password and confirm password do not match.');
       return;
     }
-
     if (newPassword === currentPassword) {
       toast.error('New password must be different from current password.');
       return;
@@ -134,22 +206,15 @@ const UpdateProfile = () => {
   };
 
   const handleRemoveImage = () => {
-    // If there's a newly uploaded image, just remove it locally
     if (profileImage) {
       setProfileImage(null);
       setPreviewImage(user?.profileImage || '');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    } 
-    // If there's an existing profile image, toggle removal state
-    else if (user?.profileImage) {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } else if (user?.profileImage) {
       if (removeProfileImage) {
-        // Undo removal
         setRemoveProfileImage(false);
         setPreviewImage(user.profileImage);
       } else {
-        // Mark for removal
         setRemoveProfileImage(true);
         setPreviewImage('');
       }
@@ -158,7 +223,7 @@ const UpdateProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       if (formData.phoneNumber) {
         const phoneDigits = String(formData.phoneNumber || '').replace(/\D/g, '');
@@ -167,6 +232,7 @@ const UpdateProfile = () => {
           return;
         }
       }
+
       const formDataToSend = new FormData();
       formDataToSend.append('firstName', formData.firstName);
       formDataToSend.append('lastName', formData.lastName);
@@ -176,7 +242,7 @@ const UpdateProfile = () => {
       formDataToSend.append('city', formData.city);
       formDataToSend.append('state', formData.state);
       formDataToSend.append('zip', formData.zip);
-      
+
       if (removeProfileImage) {
         formDataToSend.append('removeProfileImage', 'true');
       } else if (profileImage) {
@@ -184,7 +250,6 @@ const UpdateProfile = () => {
       }
 
       const data = await dispatch(updateProfile(formDataToSend)).unwrap();
-      
       if (data.success) {
         toast.success('Profile updated successfully');
         navigate('/');
@@ -196,13 +261,16 @@ const UpdateProfile = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-black mb-4">Please Login First</h2>
-          <p className="text-gray-600 mb-6">You need to be logged in to update your profile</p>
+      <div className="home-page flex min-h-screen items-center justify-center bg-[var(--background-subtle)] px-4">
+        <div className="w-full max-w-sm rounded-2xl border border-purple-100/50 bg-white/80 p-8 text-center shadow-lg shadow-purple-500/5">
+          <h2 className="mb-2 text-lg font-semibold text-[var(--text-primary)]">Please sign in</h2>
+          <p className="mb-6 text-sm text-[var(--text-secondary)]">
+            You need to be logged in to update your profile.
+          </p>
           <button
+            type="button"
             onClick={() => navigate('/login')}
-            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-900 transition-colors"
+            className="w-full rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-all"
           >
             Go to Login
           </button>
@@ -210,51 +278,61 @@ const UpdateProfile = () => {
       </div>
     );
   }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white py-20 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-black mb-3">
-            Update Profile
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Manage your personal information and profile picture
+    <motion.div
+      className="home-page min-h-screen bg-[var(--background-subtle)]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
+    >
+      <section
+        className={`border-b border-purple-100/60 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20 pb-8 ${
+          isPanelRoute ? 'pt-6' : 'pt-24 sm:pt-28'
+        }`}
+      >
+        <div className="mx-auto max-w-2xl px-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--purple-primary)] hover:text-[var(--magenta)] transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
+          </button>
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--purple-primary)]">
+            Account settings
+          </p>
+          <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">Profile</h1>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            Update your details and manage account security.
           </p>
         </div>
+      </section>
 
-        <div className="bg-white border-2 border-black rounded-2xl shadow-2xl overflow-hidden">
-          {/* Profile Image Section */}
-          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-8 py-10 border-b-2 border-black">
-            <div className="flex flex-col items-center">
-              <div className="relative mb-6">
-                {/* Profile Image */}
-                <div className="w-40 h-40 rounded-full border-4 border-black overflow-hidden bg-white shadow-lg">
-                  {previewImage ? (
-                    <img
-                      src={previewImage}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                      <HiOutlineUser className="text-5xl text-gray-400" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Camera Icon Overlay */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-0 right-0 bg-black text-white p-3 rounded-full border-4 border-white shadow-lg hover:bg-gray-800 transition-all hover:scale-110"
-                >
-                  <HiOutlineCamera className="text-xl" />
-                </button>
+      <div className="mx-auto max-w-2xl space-y-5 px-4 py-8 sm:px-6 sm:py-10">
+        {/* Profile photo */}
+        <Section title="Profile photo" description="JPG or PNG, max 5MB." icon={Camera}>
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+            <div className="relative shrink-0">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--purple-primary)]/30 bg-purple-50 sm:h-28 sm:w-28">
+                {previewImage ? (
+                  <img src={previewImage} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-xl font-semibold text-[var(--purple-primary)]">
+                    {getInitials(user)}
+                  </span>
+                )}
               </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white shadow-md transition-transform hover:scale-105"
+              >
+                <Camera className="h-3.5 w-3.5" />
+              </button>
+            </div>
 
-              {/* File Input (Hidden) */}
+            <div className="flex flex-1 flex-col items-center gap-2 sm:items-start">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -262,302 +340,236 @@ const UpdateProfile = () => {
                 onChange={handleImageChange}
                 className="hidden"
               />
-
-              <p className="text-sm text-gray-600 max-w-md text-center mb-4">
-                Click the camera icon to upload a new profile picture
-              </p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="rounded-xl border border-purple-100 px-4 py-2 text-xs font-medium text-[var(--text-primary)] transition-colors hover:bg-purple-50"
+              >
+                Upload new photo
+              </button>
               {user?.profileImage && (
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    removeProfileImage 
-                      ? 'bg-orange-100 text-orange-700 border-2 border-orange-300 hover:bg-orange-200' 
-                      : 'bg-red-100 text-red-700 border-2 border-red-300 hover:bg-red-200'
+                  className={`text-xs font-medium transition-colors ${
+                    removeProfileImage
+                      ? 'text-amber-600 hover:text-amber-700'
+                      : 'text-red-500 hover:text-red-600'
                   }`}
                 >
-                  {removeProfileImage ? 'Profile picture will be removed (click to undo)' : 'Remove Profile Picture'}
+                  {removeProfileImage ? 'Undo removal' : 'Remove photo'}
                 </button>
               )}
             </div>
           </div>
+        </Section>
 
-          {/* Form Section */}
-          <form onSubmit={handleSubmit} className="p-8">
-            {/* First Name Input */}
-            <div className="mb-6">
-              <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                First Name
-              </label>
-              <div className="relative">
-                <HiOutlineUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  placeholder="Enter your first name"
-                  className="w-full h-14 pl-12 pr-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
-                  required
-                />
+        {/* Personal info */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <Section title="Personal information" description="Your basic contact details." icon={User}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="First name" htmlFor="firstName">
+                  <input
+                    id="firstName"
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    placeholder="First name"
+                    className={inputClass}
+                    required
+                  />
+                </Field>
+                <Field label="Last name" htmlFor="lastName">
+                  <input
+                    id="lastName"
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Last name"
+                    className={inputClass}
+                    required
+                  />
+                </Field>
               </div>
-            </div>
 
-            {/* Last Name Input */}
-            <div className="mb-6">
-              <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                Last Name
-              </label>
-              <div className="relative">
-                <HiOutlineUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  placeholder="Enter your last name"
-                  className="w-full h-14 pl-12 pr-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
-                  required
-                />
-              </div>
-            </div>
+              <Field label="Email" htmlFor="email" hint="Email cannot be changed.">
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]/60" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={user.email}
+                    disabled
+                    className={`${inputDisabled} pl-9`}
+                  />
+                </div>
+              </Field>
 
-            {/* Email (Read-only) */}
-            <div className="mb-6">
-              <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                Email Address
-              </label>
-              <div className="relative">
-                <HiOutlineMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="email"
-                  value={user.email}
-                  disabled
-                  className="w-full h-14 pl-12 pr-4 border-2 border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              <Field label="Phone number" htmlFor="phoneNumber">
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]/60" />
+                  <input
+                    id="phoneNumber"
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    placeholder="10-digit mobile number"
+                    inputMode="numeric"
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    className={`${inputClass} pl-9`}
+                    required
+                  />
+                </div>
+              </Field>
             </div>
+          </Section>
 
-            {/* Phone Number Input */}
-            <div className="mb-8">
-              <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                Phone Number
-              </label>
-              <div className="relative">
-                <HiOutlinePhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <Section title="Address" description="Optional — helps others find you locally." icon={MapPin}>
+            <div className="space-y-4">
+              <Field label="Address line 1" htmlFor="addressLine1" optional>
                 <input
-                  type="tel"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="Enter your phone number"
-                  inputMode="numeric"
-                  pattern="[0-9]{10}"
-                  maxLength={10}
-                  className="w-full h-14 pl-12 pr-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Address Inputs */}
-            <div className="mb-8">
-              <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                Address <span className="text-gray-400 font-bold normal-case">(optional)</span>
-              </label>
-              
-              <div className="space-y-4">
-                <input
+                  id="addressLine1"
                   type="text"
                   name="addressLine1"
                   value={formData.addressLine1}
                   onChange={handleChange}
-                  placeholder="Address Line 1"
-                  className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                  placeholder="Street address"
+                  className={inputClass}
                 />
-                
+              </Field>
+              <Field label="Address line 2" htmlFor="addressLine2" optional>
                 <input
+                  id="addressLine2"
                   type="text"
                   name="addressLine2"
                   value={formData.addressLine2}
                   onChange={handleChange}
-                  placeholder="Address Line 2 (optional)"
-                  className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                  placeholder="Apartment, suite, etc."
+                  className={inputClass}
                 />
-                
-                <div className="grid grid-cols-3 gap-4">
+              </Field>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <Field label="City" htmlFor="city" optional>
                   <input
+                    id="city"
                     type="text"
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
                     placeholder="City"
-                    className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                    className={inputClass}
                   />
-                  
+                </Field>
+                <Field label="State" htmlFor="state" optional>
                   <input
+                    id="state"
                     type="text"
                     name="state"
                     value={formData.state}
                     onChange={handleChange}
                     placeholder="State"
-                    className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                    className={inputClass}
                   />
-                  
+                </Field>
+                <Field label="ZIP" htmlFor="zip" optional>
                   <input
+                    id="zip"
                     type="text"
                     name="zip"
                     value={formData.zip}
                     onChange={handleChange}
-                    placeholder="ZIP Code"
-                    className="w-full h-14 px-4 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+                    placeholder="ZIP"
+                    className={inputClass}
                   />
-                </div>
+                </Field>
               </div>
             </div>
+          </Section>
 
-            {/* Submit Button */}
-            <div className="flex gap-4">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              disabled={isLoading}
+              className="rounded-xl border border-purple-100 px-5 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-purple-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isLoading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  Save changes
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Password */}
+        <Section title="Password" description="Use a strong password you don't use elsewhere." icon={LockKeyhole}>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <PasswordField
+              id="currentPassword"
+              label="Current password"
+              value={passwordForm.currentPassword}
+              onChange={handlePasswordChange}
+              show={showPasswords.current}
+              onToggle={() => setShowPasswords((p) => ({ ...p, current: !p.current }))}
+              autoComplete="current-password"
+            />
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <PasswordField
+                id="newPassword"
+                label="New password"
+                value={passwordForm.newPassword}
+                onChange={handlePasswordChange}
+                show={showPasswords.next}
+                onToggle={() => setShowPasswords((p) => ({ ...p, next: !p.next }))}
+                autoComplete="new-password"
+              />
+              <PasswordField
+                id="confirmNewPassword"
+                label="Confirm new password"
+                value={passwordForm.confirmNewPassword}
+                onChange={handlePasswordChange}
+                show={showPasswords.confirm}
+                onToggle={() => setShowPasswords((p) => ({ ...p, confirm: !p.confirm }))}
+                autoComplete="new-password"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-purple-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[11px] text-[var(--text-secondary)]">
+                Minimum 8 characters. Mix letters, numbers, and symbols.
+              </p>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 flex items-center justify-center gap-2 h-14 bg-black text-white rounded-lg font-semibold hover:bg-gray-900 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-black"
+                className="w-full rounded-xl border border-purple-100 px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-purple-50 disabled:opacity-50 sm:w-auto"
               >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Updating...</span>
-                  </>
-                ) : (
-                  <>
-                    <HiOutlineCheck size={20} />
-                    <span>Update Profile</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                disabled={isLoading}
-                className="px-6 h-14 border-2 border-black text-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
+                {isLoading ? 'Updating…' : 'Update password'}
               </button>
             </div>
           </form>
-
-          {/* Change Password Section */}
-          <div className="border-t-2 border-black bg-white p-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-black">Change Password</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Update your password to keep your account secure.
-              </p>
-            </div>
-
-            <form onSubmit={handleChangePassword} className="space-y-5">
-              <div>
-                <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                  Current Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPasswords.current ? 'text' : 'password'}
-                    name="currentPassword"
-                    value={passwordForm.currentPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Enter current password"
-                    className="w-full h-14 px-4 pr-16 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords((p) => ({ ...p, current: !p.current }))}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-2 text-sm font-semibold rounded-md border border-gray-300 hover:bg-gray-100 transition-colors"
-                  >
-                    {showPasswords.current ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                    New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPasswords.next ? 'text' : 'password'}
-                      name="newPassword"
-                      value={passwordForm.newPassword}
-                      onChange={handlePasswordChange}
-                      placeholder="Min 8 characters"
-                      className="w-full h-14 px-4 pr-16 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
-                      autoComplete="new-password"
-                      minLength={8}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswords((p) => ({ ...p, next: !p.next }))}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-2 text-sm font-semibold rounded-md border border-gray-300 hover:bg-gray-100 transition-colors"
-                    >
-                      {showPasswords.next ? 'Hide' : 'Show'}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-black font-semibold mb-2 text-sm uppercase tracking-wide">
-                    Confirm New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPasswords.confirm ? 'text' : 'password'}
-                      name="confirmNewPassword"
-                      value={passwordForm.confirmNewPassword}
-                      onChange={handlePasswordChange}
-                      placeholder="Re-enter new password"
-                      className="w-full h-14 px-4 pr-16 border-2 border-black rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
-                      autoComplete="new-password"
-                      minLength={8}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswords((p) => ({ ...p, confirm: !p.confirm }))}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-2 text-sm font-semibold rounded-md border border-gray-300 hover:bg-gray-100 transition-colors"
-                    >
-                      {showPasswords.confirm ? 'Hide' : 'Show'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-                <p className="text-xs text-gray-500">
-                  Tip: Use a strong password (mix letters, numbers, symbols).
-                </p>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="h-12 px-6 bg-black text-white rounded-lg font-semibold hover:bg-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Updating...' : 'Change Password'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        {/* Additional Info */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-500 text-sm">
-            Your profile information helps others connect with you on our platform
-          </p>
-        </div>
+        </Section>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -3,12 +3,12 @@ import bcrypt from "bcrypt";
 import User from "../models/user.model.js";
 import ServiceOffering from '../models/serviceOffering.model.js';
 import crypto from "crypto";
-import nodemailer from "nodemailer";
 import {
     S3_FOLDERS,
     deleteS3AssetByUrl,
     uploadBufferToS3,
 } from "../utils/s3Upload.js";
+import { sendPasswordResetEmail, sendSecretaryNewSignupEmail } from "../utils/email.js";
 import { normalizeCommunName, isValidCommunName } from "../utils/communName.js";
 import { normalizeFeatureToggles } from "../utils/featureToggles.js";
 import Broadcast from "../models/broadcast.model.js";
@@ -22,54 +22,14 @@ const generateToken = (userId, res) => {
         expiresIn: "7d"
     });
 
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("jwt", token, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: "/",
     });
-};
-
-const sendPasswordResetEmail = async ({ toEmail, resetUrl }) => {
-    const host = (process.env.SMTP_HOST || "").trim();
-    const port = Number(process.env.SMTP_PORT || 587);
-    const user = (process.env.SMTP_USER || "").trim();
-    const pass = (process.env.SMTP_PASS || "").trim();
-    const from = (process.env.SMTP_FROM || process.env.SMTP_USER || "no-reply@commun.in").trim();
-
-    if (!host || !user || !pass) {
-        // No SMTP configured; allow API to succeed without sending.
-        return { sent: false };
-    }
-
-    const transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure: port === 465,
-        auth: { user, pass },
-    });
-
-    await transporter.sendMail({
-        from,
-        to: toEmail,
-        subject: "Reset your password",
-        text: `Reset your password using this link: ${resetUrl}`,
-        html: `
-          <div style="font-family:Arial,sans-serif;line-height:1.5">
-            <h2>Reset your password</h2>
-            <p>Click the button below to set a new password.</p>
-            <p style="margin:16px 0">
-              <a href="${resetUrl}" style="background:#111827;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px;display:inline-block">
-                Reset Password
-              </a>
-            </p>
-            <p>If you did not request this, you can ignore this email.</p>
-          </div>
-        `,
-    });
-
-    return { sent: true };
 };
 
 const forgotPassword = async (req, res) => {
@@ -271,6 +231,21 @@ const register = async (req, res) => {
 
         const user = await User.create(userPayload);
 
+        try {
+            if (secretaryForCommunity?.email) {
+                const memberName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+                await sendSecretaryNewSignupEmail({
+                    toEmail: String(secretaryForCommunity.email).trim().toLowerCase(),
+                    communityCommunName: cn,
+                    memberName: memberName || "New member",
+                    memberEmail: user.email,
+                    memberPhone: user.phoneNumber,
+                });
+            }
+        } catch (mailError) {
+            console.log("Secretary signup notification email failed:", mailError?.message || mailError);
+        }
+
         generateToken(user._id, res);
         user.password = undefined;
 
@@ -338,14 +313,13 @@ const login = async (req, res) => {
 
 const logout = (req, res) => {
     try {
+        const isProduction = process.env.NODE_ENV === "production";
         res.cookie("jwt", "", {
-            // httpOnly: true,
-            // expires: new Date(0)
             httpOnly: true,
-            secure: true, 
-            sameSite: "none", 
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
             expires: new Date(0),
-            path: "/", 
+            path: "/",
         });
         res.status(200).json({
             success: true,

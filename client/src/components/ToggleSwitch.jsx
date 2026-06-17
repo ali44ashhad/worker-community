@@ -8,8 +8,8 @@ const ToggleSwitch = ({ enabled, onToggle, disabled = false, label }) => (
     aria-label={label}
     disabled={disabled}
     onClick={onToggle}
-    className={`relative inline-flex h-7 w-12 flex-shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50 ${
-      enabled ? 'bg-gray-900' : 'bg-gray-300'
+    className={`relative inline-flex h-7 w-12 flex-shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-primary)]/40 focus-visible:ring-offset-2 disabled:opacity-50 ${
+      enabled ? 'bg-[var(--purple-primary)]' : 'bg-purple-200'
     }`}
   >
     <span

@@ -198,10 +198,16 @@ export const deleteServicePDF = createAsyncThunk(
 // Get category clicks (admin)
 export const getCategoryClicks = createAsyncThunk(
   "admin/getCategoryClicks",
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/api/admin/category-clicks`);
-      return res.data.data;
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+      const res = await axios.get(`${API_URL}/api/admin/category-clicks?${params.toString()}`);
+      return {
+        categoryClicks: res.data.data,
+        categoryClicksPagination: res.data.pagination,
+      };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch category clicks");
     }
@@ -211,10 +217,16 @@ export const getCategoryClicks = createAsyncThunk(
 // Get provider clicks (admin)
 export const getProviderClicks = createAsyncThunk(
   "admin/getProviderClicks",
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/api/admin/provider-clicks`);
-      return res.data.data;
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+      const res = await axios.get(`${API_URL}/api/admin/provider-clicks?${params.toString()}`);
+      return {
+        providerClicks: res.data.data,
+        providerClicksPagination: res.data.pagination,
+      };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch provider clicks");
     }
@@ -394,49 +406,29 @@ const adminSlice = createSlice({
       limit: 50,
     },
     categoryClicks: [],
+    categoryClicksPagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalCategories: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+      limit: 10,
+    },
     providerClicks: [],
+    providerClicksPagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalProviders: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+      limit: 10,
+    },
     secretaries: [],
     secretariesLoading: false,
     isLoading: false,
     error: null,
   },
-  reducers: {
-    clearAdminState: (state) => {
-      state.dashboardStats = null;
-      state.providers = [];
-      state.users = [];
-      state.pagination = {
-        currentPage: 1,
-        totalPages: 1,
-        totalProviders: 0,
-        hasNextPage: false,
-        hasPrevPage: false,
-        limit: 10
-      };
-      state.services = [];
-      state.usersPagination = {
-        currentPage: 1,
-        totalPages: 1,
-        totalUsers: 0,
-        hasNextPage: false,
-        hasPrevPage: false,
-        limit: 10
-      };
-      state.servicesPagination = {
-        currentPage: 1,
-        totalPages: 1,
-        totalServices: 0,
-        hasNextPage: false,
-        hasPrevPage: false,
-        limit: 10
-      };
-      state.categoryClicks = [];
-      state.providerClicks = [];
-      state.secretaries = [];
-      state.secretariesLoading = false;
-      state.error = null;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       // Get dashboard stats
@@ -549,7 +541,8 @@ const adminSlice = createSlice({
       })
       .addCase(getCategoryClicks.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.categoryClicks = action.payload;
+        state.categoryClicks = action.payload.categoryClicks;
+        state.categoryClicksPagination = action.payload.categoryClicksPagination;
       })
       .addCase(getCategoryClicks.rejected, (state, action) => {
         state.isLoading = false;
@@ -562,7 +555,8 @@ const adminSlice = createSlice({
       })
       .addCase(getProviderClicks.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.providerClicks = action.payload;
+        state.providerClicks = action.payload.providerClicks;
+        state.providerClicksPagination = action.payload.providerClicksPagination;
       })
       .addCase(getProviderClicks.rejected, (state, action) => {
         state.isLoading = false;
@@ -647,6 +641,5 @@ const adminSlice = createSlice({
   },
 });
 
-export const { clearAdminState } = adminSlice.actions;
 export default adminSlice.reducer;
 

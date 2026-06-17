@@ -1,8 +1,47 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
+import { UserPlus, Users } from 'lucide-react';
 import { getSecretariesAdmin, createSecretaryAdmin } from '../../features/adminSlice';
+import ProfileAvatar from '../../components/ProfileAvatar';
 import { getFullName } from '../../utils/userHelpers';
+import { formatCommunDisplayName } from '../../utils/communName';
+
+const inputClass =
+  'w-full rounded-xl border border-purple-100 bg-white px-3.5 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 focus:border-[var(--purple-primary)] transition-all';
+
+const labelClass = 'mb-1.5 block text-xs font-medium text-[var(--text-secondary)]';
+
+const StatusBadge = ({ isActive }) => (
+  <span
+    className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-medium ${
+      isActive
+        ? 'border border-emerald-100 bg-emerald-50 text-emerald-700'
+        : 'border border-red-100 bg-red-50 text-red-600'
+    }`}
+  >
+    {isActive ? 'Active' : 'Inactive'}
+  </span>
+);
+
+const Card = ({ icon: Icon, title, description, children }) => (
+  <div className="rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-6">
+    <div className="mb-5 flex items-start gap-3">
+      {Icon && (
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-fuchsia-100 text-[var(--purple-primary)]">
+          <Icon className="h-4 w-4" />
+        </div>
+      )}
+      <div>
+        <h2 className="text-base font-semibold text-[var(--text-primary)] sm:text-lg">{title}</h2>
+        {description && (
+          <p className="mt-0.5 text-xs leading-relaxed text-[var(--text-secondary)]">{description}</p>
+        )}
+      </div>
+    </div>
+    {children}
+  </div>
+);
 
 const SecretaryManagement = () => {
   const dispatch = useDispatch();
@@ -23,11 +62,21 @@ const SecretaryManagement = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'phoneNumber') {
-      setForm((prev) => ({ ...prev, phoneNumber: String(value || '').replace(/\D/g, '').slice(0, 15) }));
+      setForm((prev) => ({
+        ...prev,
+        phoneNumber: String(value || '')
+          .replace(/\D/g, '')
+          .slice(0, 15),
+      }));
       return;
     }
     if (name === 'communName') {
-      setForm((prev) => ({ ...prev, communName: String(value || '').toLowerCase().replace(/[^a-z0-9_-]/g, '') }));
+      setForm((prev) => ({
+        ...prev,
+        communName: String(value || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]/g, ''),
+      }));
       return;
     }
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -48,111 +97,182 @@ const SecretaryManagement = () => {
     }
   };
 
-  const inputClass =
-    'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-gray-400';
-
   return (
-    <motion.div
-      className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      <div className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">Admin</p>
-        <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">
-          Secretary management
-        </h1>
-        <p className="mt-2 text-sm text-gray-600 sm:text-base">
-          Onboard secretaries with their Commun login name. They sign in with email and password like other users.
+    <div className="p-4 lg:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+        className="mb-6"
+      >
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--purple-primary)]">
+          Admin
         </p>
-      </div>
+        <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">
+          Secretary Management
+        </h1>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          Onboard secretaries with their Commun login name. They sign in with email and password
+          like other users.
+        </p>
+      </motion.div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
+      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_1.1fr] lg:gap-8">
         <motion.form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h2 className="text-lg font-bold text-gray-900">Onboard secretary</h2>
-          <p className="mt-1 text-xs text-gray-500">
-            Lowercase letters, numbers, hyphens, underscores (2–40 chars). New members choose this same handle from a
-            list when they sign up so they join your Commun community.
-          </p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">First name *</label>
-              <input name="firstName" value={form.firstName} onChange={handleChange} className={inputClass} required />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Last name *</label>
-              <input name="lastName" value={form.lastName} onChange={handleChange} className={inputClass} required />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Phone *</label>
-              <input name="phoneNumber" value={form.phoneNumber} onChange={handleChange} className={inputClass} required />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Email *</label>
-              <input type="email" name="email" value={form.email} onChange={handleChange} className={inputClass} required />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Commun name (unique) *
-              </label>
-              <input name="communName" value={form.communName} onChange={handleChange} className={inputClass} placeholder="e.g. priya_commun" required />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Password *</label>
-              <input type="password" name="password" value={form.password} onChange={handleChange} className={inputClass} autoComplete="new-password" required />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={secretariesLoading}
-            className="mt-6 w-full rounded-lg bg-gray-900 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-8"
+          <Card
+            icon={UserPlus}
+            title="Onboard secretary"
+            description="Lowercase letters, numbers, hyphens, underscores (2–40 chars). New members choose this handle when signing up to join your Commun community."
           >
-            {secretariesLoading ? 'Saving…' : 'Create secretary'}
-          </button>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass} htmlFor="firstName">
+                  First name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  value={form.firstName}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="lastName">
+                  Last name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  value={form.lastName}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="phoneNumber">
+                  Phone <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  value={form.phoneNumber}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="email">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={labelClass} htmlFor="communName">
+                  Commun name (unique) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="communName"
+                  name="communName"
+                  value={form.communName}
+                  onChange={handleChange}
+                  className={inputClass}
+                  placeholder="e.g. priya_commun"
+                  required
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={labelClass} htmlFor="password">
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  className={inputClass}
+                  autoComplete="new-password"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={secretariesLoading}
+              className="mt-6 w-full rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-2.5 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-8"
+            >
+              {secretariesLoading ? 'Saving…' : 'Create secretary'}
+            </button>
+          </Card>
         </motion.form>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900">Secretaries</h2>
-          <p className="mt-1 text-sm text-gray-600">{secretaries.length} account{secretaries.length !== 1 ? 's' : ''}</p>
-
-          <div className="mt-4 max-h-[480px] overflow-y-auto">
+        <Card
+          icon={Users}
+          title="Secretaries"
+          description={`${secretaries.length} account${secretaries.length !== 1 ? 's' : ''}`}
+        >
+          <div className="max-h-[480px] overflow-y-auto">
             {secretariesLoading && secretaries.length === 0 ? (
-              <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
+              <div className="py-10 text-center">
+                <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
+                <p className="text-sm text-[var(--text-secondary)]">Loading…</p>
+              </div>
             ) : secretaries.length === 0 ? (
-              <p className="py-8 text-center text-sm text-gray-500">No secretaries yet.</p>
+              <p className="py-10 text-center text-sm text-[var(--text-secondary)]">
+                No secretaries yet.
+              </p>
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-purple-50">
                 {secretaries.map((u) => (
-                  <li key={u._id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900">{getFullName(u)}</p>
-                      <p className="text-xs text-gray-500">{u.email}</p>
-                      {u.communName && (
-                        <p className="text-xs font-medium text-indigo-600">{u.communName}</p>
-                      )}
+                  <li
+                    key={u._id}
+                    className="flex flex-col gap-3 py-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <ProfileAvatar
+                        user={u}
+                        alt={getFullName(u)}
+                        size="lg"
+                        className="border border-[var(--purple-primary)]/20"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                          {getFullName(u)}
+                        </p>
+                        <p className="truncate text-xs text-[var(--text-secondary)]">{u.email}</p>
+                        {u.communName && (
+                          <p className="truncate text-xs font-medium text-[var(--purple-primary)]">
+                            {formatCommunDisplayName(u.communName)}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <span
-                      className={`inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-medium ${
-                        u.isActive ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-                      }`}
-                    >
-                      {u.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                    <StatusBadge isActive={u.isActive} />
                   </li>
                 ))}
               </ul>
             )}
           </div>
-        </div>
+        </Card>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

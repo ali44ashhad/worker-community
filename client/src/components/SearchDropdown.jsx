@@ -4,39 +4,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getAllProviders } from '../features/providerSlice';
 import { getActiveCategories } from '../features/adminSlice';
 import { HiOutlineSearch } from 'react-icons/hi';
-import { FiTrendingUp } from 'react-icons/fi'; // Added this icon
-import { getFullName, getInitials } from '../utils/userHelpers';
+import { FiTrendingUp } from 'react-icons/fi';
+import { getFullName } from '../utils/userHelpers';
 import { slugifyCategoryName } from '../utils/slug';
-
-// Map categories to their images (No longer used in the 'showCategories' block, but kept for your reference)
-
-//   "Academics": "/AcademicsCategoryImage.png",
-//   "Music": "/MusicCategoryImage.png",
-//   "Dance": "/DanceCategoryImage.png",
-//   "Fitness & Sports": "/fitnessCategoryImage1.png",
-//   "Home Baker": "/HomeBakerCategoryImage.png",
-//   "Technology": "/TechnologyCategoryImage.png",
-//   "Home Cooking": "/cooking.png",
-//   "Home Catering": "/cookingIcon.png",
-//   "Catering": "/cookingIcon1.png",
-//   "Professional Baker": "/HomeBakerCategoryImage.png",
-//   "Workshops": "/tutor.png",
-//   "Photography": "/photographyIcon.png",
-//   "Consulting": "/eventPlannerIcon.png",
-//   "Finance": "/eventPlannerIcon.png",
-//   "Groceries": "/groceryIcon.png",
-//   "Home Products": "/art.png",
-//   "Apparels & Footwear": "/art.png",
-//   "Law": "/eventPlannerIcon.png",
-//   "Medical": "/eventPlannerIcon.png",
-//   "Art & Craft": "/artIcon.png",
-//   "Home Interiors": "/art.png",
-//   "Construction": "/art.png",
-//   "Real Estate": "/eventPlannerIcon.png",
-//   "Event Planner": "/eventPlannerIcon.png",
-//   "Gifting": "/eventPlannerIcon.png",
-//   "Other": "/eventPlannerIcon.png"
-// };
 
 const SearchDropdown = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -150,14 +120,17 @@ const SearchDropdown = ({ isOpen, onClose }) => {
   const showServices = searchQuery.trim().length > 0;
 
   return (
-    <div ref={dropdownRef} className="absolute top-full left-0 mt-2 w-[26rem] bg-white border border-gray-300 rounded-lg shadow-2xl z-50 max-h-[600px] overflow-hidden flex flex-col">
+    <div
+      ref={dropdownRef}
+      className="flex w-full max-w-xl max-h-[min(600px,calc(100vh-6rem))] flex-col overflow-hidden rounded-2xl border border-purple-100/50 bg-white shadow-2xl shadow-purple-500/10"
+    >
       {/* Search Input */}
       <div className="p-4 border-b border-gray-200">
         <div className="relative">
           <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search for services" // Updated placeholder
+            placeholder="Search for services"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-gray-50 border border-gray-300 text-black text-sm rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -166,12 +139,8 @@ const SearchDropdown = ({ isOpen, onClose }) => {
         </div>
       </div>
 
-      {/* Content */}
+        {/* Content */}
       <div className="overflow-y-auto flex-1">
-        
-        {/* ====================================================== */}
-        {/* MODIFIED CATEGORIES BLOCK - START */}
-        {/* ====================================================== */}
         {showCategories && (
           <div className="p-4">
             <h3 className="text-base font-semibold text-gray-800 mb-4">
@@ -193,14 +162,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
             </div>
           </div>
         )}
-        {/* ====================================================== */}
-        {/* MODIFIED CATEGORIES BLOCK - END */}
-        {/* ====================================================== */}
 
-
-        {/* ====================================================== */}
-        {/* UNCHANGED SERVICES BLOCK - START */}
-        {/* ====================================================== */}
         {showServices && (
           <div className="p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
@@ -214,7 +176,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
               <div className="space-y-2">
                 {filteredServices.map((service) => {
                   const portfolioImages = service?.portfolioImages || [];
-                  const mainImage = portfolioImages[0]?.url || '/logo2.png';
+                  const mainImage = portfolioImages[0]?.url || '/CommuN-logo.png';
                   const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
                   const description = service?.description || 'No description available.';
                   const truncatedDescription = description.length > 80
@@ -228,11 +190,11 @@ const SearchDropdown = ({ isOpen, onClose }) => {
                       className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer group"
                     >
                       {/* Service Image */}
-                      <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-gray-200 border border-gray-300">
+                      <div className="service-image-zoom h-16 w-16 shrink-0 rounded-md border border-gray-300 bg-gray-200">
                         <img
                           src={mainImage}
                           alt="Service"
-                          className="w-full h-full object-cover"
+                          className="service-image-zoom__img h-full w-full object-cover"
                         />
                       </div>
 
@@ -260,9 +222,6 @@ const SearchDropdown = ({ isOpen, onClose }) => {
             )}
           </div>
         )}
-        {/* ====================================================== */}
-        {/* UNCHANGED SERVICES BLOCK - END */}
-        {/* ====================================================== */}
       </div>
     </div>
   );

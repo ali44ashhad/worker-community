@@ -13,6 +13,14 @@
 }
 
 :root {
+  /* CommuN home page theme (Figma) */
+  --purple-primary: #6b46c1;
+  --purple-secondary: #553c9a;
+  --magenta: #d946ef;
+  --background-subtle: #fafbfc;
+  --text-primary: #1a1a2e;
+  --text-secondary: #475569;
+
   /* Apple-inspired Color Palette */
   --color-primary: #007AFF;
   --color-primary-dark: #0051D5;
@@ -96,6 +104,44 @@ body::-webkit-scrollbar {
   -webkit-overflow-scrolling: touch;
   /* Hardware acceleration without breaking fixed positioning */
   will-change: auto;
+}
+
+/* CommuN wordmark — wide PNG (3241×776); cap size so it never blows up the header */
+.site-logo {
+  height: 2.75rem !important;
+  width: auto !important;
+  max-width: 12.5rem !important;
+  object-fit: contain;
+  object-position: left center;
+  flex-shrink: 0;
+  image-rendering: auto;
+}
+
+/* Sidebar panels — wordmark sized for sidebar header */
+.sidebar-logo {
+  height: 3.25rem !important;
+  width: auto !important;
+  max-width: 14rem !important;
+  object-fit: contain;
+  object-position: left center;
+  flex-shrink: 0;
+  image-rendering: auto;
+}
+
+/* Circular profile photos — global img { height: auto } otherwise squashes avatars */
+.profile-avatar {
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.profile-avatar > img {
+  width: 100%;
+  height: 100% !important;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
 }
 
 img,
@@ -295,7 +341,9 @@ input[type="range"]::-moz-range-thumb:hover {
 
 /* Sidebar Portal Containers - Ensure fixed positioning works correctly */
 #admin-sidebar-portal,
-#provider-sidebar-portal {
+#provider-sidebar-portal,
+#secretary-sidebar-portal,
+#customer-sidebar-portal {
   position: static !important;
   transform: none !important;
   -webkit-transform: none !important;
@@ -307,12 +355,33 @@ input[type="range"]::-moz-range-thumb:hover {
   -webkit-backdrop-filter: none !important;
 }
 
-/* Ensure sidebar content is crisp and clear */
+/* Text smoothing in sidebars — do not force crisp-edges on images (blurs logos) */
 #admin-sidebar-portal > *,
-#provider-sidebar-portal > * {
+#provider-sidebar-portal > *,
+#secretary-sidebar-portal > *,
+#customer-sidebar-portal > * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+}
+
+#admin-sidebar-portal img,
+#provider-sidebar-portal img,
+#secretary-sidebar-portal img,
+#customer-sidebar-portal img {
+  image-rendering: auto;
+}
+
+/* Service image hover zoom (Amazon-style) */
+.service-image-zoom {
+  overflow: hidden;
+}
+
+.service-image-zoom__img {
+  transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.service-image-zoom:hover .service-image-zoom__img {
+  transform: scale(1.18);
 }
