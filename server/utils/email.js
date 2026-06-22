@@ -1,10 +1,6 @@
-import { SendEmailCommand } from "@aws-sdk/client-ses";
-import sesClient, { getSesFromEmail } from "../config/ses.js";
+import transporter, { getSmtpFromEmail, isSmtpConfigured } from "../config/smtp.js";
 import { formatCommunDisplayName } from "./communName.js";
-
-function getFrontendBase() {
-    return (process.env.FRONTEND_URL || "").trim() || "http://localhost:5173";
-}
+import { getFrontendBase } from "./frontendUrl.js";
 
 function escapeHtml(input) {
     return String(input ?? "")
@@ -62,14 +58,25 @@ function renderEmailLayout({
         `
         : "";
 
-    const ctaHtml = cta?.href
+    const ctaHref = cta?.href ? String(cta.href).trim() : "";
+    const ctaHtml = ctaHref
         ? `
-          <div style="margin:18px 0 0">
-            <a href="${cta.href}"
-               style="display:inline-block;background:linear-gradient(90deg, ${brand.primary}, ${brand.secondary});color:${brand.buttonText};text-decoration:none;padding:12px 16px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 8px 18px rgba(107,70,193,0.22)">
-              ${escapeHtml(cta.label || "Open")}
-            </a>
-          </div>
+          <table role="presentation" cellspacing="0" cellpadding="0" style="margin:18px 0 0">
+            <tr>
+              <td align="left" style="border-radius:12px;background:${brand.primary}">
+                <a href="${ctaHref}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   style="display:inline-block;background:linear-gradient(90deg, ${brand.primary}, ${brand.secondary});color:${brand.buttonText};text-decoration:none;padding:12px 20px;border-radius:12px;font-weight:700;font-size:14px;line-height:1.2;mso-padding-alt:0">
+                  ${escapeHtml(cta.label || "Open")}
+                </a>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:14px 0 0;font-size:12px;line-height:1.6;color:${brand.muted};word-break:break-all">
+            If the button does not work, open this link:<br />
+            <a href="${ctaHref}" target="_blank" rel="noopener noreferrer" style="color:${brand.primary};font-weight:600">${escapeHtml(ctaHref)}</a>
+          </p>
         `
         : "";
 
@@ -143,25 +150,19 @@ function renderEmailLayout({
 }
 
 async function sendEmail({ toEmail, subject, text, html }) {
-    const from = getSesFromEmail();
-
-    if (!from || !process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    if (!isSmtpConfigured()) {
         return { sent: false };
     }
 
-    await sesClient.send(
-        new SendEmailCommand({
-            Source: from,
-            Destination: { ToAddresses: [toEmail] },
-            Message: {
-                Subject: { Charset: "UTF-8", Data: subject },
-                Body: {
-                    Text: { Charset: "UTF-8", Data: text },
-                    Html: { Charset: "UTF-8", Data: html },
-                },
-            },
-        })
-    );
+    const from = getSmtpFromEmail();
+
+    await transporter.sendMail({
+        from,
+        to: toEmail,
+        subject,
+        text,
+        html,
+    });
 
     return { sent: true };
 }

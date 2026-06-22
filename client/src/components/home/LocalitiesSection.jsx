@@ -4,10 +4,22 @@ import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
 
 const comingSoonLocalities = [
-  { name: 'Hauz Khas', top: '30%', left: '25%' },
-  { name: 'Greater Kailash', top: '40%', left: '60%' },
-  { name: 'Vasant Kunj', top: '68%', left: '28%' },
-  { name: 'Saket', top: '62%', left: '55%' },
+  {
+    name: 'Hauz Khas',
+    className: 'top-[8%] left-[6%] sm:top-[22%] sm:left-[18%] lg:top-[30%] lg:left-[25%]',
+  },
+  {
+    name: 'Greater Kailash',
+    className: 'top-[12%] right-[5%] sm:top-[20%] sm:right-[14%] lg:top-[40%] lg:right-auto lg:left-[60%]',
+  },
+  {
+    name: 'Vasant Kunj',
+    className: 'bottom-[20%] left-[6%] sm:bottom-[18%] sm:left-[16%] lg:bottom-auto lg:top-[68%] lg:left-[28%]',
+  },
+  {
+    name: 'Saket',
+    className: 'bottom-[20%] right-[6%] sm:bottom-[16%] sm:right-[12%] lg:bottom-auto lg:top-[62%] lg:right-auto lg:left-[55%]',
+  },
 ];
 
 const LocalitiesSection = () => (
@@ -23,47 +35,63 @@ const LocalitiesSection = () => (
         </p>
       </div>
 
-      <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 overflow-hidden shadow-2xl">
-        <div className="relative h-96 bg-gradient-to-br from-purple-900/40 to-fuchsia-900/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10">
-          <svg className="absolute inset-0 w-full h-full opacity-20" aria-hidden="true">
-            <defs>
-              <pattern id="home-locality-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#home-locality-grid)" />
-            <path d="M 0 150 Q 200 180 400 150 T 800 150" stroke="white" strokeWidth="2" fill="none" opacity="0.3" />
-            <path d="M 200 0 L 200 400" stroke="white" strokeWidth="2" fill="none" opacity="0.3" />
-            <path d="M 0 250 L 800 250" stroke="white" strokeWidth="2" fill="none" opacity="0.3" />
-            <path d="M 400 0 L 400 400" stroke="white" strokeWidth="2" fill="none" opacity="0.3" />
-            <path d="M 600 0 L 600 400" stroke="white" strokeWidth="2.5" fill="none" opacity="0.4" />
+      <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-4 sm:p-8 overflow-hidden shadow-2xl">
+        <div className="relative min-h-[26rem] sm:min-h-[24rem] h-[62vw] max-h-[30rem] sm:h-96 bg-gradient-to-br from-purple-900/40 to-fuchsia-900/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10">
+          {/* Full-height grid — CSS so it always covers the entire map */}
+          <div
+            className="absolute inset-0 opacity-25 pointer-events-none"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, rgba(255,255,255,0.45) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.45) 1px, transparent 1px)
+              `,
+              backgroundSize: '36px 36px',
+            }}
+          />
+
+          {/* Decorative map lines */}
+          <svg className="absolute inset-0 w-full h-full opacity-25 pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M 0 38 Q 25 42 50 38 T 100 38" stroke="white" strokeWidth="0.4" fill="none" vectorEffect="non-scaling-stroke" />
+            <path d="M 25 0 L 25 100" stroke="white" strokeWidth="0.35" fill="none" vectorEffect="non-scaling-stroke" />
+            <path d="M 0 62 L 100 62" stroke="white" strokeWidth="0.35" fill="none" vectorEffect="non-scaling-stroke" />
+            <path d="M 50 0 L 50 100" stroke="white" strokeWidth="0.35" fill="none" vectorEffect="non-scaling-stroke" />
+            <path d="M 75 0 L 75 100" stroke="white" strokeWidth="0.45" fill="none" vectorEffect="non-scaling-stroke" />
           </svg>
 
+          {/* Active locality */}
           <motion.div
-            className="absolute"
-            style={{ top: '45%', left: '38%', width: '140px', height: '140px' }}
+            className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 sm:top-[45%] sm:left-[38%] sm:translate-x-0 sm:translate-y-0 z-10"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
           >
-            <svg width="140" height="140" className="absolute inset-0" aria-hidden="true">
-              <path
-                d="M 20 10 Q 70 5 120 15 L 135 60 Q 130 110 100 130 L 40 135 Q 10 110 15 60 Z"
-                fill="rgba(217,70,239,0.35)"
-                stroke="rgba(255,255,255,0.5)"
-                strokeWidth="2"
-              />
-            </svg>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="w-10 h-10 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white/30">
-                <MapPin className="w-5 h-5 text-white" />
+            <div className="flex flex-col items-center">
+              <div className="relative flex items-center justify-center w-[7.5rem] h-[7.5rem] sm:w-[8.75rem] sm:h-[8.75rem]">
+                <svg
+                  className="absolute inset-0 w-full h-full"
+                  viewBox="0 0 100 100"
+                  aria-hidden="true"
+                >
+                  <ellipse
+                    cx="50"
+                    cy="50"
+                    rx="44"
+                    ry="40"
+                    fill="rgba(217,70,239,0.35)"
+                    stroke="rgba(255,255,255,0.5)"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+                <div className="relative z-10 w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white/30">
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </div>
               </div>
-              <div className="absolute top-12 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <div className="bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-xl text-xs border border-white/30 font-medium">
+              <div className="mt-1 max-w-[9.5rem] sm:max-w-none">
+                <div className="bg-white/20 backdrop-blur-sm text-white px-2.5 py-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs border border-white/30 font-medium text-center">
                   Sainik Farms
-                  <div className="text-xs text-fuchsia-200 mt-0.5 flex items-center justify-center gap-1 font-semibold">
-                    <span className="w-1.5 h-1.5 bg-fuchsia-300 rounded-full animate-pulse" />
+                  <div className="text-[10px] sm:text-xs text-fuchsia-200 mt-0.5 flex items-center justify-center gap-1 font-semibold">
+                    <span className="w-1.5 h-1.5 bg-fuchsia-300 rounded-full animate-pulse shrink-0" />
                     Active Now
                   </div>
                 </div>
@@ -74,33 +102,35 @@ const LocalitiesSection = () => (
           {comingSoonLocalities.map((locality, i) => (
             <motion.div
               key={locality.name}
-              className="absolute"
-              style={{ top: locality.top, left: locality.left }}
+              className={`absolute z-10 ${locality.className}`}
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
             >
-              <div className="w-8 h-8 bg-purple-300/30 rounded-full flex items-center justify-center border-2 border-purple-300/40">
-                <MapPin className="w-4 h-4 text-purple-200" />
-              </div>
-              <div className="absolute top-10 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <div className="bg-white/10 backdrop-blur-sm text-purple-100 px-3 py-1.5 rounded-xl text-xs border border-white/20 font-medium">
-                  {locality.name}
-                  <div className="text-xs text-purple-200 mt-0.5">Coming Soon</div>
+              <div className="flex flex-col items-center">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-300/30 rounded-full flex items-center justify-center border-2 border-purple-300/40 shrink-0">
+                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-200" />
+                </div>
+                <div className="mt-1.5 max-w-[6.5rem] sm:max-w-[7.5rem]">
+                  <div className="bg-white/10 backdrop-blur-sm text-purple-100 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl text-[10px] sm:text-xs border border-white/20 font-medium text-center leading-tight">
+                    {locality.name}
+                    <div className="text-[9px] sm:text-xs text-purple-200 mt-0.5">Coming Soon</div>
+                  </div>
                 </div>
               </div>
             </motion.div>
           ))}
 
-          <div className="absolute bottom-4 left-4 bg-white/10 backdrop-blur-md px-5 py-3 rounded-xl border border-white/20">
-            <div className="text-sm text-white space-y-2 font-medium">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full" />
+          <div className="absolute z-20 bottom-3 left-1/2 -translate-x-1/2 sm:bottom-4 sm:left-4 sm:translate-x-0 bg-white/10 backdrop-blur-md px-4 py-3 sm:px-5 sm:py-3.5 rounded-xl border border-white/20">
+            <div className="flex flex-row sm:flex-col items-center sm:items-start gap-5 sm:gap-0 sm:space-y-3 text-xs sm:text-sm text-white font-medium">
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full shrink-0" />
                 <span>Active</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-purple-300/30 rounded-full border border-purple-300/40" />
+              <div className="hidden sm:block w-full h-px bg-white/15" aria-hidden="true" />
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-purple-300/30 rounded-full border border-purple-300/40 shrink-0" />
                 <span>Coming Soon</span>
               </div>
             </div>

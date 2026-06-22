@@ -7,7 +7,8 @@ import CommunityCta from '../components/home/CommunityCta';
 import { Search, RefreshCw } from 'lucide-react';
 import { getFullName } from '../utils/userHelpers';
 import Pagination from '../components/Pagination';
-import { getPublicServices } from '../features/serviceSlice';
+import { getPublicServices, getCommunityServices } from '../features/serviceSlice';
+import { formatCommunDisplayName } from '../utils/communName';
 
 const chipClass = (active) =>
   `px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
@@ -16,9 +17,11 @@ const chipClass = (active) =>
       : 'bg-white text-[var(--text-secondary)] border-purple-100 hover:bg-purple-50 hover:border-purple-200'
   }`;
 
-const Services = () => {
+const Services = ({ communityScope = false, compact = false, embedded = false }) => {
   const dispatch = useDispatch();
-  const { services, isFetching, error, pagination } = useSelector((state) => state.services);
+  const { services, isFetching, error, pagination, communityCommunName, needsCommunity } = useSelector(
+    (state) => state.services
+  );
 
   const ITEMS_PER_PAGE = 12;
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,8 +33,12 @@ const Services = () => {
   const [allServices, setAllServices] = useState([]);
 
   useEffect(() => {
+    if (communityScope) {
+      dispatch(getCommunityServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
+      return;
+    }
     dispatch(getPublicServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
-  }, [dispatch, currentPage]);
+  }, [dispatch, currentPage, communityScope]);
 
   useEffect(() => {
     setAllServices(services || []);
@@ -110,6 +117,10 @@ const Services = () => {
   }, [selectedCategory]);
 
   const handleRefresh = () => {
+    if (communityScope) {
+      dispatch(getCommunityServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
+      return;
+    }
     dispatch(getPublicServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
   };
 
@@ -126,12 +137,12 @@ const Services = () => {
 
   return (
     <motion.div
-      className="home-page min-h-screen bg-[var(--background-subtle)]"
+      className={`home-page min-h-screen bg-[var(--background-subtle)] ${compact ? '' : ''}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Hero */}
+      {!compact && !embedded && (
       <section className="relative overflow-hidden pt-28 pb-12 lg:pt-32 lg:pb-14 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(217,70,239,0.05),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(107,70,193,0.05),transparent_50%)]" />
@@ -144,22 +155,56 @@ const Services = () => {
           >
             <div className="inline-block px-4 py-2 bg-gradient-to-r from-purple-100 to-fuchsia-100 rounded-full mb-6">
               <span className="text-sm font-semibold bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
-                Find Local Help
+                {communityScope ? 'Community Services' : 'Find Local Help'}
               </span>
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-[var(--text-primary)] via-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent mb-4 leading-[1.1]">
-              All Services
+              {communityScope ? 'Your Community Services' : 'All Services'}
             </h1>
             <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
-              Browse services from talented community providers — tutoring, baking, fitness,
-              technology and more, right in your neighbourhood.
+              {communityScope ? (
+                <>
+                  Browse services from providers in your Commun community
+                  {communityCommunName ? (
+                    <span className="font-medium text-[var(--purple-primary)]">
+                      {' '}
+                      ({formatCommunDisplayName(communityCommunName)})
+                    </span>
+                  ) : null}
+                  . Only categories enabled by your secretary are shown here.
+                </>
+              ) : (
+                'Browse services from talented community providers — tutoring, baking, fitness, technology and more, right in your neighbourhood.'
+              )}
             </p>
           </motion.div>
         </div>
       </section>
+      )}
+
+      {compact && communityScope && !embedded && (
+        <section className="border-b border-purple-100/60 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20 py-6 sm:py-8">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--purple-primary)]">
+              Community
+            </p>
+            <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">Services</h1>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              Services from providers in your Commun community
+              {communityCommunName ? (
+                <span className="font-medium text-[var(--purple-primary)]">
+                  {' '}
+                  ({formatCommunDisplayName(communityCommunName)})
+                </span>
+              ) : null}
+              . Only categories enabled by your secretary are shown.
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Main content */}
-      <section className="pb-16 bg-gradient-to-b from-white to-purple-50/30">
+      <section className={`pb-16 bg-gradient-to-b from-white to-purple-50/30 ${compact || embedded ? 'pt-6' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Sidebar filters */}
@@ -309,7 +354,18 @@ const Services = () => {
                 </div>
               )}
 
-              {!isFetching && !error && filteredServices.length === 0 && (
+              {needsCommunity && !isFetching && (
+                <div className="text-center py-12">
+                  <div className="bg-white/80 backdrop-blur-sm border border-purple-100/50 rounded-3xl p-8 max-w-md mx-auto shadow-lg shadow-purple-500/5">
+                    <p className="text-xl font-semibold text-[var(--text-primary)] mb-2">No community linked</p>
+                    <p className="text-[var(--text-secondary)] text-sm">
+                      Join a Commun community to see local services here.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!needsCommunity && !isFetching && !error && filteredServices.length === 0 && (
                 <div className="text-center py-12">
                   <div className="bg-white/80 backdrop-blur-sm border border-purple-100/50 rounded-3xl p-8 max-w-md mx-auto shadow-lg shadow-purple-500/5">
                     <Search className="mx-auto mb-4 w-12 h-12 text-purple-300" />
@@ -317,7 +373,9 @@ const Services = () => {
                     <p className="text-[var(--text-secondary)] text-sm">
                       {hasActiveFilters
                         ? 'Try adjusting your search or filter criteria.'
-                        : 'No services available at the moment.'}
+                        : communityScope
+                          ? 'No enabled services in your community yet.'
+                          : 'No services available at the moment.'}
                     </p>
                     {hasActiveFilters && (
                       <button
@@ -353,7 +411,7 @@ const Services = () => {
         </div>
       </section>
 
-      <CommunityCta />
+      {!compact && !embedded && <CommunityCta />}
     </motion.div>
   );
 };

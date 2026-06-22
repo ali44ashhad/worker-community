@@ -121,6 +121,12 @@ const userSchema = new Schema({
         sports: { type: Boolean, default: false },
         fundraiser: { type: Boolean, default: false },
     },
+    /** Secretary-only: which service categories are visible in this community. */
+    categoryToggles: {
+        type: Map,
+        of: Boolean,
+        default: {},
+    },
 }, { timestamps: true });
 
 // Virtual field for backward compatibility - combines firstName and lastName

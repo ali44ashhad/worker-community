@@ -9,6 +9,7 @@ import {
   LogOut,
   Megaphone,
   User,
+  Wrench,
   Users,
   X,
 } from 'lucide-react';
@@ -19,6 +20,7 @@ import SidebarPanelGreeting from './SidebarPanelGreeting';
 
 const menuItems = [
   { icon: LayoutGrid, label: 'Dashboard', path: '/secretary/dashboard' },
+  { icon: Wrench, label: 'Services', path: '/secretary/services' },
   { icon: ClipboardCheck, label: 'Approve / reject', path: '/secretary/approvals' },
   { icon: Users, label: 'Member list', path: '/secretary/members' },
   { icon: Megaphone, label: 'Broadcast', path: '/secretary/broadcast' },

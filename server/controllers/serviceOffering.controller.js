@@ -1,5 +1,37 @@
 import ServiceOffering from "../models/serviceOffering.model.js";
-import ProviderProfile from "../models/providerProfile.model.js";
+import {
+    buildPublicServicesPipeline,
+    getEnabledCategoriesForCommunity,
+    getMemberCommunityHandle,
+} from "../utils/communityServices.js";
+
+const parsePagination = (req) => {
+    const pageParam = parseInt(req.query.page, 10);
+    const limitParam = parseInt(req.query.limit, 10);
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 50) : 12;
+    const skip = (page - 1) * limit;
+    return { page, limit, skip };
+};
+
+const runServicesQuery = async ({ communityHandle, enabledCategories, page, limit, skip }) => {
+    const pipeline = buildPublicServicesPipeline({
+        communityHandle,
+        enabledCategories,
+        skip,
+        limit,
+    });
+
+    const [result] = await ServiceOffering.aggregate(pipeline);
+    const services = result?.data || [];
+    const total = result?.meta?.[0]?.total || 0;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    return {
+        services,
+        pagination: { page, limit, total, totalPages },
+    };
+};
 
 /**
  * @description Public paginated services list (12 per page by default)
@@ -7,122 +39,66 @@ import ProviderProfile from "../models/providerProfile.model.js";
  * @access Public
  */
 const getPublicServices = async (req, res) => {
-  try {
-    const pageParam = parseInt(req.query.page, 10);
-    const limitParam = parseInt(req.query.limit, 10);
-    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
-    const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 50) : 12;
-    const skip = (page - 1) * limit;
+    try {
+        const { page, limit, skip } = parsePagination(req);
+        const { services, pagination } = await runServicesQuery({
+            communityHandle: null,
+            enabledCategories: null,
+            page,
+            limit,
+            skip,
+        });
 
-    // Approved + active users only (same logic as provider public listing)
-    const userMatch = {
-      isActive: { $ne: false },
-      $or: [{ accountStatus: { $exists: false } }, { accountStatus: "approved" }],
-    };
+        return res.status(200).json({
+            success: true,
+            services,
+            pagination,
+        });
+    } catch (error) {
+        console.error("Error in getPublicServices:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
 
-    const pipeline = [
-      // Attach provider profile
-      {
-        $lookup: {
-          from: "providerprofiles",
-          localField: "provider",
-          foreignField: "_id",
-          as: "providerProfile",
-        },
-      },
-      { $unwind: "$providerProfile" },
+/**
+ * @description Community-scoped services for logged-in members (filtered by secretary category toggles)
+ * @route GET /api/service-offering/community?page=1&limit=12
+ * @access Private (customer, provider, secretary)
+ */
+const getCommunityServices = async (req, res) => {
+    try {
+        const communityHandle = getMemberCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(200).json({
+                success: true,
+                services: [],
+                pagination: { page: 1, limit: 12, total: 0, totalPages: 1 },
+                communityCommunName: null,
+                needsCommunity: true,
+            });
+        }
 
-      // Attach user (and filter by active/approved)
-      {
-        $lookup: {
-          from: "users",
-          let: { userId: "$providerProfile.user" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
-            { $match: userMatch },
-            {
-              $project: {
-                firstName: 1,
-                lastName: 1,
-                profileImage: 1,
-                phoneNumber: 1,
-                addressLine1: 1,
-                addressLine2: 1,
-                city: 1,
-                state: 1,
-                zip: 1,
-                communName: 1,
-                communityCommunName: 1,
-              },
-            },
-          ],
-          as: "providerUser",
-        },
-      },
-      { $unwind: "$providerUser" },
+        const { page, limit, skip } = parsePagination(req);
+        const enabledCategories = await getEnabledCategoriesForCommunity(communityHandle);
+        const { services, pagination } = await runServicesQuery({
+            communityHandle,
+            enabledCategories,
+            page,
+            limit,
+            skip,
+        });
 
-      // Rating aggregate per service
-      {
-        $lookup: {
-          from: "comments",
-          let: { serviceId: "$_id" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$serviceOffering", "$$serviceId"] } } },
-            {
-              $group: {
-                _id: "$serviceOffering",
-                averageRating: { $avg: "$rating" },
-                reviewCount: { $sum: 1 },
-              },
-            },
-          ],
-          as: "ratingStats",
-        },
-      },
-      {
-        $addFields: {
-          averageRating: {
-            $ifNull: [{ $round: [{ $arrayElemAt: ["$ratingStats.averageRating", 0] }, 2] }, 0],
-          },
-          reviewCount: { $ifNull: [{ $arrayElemAt: ["$ratingStats.reviewCount", 0] }, 0] },
-          provider: {
-            _id: "$providerProfile._id",
-            bio: "$providerProfile.bio",
-            providerProfileCount: "$providerProfile.providerProfileCount",
-            user: "$providerUser",
-          },
-        },
-      },
-      { $project: { ratingStats: 0, providerProfile: 0, providerUser: 0 } },
-
-      { $sort: { createdAt: -1 } },
-      {
-        $facet: {
-          data: [{ $skip: skip }, { $limit: limit }],
-          meta: [{ $count: "total" }],
-        },
-      },
-    ];
-
-    const [result] = await ServiceOffering.aggregate(pipeline);
-    const services = result?.data || [];
-    const total = result?.meta?.[0]?.total || 0;
-    const totalPages = Math.max(1, Math.ceil(total / limit));
-
-    return res.status(200).json({
-      success: true,
-      services,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-      },
-    });
-  } catch (error) {
-    console.error("Error in getPublicServices:", error.message);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
+        return res.status(200).json({
+            success: true,
+            services,
+            pagination,
+            communityCommunName: communityHandle,
+            needsCommunity: false,
+        });
+    } catch (error) {
+        console.error("Error in getCommunityServices:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
 };
 
 /**
@@ -131,96 +107,95 @@ const getPublicServices = async (req, res) => {
  * @access Public
  */
 const getTopServicesByClicks = async (req, res) => {
-  try {
-    const limitParam = parseInt(req.query.limit, 10);
-    const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 12) : 6;
+    try {
+        const limitParam = parseInt(req.query.limit, 10);
+        const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 12) : 6;
 
-    const userMatch = {
-      isActive: { $ne: false },
-      $or: [{ accountStatus: { $exists: false } }, { accountStatus: "approved" }],
-    };
+        const userMatch = {
+            isActive: { $ne: false },
+            $or: [{ accountStatus: { $exists: false } }, { accountStatus: "approved" }],
+        };
 
-    const pipeline = [
-      { $sort: { serviceOfferingCount: -1, createdAt: -1 } },
-      { $limit: limit },
-      {
-        $lookup: {
-          from: "providerprofiles",
-          localField: "provider",
-          foreignField: "_id",
-          as: "providerProfile",
-        },
-      },
-      { $unwind: "$providerProfile" },
-      {
-        $lookup: {
-          from: "users",
-          let: { userId: "$providerProfile.user" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
-            { $match: userMatch },
+        const pipeline = [
+            { $sort: { serviceOfferingCount: -1, createdAt: -1 } },
+            { $limit: limit },
             {
-              $project: {
-                firstName: 1,
-                lastName: 1,
-                profileImage: 1,
-                phoneNumber: 1,
-                addressLine1: 1,
-                addressLine2: 1,
-                city: 1,
-                state: 1,
-                zip: 1,
-                communName: 1,
-                communityCommunName: 1,
-              },
+                $lookup: {
+                    from: "providerprofiles",
+                    localField: "provider",
+                    foreignField: "_id",
+                    as: "providerProfile",
+                },
             },
-          ],
-          as: "providerUser",
-        },
-      },
-      { $unwind: "$providerUser" },
-      {
-        $lookup: {
-          from: "comments",
-          let: { serviceId: "$_id" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$serviceOffering", "$$serviceId"] } } },
+            { $unwind: "$providerProfile" },
             {
-              $group: {
-                _id: "$serviceOffering",
-                averageRating: { $avg: "$rating" },
-                reviewCount: { $sum: 1 },
-              },
+                $lookup: {
+                    from: "users",
+                    let: { userId: "$providerProfile.user" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+                        { $match: userMatch },
+                        {
+                            $project: {
+                                firstName: 1,
+                                lastName: 1,
+                                profileImage: 1,
+                                phoneNumber: 1,
+                                addressLine1: 1,
+                                addressLine2: 1,
+                                city: 1,
+                                state: 1,
+                                zip: 1,
+                                communName: 1,
+                                communityCommunName: 1,
+                            },
+                        },
+                    ],
+                    as: "providerUser",
+                },
             },
-          ],
-          as: "ratingStats",
-        },
-      },
-      {
-        $addFields: {
-          averageRating: {
-            $ifNull: [{ $round: [{ $arrayElemAt: ["$ratingStats.averageRating", 0] }, 2] }, 0],
-          },
-          reviewCount: { $ifNull: [{ $arrayElemAt: ["$ratingStats.reviewCount", 0] }, 0] },
-          provider: {
-            _id: "$providerProfile._id",
-            bio: "$providerProfile.bio",
-            providerProfileCount: "$providerProfile.providerProfileCount",
-            user: "$providerUser",
-          },
-        },
-      },
-      { $project: { ratingStats: 0, providerProfile: 0, providerUser: 0 } },
-    ];
+            { $unwind: "$providerUser" },
+            {
+                $lookup: {
+                    from: "comments",
+                    let: { serviceId: "$_id" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$serviceOffering", "$$serviceId"] } } },
+                        {
+                            $group: {
+                                _id: "$serviceOffering",
+                                averageRating: { $avg: "$rating" },
+                                reviewCount: { $sum: 1 },
+                            },
+                        },
+                    ],
+                    as: "ratingStats",
+                },
+            },
+            {
+                $addFields: {
+                    averageRating: {
+                        $ifNull: [{ $round: [{ $arrayElemAt: ["$ratingStats.averageRating", 0] }, 2] }, 0],
+                    },
+                    reviewCount: { $ifNull: [{ $arrayElemAt: ["$ratingStats.reviewCount", 0] }, 0] },
+                    provider: {
+                        _id: "$providerProfile._id",
+                        bio: "$providerProfile.bio",
+                        providerProfileCount: "$providerProfile.providerProfileCount",
+                        user: "$providerUser",
+                    },
+                },
+            },
+            { $project: { ratingStats: 0, providerProfile: 0, providerUser: 0 } },
+        ];
 
-    const services = await ServiceOffering.aggregate(pipeline);
+        const services = await ServiceOffering.aggregate(pipeline);
 
-    return res.status(200).json({ success: true, services });
-  } catch (error) {
-    console.error("Error in getTopServicesByClicks:", error.message);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
+        return res.status(200).json({ success: true, services });
+    } catch (error) {
+        console.error("Error in getTopServicesByClicks:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
 };
 
-export { getPublicServices, getTopServicesByClicks };
-
+export { getPublicServices, getCommunityServices, getTopServicesByClicks };

@@ -9,6 +9,7 @@ import {
     uploadBufferToS3,
 } from "../utils/s3Upload.js";
 import { sendPasswordResetEmail, sendSecretaryNewSignupEmail } from "../utils/email.js";
+import { getFrontendBase } from "../utils/frontendUrl.js";
 import { normalizeCommunName, isValidCommunName } from "../utils/communName.js";
 import { normalizeFeatureToggles } from "../utils/featureToggles.js";
 import Broadcast from "../models/broadcast.model.js";
@@ -55,8 +56,8 @@ const forgotPassword = async (req, res) => {
         user.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
         await user.save();
 
-        const frontendBase = (process.env.FRONTEND_URL || "").trim() || "http://localhost:5173";
-        const resetUrl = `${frontendBase.replace(/\/+$/, "")}/reset-password/${rawToken}`;
+        const frontendBase = getFrontendBase();
+        const resetUrl = `${frontendBase}/reset-password/${rawToken}`;
         try {
             await sendPasswordResetEmail({ toEmail: user.email, resetUrl });
         } catch (mailError) {

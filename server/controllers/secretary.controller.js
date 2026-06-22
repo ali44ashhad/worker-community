@@ -2,6 +2,8 @@ import User from "../models/user.model.js";
 import Broadcast from "../models/broadcast.model.js";
 import CommunityEvent from "../models/communityEvent.model.js";
 import { FEATURE_TOGGLE_KEYS, normalizeFeatureToggles } from "../utils/featureToggles.js";
+import { isCategoryEnabled, normalizeCategoryToggles } from "../utils/categoryToggles.js";
+import { getCommunityCategoryStats } from "../utils/communityServices.js";
 import { validateEventExpiry } from "../utils/communityEvents.js";
 import { buildAttachmentsFromRequest, deleteEventAttachments } from "../utils/eventAttachments.js";
 import { sendUserRegistrationApprovedEmail, sendUserRegistrationRejectedEmail } from "../utils/email.js";
@@ -521,6 +523,109 @@ const deleteBroadcast = async (req, res) => {
     }
 };
 
+/**
+ * @route GET /api/secretary/services/toggles
+ */
+const getCategoryToggles = async (req, res) => {
+    try {
+        const communityHandle = getSecretaryCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    categories: [],
+                    toggles: {},
+                    communityCommunName: null,
+                    needsCommunName: true,
+                },
+            });
+        }
+
+        const categories = await getCommunityCategoryStats(communityHandle);
+        const toggles = normalizeCategoryToggles(req.user.categoryToggles);
+        const items = categories.map((item) => ({
+            name: item.name,
+            serviceCount: item.serviceCount,
+            enabled: isCategoryEnabled(toggles, item.name),
+        }));
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                categories: items,
+                toggles,
+                communityCommunName: communityHandle,
+                needsCommunName: false,
+            },
+        });
+    } catch (error) {
+        console.error("getCategoryToggles:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @route PATCH /api/secretary/services/toggles
+ * Body: { categoryName: string, enabled: boolean }
+ */
+const updateCategoryToggle = async (req, res) => {
+    try {
+        const { categoryName, enabled } = req.body;
+        const name = String(categoryName || "").trim();
+        if (!name) {
+            return res.status(400).json({ success: false, message: "categoryName is required." });
+        }
+        if (typeof enabled !== "boolean") {
+            return res.status(400).json({ success: false, message: "enabled must be true or false." });
+        }
+
+        const communityHandle = getSecretaryCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(400).json({ success: false, message: "Set your Commun name first." });
+        }
+
+        const available = await getCommunityCategoryStats(communityHandle);
+        const existsInCommunity = available.some((item) => item.name === name);
+        if (!existsInCommunity) {
+            return res.status(400).json({
+                success: false,
+                message: "This category has no services in your community yet.",
+            });
+        }
+
+        const secretary = await User.findById(req.user._id);
+        if (!secretary || secretary.role !== "secretary") {
+            return res.status(403).json({ success: false, message: "Forbidden." });
+        }
+
+        if (!secretary.categoryToggles) {
+            secretary.categoryToggles = new Map();
+        }
+        secretary.categoryToggles.set(name, enabled);
+        secretary.markModified("categoryToggles");
+        await secretary.save();
+
+        const toggles = normalizeCategoryToggles(secretary.categoryToggles);
+        const categories = available.map((item) => ({
+            name: item.name,
+            serviceCount: item.serviceCount,
+            enabled: isCategoryEnabled(toggles, item.name),
+        }));
+
+        return res.status(200).json({
+            success: true,
+            message: "Service category setting updated.",
+            data: {
+                categories,
+                toggles,
+            },
+        });
+    } catch (error) {
+        console.error("updateCategoryToggle:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 export {
     listPendingRegistrations,
     approveRegistration,
@@ -535,4 +640,6 @@ export {
     listBroadcasts,
     createBroadcast,
     deleteBroadcast,
+    getCategoryToggles,
+    updateCategoryToggle,
 };

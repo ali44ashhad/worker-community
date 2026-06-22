@@ -9,6 +9,7 @@ import {
   LogOut,
   Megaphone,
   User,
+  Wrench,
   X,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -43,6 +44,7 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
 
   const menuItems = [
     { icon: LayoutGrid, label: 'Dashboard', path: '/provider/dashboard' },
+    { icon: Wrench, label: 'Services', path: '/community/services' },
     { icon: Briefcase, label: 'Manage Services', path: '/provider/manage-services' },
     ...(communityFeatures.broadcast
       ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast' }]

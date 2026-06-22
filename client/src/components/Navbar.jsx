@@ -4,7 +4,6 @@ import {
   HiOutlineX,
   HiOutlineSearch,
   HiChevronDown,
-  HiOutlineUserAdd,
   HiOutlineViewGrid,
   HiOutlineCog,
   HiOutlineUserCircle,
@@ -32,9 +31,9 @@ const Navbar = () => {
   const wishlistIds = useSelector((s) => s.wishlist.ids);
   const communityFeatures = useSelector((state) => state.community.features);
   const showCommunityBroadcast =
-    user && ['customer', 'provider'].includes(user.role) && communityFeatures.broadcast;
+    user && user.role === 'provider' && communityFeatures.broadcast;
   const showCommunityEvents =
-    user && ['customer', 'provider'].includes(user.role) && communityFeatures.events;
+    user && user.role === 'provider' && communityFeatures.events;
   const desktopDropdownRef = useRef(null);
   const mobileDropdownRef = useRef(null);
 
@@ -208,12 +207,12 @@ const Navbar = () => {
                       <div className="py-1.5">
                       {user.role === 'customer' && (
                         <Link
-                          to="/become-provider"
+                          to="/community/wishlist"
                           onClick={() => setIsUserDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
-                          <HiOutlineUserAdd size={18} className="text-gray-500 flex-shrink-0" />
-                          <span>Become Provider</span>
+                          <HiOutlineViewGrid size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>User panel</span>
                         </Link>
                       )}
                       {user.role === 'provider' && (
@@ -364,15 +363,15 @@ const Navbar = () => {
                       <div className="py-1.5">
                       {user.role === 'customer' && (
                         <Link
-                          to="/become-provider"
+                          to="/community/wishlist"
                           onClick={() => {
                             setIsUserDropdownOpen(false);
                             closeMenu();
                           }}
                           className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
-                          <HiOutlineUserAdd size={18} className="text-gray-500 flex-shrink-0" />
-                          <span>Become Provider</span>
+                          <HiOutlineViewGrid size={18} className="text-gray-500 flex-shrink-0" />
+                          <span>User panel</span>
                         </Link>
                       )}
                       {user.role === 'provider' && (
@@ -604,8 +603,8 @@ const Navbar = () => {
                       <Link to="/update-profile" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Update Profile</Link>
                     </motion.div>
                     {user.role === 'customer' && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (mobileNavLinks.length + (['admin', 'provider', 'secretary'].includes(user.role) ? 3 : 2)) * 0.04 }}>
-                        <Link to="/become-provider" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">Become Provider</Link>
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (mobileNavLinks.length + 1) * 0.04 }}>
+                        <Link to="/community/wishlist" onClick={closeMenu} className="block px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">User panel</Link>
                       </motion.div>
                     )}
                   </>

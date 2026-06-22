@@ -46,8 +46,7 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
 
   const menuItems = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: Wrench, label: 'Services', path: '/service' },
-    { icon: Tag, label: 'Categories', path: '/category' },
+    { icon: Wrench, label: 'Services', path: '/community/services' },
     ...(communityFeatures.broadcast
       ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast' }]
       : []),

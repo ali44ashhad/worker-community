@@ -53,6 +53,7 @@ import SecretaryApprovals from './pages/secretary/SecretaryApprovals'
 import SecretaryMembers from './pages/secretary/SecretaryMembers'
 import SecretaryBroadcast from './pages/secretary/SecretaryBroadcast'
 import SecretaryEvents from './pages/secretary/SecretaryEvents'
+import SecretaryServices from './pages/secretary/SecretaryServices'
 import SecretaryManagement from './pages/admin/SecretaryManagement'
 import PendingApproval from './pages/PendingApproval'
 import CommunityBroadcast from './pages/community/CommunityBroadcast'
@@ -109,6 +110,7 @@ const App = () => {
     '/community/update-profile',
     '/community/wishlist',
     '/community/become-provider',
+    '/community/services',
   ];
   const isMemberCommunityRoute =
     ['customer', 'provider'].includes(user?.role) &&
@@ -255,6 +257,16 @@ const App = () => {
           }
         />
         <Route
+          path='/community/services'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <Services communityScope compact />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
           path='/community/become-provider'
           element={
             <MemberProtectedRoute>
@@ -294,6 +306,7 @@ const App = () => {
             <Route path="members" element={<SecretaryMembers />} />
             <Route path="broadcast" element={<SecretaryBroadcast />} />
             <Route path="events" element={<SecretaryEvents />} />
+            <Route path="services" element={<SecretaryServices />} />
             <Route path="update-profile" element={<UpdateProfile />} />
           </Route>
         </Route>

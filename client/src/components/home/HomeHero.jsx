@@ -4,10 +4,34 @@ import { motion } from 'framer-motion';
 import { ChevronRight, MapPin, Calculator, BookOpen, ChefHat, Dumbbell } from 'lucide-react';
 
 const floatingServices = [
-  { icon: Calculator, label: 'C.A', top: '15%', left: '20%', delay: 0, color: 'from-blue-500 to-cyan-500' },
-  { icon: BookOpen, label: 'Tutor', top: '25%', left: '70%', delay: 0.2, color: 'from-purple-500 to-pink-500' },
-  { icon: ChefHat, label: 'Baker', top: '65%', left: '15%', delay: 0.4, color: 'from-emerald-500 to-teal-500' },
-  { icon: Dumbbell, label: 'Pilates', top: '70%', left: '75%', delay: 0.6, color: 'from-rose-500 to-pink-500' },
+  {
+    icon: Calculator,
+    label: 'C.A',
+    delay: 0,
+    color: 'from-blue-500 to-cyan-500',
+    className: 'top-[14%] left-[10%] sm:left-[16%] lg:left-[20%]',
+  },
+  {
+    icon: BookOpen,
+    label: 'Tutor',
+    delay: 0.2,
+    color: 'from-purple-500 to-pink-500',
+    className: 'top-[24%] right-[10%] sm:right-[16%] lg:right-[18%]',
+  },
+  {
+    icon: ChefHat,
+    label: 'Baker',
+    delay: 0.4,
+    color: 'from-emerald-500 to-teal-500',
+    className: 'top-[64%] left-[10%] sm:left-[14%] lg:left-[15%]',
+  },
+  {
+    icon: Dumbbell,
+    label: 'Pilates',
+    delay: 0.6,
+    color: 'from-rose-500 to-pink-500',
+    className: 'top-[68%] right-[10%] sm:right-[14%] lg:right-[16%]',
+  },
 ];
 
 const HomeHero = () => (
@@ -60,7 +84,7 @@ const HomeHero = () => (
           className="relative"
         >
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-400 to-fuchsia-400 rounded-3xl opacity-20 blur-3xl" />
-          <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-2xl shadow-purple-500/10 border border-purple-100/50">
+          <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-4 sm:p-6 shadow-2xl shadow-purple-500/10 border border-purple-100/50">
             <div className="w-full aspect-square bg-gradient-to-br from-purple-50 via-fuchsia-50 to-purple-100 rounded-2xl relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="grid grid-cols-8 grid-rows-8 h-full w-full">
@@ -88,17 +112,16 @@ const HomeHero = () => (
                 return (
                   <motion.div
                     key={item.label}
-                    className="absolute bg-white/95 backdrop-blur-sm rounded-2xl p-3 shadow-lg border border-white/50"
-                    style={{ top: item.top, left: item.left }}
+                    className={`absolute max-w-[calc(50%-1rem)] bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-lg border border-white/50 ${item.className}`}
                     animate={{ y: [0, -8, 0] }}
                     transition={{ duration: 3, repeat: Infinity, delay: item.delay }}
                     whileHover={{ scale: 1.05 }}
                   >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 bg-gradient-to-br ${item.color} rounded-lg flex items-center justify-center`}>
-                        <Icon className="w-4 h-4 text-white" />
+                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                      <div className={`shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br ${item.color} rounded-lg flex items-center justify-center`}>
+                        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                       </div>
-                      <span className="text-xs font-semibold text-gray-800">{item.label}</span>
+                      <span className="text-[11px] sm:text-xs font-semibold text-gray-800 whitespace-nowrap">{item.label}</span>
                     </div>
                   </motion.div>
                 );

@@ -1,11 +1,15 @@
 import express from "express";
 import { incrementServiceOfferingCount } from "../controllers/providerProfile.controller.js";
-import { getPublicServices, getTopServicesByClicks } from "../controllers/serviceOffering.controller.js";
+import { getPublicServices, getCommunityServices, getTopServicesByClicks } from "../controllers/serviceOffering.controller.js";
+import { protect } from "../middlewares/user.middleware.js";
 
 const router = express.Router();
 
 // Public paginated services list
 router.get("/", getPublicServices);
+
+// Community-scoped services for panel users
+router.get("/community", protect, getCommunityServices);
 
 // Public top services by clicks
 router.get("/top-clicked", getTopServicesByClicks);

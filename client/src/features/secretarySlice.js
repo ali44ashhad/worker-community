@@ -114,6 +114,46 @@ export const updateFeatureToggle = createAsyncThunk(
   }
 );
 
+export const fetchCategoryToggles = createAsyncThunk(
+  "secretary/fetchCategoryToggles",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/secretary/services/toggles`);
+      const data = res.data?.data || {};
+      return {
+        categories: data.categories || [],
+        toggles: data.toggles || {},
+        communityCommunName: data.communityCommunName || null,
+        needsCommunName: Boolean(data.needsCommunName),
+      };
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to load service categories";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateCategoryToggle = createAsyncThunk(
+  "secretary/updateCategoryToggle",
+  async ({ categoryName, enabled }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/secretary/services/toggles`, {
+        categoryName,
+        enabled,
+      });
+      const data = res.data?.data || {};
+      return {
+        categories: data.categories || [],
+        toggles: data.toggles || {},
+      };
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update service category";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 export const fetchCommunityEvents = createAsyncThunk(
   "secretary/fetchCommunityEvents",
   async (_, { rejectWithValue }) => {
@@ -256,6 +296,14 @@ const secretarySlice = createSlice({
     },
     broadcastSending: false,
     broadcastDeletingId: null,
+    categoryToggles: [],
+    categoryTogglesLoading: false,
+    categoryTogglesError: null,
+    categoryTogglesSaving: false,
+    categoryTogglesMeta: {
+      needsCommunName: false,
+      communityCommunName: null,
+    },
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -397,6 +445,32 @@ const secretarySlice = createSlice({
       })
       .addCase(deleteBroadcast.rejected, (state) => {
         state.broadcastDeletingId = null;
+      })
+      .addCase(fetchCategoryToggles.pending, (state) => {
+        state.categoryTogglesLoading = true;
+        state.categoryTogglesError = null;
+      })
+      .addCase(fetchCategoryToggles.fulfilled, (state, action) => {
+        state.categoryTogglesLoading = false;
+        state.categoryToggles = action.payload.categories;
+        state.categoryTogglesMeta = {
+          needsCommunName: action.payload.needsCommunName,
+          communityCommunName: action.payload.communityCommunName,
+        };
+      })
+      .addCase(fetchCategoryToggles.rejected, (state, action) => {
+        state.categoryTogglesLoading = false;
+        state.categoryTogglesError = action.payload;
+      })
+      .addCase(updateCategoryToggle.pending, (state) => {
+        state.categoryTogglesSaving = true;
+      })
+      .addCase(updateCategoryToggle.fulfilled, (state, action) => {
+        state.categoryTogglesSaving = false;
+        state.categoryToggles = action.payload.categories;
+      })
+      .addCase(updateCategoryToggle.rejected, (state) => {
+        state.categoryTogglesSaving = false;
       });
   },
 });

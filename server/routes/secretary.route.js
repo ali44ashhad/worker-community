@@ -15,6 +15,8 @@ import {
     listBroadcasts,
     createBroadcast,
     deleteBroadcast,
+    getCategoryToggles,
+    updateCategoryToggle,
 } from "../controllers/secretary.controller.js";
 
 const router = express.Router();
@@ -26,6 +28,8 @@ router.patch("/registrations/:userId/approve", protect, isSecretary, approveRegi
 router.patch("/registrations/:userId/reject", protect, isSecretary, rejectRegistration);
 router.get("/features/toggles", protect, isSecretary, getFeatureToggles);
 router.patch("/features/toggles", protect, isSecretary, updateFeatureToggle);
+router.get("/services/toggles", protect, isSecretary, getCategoryToggles);
+router.patch("/services/toggles", protect, isSecretary, updateCategoryToggle);
 router.get("/events", protect, isSecretary, listCommunityEvents);
 router.post("/events", protect, isSecretary, eventAttachmentUpload, createCommunityEvent);
 router.delete("/events/:eventId", protect, isSecretary, deleteCommunityEvent);
