@@ -157,7 +157,6 @@ const Login = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-50/40 via-white to-fuchsia-50/30 pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(217,70,239,0.06),transparent_45%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(107,70,193,0.06),transparent_45%)] pointer-events-none" />
-
       <div className="relative min-h-screen flex items-center justify-center px-4 py-28 sm:px-6">
         <motion.div
           className="flex w-full max-w-5xl items-stretch overflow-hidden rounded-3xl border border-purple-100/50 bg-white/80 shadow-xl shadow-purple-500/10 backdrop-blur-sm"

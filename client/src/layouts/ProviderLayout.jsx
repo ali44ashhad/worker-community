@@ -63,7 +63,7 @@ const ProviderLayout = ({ children }) => {
     <div className="relative min-h-screen bg-[var(--background-subtle)]">
       <ProviderSidebar isOpen={isDesktop ? true : isSidebarOpen} onClose={closeSidebar} />
 
-      <main className="relative z-10 min-h-screen lg:ml-64">
+      <main className="min-h-screen lg:ml-64">
         <div
           className={`sticky top-0 z-20 border-b border-purple-100/60 bg-white/90 shadow-sm shadow-purple-500/5 backdrop-blur-md transition-opacity duration-300 lg:hidden ${
             isSidebarOpen ? 'hidden' : ''

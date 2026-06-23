@@ -1,3 +1,13 @@
+export function getSocketUrl() {
+  const raw = (import.meta.env.VITE_SOCKET_URL || "").trim();
+  if (raw) {
+    return raw.replace(/\/+$/, "");
+  }
+  // Same host as REST API (works when API + Socket.IO run together on AWS/EC2).
+  // For split deploy (API on Vercel, socket elsewhere), set VITE_SOCKET_URL.
+  return getApiBase() || "http://localhost:3000";
+}
+
 export function getApiBase() {
   // In production (Vercel), prefer relative `/api/*` so `vercel.json` rewrites work.
   // In local dev, set VITE_API_URL=http://localhost:3001 (no trailing `/api`).

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { io } from "socket.io-client";
-import { getApiBase } from "../utils/apiBase";
+import { getSocketUrl } from "../utils/apiBase";
 
 export function useInterestChat(interestCommunityId, enabled = true) {
   const socketRef = useRef(null);
@@ -51,8 +51,10 @@ export function useInterestChat(interestCommunityId, enabled = true) {
   useEffect(() => {
     if (!enabled || !interestCommunityId) return undefined;
 
-    const base = getApiBase() || "http://localhost:3000";
-    const socket = io(base, { withCredentials: true, transports: ["websocket", "polling"] });
+    const socket = io(getSocketUrl(), {
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+    });
     socketRef.current = socket;
 
     socket.on("connect", () => {
