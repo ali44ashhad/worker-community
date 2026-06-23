@@ -54,6 +54,9 @@ import SecretaryMembers from './pages/secretary/SecretaryMembers'
 import SecretaryBroadcast from './pages/secretary/SecretaryBroadcast'
 import SecretaryEvents from './pages/secretary/SecretaryEvents'
 import SecretaryServices from './pages/secretary/SecretaryServices'
+import CommunityMgmt from './pages/admin/CommunityMgmt'
+import InterestCommunities from './pages/interest/InterestCommunities'
+import InterestCommunityChat from './pages/interest/InterestCommunityChat'
 import SecretaryManagement from './pages/admin/SecretaryManagement'
 import PendingApproval from './pages/PendingApproval'
 import CommunityBroadcast from './pages/community/CommunityBroadcast'
@@ -111,6 +114,7 @@ const App = () => {
     '/community/wishlist',
     '/community/become-provider',
     '/community/services',
+    '/community/communities',
   ];
   const isMemberCommunityRoute =
     ['customer', 'provider'].includes(user?.role) &&
@@ -276,6 +280,26 @@ const App = () => {
             </MemberProtectedRoute>
           }
         />
+        <Route
+          path='/community/communities'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <InterestCommunities chatBasePath="/community/communities" />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
+          path='/community/communities/:id/chat'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <InterestCommunityChat listPath="/community/communities" />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
         
         {/* Admin Routes */}
         <Route
@@ -295,6 +319,7 @@ const App = () => {
           <Route path="categories" element={<CategoryManagement />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="secretaries" element={<SecretaryManagement />} />
+          <Route path="communities" element={<CommunityMgmt />} />
           <Route path="update-profile" element={<UpdateProfile />} />
         </Route>
 
@@ -307,6 +332,14 @@ const App = () => {
             <Route path="broadcast" element={<SecretaryBroadcast />} />
             <Route path="events" element={<SecretaryEvents />} />
             <Route path="services" element={<SecretaryServices />} />
+            <Route
+              path="communities"
+              element={<InterestCommunities chatBasePath="/secretary/communities" />}
+            />
+            <Route
+              path="communities/:id/chat"
+              element={<InterestCommunityChat listPath="/secretary/communities" />}
+            />
             <Route path="update-profile" element={<UpdateProfile />} />
           </Route>
         </Route>

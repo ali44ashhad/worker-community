@@ -14,6 +14,7 @@ import {
   UserCog,
   Users,
   X,
+  MessageCircle,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -29,6 +30,7 @@ const menuItems = [
   { icon: BarChart3, label: 'Provider Clicks', path: '/admin/provider-clicks' },
   { icon: Users, label: 'User Mgmt', path: '/admin/users' },
   { icon: ClipboardList, label: 'Secretary Mgmt', path: '/admin/secretaries' },
+  { icon: MessageCircle, label: 'Community Mgmt', path: '/admin/communities' },
   { icon: User, label: 'Update Profile', path: '/admin/update-profile' },
   { icon: Home, label: 'Home Page', path: '/' },
 ];

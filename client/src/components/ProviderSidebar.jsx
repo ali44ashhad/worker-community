@@ -11,6 +11,7 @@ import {
   User,
   Wrench,
   X,
+  MessageCircle,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -45,6 +46,7 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
   const menuItems = [
     { icon: LayoutGrid, label: 'Dashboard', path: '/provider/dashboard' },
     { icon: Wrench, label: 'Services', path: '/community/services' },
+    { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
     { icon: Briefcase, label: 'Manage Services', path: '/provider/manage-services' },
     ...(communityFeatures.broadcast
       ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast' }]

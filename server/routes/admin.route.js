@@ -19,6 +19,12 @@ import {
     getSecretaries,
     createSecretary
 } from "../controllers/admin.controller.js";
+import {
+    listAllAdmin,
+    createCommunity,
+    toggleCommunity,
+    deleteCommunity,
+} from "../controllers/adminInterestCommunity.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
 
@@ -153,5 +159,10 @@ router.patch(
     isAdmin,
     updateCategoryStatusAdmin
 );
+
+router.get("/interest-communities", protect, isAdmin, listAllAdmin);
+router.post("/interest-communities", protect, isAdmin, createCommunity);
+router.patch("/interest-communities/:id/toggle", protect, isAdmin, toggleCommunity);
+router.delete("/interest-communities/:id", protect, isAdmin, deleteCommunity);
 
 export default router;

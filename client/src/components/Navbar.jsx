@@ -8,9 +8,6 @@ import {
   HiOutlineCog,
   HiOutlineUserCircle,
   HiOutlineLogout,
-  HiOutlineHeart,
-  HiOutlineSpeakerphone,
-  HiOutlineCalendar,
 } from 'react-icons/hi';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -28,12 +25,6 @@ const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const user = useSelector((state) => state.auth.user);
-  const wishlistIds = useSelector((s) => s.wishlist.ids);
-  const communityFeatures = useSelector((state) => state.community.features);
-  const showCommunityBroadcast =
-    user && user.role === 'provider' && communityFeatures.broadcast;
-  const showCommunityEvents =
-    user && user.role === 'provider' && communityFeatures.events;
   const desktopDropdownRef = useRef(null);
   const mobileDropdownRef = useRef(null);
 
@@ -245,39 +236,6 @@ const Navbar = () => {
                           <span>Secretary panel</span>
                         </Link>
                       )}
-                      {showCommunityBroadcast && (
-                        <Link
-                          to="/community/broadcast"
-                          onClick={() => setIsUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          <HiOutlineSpeakerphone size={18} className="text-gray-500 flex-shrink-0" />
-                          <span>Broadcast</span>
-                        </Link>
-                      )}
-                      {showCommunityEvents && (
-                        <Link
-                          to="/community/events"
-                          onClick={() => setIsUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          <HiOutlineCalendar size={18} className="text-gray-500 flex-shrink-0" />
-                          <span>Events</span>
-                        </Link>
-                      )}
-                      <Link
-                        to="/cart"
-                        onClick={() => setIsUserDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <HiOutlineHeart size={18} className="text-gray-500 flex-shrink-0" />
-                        <span>Wishlist</span>
-                        {/* {wishlistIds?.length > 0 && (
-                          <span className="ml-auto bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                            {wishlistIds.length}
-                          </span>
-                        )} */}
-                      </Link>
                       <Link
                         to="/update-profile"
                         onClick={() => setIsUserDropdownOpen(false)}
@@ -413,48 +371,6 @@ const Navbar = () => {
                           <span>Secretary panel</span>
                         </Link>
                       )}
-                      {showCommunityBroadcast && (
-                        <Link
-                          to="/community/broadcast"
-                          onClick={() => {
-                            setIsUserDropdownOpen(false);
-                            closeMenu();
-                          }}
-                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          <HiOutlineSpeakerphone size={18} className="text-gray-500 flex-shrink-0" />
-                          <span>Broadcast</span>
-                        </Link>
-                      )}
-                      {showCommunityEvents && (
-                        <Link
-                          to="/community/events"
-                          onClick={() => {
-                            setIsUserDropdownOpen(false);
-                            closeMenu();
-                          }}
-                          className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          <HiOutlineCalendar size={18} className="text-gray-500 flex-shrink-0" />
-                          <span>Events</span>
-                        </Link>
-                      )}
-                      <Link
-                        to="/cart"
-                        onClick={() => {
-                          setIsUserDropdownOpen(false);
-                          closeMenu();
-                        }}
-                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <HiOutlineHeart size={18} className="text-gray-500 flex-shrink-0" />
-                        <span>Wishlist</span>
-                        {wishlistIds?.length > 0 && (
-                          <span className="ml-auto bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                            {wishlistIds.length}
-                          </span>
-                        )}
-                      </Link>
                       <Link
                         to="/update-profile"
                         onClick={() => {

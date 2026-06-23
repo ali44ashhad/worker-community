@@ -1,5 +1,7 @@
 import "dotenv/config";
 import express from "express";
+import http from "http";
+import { Server } from "socket.io";
 import dns from "dns";
 
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
@@ -14,6 +16,8 @@ import secretaryRouter from "./routes/secretary.route.js";
 import serviceOfferingRouter from "./routes/serviceOffering.route.js";
 import sitemapRouter from "./routes/sitemap.route.js";
 import categoryRouter from "./routes/category.route.js";
+import interestCommunityRouter from "./routes/interestCommunity.route.js";
+import { initChatSocket } from "./socket/chatSocket.js";
 import cors from "cors";
 import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
 
@@ -94,6 +98,7 @@ app.use('/api/bookings', bookingRouter);
 app.use('/api/comments', commentRouter);
 app.use('/api/admin',adminRouter)
 app.use('/api/secretary', secretaryRouter);
+app.use('/api/interest-communities', interestCommunityRouter);
 app.use('/api', sitemapRouter);
 
 // Global error handler to prevent crashes on unexpected errors
@@ -144,8 +149,18 @@ async function init() {
 if (!isVercel) {
   init()
     .then(() => {
-      app.listen(port, () => {
+      const httpServer = http.createServer(app);
+      const io = new Server(httpServer, {
+        cors: {
+          origin: [...allowedOrigins],
+          credentials: true,
+        },
+      });
+      initChatSocket(io);
+
+      httpServer.listen(port, () => {
         console.log(`Server is listening at port: ${port}`);
+        console.log(`Socket.io chat enabled`);
       });
     })
     .catch((err) => {

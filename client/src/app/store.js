@@ -7,6 +7,7 @@ import adminReducer from '../features/adminSlice.js';
 import secretaryReducer from '../features/secretarySlice.js';
 import communityReducer from '../features/communitySlice.js';
 import servicesReducer from '../features/serviceSlice.js';
+import interestCommunityReducer from '../features/interestCommunitySlice.js';
 
 export const store = configureStore({
     reducer: {
@@ -18,5 +19,6 @@ export const store = configureStore({
         admin: adminReducer,
         secretary: secretaryReducer,
         community: communityReducer,
+        interestCommunity: interestCommunityReducer,
     },
 });

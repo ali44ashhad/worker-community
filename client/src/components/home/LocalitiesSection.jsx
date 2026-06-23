@@ -3,22 +3,33 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
 
+const activeLocality = {
+  name: 'Sainik Farms',
+  className:
+    'bottom-[20%] right-[6%] sm:bottom-[16%] sm:right-[12%] sm:top-auto sm:left-auto sm:translate-x-0 sm:translate-y-0 lg:bottom-auto lg:top-[62%] lg:right-auto lg:left-[55%]',
+};
+
 const comingSoonLocalities = [
   {
     name: 'Hauz Khas',
-    className: 'top-[8%] left-[6%] sm:top-[22%] sm:left-[18%] lg:top-[30%] lg:left-[25%]',
+    className: 'top-[8%] right-[30%] sm:top-[22%] sm:left-[18%] lg:top-[22%] lg:left-[25%]',
   },
   {
     name: 'Greater Kailash',
-    className: 'top-[12%] right-[5%] sm:top-[20%] sm:right-[14%] lg:top-[40%] lg:right-auto lg:left-[60%]',
+    className: 'top-[18%] right-[2%] sm:top-[20%] sm:right-[14%] lg:top-[40%] lg:right-auto lg:left-[60%]',
   },
+  // {
+  //   name: 'Greater Kailash',
+  //   className: 'top-[12%] right-[5%] sm:top-[20%] sm:right-[14%] lg:top-[40%] lg:right-auto lg:left-[60%]',
+  // },
   {
     name: 'Vasant Kunj',
     className: 'bottom-[20%] left-[6%] sm:bottom-[18%] sm:left-[16%] lg:bottom-auto lg:top-[68%] lg:left-[28%]',
   },
   {
     name: 'Saket',
-    className: 'bottom-[20%] right-[6%] sm:bottom-[16%] sm:right-[12%] lg:bottom-auto lg:top-[62%] lg:right-auto lg:left-[55%]',
+    className:
+      'top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 sm:bottom-auto sm:top-[45%] sm:left-[38%] sm:right-auto sm:translate-x-0 sm:translate-y-0 lg:top-[48%] lg:left-[42%]',
   },
 ];
 
@@ -60,14 +71,14 @@ const LocalitiesSection = () => (
 
           {/* Active locality */}
           <motion.div
-            className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 sm:top-[45%] sm:left-[38%] sm:translate-x-0 sm:translate-y-0 z-10"
+            className={`absolute z-10 ${activeLocality.className}`}
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
           >
             <div className="flex flex-col items-center">
-              <div className="relative flex items-center justify-center w-[7.5rem] h-[7.5rem] sm:w-[8.75rem] sm:h-[8.75rem]">
+              <div className="relative flex items-center justify-center w-[5.5rem] h-[4.75rem] sm:w-[6.25rem] sm:h-[5.25rem]">
                 <svg
                   className="absolute inset-0 w-full h-full"
                   viewBox="0 0 100 100"
@@ -76,20 +87,20 @@ const LocalitiesSection = () => (
                   <ellipse
                     cx="50"
                     cy="50"
-                    rx="44"
-                    ry="40"
+                    rx="30"
+                    ry="27"
                     fill="rgba(217,70,239,0.35)"
                     stroke="rgba(255,255,255,0.5)"
                     strokeWidth="1.5"
                   />
                 </svg>
-                <div className="relative z-10 w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white/30">
-                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <div className="relative z-10 w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white/30">
+                  <MapPin className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
                 </div>
               </div>
-              <div className="mt-1 max-w-[9.5rem] sm:max-w-none">
+              <div className="mt-0.5 max-w-[9.5rem] sm:max-w-none">
                 <div className="bg-white/20 backdrop-blur-sm text-white px-2.5 py-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs border border-white/30 font-medium text-center">
-                  Sainik Farms
+                  {activeLocality.name}
                   <div className="text-[10px] sm:text-xs text-fuchsia-200 mt-0.5 flex items-center justify-center gap-1 font-semibold">
                     <span className="w-1.5 h-1.5 bg-fuchsia-300 rounded-full animate-pulse shrink-0" />
                     Active Now

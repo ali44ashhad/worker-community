@@ -12,6 +12,7 @@ import {
   UserPlus,
   Wrench,
   X,
+  MessageCircle,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -47,6 +48,7 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
   const menuItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Wrench, label: 'Services', path: '/community/services' },
+    { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
     ...(communityFeatures.broadcast
       ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast' }]
       : []),

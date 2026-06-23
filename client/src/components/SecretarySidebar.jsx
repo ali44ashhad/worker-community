@@ -12,6 +12,7 @@ import {
   Wrench,
   Users,
   X,
+  MessageCircle,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -21,6 +22,7 @@ import SidebarPanelGreeting from './SidebarPanelGreeting';
 const menuItems = [
   { icon: LayoutGrid, label: 'Dashboard', path: '/secretary/dashboard' },
   { icon: Wrench, label: 'Services', path: '/secretary/services' },
+  { icon: MessageCircle, label: 'Communities', path: '/secretary/communities' },
   { icon: ClipboardCheck, label: 'Approve / reject', path: '/secretary/approvals' },
   { icon: Users, label: 'Member list', path: '/secretary/members' },
   { icon: Megaphone, label: 'Broadcast', path: '/secretary/broadcast' },
