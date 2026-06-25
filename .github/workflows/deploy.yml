@@ -32,10 +32,26 @@ jobs:
 
             echo "📦 Installing dependencies..."
             cd server
+
             npm install
 
             echo "🚀 Reloading PM2..."
             pm2 reload commun-api --update-env
 
-            echo "✅ Deployment completed successfully!"
+            echo "⏳ Waiting for application to start..."
+            sleep 10
+
+            echo "❤️ Local Health Check..."
+            curl --fail http://localhost:3000
+
+            echo ""
+            echo "🌍 Public Health Check..."
+            curl --fail https://api.commun.in
+
+            echo ""
+            echo "📊 PM2 Status"
+            pm2 list
+
+            echo ""
+            echo "🎉 Deployment completed successfully!"
           EOF
