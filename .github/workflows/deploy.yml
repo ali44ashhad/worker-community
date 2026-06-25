@@ -23,17 +23,19 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << 'EOF'
-          set -e
+            set -e
 
-          cd /home/ubuntu/worker-community
+            echo "📥 Pulling latest code..."
+            cd /home/ubuntu/worker-community
 
-          git pull origin main
+            git pull origin main
 
-          cd server
+            echo "📦 Installing dependencies..."
+            cd server
+            npm install
 
-          npm install
+            echo "🚀 Reloading PM2..."
+            pm2 reload commun-api --update-env
 
-          pm2 restart commun-api --update-env
-
-          echo "Deployment completed successfully!"
+            echo "✅ Deployment completed successfully!"
           EOF
