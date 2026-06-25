@@ -21,21 +21,21 @@ jobs:
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy to EC2
-        run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            set -e
+  run: |
+    ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+      set -e
 
-            cd ${{ secrets.PROJECT_PATH }}
+      cd /home/ubuntu/worker-community
 
-            echo "Pulling latest code..."
-            git pull origin main
+      echo "Pulling latest code..."
+      git pull origin main
 
-            echo "Installing backend dependencies..."
-            cd server
-            npm install
+      echo "Installing backend dependencies..."
+      cd server
+      npm install
 
-            echo "Restarting PM2..."
-            pm2 restart commun-api --update-env
+      echo "Restarting PM2..."
+      pm2 restart commun-api --update-env
 
-            echo "Deployment completed successfully!"
-          EOF
+      echo "Deployment completed successfully!"
+    EOF
