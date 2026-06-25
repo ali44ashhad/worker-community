@@ -3,8 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronRight, TrendingUp } from 'lucide-react';
-import ServiceCard from '../components/service/ServiceCard';
-import CommunityCta from '../components/home/CommunityCta';
+import ServiceCard from '../components/service/ServiceCard'; 
 import HomePageLoader from '../components/loaders/HomePageLoader';
 import { getApiBase } from '../utils/apiBase';
 
@@ -125,8 +124,7 @@ const TopServices = () => {
           )}
         </div>
       </section>
-
-      <CommunityCta />
+ 
     </motion.div>
   );
 };

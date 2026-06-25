@@ -12,6 +12,7 @@ import { sendPasswordResetEmail, sendSecretaryNewSignupEmail } from "../utils/em
 import { getFrontendBase } from "../utils/frontendUrl.js";
 import { normalizeCommunName, isValidCommunName } from "../utils/communName.js";
 import { normalizeFeatureToggles } from "../utils/featureToggles.js";
+import { sendPhoneOtp, verifyPhoneOtp, normalizePhoneDigits } from "../utils/twilio.js";
 import Broadcast from "../models/broadcast.model.js";
 import CommunityEvent from "../models/communityEvent.model.js";
 import { validateEventExpiry } from "../utils/communityEvents.js";
@@ -139,6 +140,191 @@ const listSignupCommunities = async (req, res) => {
     }
 };
 
+const sendSignupOtp = async (req, res) => {
+    try {
+        const phoneDigits = normalizePhoneDigits(req.body?.phoneNumber);
+        if (phoneDigits.length !== 10) {
+            return res.status(400).json({
+                success: false,
+                message: "Enter a valid 10-digit phone number.",
+            });
+        }
+
+        const existing = await User.findOne({ phoneNumber: phoneDigits });
+        if (existing) {
+            return res.status(409).json({
+                success: false,
+                message: "This phone number is already registered.",
+            });
+        }
+
+        await sendPhoneOtp(phoneDigits);
+
+        return res.status(200).json({
+            success: true,
+            message: "OTP sent to your phone.",
+        });
+    } catch (error) {
+        console.error("sendSignupOtp:", error?.message || error);
+        return res.status(500).json({
+            success: false,
+            message: error?.message || "Could not send OTP. Please try again.",
+        });
+    }
+};
+
+const verifySignupOtp = async (req, res) => {
+    try {
+        const phoneDigits = normalizePhoneDigits(req.body?.phoneNumber);
+        const code = String(req.body?.code || "").trim();
+
+        if (phoneDigits.length !== 10) {
+            return res.status(400).json({
+                success: false,
+                message: "Enter a valid 10-digit phone number.",
+            });
+        }
+        if (!code || code.length < 4) {
+            return res.status(400).json({
+                success: false,
+                message: "Enter the OTP sent to your phone.",
+            });
+        }
+
+        const approved = await verifyPhoneOtp(phoneDigits, code);
+        if (!approved) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired OTP.",
+            });
+        }
+
+        const phoneVerificationToken = jwt.sign(
+            { phoneNumber: phoneDigits, purpose: "signup" },
+            process.env.JWT_SECRET,
+            { expiresIn: "15m" }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Phone number verified.",
+            data: { phoneVerificationToken },
+        });
+    } catch (error) {
+        console.error("verifySignupOtp:", error?.message || error);
+        return res.status(500).json({
+            success: false,
+            message: error?.message || "Could not verify OTP. Please try again.",
+        });
+    }
+};
+
+const findUserByPhoneDigits = async (phoneDigits) => {
+    const direct = await User.findOne({ phoneNumber: phoneDigits });
+    if (direct) return direct;
+    return User.findOne({
+        phoneNumber: { $regex: new RegExp(`${phoneDigits}$`) },
+    });
+};
+
+const sendLoginOtp = async (req, res) => {
+    try {
+        const phoneDigits = normalizePhoneDigits(req.body?.phoneNumber);
+        if (phoneDigits.length !== 10) {
+            return res.status(400).json({
+                success: false,
+                message: "Enter a valid 10-digit phone number.",
+            });
+        }
+
+        const user = await findUserByPhoneDigits(phoneDigits);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "This phone number is not registered.",
+            });
+        }
+
+        if (user.isActive === false) {
+            return res.status(403).json({
+                success: false,
+                message: "Your account is deactivated. Please contact admin.",
+            });
+        }
+
+        await sendPhoneOtp(phoneDigits);
+
+        return res.status(200).json({
+            success: true,
+            message: "OTP sent to your phone.",
+        });
+    } catch (error) {
+        console.error("sendLoginOtp:", error?.message || error);
+        return res.status(500).json({
+            success: false,
+            message: error?.message || "Could not send OTP. Please try again.",
+        });
+    }
+};
+
+const verifyLoginOtp = async (req, res) => {
+    try {
+        const phoneDigits = normalizePhoneDigits(req.body?.phoneNumber);
+        const code = String(req.body?.code || "").trim();
+
+        if (phoneDigits.length !== 10) {
+            return res.status(400).json({
+                success: false,
+                message: "Enter a valid 10-digit phone number.",
+            });
+        }
+        if (!code || code.length < 4) {
+            return res.status(400).json({
+                success: false,
+                message: "Enter the OTP sent to your phone.",
+            });
+        }
+
+        const approved = await verifyPhoneOtp(phoneDigits, code);
+        if (!approved) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired OTP.",
+            });
+        }
+
+        const user = await findUserByPhoneDigits(phoneDigits);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "This phone number is not registered.",
+            });
+        }
+
+        if (user.isActive === false) {
+            return res.status(403).json({
+                success: false,
+                message: "Your account is deactivated. Please contact admin.",
+            });
+        }
+
+        generateToken(user._id, res);
+        user.password = undefined;
+
+        return res.status(200).json({
+            success: true,
+            message: "Logged in successfully.",
+            user,
+        });
+    } catch (error) {
+        console.error("verifyLoginOtp:", error?.message || error);
+        return res.status(500).json({
+            success: false,
+            message: error?.message || "Could not verify OTP. Please try again.",
+        });
+    }
+};
+
 const register = async (req, res) => {
     const {
         firstName,
@@ -146,47 +332,102 @@ const register = async (req, res) => {
         email,
         password,
         phoneNumber,
+        phoneVerificationToken,
         addressLine1,
+        flatNumber,
         addressLine2,
         city,
         state,
         zip,
         communityCommunName,
         communName,
+        requestedCommunityName,
+        otherCommunityName,
     } = req.body;
     try {
-        const rawCommunity =
-            communityCommunName !== undefined && communityCommunName !== null && String(communityCommunName).trim() !== ""
-                ? communityCommunName
-                : communName;
+        const phoneDigits = normalizePhoneDigits(phoneNumber);
+        if (phoneDigits.length !== 10) {
+            return res.status(400).json({
+                success: false,
+                message: "Enter a valid 10-digit phone number.",
+            });
+        }
+
+        if (!phoneVerificationToken) {
+            return res.status(400).json({
+                success: false,
+                message: "Please verify your phone number with OTP before signing up.",
+            });
+        }
+
+        let verifiedPhonePayload;
+        try {
+            verifiedPhonePayload = jwt.verify(phoneVerificationToken, process.env.JWT_SECRET);
+        } catch {
+            return res.status(400).json({
+                success: false,
+                message: "Phone verification expired. Please verify your number again.",
+            });
+        }
 
         if (
-            !firstName ||
-            !lastName ||
-            !email ||
-            !password ||
-            !phoneNumber ||
-            rawCommunity === undefined ||
-            rawCommunity === null ||
-            String(rawCommunity).trim() === ""
+            verifiedPhonePayload?.purpose !== "signup" ||
+            normalizePhoneDigits(verifiedPhonePayload?.phoneNumber) !== phoneDigits
         ) {
             return res.status(400).json({
                 success: false,
-                message: "All required fields must be provided, including Commun community.",
+                message: "Phone verification does not match. Please verify again.",
             });
         }
+
+        const flatNo = String(flatNumber || addressLine1 || "").trim();
+        const rawOtherCommunity = String(
+            requestedCommunityName || otherCommunityName || ""
+        ).trim();
+        const isOtherCommunity =
+            String(communityCommunName || "").trim().toLowerCase() === "__other__" ||
+            (!communityCommunName && rawOtherCommunity);
+
+        const rawCommunity = isOtherCommunity
+            ? ""
+            : communityCommunName !== undefined &&
+                communityCommunName !== null &&
+                String(communityCommunName).trim() !== ""
+              ? communityCommunName
+              : communName;
+
+        if (!firstName || !lastName || !email || !password || !phoneDigits) {
+            return res.status(400).json({
+                success: false,
+                message: "All required fields must be provided.",
+            });
+        }
+
+        if (!flatNo) {
+            return res.status(400).json({
+                success: false,
+                message: "Flat number is required.",
+            });
+        }
+
+        if (!isOtherCommunity && (rawCommunity === undefined || rawCommunity === null || String(rawCommunity).trim() === "")) {
+            return res.status(400).json({
+                success: false,
+                message: "Please select your Commun community.",
+            });
+        }
+
+        if (isOtherCommunity && !rawOtherCommunity) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter your community name.",
+            });
+        }
+
         if (password.length < 8) {
             return res.status(400).json({
                 success: false,
                 message: "Password should be at least 8 characters"
-            });
-        }
-
-        const cn = normalizeCommunName(rawCommunity);
-        if (!isValidCommunName(cn)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid Commun community selection.",
             });
         }
 
@@ -199,16 +440,39 @@ const register = async (req, res) => {
             });
         }
 
-        const secretaryForCommunity = await User.findOne({
-            role: "secretary",
-            isActive: true,
-            communName: cn,
-        });
-        if (!secretaryForCommunity) {
-            return res.status(400).json({
+        const phoneTaken = await User.findOne({ phoneNumber: phoneDigits });
+        if (phoneTaken) {
+            return res.status(409).json({
                 success: false,
-                message: "Please choose a valid Commun community from the list.",
+                message: "This phone number is already registered.",
             });
+        }
+
+        let cn = "";
+        let secretaryForCommunity = null;
+
+        if (isOtherCommunity) {
+            cn = "";
+        } else {
+            cn = normalizeCommunName(rawCommunity);
+            if (!isValidCommunName(cn)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid Commun community selection.",
+                });
+            }
+
+            secretaryForCommunity = await User.findOne({
+                role: "secretary",
+                isActive: true,
+                communName: cn,
+            });
+            if (!secretaryForCommunity) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Please choose a valid Commun community from the list.",
+                });
+            }
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -218,14 +482,19 @@ const register = async (req, res) => {
             lastName: String(lastName).trim(),
             email: emailNorm,
             password: hashedPassword,
-            phoneNumber: String(phoneNumber).trim(),
+            phoneNumber: phoneDigits,
             communityCommunName: cn,
-            accountStatus: "pending",
+            accountStatus: isOtherCommunity ? "approved" : "pending",
             role: "customer",
+            flatNumber: flatNo,
+            addressLine1: "",
+            isPublicMember: isOtherCommunity,
         };
 
-        // Add address fields if provided
-        if (addressLine1) userPayload.addressLine1 = addressLine1;
+        if (isOtherCommunity) {
+            userPayload.requestedCommunityName = rawOtherCommunity;
+        }
+
         if (addressLine2) userPayload.addressLine2 = addressLine2;
         if (city) userPayload.city = city;
         if (state) userPayload.state = state;
@@ -253,7 +522,9 @@ const register = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: "Account created. A secretary will review your registration shortly.",
+            message: isOtherCommunity
+                ? "Account created. Welcome to CommuN!"
+                : "Account created. A secretary will review your registration shortly.",
             user
         });
     } catch (error) {
@@ -361,10 +632,92 @@ const checkAuth = (req, res) => {
     }
 };
 
+/**
+ * @route POST /api/user/join-community
+ * Public members (Other signup) can request to join a listed Commun community.
+ */
+const joinCommunity = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        if (!user.isPublicMember) {
+            return res.status(400).json({
+                success: false,
+                message: "Your account is already linked to a Commun community.",
+            });
+        }
+
+        const { communityCommunName } = req.body || {};
+        if (!communityCommunName || String(communityCommunName).trim() === "") {
+            return res.status(400).json({
+                success: false,
+                message: "Please select a Commun community.",
+            });
+        }
+
+        const cn = normalizeCommunName(communityCommunName);
+        if (!isValidCommunName(cn)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Commun community selection.",
+            });
+        }
+
+        const secretaryForCommunity = await User.findOne({
+            role: "secretary",
+            isActive: true,
+            communName: cn,
+        });
+        if (!secretaryForCommunity) {
+            return res.status(400).json({
+                success: false,
+                message: "Please choose a valid Commun community from the list.",
+            });
+        }
+
+        user.communityCommunName = cn;
+        user.isPublicMember = false;
+        user.accountStatus = "pending";
+        await user.save();
+
+        try {
+            if (secretaryForCommunity?.email) {
+                const memberName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+                await sendSecretaryNewSignupEmail({
+                    toEmail: String(secretaryForCommunity.email).trim().toLowerCase(),
+                    communityCommunName: cn,
+                    memberName: memberName || "New member",
+                    memberEmail: user.email,
+                    memberPhone: user.phoneNumber,
+                });
+            }
+        } catch (mailError) {
+            console.log("Secretary join-community notification failed:", mailError?.message || mailError);
+        }
+
+        user.password = undefined;
+
+        return res.status(200).json({
+            success: true,
+            message: "Join request submitted. A secretary will review your registration shortly.",
+            user,
+        });
+    } catch (error) {
+        console.error("joinCommunity:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Could not join community.",
+        });
+    }
+};
+
 // --- Controller to Update User Profile ---
 const updateUserProfile = async (req, res) => {
     try {
-        const { firstName, lastName, phoneNumber, addressLine1, addressLine2, city, state, zip } = req.body;
+        const { firstName, lastName, phoneNumber, flatNumber, addressLine1, addressLine2, city, state, zip } = req.body;
         const userId = req.user._id; // From your auth middleware
 
         const user = await User.findById(userId);
@@ -377,6 +730,7 @@ const updateUserProfile = async (req, res) => {
         if (firstName !== undefined) user.firstName = firstName;
         if (lastName !== undefined) user.lastName = lastName;
         if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
+        if (flatNumber !== undefined) user.flatNumber = String(flatNumber).trim();
         if (addressLine1 !== undefined) user.addressLine1 = addressLine1;
         if (addressLine2 !== undefined) user.addressLine2 = addressLine2;
         if (city !== undefined) user.city = city;
@@ -809,6 +1163,10 @@ const deleteMemberCommunityEvent = async (req, res) => {
 // --- Single Export Block ---
 export {
     listSignupCommunities,
+    sendSignupOtp,
+    verifySignupOtp,
+    sendLoginOtp,
+    verifyLoginOtp,
     register,
     login,
     logout,
@@ -818,6 +1176,7 @@ export {
     listMemberCommunityEvents,
     createMemberCommunityEvent,
     deleteMemberCommunityEvent,
+    joinCommunity,
     updateUserProfile,
     changePassword,
     forgotPassword,

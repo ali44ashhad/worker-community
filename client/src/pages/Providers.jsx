@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { getAllProviders } from '../features/providerSlice';
 import ProviderCard from '../components/provider/ProviderCard';
-import HomePageLoader from '../components/loaders/HomePageLoader';
-import CommunityCta from '../components/home/CommunityCta';
+import HomePageLoader from '../components/loaders/HomePageLoader'; 
 import { Search, RefreshCw } from 'lucide-react';
 import { getFullName } from '../utils/userHelpers';
 import Pagination from '../components/Pagination';
@@ -274,9 +273,7 @@ const Providers = () => {
             </div>
           </div>
         </div>
-      </section>
-
-      <CommunityCta />
+      </section> 
     </motion.div>
   );
 };

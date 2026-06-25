@@ -13,8 +13,7 @@ import {
   ArrowRight,
   Star,
 } from 'lucide-react';
-import Comment from '../components/Comment';
-import CommunityCta from '../components/home/CommunityCta';
+import Comment from '../components/Comment'; 
 import { addToWishlist, removeFromWishlist, fetchWishlist } from '../features/wishlistSlice';
 import { fetchCommentsByService } from '../features/commentSlice';
 import { toast } from 'react-hot-toast';
@@ -495,8 +494,7 @@ const SpecificService = () => {
           </div>
         </div>
       </section>
-
-      <CommunityCta />
+ 
     </motion.div>
   );
 };

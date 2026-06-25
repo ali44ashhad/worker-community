@@ -97,7 +97,9 @@ const App = () => {
     }
   }, [dispatch, user, isCheckingAuth])
 
-  if(isCheckingAuth){
+  // Show auth-check loader everywhere except Home (`/`).
+  // Home is public, so we can render immediately while the session is being checked.
+  if (isCheckingAuth && location.pathname !== '/') {
     return <HomePageLoader fullScreen label="Loading CommuN…" sublabel="Checking your session." />;
   }
 

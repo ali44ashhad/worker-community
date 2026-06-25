@@ -18,6 +18,22 @@ export const signupUser = createAsyncThunk(
   }
 );
 
+// ========================== LOGIN WITH PHONE OTP ==========================
+export const loginWithPhoneOtp = createAsyncThunk(
+  "auth/loginWithPhoneOtp",
+  async ({ phoneNumber, code }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/user/login/verify-otp`, {
+        phoneNumber,
+        code,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Login failed");
+    }
+  }
+);
+
 // ========================== LOGIN ==========================
 export const loginUser = createAsyncThunk(
   "auth/login",
@@ -53,6 +69,21 @@ export const logoutUser = createAsyncThunk(
       return response.data; // expected { message: "Logout successful" }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Logout failed");
+    }
+  }
+);
+
+// ========================== JOIN COMMUNITY ==========================
+export const joinCommunity = createAsyncThunk(
+  "auth/joinCommunity",
+  async (communityCommunName, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/user/join-community`, {
+        communityCommunName,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Could not join community");
     }
   }
 );
@@ -136,6 +167,21 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
 
+      // ---------- LOGIN WITH PHONE OTP ----------
+      .addCase(loginWithPhoneOtp.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loginWithPhoneOtp.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+      })
+      .addCase(loginWithPhoneOtp.rejected, (state, action) => {
+        state.isLoading = false;
+        state.user = null;
+        state.error = action.payload;
+      })
+
       // ---------- CHECK AUTH ----------
       .addCase(checkAuth.pending, (state) => {
         state.isCheckingAuth = true;
@@ -175,6 +221,20 @@ const authSlice = createSlice({
         state.user = action.payload.user;
       })
       .addCase(updateProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
+      // ---------- JOIN COMMUNITY ----------
+      .addCase(joinCommunity.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(joinCommunity.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+      })
+      .addCase(joinCommunity.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       })

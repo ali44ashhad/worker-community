@@ -11,6 +11,7 @@ import {
     uploadBufferToS3,
 } from "../utils/s3Upload.js";
 import { isValidCommunName, normalizeCommunName } from "../utils/communName.js";
+import { normalizeCategoryIcon } from "../utils/categoryIcons.js";
 
 /**
  * @description Get all dashboard statistics for the admin
@@ -563,7 +564,7 @@ const getAllCategoriesAdmin = async (req, res) => {
 
 const createCategoryAdmin = async (req, res) => {
     try {
-        const { name, subCategories = [], keywords = [], description = "", isActive = true } = req.body;
+        const { name, subCategories = [], keywords = [], icon, isActive = true } = req.body;
         const trimmedName = String(name || "").trim();
         if (!trimmedName) {
             return res.status(400).json({ success: false, message: "Category name is required." });
@@ -586,17 +587,11 @@ const createCategoryAdmin = async (req, res) => {
             return res.status(409).json({ success: false, message: "Category already exists." });
         }
 
-        let image = { url: "", public_id: "" };
-        if (req.file?.buffer) {
-            image = await uploadBufferToS3(req.file, S3_FOLDERS.CATEGORY);
-        }
-
         const category = await Category.create({
             name: trimmedName,
             subCategories: parseJsonArray(subCategories),
             keywords: parseJsonArray(keywords),
-            description: String(description || "").trim(),
-            image,
+            icon: normalizeCategoryIcon(icon, trimmedName),
             isActive: String(isActive) === "false" ? false : Boolean(isActive),
         });
 
@@ -614,7 +609,7 @@ const createCategoryAdmin = async (req, res) => {
 const updateCategoryAdmin = async (req, res) => {
     try {
         const { categoryId } = req.params;
-        const { name, subCategories, keywords, description, isActive } = req.body;
+        const { name, subCategories, keywords, icon, isActive } = req.body;
 
         const parseJsonArray = (value) => {
             if (value === undefined || value === null) return [];
@@ -652,19 +647,11 @@ const updateCategoryAdmin = async (req, res) => {
         if (keywords !== undefined) {
             category.keywords = parseJsonArray(keywords);
         }
-        if (description !== undefined) {
-            category.description = String(description || "").trim();
+        if (icon !== undefined) {
+            category.icon = normalizeCategoryIcon(icon, category.name);
         }
         if (isActive !== undefined) {
             category.isActive = String(isActive) === "false" ? false : Boolean(isActive);
-        }
-
-        if (req.file?.buffer) {
-            if (category.image?.public_id) {
-                await deleteFromS3Safe(category.image.public_id);
-            }
-            const uploaded = await uploadBufferToS3(req.file, S3_FOLDERS.CATEGORY);
-            category.image = uploaded;
         }
 
         await category.save();
@@ -1042,13 +1029,15 @@ const getAllUsers = async (req, res) => {
                     { email: { $regex: search, $options: 'i' } },
                     { phoneNumber: { $regex: search, $options: 'i' } },
                     { role: { $regex: search, $options: 'i' } },
+                    { communityCommunName: { $regex: search, $options: 'i' } },
+                    { requestedCommunityName: { $regex: search, $options: 'i' } },
                 ]
             };
         }
 
         const totalUsers = await User.countDocuments(query);
         const users = await User.find(query)
-            .select('firstName lastName email phoneNumber role profileImage isActive createdAt')
+            .select('firstName lastName email phoneNumber role profileImage isActive createdAt flatNumber communityCommunName requestedCommunityName isPublicMember communName')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);

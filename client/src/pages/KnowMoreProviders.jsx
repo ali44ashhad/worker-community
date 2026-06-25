@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Briefcase, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react';
-import CommunityCta from '../components/home/CommunityCta';
+ 
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -156,9 +156,7 @@ const KnowMoreProviders = () => {
             </Card>
           </motion.div>
         </div>
-      </section>
-
-      <CommunityCta />
+      </section> 
     </motion.div>
   );
 };

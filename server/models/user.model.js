@@ -30,6 +30,12 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
+    flatNumber: {
+        type: String,
+        required: false,
+        trim: true,
+        default: "",
+    },
     addressLine1: {
         type: String,
         required: false,
@@ -79,6 +85,17 @@ const userSchema = new Schema({
         lowercase: true,
         maxlength: 40,
         default: "",
+    },
+    /** When user selects "Other" at signup, store their requested community name. */
+    requestedCommunityName: {
+        type: String,
+        trim: true,
+        default: "",
+    },
+    /** True when user signed up via "Other" — no secretary community; uses public platform. */
+    isPublicMember: {
+        type: Boolean,
+        default: false,
     },
     role: {
         type: String,

@@ -1,9 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, ShieldCheck, BadgeCheck, Users } from 'lucide-react';
-import CommunityCta from '../components/home/CommunityCta';
-
+import { ChevronRight, Search, ShieldCheck, BadgeCheck, Users } from 'lucide-react'; 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
   whileInView: { opacity: 1, y: 0 },
@@ -166,9 +164,7 @@ const KnowMoreSeekers = () => {
             </Card>
           </motion.div>
         </div>
-      </section>
-
-      <CommunityCta />
+      </section> 
     </motion.div>
   );
 };

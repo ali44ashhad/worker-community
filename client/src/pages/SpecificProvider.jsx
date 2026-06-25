@@ -4,8 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { getProviderById, clearSelectedProvider } from '../features/providerSlice';
 import { MapPin, MessageCircle, Star } from 'lucide-react';
-import ServiceCard from '../components/service/ServiceCard';
-import CommunityCta from '../components/home/CommunityCta';
+import ServiceCard from '../components/service/ServiceCard'; 
 import axios from 'axios';
 import { getFullName, getInitials, formatAddress } from '../utils/userHelpers';
 
@@ -327,9 +326,7 @@ const SpecificProvider = () => {
             </div>
           </div>
         </div>
-      </section>
-
-      <CommunityCta />
+      </section> 
     </motion.div>
   );
 };

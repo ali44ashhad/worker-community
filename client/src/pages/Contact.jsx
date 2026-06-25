@@ -3,8 +3,7 @@ import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, Clock, ChevronRight, MessageCircle } from 'lucide-react';
-import emailjs from '@emailjs/browser';
-import CommunityCta from '../components/home/CommunityCta';
+import emailjs from '@emailjs/browser'; 
 
 const EMAILJS_SERVICE_ID = 'service_j70psri';
 const EMAILJS_TEMPLATE_ID = 'template_rtmto2q';
@@ -411,8 +410,7 @@ const Contact = () => {
           </motion.div>
         </div>
       </section>
-
-      <CommunityCta />
+ 
     </motion.div>
   );
 };

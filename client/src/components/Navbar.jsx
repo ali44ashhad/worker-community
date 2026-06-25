@@ -407,9 +407,7 @@ const Navbar = () => {
             </motion.button>
           </div>
         </nav>
-      </header>
-
-      {/* Search overlay — rendered outside header so it is not clipped */}
+      </header> 
       <AnimatePresence>
         {isSearchOpen && (
           <>
@@ -464,7 +462,6 @@ const Navbar = () => {
                 <HiOutlineX size={22} />
               </motion.button>
             </div>
-
             <div className="flex flex-col h-[calc(100%-73px)] overflow-y-auto">
               <div className="py-6 px-6 space-y-2">
                 {mobileNavLinks.map((link, i) => (

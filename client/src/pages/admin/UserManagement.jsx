@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAllUsersAdmin, updateUserStatusAdmin } from '../../features/adminSlice';
 import ProfileAvatar from '../../components/ProfileAvatar';
-import { getFullName } from '../../utils/userHelpers';
+import { getFullName, getUserCommunityInfo, getUserFlatNumber } from '../../utils/userHelpers';
 
 const inputClass =
   'w-full pl-9 pr-3 py-2.5 text-sm border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 focus:border-[var(--purple-primary)] transition-all';
@@ -18,6 +18,23 @@ const StatusBadge = ({ isActive }) => (
     {isActive === false ? 'Inactive' : 'Active'}
   </span>
 );
+
+const CommunityDisplay = ({ user }) => {
+  const info = getUserCommunityInfo(user);
+  return (
+    <div className="min-w-[140px]">
+      <p className="font-medium text-[var(--text-primary)]">{info.name}</p>
+      <span
+        className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${info.badgeClass}`}
+      >
+        {info.badge}
+      </span>
+      {info.subtext ? (
+        <p className="mt-1 text-[11px] leading-snug text-[var(--text-secondary)]">{info.subtext}</p>
+      ) : null}
+    </div>
+  );
+};
 
 const ActionButton = ({ user, updatingUserId, authUserId, onToggle }) => {
   const isSelf = authUserId === user._id;
@@ -87,16 +104,25 @@ const UserManagement = () => {
         </p>
         <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">User Management</h1>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          Activate or deactivate user accounts.
+          Activate or deactivate user accounts. Community badges show listed signups vs Other (manual) entries.
         </p>
       </motion.div>
+
+      <div className="mb-5 flex flex-wrap gap-2 text-[11px]">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
+          Listed community — signed up from secretary list
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 font-medium text-amber-800">
+          Other (manual) — user typed their own community name
+        </span>
+      </div>
 
       <div className="relative mb-5 max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]" />
         <input
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search by name, email, role, phone"
+          placeholder="Search by name, email, role, phone, community"
           className={inputClass}
         />
       </div>
@@ -133,8 +159,17 @@ const UserManagement = () => {
                 </div>
                 <StatusBadge isActive={user.isActive} />
               </div>
-              <div className="flex items-center justify-between gap-3 border-t border-purple-100 pt-3">
-                <span className="text-xs capitalize text-[var(--text-secondary)]">{user.role}</span>
+              <div className="mb-3 border-t border-purple-100 pt-3">
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Community
+                </p>
+                <CommunityDisplay user={user} />
+              </div>
+              <div className="mb-3 flex items-center justify-between gap-3 border-t border-purple-100 pt-3 text-xs text-[var(--text-secondary)]">
+                <span>Flat: {getUserFlatNumber(user) || '—'}</span>
+                <span className="capitalize">{user.role}</span>
+              </div>
+              <div className="flex items-center justify-end gap-3 border-t border-purple-100 pt-3">
                 <ActionButton
                   user={user}
                   updatingUserId={updatingUserId}
@@ -150,7 +185,7 @@ const UserManagement = () => {
       {/* Desktop table */}
       <div className="hidden overflow-hidden rounded-2xl border border-purple-100/50 bg-white/80 shadow-sm shadow-purple-500/5 lg:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px]">
+          <table className="w-full min-w-[960px]">
             <thead className="border-b border-purple-100 bg-purple-50/40">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
@@ -158,6 +193,12 @@ const UserManagement = () => {
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Email
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Community
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Flat No.
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Role
@@ -173,7 +214,7 @@ const UserManagement = () => {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center">
+                  <td colSpan={7} className="px-4 py-12 text-center">
                     <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
                     <p className="text-sm text-[var(--text-secondary)]">Loading users…</p>
                   </td>
@@ -181,7 +222,7 @@ const UserManagement = () => {
               )}
               {!isLoading && users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-sm text-[var(--text-secondary)]">
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-[var(--text-secondary)]">
                     No users found.
                   </td>
                 </tr>
@@ -203,6 +244,12 @@ const UserManagement = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{user.email}</td>
+                    <td className="px-4 py-3">
+                      <CommunityDisplay user={user} />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">
+                      {getUserFlatNumber(user) || '—'}
+                    </td>
                     <td className="px-4 py-3 text-sm capitalize text-[var(--text-secondary)]">
                       {user.role}
                     </td>

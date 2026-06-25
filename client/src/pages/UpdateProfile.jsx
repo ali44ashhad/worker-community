@@ -13,10 +13,19 @@ import {
   MapPin,
   LockKeyhole,
   ArrowLeft,
+  Building2,
+  X,
 } from 'lucide-react';
-import { changePasswordUser, updateProfile } from '../features/authSlice';
+import { changePasswordUser, joinCommunity, updateProfile } from '../features/authSlice';
 import { toast } from 'react-hot-toast';
-import { getInitials } from '../utils/userHelpers';
+import { getApiBase } from '../utils/apiBase';
+import { formatCommunDisplayName } from '../utils/communName';
+import {
+  getInitials,
+  getUserCommunityLabel,
+  getUserFlatNumber,
+  getUserStreetAddressLine1,
+} from '../utils/userHelpers';
 
 const inputClass =
   'w-full px-3.5 py-2.5 text-sm border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 focus:border-[var(--purple-primary)] transition-all';
@@ -94,12 +103,18 @@ const UpdateProfile = () => {
     firstName: '',
     lastName: '',
     phoneNumber: '',
+    flatNumber: '',
     addressLine1: '',
     addressLine2: '',
     city: '',
     state: '',
     zip: '',
   });
+  const [showJoinCommunity, setShowJoinCommunity] = useState(false);
+  const [communities, setCommunities] = useState([]);
+  const [communitiesLoading, setCommunitiesLoading] = useState(false);
+  const [selectedCommunity, setSelectedCommunity] = useState('');
+  const [joiningCommunity, setJoiningCommunity] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [profileImage, setProfileImage] = useState(null);
   const [removeProfileImage, setRemoveProfileImage] = useState(false);
@@ -121,7 +136,8 @@ const UpdateProfile = () => {
         firstName: user.firstName || user.name?.split(' ')[0] || '',
         lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',
         phoneNumber: user.phoneNumber || '',
-        addressLine1: user.addressLine1 || '',
+        flatNumber: getUserFlatNumber(user),
+        addressLine1: getUserStreetAddressLine1(user),
         addressLine2: user.addressLine2 || '',
         city: user.city || '',
         state: user.state || '',
@@ -132,6 +148,56 @@ const UpdateProfile = () => {
       setProfileImage(null);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!showJoinCommunity) return undefined;
+    const base = getApiBase() || '';
+    let cancelled = false;
+    setCommunitiesLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(`${base}/api/user/signup-communities`);
+        const json = await res.json();
+        if (cancelled) return;
+        if (json?.success && Array.isArray(json.data?.communities)) {
+          setCommunities(json.data.communities);
+        } else {
+          setCommunities([]);
+        }
+      } catch {
+        if (!cancelled) setCommunities([]);
+      } finally {
+        if (!cancelled) setCommunitiesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showJoinCommunity]);
+
+  const communityLabel = getUserCommunityLabel(user);
+
+  const handleJoinCommunity = async (e) => {
+    e.preventDefault();
+    if (!selectedCommunity) {
+      toast.error('Please select a community.');
+      return;
+    }
+    setJoiningCommunity(true);
+    try {
+      const data = await dispatch(joinCommunity(selectedCommunity)).unwrap();
+      toast.success(data?.message || 'Join request submitted.');
+      setShowJoinCommunity(false);
+      setSelectedCommunity('');
+      if (data?.user?.accountStatus === 'pending') {
+        navigate('/pending-approval');
+      }
+    } catch (error) {
+      toast.error(error || 'Could not join community.');
+    } finally {
+      setJoiningCommunity(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -237,6 +303,7 @@ const UpdateProfile = () => {
       formDataToSend.append('firstName', formData.firstName);
       formDataToSend.append('lastName', formData.lastName);
       formDataToSend.append('phoneNumber', formData.phoneNumber);
+      formDataToSend.append('flatNumber', formData.flatNumber);
       formDataToSend.append('addressLine1', formData.addressLine1);
       formDataToSend.append('addressLine2', formData.addressLine2);
       formDataToSend.append('city', formData.city);
@@ -395,7 +462,31 @@ const UpdateProfile = () => {
                 </Field>
               </div>
 
-              <Field label="Email" htmlFor="email" hint="Email cannot be changed.">
+              <Field label="Community" htmlFor="communityDisplay">
+                <div className="relative">
+                  <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]/60" />
+                  <input
+                    id="communityDisplay"
+                    type="text"
+                    value={
+                      communityLabel ||
+                      (user.isPublicMember ? 'Public member (not linked)' : 'Not set')
+                    }
+                    disabled
+                    className={`${inputDisabled} pl-9`}
+                  />
+                </div>
+                {user.isPublicMember && user.requestedCommunityName && (
+                  <p className="mt-1 text-[11px] text-[var(--text-secondary)]/80">
+                    You signed up with: {user.requestedCommunityName}
+                  </p>
+                )}
+              </Field>
+
+              <div>
+                <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">
+                  Email
+                </label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]/60" />
                   <input
@@ -406,7 +497,19 @@ const UpdateProfile = () => {
                     className={`${inputDisabled} pl-9`}
                   />
                 </div>
-              </Field>
+                <p className="mt-1 flex items-center justify-between gap-2 text-[11px] text-[var(--text-secondary)]/80">
+                  <span>Email cannot be changed.</span>
+                  {user.isPublicMember && (
+                    <button
+                      type="button"
+                      onClick={() => setShowJoinCommunity(true)}
+                      className="shrink-0 font-semibold text-[var(--purple-primary)] transition-colors hover:text-[var(--magenta)]"
+                    >
+                      Join community
+                    </button>
+                  )}
+                </p>
+              </div>
 
               <Field label="Phone number" htmlFor="phoneNumber">
                 <div className="relative">
@@ -429,7 +532,21 @@ const UpdateProfile = () => {
             </div>
           </Section>
 
-          <Section title="Address" description="Optional — helps others find you locally." icon={MapPin}>
+          <Section title="Flat number" description="Your flat or house number in the community." icon={Building2}>
+            <Field label="Flat / house number" htmlFor="flatNumber">
+              <input
+                id="flatNumber"
+                type="text"
+                name="flatNumber"
+                value={formData.flatNumber}
+                onChange={handleChange}
+                placeholder="e.g. A-101, Block 2"
+                className={inputClass}
+              />
+            </Field>
+          </Section>
+
+          <Section title="Address" description="Optional — street address (flat number is separate above)." icon={MapPin}>
             <div className="space-y-4">
               <Field label="Address line 1" htmlFor="addressLine1" optional>
                 <input
@@ -569,6 +686,67 @@ const UpdateProfile = () => {
           </form>
         </Section>
       </div>
+
+      {showJoinCommunity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md rounded-2xl border border-purple-100/50 bg-white p-6 shadow-xl"
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Join a community</h3>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  Select a Commun community. A secretary will review your request.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowJoinCommunity(false)}
+                className="rounded-lg p-1 text-[var(--text-secondary)] hover:bg-purple-50"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleJoinCommunity} className="space-y-4">
+              <select
+                value={selectedCommunity}
+                onChange={(e) => setSelectedCommunity(e.target.value)}
+                className={inputClass}
+                required
+                disabled={communitiesLoading}
+              >
+                <option value="">
+                  {communitiesLoading ? 'Loading communities…' : 'Select community'}
+                </option>
+                {communities.map((c) => (
+                  <option key={c.communName} value={c.communName}>
+                    {formatCommunDisplayName(c.communName)}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowJoinCommunity(false)}
+                  className="flex-1 rounded-xl border border-purple-100 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-purple-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={joiningCommunity || !selectedCommunity}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {joiningCommunity ? 'Submitting…' : 'Submit request'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 };

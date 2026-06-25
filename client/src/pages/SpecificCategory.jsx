@@ -4,11 +4,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { getAllProviders } from '../features/providerSlice';
 import ServiceCard from '../components/service/ServiceCard';
-import HomePageLoader from '../components/loaders/HomePageLoader';
-import CommunityCta from '../components/home/CommunityCta';
+import HomePageLoader from '../components/loaders/HomePageLoader'; 
 import { Search, RefreshCw, ArrowLeft } from 'lucide-react';
 import { getActiveCategories } from '../features/adminSlice';
 import { slugifyCategoryName } from '../utils/slug';
+import { getCategoryDescription } from '../utils/categoryDisplay';
 
 const chipClass = (active) =>
   `px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
@@ -47,10 +47,8 @@ const SpecificCategory = () => {
     const rules = {};
     (activeCategories || []).forEach((c) => {
       rules[c.name] = {
-        description: c.description || '',
         subCategories: c.subCategories || [],
         keywords: c.keywords || [],
-        image: c.image || { url: '', public_id: '' },
       };
     });
     return rules;
@@ -284,7 +282,7 @@ const SpecificCategory = () => {
               {categoryName}
             </h1>
             <p className="text-lg text-[var(--text-secondary)] max-w-2xl leading-relaxed">
-              {categoryData.description}
+              {getCategoryDescription(categoryData)}
             </p>
           </motion.div>
         </div>
@@ -558,8 +556,7 @@ const SpecificCategory = () => {
           </div>
         </div>
       </section>
-
-      <CommunityCta />
+ 
     </motion.div>
   );
 };

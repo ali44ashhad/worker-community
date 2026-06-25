@@ -1,5 +1,6 @@
 import Category from "../models/category.model.js";
 import { CATEGORY_DEFAULTS } from "./seedCategoryDefaults.js";
+import { normalizeCategoryIcon } from "./categoryIcons.js";
 
 export async function seedCategoriesIfMissing() {
   const entries = Object.entries(CATEGORY_DEFAULTS || {});
@@ -10,7 +11,6 @@ export async function seedCategoriesIfMissing() {
     entries.map(async ([name, def]) => {
       const subCategories = Array.isArray(def?.subCategories) ? def.subCategories : [];
       const keywords = Array.isArray(def?.keywords) ? def.keywords : [];
-      const description = typeof def?.description === "string" ? def.description : "";
 
       await Category.updateOne(
         { name },
@@ -19,7 +19,7 @@ export async function seedCategoriesIfMissing() {
             name,
             subCategories,
             keywords,
-            description,
+            icon: normalizeCategoryIcon("", name),
             isActive: true,
           },
         },

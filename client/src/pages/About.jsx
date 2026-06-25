@@ -270,14 +270,14 @@ const About = () => {
           <motion.p
             {...fadeUp}
             className="mt-10 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 to-fuchsia-50 px-6 py-5 text-center text-base font-medium text-[var(--text-primary)]"
-          >
+          > 
             CommuN solves all of these with one platform that keeps the neighbourhood at its center.
           </motion.p>
         </div>
       </section>
 
       {/* Why CommuN */}
-      <section className="py-24 bg-gradient-to-b from-white to-purple-50/30">
+      <section className=" bg-gradient-to-b from-white to-purple-50/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading icon={Sparkles} subtitle="Built for neighbours, by neighbours">
             Why CommuN Matters

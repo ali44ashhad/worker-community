@@ -17,6 +17,7 @@ const listPendingRegistrations = async (req, res) => {
     try {
         const users = await User.find({
             accountStatus: "pending",
+            isPublicMember: { $ne: true },
             role: { $nin: ["admin", "secretary"] },
             isActive: { $ne: false },
         })

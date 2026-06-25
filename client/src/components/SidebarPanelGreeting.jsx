@@ -6,6 +6,9 @@ const SidebarPanelGreeting = ({ user }) => {
   if (!user) return null;
 
   const communName = user.communName || user.communityCommunName;
+  const publicCommunityLabel = user.isPublicMember && user.requestedCommunityName
+    ? user.requestedCommunityName
+    : null;
 
   return (
     <>
@@ -15,6 +18,11 @@ const SidebarPanelGreeting = ({ user }) => {
       {communName && (
         <p className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">
           Welcome to {formatCommunDisplayName(communName)}
+        </p>
+      )}
+      {publicCommunityLabel && (
+        <p className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">
+          {publicCommunityLabel} · Public member
         </p>
       )}
     </>

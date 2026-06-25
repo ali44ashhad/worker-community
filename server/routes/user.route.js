@@ -5,6 +5,10 @@ import {
     logout, 
     register,
     listSignupCommunities,
+    sendSignupOtp,
+    verifySignupOtp,
+    sendLoginOtp,
+    verifyLoginOtp,
     getCommunityFeatures,
     listCommunityBroadcasts,
     listMemberCommunityEvents,
@@ -14,6 +18,7 @@ import {
     changePassword,
     forgotPassword,
     resetPassword,
+    joinCommunity,
     addServiceToWishlist, 
     removeServiceFromWishlist 
 } from '../controllers/user.controller.js';
@@ -24,6 +29,10 @@ import { eventAttachmentUpload } from '../middlewares/eventAttachmentUpload.js';
 const userRouter = express.Router();
 
 userRouter.get('/signup-communities', listSignupCommunities);
+userRouter.post('/signup/send-otp', sendSignupOtp);
+userRouter.post('/signup/verify-otp', verifySignupOtp);
+userRouter.post('/login/send-otp', sendLoginOtp);
+userRouter.post('/login/verify-otp', verifyLoginOtp);
 userRouter.post('/register', register);
 userRouter.post('/login', login);
 userRouter.post('/logout', logout);
@@ -41,6 +50,7 @@ userRouter.put(
 );
 
 userRouter.put("/change-password", protect, changePassword);
+userRouter.post("/join-community", protect, joinCommunity);
 userRouter.post("/forgot-password", forgotPassword);
 userRouter.post("/reset-password/:token", resetPassword);
 userRouter.post('/wishlist/:serviceId', protect, addServiceToWishlist);

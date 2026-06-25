@@ -265,18 +265,14 @@ export const getAllCategoriesAdmin = createAsyncThunk(
 
 export const createCategoryAdmin = createAsyncThunk(
   "admin/createCategory",
-  async ({ name, subCategories = [], keywords = [], description = "", isActive = true, imageFile }, { rejectWithValue }) => {
+  async ({ name, subCategories = [], keywords = [], icon, isActive = true }, { rejectWithValue }) => {
     try {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("subCategories", JSON.stringify(subCategories));
-      formData.append("keywords", JSON.stringify(keywords));
-      formData.append("description", description);
-      formData.append("isActive", String(Boolean(isActive)));
-      if (imageFile) formData.append("image", imageFile);
-
-      const res = await axios.post(`${API_URL}/api/admin/categories`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const res = await axios.post(`${API_URL}/api/admin/categories`, {
+        name,
+        subCategories,
+        keywords,
+        icon,
+        isActive: Boolean(isActive),
       });
       toast.success(res.data?.message || "Category created.");
       return res.data.category;
@@ -292,22 +288,7 @@ export const updateCategoryAdmin = createAsyncThunk(
   "admin/updateCategory",
   async ({ categoryId, patch }, { rejectWithValue }) => {
     try {
-      let body = patch;
-      let config = undefined;
-
-      if (patch?.imageFile) {
-        const formData = new FormData();
-        if (patch.name !== undefined) formData.append("name", patch.name);
-        if (patch.subCategories !== undefined) formData.append("subCategories", JSON.stringify(patch.subCategories));
-        if (patch.keywords !== undefined) formData.append("keywords", JSON.stringify(patch.keywords));
-        if (patch.description !== undefined) formData.append("description", patch.description);
-        if (patch.isActive !== undefined) formData.append("isActive", String(Boolean(patch.isActive)));
-        formData.append("image", patch.imageFile);
-        body = formData;
-        config = { headers: { "Content-Type": "multipart/form-data" } };
-      }
-
-      const res = await axios.put(`${API_URL}/api/admin/categories/${categoryId}`, body, config);
+      const res = await axios.put(`${API_URL}/api/admin/categories/${categoryId}`, patch);
       toast.success(res.data?.message || "Category updated.");
       return res.data.category;
     } catch (err) {

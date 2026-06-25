@@ -3,6 +3,96 @@
  * Handles both new field structure (firstName, lastName) and old structure (name) for backward compatibility
  */
 
+import { formatCommunDisplayName } from './communName';
+
+/**
+ * Flat / house number (separate from street address).
+ * Legacy signups stored flat only in addressLine1.
+ */
+export const getUserFlatNumber = (user) => {
+  if (!user) return '';
+  if (user.flatNumber) return user.flatNumber;
+  const hasStreetAddress = user.addressLine2 || user.city || user.state || user.zip;
+  if (user.addressLine1 && !hasStreetAddress) return user.addressLine1;
+  return '';
+};
+
+/**
+ * Street address line 1 (excludes legacy flat-only value).
+ */
+export const getUserStreetAddressLine1 = (user) => {
+  if (!user) return '';
+  if (user.flatNumber) return user.addressLine1 || '';
+  const legacyFlat = user.addressLine1 && !(user.addressLine2 || user.city || user.state || user.zip);
+  return legacyFlat ? '' : (user.addressLine1 || '');
+};
+
+/**
+ * Display label for user's Commun community.
+ */
+export const getUserCommunityLabel = (user) => {
+  if (!user) return '';
+  if (user.communityCommunName) {
+    return formatCommunDisplayName(user.communityCommunName);
+  }
+  if (user.role === 'secretary' && user.communName) {
+    return formatCommunDisplayName(user.communName);
+  }
+  if (user.requestedCommunityName) {
+    return user.requestedCommunityName;
+  }
+  return '';
+};
+
+/**
+ * Rich community info for admin tables — distinguishes listed vs Other (manual) signups.
+ */
+export const getUserCommunityInfo = (user) => {
+  if (!user) {
+    return { name: '—', badge: 'Not set', badgeClass: 'bg-slate-50 text-slate-500 border-slate-100', subtext: '' };
+  }
+
+  if (user.role === 'secretary' && user.communName) {
+    return {
+      name: formatCommunDisplayName(user.communName),
+      badge: 'Secretary',
+      badgeClass: 'bg-purple-50 text-purple-700 border-purple-100',
+      subtext: '',
+    };
+  }
+
+  if (user.communityCommunName) {
+    const subtext =
+      user.requestedCommunityName &&
+      user.requestedCommunityName.trim().toLowerCase() !==
+        String(user.communityCommunName).trim().toLowerCase()
+        ? `Originally Other: ${user.requestedCommunityName}`
+        : '';
+    return {
+      name: formatCommunDisplayName(user.communityCommunName),
+      badge: 'Listed community',
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+      subtext,
+    };
+  }
+
+  if (user.requestedCommunityName || user.isPublicMember) {
+    return {
+      name: user.requestedCommunityName || '—',
+      badge: 'Other (manual)',
+      badgeClass: 'bg-amber-50 text-amber-800 border-amber-100',
+      subtext: user.isPublicMember ? 'Public profile · not linked to a secretary community' : '',
+    };
+  }
+
+  return {
+    name: '—',
+    badge: 'Not set',
+    badgeClass: 'bg-slate-50 text-slate-500 border-slate-100',
+    subtext: '',
+  };
+};
+
 /**
  * Get the full name of a user
  * @param {Object} user - User object
@@ -77,7 +167,8 @@ export const formatAddress = (user) => {
   
   // New structure: address fields
   const parts = [];
-  if (user.addressLine1) parts.push(user.addressLine1);
+  const street1 = getUserStreetAddressLine1(user);
+  if (street1) parts.push(street1);
   if (user.addressLine2) parts.push(user.addressLine2);
   if (user.city) parts.push(user.city);
   if (user.state) parts.push(user.state);

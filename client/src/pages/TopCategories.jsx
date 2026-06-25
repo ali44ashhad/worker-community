@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { ChevronRight, TrendingUp } from 'lucide-react';
-import CommunityCta from '../components/home/CommunityCta';
+import { ChevronRight, TrendingUp } from 'lucide-react'; 
 import { slugifyCategoryName } from '../utils/slug';
 import HomePageLoader from '../components/loaders/HomePageLoader';
 import { getApiBase } from '../utils/apiBase';
+import CategoryIcon from '../components/CategoryIcon';
+import { getCategoryDescription } from '../utils/categoryDisplay';
 
 const API_URL = getApiBase() || 'http://localhost:3001';
 axios.defaults.withCredentials = true;
@@ -25,13 +26,6 @@ const fadeUp = {
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: '-40px' },
   transition: { duration: 0.45 },
-};
-
-const getCategoryDescription = (category) => {
-  if (category.description?.trim()) return category.description;
-  if (category.subCategories?.length) return category.subCategories.slice(0, 4).join(', ');
-  if (category.keywords?.length) return category.keywords.slice(0, 4).join(', ');
-  return 'Explore services in this category';
 };
 
 const TopCategories = () => {
@@ -145,9 +139,9 @@ const TopCategories = () => {
                       <div className="relative flex flex-1 flex-col">
                         <div className="flex items-start justify-between gap-4">
                           <div
-                            className={`mb-5 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-2xl font-bold text-white shadow-lg transition-all group-hover:scale-110 group-hover:rotate-3`}
+                            className={`mb-5 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg transition-all group-hover:scale-110 group-hover:rotate-3`}
                           >
-                            {category.name?.charAt(0)?.toUpperCase() || 'C'}
+                            <CategoryIcon icon={category.icon} name={category.name} className="h-8 w-8" />
                           </div>
                           <div className="shrink-0 rounded-2xl border border-purple-100 bg-white/90 px-3 py-2 text-xs font-semibold text-[var(--text-secondary)]">
                             <span className="text-[var(--purple-primary)]">{category.totalClicks || 0}</span> clicks
@@ -196,9 +190,7 @@ const TopCategories = () => {
             </div>
           )}
         </div>
-      </section>
-
-      <CommunityCta />
+      </section> 
     </motion.div>
   );
 };

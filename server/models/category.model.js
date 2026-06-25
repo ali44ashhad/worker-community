@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { DEFAULT_CATEGORY_ICON } from "../utils/categoryIcons.js";
 
 const { Schema } = mongoose;
 
@@ -19,14 +20,10 @@ const categorySchema = new Schema(
       type: [String],
       default: [],
     },
-    description: {
+    icon: {
       type: String,
-      default: "",
+      default: DEFAULT_CATEGORY_ICON,
       trim: true,
-    },
-    image: {
-      url: { type: String, default: "" },
-      public_id: { type: String, default: "" },
     },
     isActive: {
       type: Boolean,
@@ -39,4 +36,3 @@ const categorySchema = new Schema(
 const Category = mongoose.model("Category", categorySchema);
 
 export default Category;
-

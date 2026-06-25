@@ -44,11 +44,16 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const communityFeatures = useSelector((state) => state.community.features);
+  const isPublicMember = Boolean(user?.isPublicMember);
 
   const menuItems = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: Wrench, label: 'Services', path: '/community/services' },
-    { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
+    ...(!isPublicMember
+      ? [
+          { icon: Wrench, label: 'Services', path: '/community/services' },
+          { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
+        ]
+      : []),
     ...(communityFeatures.broadcast
       ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast' }]
       : []),

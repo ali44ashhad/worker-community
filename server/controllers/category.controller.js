@@ -6,7 +6,7 @@ const getActiveCategories = async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
       .sort({ name: 1 })
-      .select("name subCategories keywords description image isActive");
+      .select("name subCategories keywords icon isActive");
 
     return res.status(200).json({ success: true, categories });
   } catch (error) {
@@ -37,7 +37,7 @@ const getTopCategoriesByClicks = async (req, res) => {
 
     const names = top.map((t) => t._id).filter(Boolean);
     const categories = await Category.find({ name: { $in: names }, isActive: true })
-      .select("name subCategories keywords description image isActive")
+      .select("name subCategories keywords icon isActive")
       .lean();
 
     const categoryMap = new Map(categories.map((c) => [c.name, c]));

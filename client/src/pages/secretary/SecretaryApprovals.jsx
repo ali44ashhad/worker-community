@@ -87,9 +87,11 @@ const SecretaryApprovals = () => {
                   <div className="min-w-0">
                     <p className="font-semibold text-[var(--text-primary)]">{getFullName(u)}</p>
                     <p className="text-xs text-[var(--text-secondary)]">{u.email}</p>
-                    {(u.communName || u.communityCommunName) && (
+                    {(u.communName || u.communityCommunName || u.requestedCommunityName) && (
                       <p className="text-xs font-medium text-[var(--purple-primary)]">
-                        {formatCommunDisplayName(u.communName || u.communityCommunName)}
+                        {u.requestedCommunityName && !u.communityCommunName
+                          ? `${u.requestedCommunityName} (requested)`
+                          : formatCommunDisplayName(u.communName || u.communityCommunName)}
                       </p>
                     )}
                     <p className="mt-1 text-xs capitalize text-[var(--text-secondary)]">

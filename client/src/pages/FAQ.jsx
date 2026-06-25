@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronRight, HelpCircle } from 'lucide-react';
-import CommunityCta from '../components/home/CommunityCta';
+import { ChevronDown, ChevronRight, HelpCircle } from 'lucide-react'; 
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(null);
@@ -208,9 +207,7 @@ const FAQ = () => {
             </div>
           </motion.div>
         </div>
-      </section>
-
-      <CommunityCta />
+      </section> 
     </motion.div>
   );
 };

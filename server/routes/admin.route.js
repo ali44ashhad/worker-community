@@ -141,7 +141,6 @@ router.post(
     "/categories",
     protect,
     isAdmin,
-    upload.single("image"),
     createCategoryAdmin
 );
 
@@ -149,7 +148,6 @@ router.put(
     "/categories/:categoryId",
     protect,
     isAdmin,
-    upload.single("image"),
     updateCategoryAdmin
 );
 

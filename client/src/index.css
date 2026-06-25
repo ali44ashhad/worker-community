@@ -117,6 +117,13 @@ body::-webkit-scrollbar {
   image-rendering: auto;
 }
 
+@media (max-width: 767px) {
+  .site-logo {
+    height: 2.125rem !important;
+    max-width: 10rem !important;
+  }
+}
+
 /* Sidebar panels — wordmark sized for sidebar header */
 .sidebar-logo {
   height: 3.25rem !important;

@@ -5,6 +5,8 @@ import { ChevronRight } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getActiveCategories } from '../../features/adminSlice';
 import { slugifyCategoryName } from '../../utils/slug';
+import CategoryIcon from '../CategoryIcon';
+import { getCategoryDescription } from '../../utils/categoryDisplay';
 
 const GRADIENTS = [
   'from-blue-500 to-cyan-500',
@@ -16,17 +18,6 @@ const GRADIENTS = [
 ];
 
 const DISPLAY_LIMIT = 6;
-
-const getCategoryDescription = (category) => {
-  if (category.description?.trim()) return category.description;
-  if (category.subCategories?.length) {
-    return category.subCategories.slice(0, 4).join(', ');
-  }
-  if (category.keywords?.length) {
-    return category.keywords.slice(0, 4).join(', ');
-  }
-  return 'Explore services in this category';
-};
 
 const BrowseCategories = () => {
   const dispatch = useDispatch();
@@ -86,9 +77,9 @@ const BrowseCategories = () => {
                   <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-50/0 to-fuchsia-50/0 transition-all group-hover:from-purple-50/50 group-hover:to-fuchsia-50/30" />
                   <div className="relative flex flex-1 flex-col">
                     <div
-                      className={`mb-5 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-2xl font-bold text-white shadow-lg transition-all group-hover:scale-110 group-hover:rotate-3`}
+                      className={`mb-5 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg transition-all group-hover:scale-110 group-hover:rotate-3`}
                     >
-                      {category.name.charAt(0).toUpperCase()}
+                      <CategoryIcon icon={category.icon} name={category.name} className="h-8 w-8" />
                     </div>
                     <h3 className="mb-2 line-clamp-1 min-h-[1.75rem] text-xl font-bold text-[var(--text-primary)]">
                       {category.name}

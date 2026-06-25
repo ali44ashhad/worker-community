@@ -8,6 +8,12 @@ import {
 } from '../../features/adminSlice';
 import { Layers, Plus, Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import CategoryIcon from '../../components/CategoryIcon';
+import {
+  CATEGORY_ICON_OPTIONS,
+  DEFAULT_CATEGORY_ICON,
+  resolveCategoryIconName,
+} from '../../utils/categoryIcons';
 
 const inputClass =
   'w-full px-3.5 py-2.5 text-sm border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 focus:border-[var(--purple-primary)] transition-all';
@@ -73,10 +79,8 @@ const CategoryManagement = () => {
     name: '',
     subCategoriesCsv: '',
     keywordsCsv: '',
-    description: '',
+    icon: DEFAULT_CATEGORY_ICON,
     isActive: true,
-    imageFile: null,
-    imagePreviewUrl: '',
   });
 
   useEffect(() => {
@@ -90,10 +94,8 @@ const CategoryManagement = () => {
         name: '',
         subCategoriesCsv: '',
         keywordsCsv: '',
-        description: '',
+        icon: DEFAULT_CATEGORY_ICON,
         isActive: true,
-        imageFile: null,
-        imagePreviewUrl: '',
       });
       return;
     }
@@ -101,10 +103,8 @@ const CategoryManagement = () => {
       name: editing.name || '',
       subCategoriesCsv: (editing.subCategories || []).join(', '),
       keywordsCsv: (editing.keywords || []).join(', '),
-      description: editing.description || '',
+      icon: resolveCategoryIconName(editing.icon, editing.name),
       isActive: editing.isActive !== false,
-      imageFile: null,
-      imagePreviewUrl: editing.image?.url || '',
     });
   }, [isModalOpen, editing]);
 
@@ -130,9 +130,8 @@ const CategoryManagement = () => {
       name: form.name.trim(),
       subCategories: splitCsv(form.subCategoriesCsv),
       keywords: splitCsv(form.keywordsCsv),
-      description: form.description,
+      icon: form.icon,
       isActive: Boolean(form.isActive),
-      imageFile: form.imageFile || undefined,
     };
 
     if (!payload.name) return;
@@ -250,19 +249,9 @@ const CategoryManagement = () => {
                   className="group rounded-xl border border-purple-100/50 bg-purple-50/20 p-4 text-left transition-colors hover:border-purple-200 hover:bg-white"
                 >
                   <div className="flex items-start gap-3">
-                    {cat.image?.url ? (
-                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-purple-100">
-                        <img
-                          src={cat.image.url}
-                          alt={cat.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-fuchsia-100 text-[var(--purple-primary)]">
-                        <Layers className="h-5 w-5" />
-                      </div>
-                    )}
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-fuchsia-100 text-[var(--purple-primary)]">
+                      <CategoryIcon icon={cat.icon} name={cat.name} className="h-5 w-5" />
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-[var(--text-primary)] group-hover:text-[var(--purple-primary)]">
                         {cat.name}
@@ -412,50 +401,30 @@ const CategoryManagement = () => {
                   </div>
 
                   <div>
-                    <label className={labelClass} htmlFor="cat-description">
-                      Description
-                    </label>
-                    <textarea
-                      id="cat-description"
-                      value={form.description}
-                      onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                      rows={3}
-                      className={inputClass}
-                      placeholder="Short description shown on category pages"
-                    />
-                  </div>
-
-                  <div>
-                    <label className={labelClass}>Category image</label>
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                      <div className="flex h-20 w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-purple-100 bg-purple-50/30">
-                        {form.imagePreviewUrl ? (
-                          <img
-                            src={form.imagePreviewUrl}
-                            alt="Category preview"
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-xs text-[var(--text-secondary)]">No image</span>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0] || null;
-                            if (!file) return;
-                            const preview = URL.createObjectURL(file);
-                            setForm((p) => ({ ...p, imageFile: file, imagePreviewUrl: preview }));
-                          }}
-                          className={`${inputClass} file:mr-3 file:rounded-lg file:border-0 file:bg-purple-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-[var(--purple-primary)]`}
-                        />
-                        <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                          Upload PNG/JPG. Replaces the existing image when saved.
-                        </p>
-                      </div>
+                    <label className={labelClass}>Category icon</label>
+                    <div className="grid max-h-48 grid-cols-6 gap-2 overflow-y-auto rounded-xl border border-purple-100 bg-purple-50/20 p-3 sm:grid-cols-8">
+                      {CATEGORY_ICON_OPTIONS.map(({ name, Icon }) => {
+                        const selected = form.icon === name;
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            title={name}
+                            onClick={() => setForm((p) => ({ ...p, icon: name }))}
+                            className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all ${
+                              selected
+                                ? 'border-[var(--purple-primary)] bg-white text-[var(--purple-primary)] shadow-sm'
+                                : 'border-transparent bg-white/80 text-[var(--text-secondary)] hover:border-purple-200 hover:text-[var(--purple-primary)]'
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </button>
+                        );
+                      })}
                     </div>
+                    <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
+                      Selected: <span className="font-medium text-[var(--text-primary)]">{form.icon}</span>
+                    </p>
                   </div>
 
                   <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--text-primary)]">

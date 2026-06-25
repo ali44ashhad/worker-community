@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import ServiceCard from '../components/service/ServiceCard';
-import HomePageLoader from '../components/loaders/HomePageLoader';
-import CommunityCta from '../components/home/CommunityCta';
+import HomePageLoader from '../components/loaders/HomePageLoader'; 
 import { Search, RefreshCw } from 'lucide-react';
 import { getFullName } from '../utils/userHelpers';
 import Pagination from '../components/Pagination';
@@ -410,8 +409,7 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
           </div>
         </div>
       </section>
-
-      {!compact && !embedded && <CommunityCta />}
+ 
     </motion.div>
   );
 };

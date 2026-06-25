@@ -43,10 +43,16 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
     };
   }, []);
 
+  const isPublicMember = Boolean(user?.isPublicMember);
+
   const menuItems = [
     { icon: LayoutGrid, label: 'Dashboard', path: '/provider/dashboard' },
-    { icon: Wrench, label: 'Services', path: '/community/services' },
-    { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
+    ...(!isPublicMember
+      ? [
+          { icon: Wrench, label: 'Services', path: '/community/services' },
+          { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
+        ]
+      : []),
     { icon: Briefcase, label: 'Manage Services', path: '/provider/manage-services' },
     ...(communityFeatures.broadcast
       ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast' }]
