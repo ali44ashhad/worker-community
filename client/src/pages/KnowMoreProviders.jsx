@@ -1,7 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { ChevronRight, Briefcase, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react';
+import { canBecomeProvider } from '../utils/userHelpers';
  
 
 const fadeUp = {
@@ -41,6 +43,9 @@ const Feature = ({ icon: Icon, title, body }) => (
 );
 
 const KnowMoreProviders = () => {
+  const user = useSelector((state) => state.auth.user);
+  const showBecomeProvider = canBecomeProvider(user);
+
   return (
     <motion.div
       className="home-page min-h-screen bg-[var(--background-subtle)]"
@@ -139,13 +144,15 @@ const KnowMoreProviders = () => {
                 <CheckBullet>Keep your availability and pricing updated</CheckBullet>
               </ul>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Link
-                  to="/become-provider"
-                  className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white rounded-2xl hover:shadow-2xl hover:shadow-purple-500/30 hover:scale-[1.02] transition-all font-semibold"
-                >
-                  Become a Provider
-                  <ChevronRight className="ml-2 w-5 h-5" />
-                </Link>
+                {showBecomeProvider && (
+                  <Link
+                    to="/become-provider"
+                    className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white rounded-2xl hover:shadow-2xl hover:shadow-purple-500/30 hover:scale-[1.02] transition-all font-semibold"
+                  >
+                    Become a Provider
+                    <ChevronRight className="ml-2 w-5 h-5" />
+                  </Link>
+                )}
                 <Link
                   to="/provider"
                   className="inline-flex items-center justify-center px-6 py-3 border-2 border-purple-200 text-[var(--purple-primary)] rounded-2xl hover:bg-purple-50 hover:border-[var(--purple-primary)] transition-all font-semibold"

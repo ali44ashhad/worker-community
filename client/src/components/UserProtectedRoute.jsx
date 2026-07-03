@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-const UserProtectedRoute = ({ children }) => {
+const UserProtectedRoute = ({ children, requireCommunity = false }) => {
   const user = useSelector((state) => state.auth.user);
   const isCheckingAuth = useSelector((state) => state.auth.isCheckingAuth);
 
@@ -21,6 +21,10 @@ const UserProtectedRoute = ({ children }) => {
   const accountStatus = user.accountStatus || 'approved';
   if (accountStatus !== 'approved') {
     return <Navigate to="/pending-approval" replace />;
+  }
+
+  if (requireCommunity && !user.communityCommunName) {
+    return <Navigate to="/update-profile" replace />;
   }
 
   return children;

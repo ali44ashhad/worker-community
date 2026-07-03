@@ -237,6 +237,7 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (step !== 5) return;
     if (!formData.flatNumber.trim()) {
       toast.error('Please enter your flat number.');
       return;
@@ -582,12 +583,22 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
 
         <div className="mt-6 flex gap-3">
           {step < 5 ? (
-            <button type="button" onClick={handleNext} className={`${btnPrimary} w-full`}>
+            <button
+              key="wizard-next"
+              type="button"
+              onClick={handleNext}
+              className={`${btnPrimary} w-full`}
+            >
               Next
               <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
-            <button type="submit" disabled={loading} className={`${btnPrimary} w-full`}>
+            <button
+              key="wizard-submit"
+              type="submit"
+              disabled={loading}
+              className={`${btnPrimary} w-full`}
+            >
               {loading ? 'Please wait…' : 'Sign Up'}
             </button>
           )}

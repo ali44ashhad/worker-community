@@ -128,38 +128,22 @@ const getAllProviders = async (req, res) => {
         const search = req.query.search || '';
         const skip = (page - 1) * limit;
 
-        // Build search query
-        let searchQuery = {};
+        // Hide deactivated users even in admin provider/service lists.
+        // Combine the active-user filter with the search filter in a single query so
+        // one condition doesn't overwrite the other.
+        const userFilter = { isActive: { $ne: false } };
         if (search.trim()) {
-            // First, find users that match the search criteria
-            const matchingUsers = await User.find({
-                $or: [
-                    { firstName: { $regex: search, $options: 'i' } },
-                    { lastName: { $regex: search, $options: 'i' } },
-                    { email: { $regex: search, $options: 'i' } }
-                ]
-            }).select('_id');
-            
-            const userIds = matchingUsers.map(user => user._id);
-            
-            // Find providers that reference these users
-            if (userIds.length > 0) {
-                searchQuery = { user: { $in: userIds } };
-            } else {
-                // No matching users, return empty result
-                searchQuery = { _id: null }; // This will match nothing
-            }
+            userFilter.$or = [
+                { firstName: { $regex: search, $options: 'i' } },
+                { lastName: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+            ];
         }
 
-        // Hide deactivated users even in admin provider/service lists
-        const activeUsers = await User.find({ isActive: { $ne: false } }).select("_id");
-        const activeUserIds = activeUsers.map((u) => u._id);
+        const matchingUsers = await User.find(userFilter).select('_id');
+        const matchingUserIds = matchingUsers.map((user) => user._id);
 
-        // Merge searchQuery with active users filter
-        const providerQuery = {
-            ...searchQuery,
-            user: { ...(searchQuery.user || {}), $in: activeUserIds },
-        };
+        const providerQuery = { user: { $in: matchingUserIds } };
 
         const totalProviders = await ProviderProfile.countDocuments(providerQuery);
 
@@ -458,10 +442,17 @@ const updateServiceDetails = async (req, res) => {
                 ? updateData.keywords
                 : existingService.keywords || [];
 
+        // When the category is unchanged, grandfather the values already stored on
+        // the service so legacy taxonomy entries don't block edits like image uploads.
+        const categoryChanged =
+            String(nextServiceCategory || "") !== String(existingService.serviceCategory || "");
+
         await validateCategorySelection({
             serviceCategory: nextServiceCategory,
             subCategories: nextSubCategories,
             keywords: nextKeywords,
+            existingSubCategories: categoryChanged ? [] : existingService.subCategories || [],
+            existingKeywords: categoryChanged ? [] : existingService.keywords || [],
         });
 
         // Update regular fields first if there are any
@@ -738,6 +729,55 @@ const deleteServiceImage = async (req, res) => {
 
     } catch (error) {
         console.error("Error in deleteServiceImage controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Set which portfolio image appears first (service card cover)
+ * @route PATCH /api/admin/service/:serviceId/cover-image
+ * @access Private (Admin)
+ */
+const setServiceCoverImage = async (req, res) => {
+    try {
+        const { serviceId } = req.params;
+        const { publicId } = req.body || {};
+
+        if (!publicId) {
+            return res.status(400).json({ success: false, message: "Image public ID is required." });
+        }
+
+        const service = await ServiceOffering.findById(serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, message: "Service offering not found." });
+        }
+
+        const images = service.portfolioImages || [];
+        const imageIndex = images.findIndex((img) => img.public_id === publicId);
+        if (imageIndex === -1) {
+            return res.status(404).json({ success: false, message: "Image not found." });
+        }
+        if (imageIndex === 0) {
+            return res.status(200).json({
+                success: true,
+                message: "This image is already the cover.",
+                service,
+            });
+        }
+
+        const reordered = [...images];
+        const [coverImage] = reordered.splice(imageIndex, 1);
+        reordered.unshift(coverImage);
+        service.portfolioImages = reordered;
+        await service.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Cover image updated.",
+            service,
+        });
+    } catch (error) {
+        console.error("Error in setServiceCoverImage:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -1219,6 +1259,7 @@ export {
     getAllServices,
     updateServiceDetails,
     deleteServiceImage,
+    setServiceCoverImage,
     deleteServicePDF,
     getCategoryClicks,
     getProviderClicks,

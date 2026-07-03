@@ -94,6 +94,16 @@ export const getUserCommunityInfo = (user) => {
 };
 
 /**
+ * Whether the user may register as a provider (must be linked to a Commun community).
+ * Anonymous visitors return true so marketing CTAs stay visible until login.
+ */
+export const canBecomeProvider = (user) => {
+  if (!user) return true;
+  if (user.role !== 'customer') return false;
+  return Boolean(user.communityCommunName);
+};
+
+/**
  * Get the full name of a user
  * @param {Object} user - User object
  * @returns {string} Full name or fallback

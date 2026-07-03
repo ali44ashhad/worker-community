@@ -281,7 +281,7 @@ const SpecificService = () => {
       case 'about':
         return (
           <div className="space-y-8">
-            <div>
+            {/* <div>
               <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">About This Business</h2>
               <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
                 {serviceDescription}
@@ -298,12 +298,9 @@ const SpecificService = () => {
                   ))}
                 </ul>
               )}
-            </div>
+            </div> */}
 
-            <div className="border-t border-purple-100 pt-8">
-              <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">
-                Get to know {providerName}
-              </h2>
+            <div className=""> 
               <div className="flex items-start gap-4">
                 <ProfileAvatar
                   user={service?.provider?.user}
@@ -482,16 +479,16 @@ const SpecificService = () => {
             {/* Image gallery */}
             <div>
               <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-purple-50 to-fuchsia-50/50 border border-purple-100">
-                <div className="relative aspect-[4/3] sm:aspect-[16/10]">
+                <div className="relative aspect-[16/10]">
                   {portfolioImages.length > 0 && currentImage && !imageError ? (
                     <img
                       src={currentImage}
                       alt={`${serviceName} - ${selectedImageIndex + 1}`}
-                      className="h-full w-full object-cover"
+                      className="absolute inset-0 h-full w-full object-cover"
                       onError={handleImageError}
                     />
                   ) : (
-                    <ServiceCover service={service} size="xl" imageClassName="h-full w-full object-cover" />
+                    <ServiceCover service={service} size="xl" imageClassName="absolute inset-0 h-full w-full object-cover" />
                   )}
 
                   {portfolioImages.length > 1 && (
@@ -746,20 +743,7 @@ const SpecificService = () => {
                   )}
                 </dl>
               </Card>
-
-              {whatsIncludedItems.length > 0 && (
-                <Card className="p-6">
-                  <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">What&apos;s Included</h3>
-                  <ul className="space-y-3">
-                    {whatsIncludedItems.map((item) => (
-                      <li key={item} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
-                        <Check className="w-4 h-4 text-[var(--purple-primary)] shrink-0 mt-0.5" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
+ 
 
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-3">

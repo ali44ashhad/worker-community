@@ -1,7 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, ShieldCheck, BadgeCheck, Users } from 'lucide-react'; 
+import { useSelector } from 'react-redux';
+import { ChevronRight, Search, ShieldCheck, BadgeCheck, Users } from 'lucide-react';
+import { canBecomeProvider } from '../utils/userHelpers';
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
   whileInView: { opacity: 1, y: 0 },
@@ -39,6 +41,9 @@ const Feature = ({ icon: Icon, title, body }) => (
 );
 
 const KnowMoreSeekers = () => {
+  const user = useSelector((state) => state.auth.user);
+  const showBecomeProvider = canBecomeProvider(user);
+
   return (
     <motion.div
       className="home-page min-h-screen bg-[var(--background-subtle)]"
@@ -151,16 +156,20 @@ const KnowMoreSeekers = () => {
                 <CheckBullet>Confirm pricing and timelines up front</CheckBullet>
                 <CheckBullet>Save your favourites to revisit anytime</CheckBullet>
               </ul>
-              <p className="mt-6 text-sm text-[var(--text-secondary)] leading-relaxed">
-                Want to offer a skill too? You can join as a provider anytime.
-              </p>
-              <Link
-                to="/become-provider"
-                className="mt-4 inline-flex items-center justify-center px-6 py-3 border-2 border-purple-200 text-[var(--purple-primary)] rounded-2xl hover:bg-purple-50 hover:border-[var(--purple-primary)] transition-all font-semibold w-full sm:w-auto"
-              >
-                Become a Provider
-                <ChevronRight className="ml-2 w-5 h-5" />
-              </Link>
+              {showBecomeProvider && (
+                <>
+                  <p className="mt-6 text-sm text-[var(--text-secondary)] leading-relaxed">
+                    Want to offer a skill too? You can join as a provider anytime.
+                  </p>
+                  <Link
+                    to="/become-provider"
+                    className="mt-4 inline-flex items-center justify-center px-6 py-3 border-2 border-purple-200 text-[var(--purple-primary)] rounded-2xl hover:bg-purple-50 hover:border-[var(--purple-primary)] transition-all font-semibold w-full sm:w-auto"
+                  >
+                    Become a Provider
+                    <ChevronRight className="ml-2 w-5 h-5" />
+                  </Link>
+                </>
+              )}
             </Card>
           </motion.div>
         </div>

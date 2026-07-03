@@ -667,6 +667,13 @@ const becomeProviderWithServices = async (req, res) => {
             return res.status(401).json({ success: false, message: "User not found." });
         }
 
+        if (!authUser.communityCommunName) {
+            return res.status(403).json({
+                success: false,
+                message: "You must be assigned to a Commun community before becoming a provider.",
+            });
+        }
+
         const existingProfile = await ProviderProfile.findOne({ user: userId });
         if (existingProfile) {
             const acctExisting = authUser.accountStatus || "approved";
@@ -920,6 +927,12 @@ const updateServiceOffering = async (req, res) => {
             });
         }
 
+        // Capture original taxonomy values before mutating, so pre-existing (legacy)
+        // entries can be grandfathered during validation.
+        const originalCategory = service.serviceCategory;
+        const originalSubCategories = [...(service.subCategories || [])];
+        const originalKeywords = [...(service.keywords || [])];
+
         // Update service fields
         if (servicename !== undefined) service.servicename = servicename;
         if (serviceCategory) service.serviceCategory = serviceCategory;
@@ -953,10 +966,14 @@ const updateServiceOffering = async (req, res) => {
         }
 
         // Enforce DB-driven category/subcategory/specialization validation using the final values to be saved
+        const categoryChanged =
+            String(service.serviceCategory || "") !== String(originalCategory || "");
         await validateCategorySelection({
             serviceCategory: service.serviceCategory,
             subCategories: service.subCategories || [],
             keywords: service.keywords || [],
+            existingSubCategories: categoryChanged ? [] : originalSubCategories,
+            existingKeywords: categoryChanged ? [] : originalKeywords,
         });
         
         if (description) service.description = description;
@@ -1158,6 +1175,12 @@ const updateServiceOfferingJson = async (req, res) => {
             return res.status(403).json({ success: false, message: "You are not authorized to update this service." });
         }
 
+        // Capture original taxonomy values before mutating, so pre-existing (legacy)
+        // entries can be grandfathered during validation.
+        const originalCategory = service.serviceCategory;
+        const originalSubCategories = [...(service.subCategories || [])];
+        const originalKeywords = [...(service.keywords || [])];
+
         if (servicename !== undefined) service.servicename = servicename;
         if (serviceCategory) service.serviceCategory = serviceCategory;
         if (description !== undefined) service.description = description;
@@ -1169,10 +1192,14 @@ const updateServiceOfferingJson = async (req, res) => {
             service.keywords = Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []);
         }
 
+        const categoryChanged =
+            String(service.serviceCategory || "") !== String(originalCategory || "");
         await validateCategorySelection({
             serviceCategory: service.serviceCategory,
             subCategories: service.subCategories || [],
             keywords: service.keywords || [],
+            existingSubCategories: categoryChanged ? [] : originalSubCategories,
+            existingKeywords: categoryChanged ? [] : originalKeywords,
         });
 
         if (experience !== undefined) {

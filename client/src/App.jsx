@@ -159,7 +159,7 @@ const App = () => {
         <Route 
           path='/become-provider' 
           element={
-            <UserProtectedRoute>
+            <UserProtectedRoute requireCommunity>
               <BecomeProvider></BecomeProvider>
             </UserProtectedRoute>
           }
@@ -279,7 +279,7 @@ const App = () => {
         <Route
           path='/community/become-provider'
           element={
-            <MemberProtectedRoute>
+            <MemberProtectedRoute requireCommunity>
               <ProviderAwareLayout>
                 <BecomeProvider />
               </ProviderAwareLayout>

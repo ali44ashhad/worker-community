@@ -6,6 +6,7 @@ import {
   getAllServicesAdmin,
   updateServiceDetails,
   deleteServiceImage,
+  setServiceCoverImage,
   deleteServicePDF,
   getActiveCategories,
 } from '../../features/adminSlice';
@@ -22,11 +23,13 @@ import {
   Package,
   Pencil,
   Search,
+  Star,
   Tag,
   Trash2,
   X,
 } from 'lucide-react';
 import { getFullName } from '../../utils/userHelpers';
+import { isDefaultServiceImage } from '../../utils/serviceImage';
 
 const inputClass =
   'w-full px-3.5 py-2.5 text-sm border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 focus:border-[var(--purple-primary)] transition-all';
@@ -80,6 +83,7 @@ const AdminServices = () => {
   const [imageToDelete, setImageToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [savingServiceId, setSavingServiceId] = useState(null);
+  const [coverSettingId, setCoverSettingId] = useState(null);
   const [expandedServices, setExpandedServices] = useState(new Set());
 
   useEffect(() => {
@@ -202,6 +206,19 @@ const AdminServices = () => {
 
   const handleDeleteImage = (serviceId, imagePublicId) => {
     setImageToDelete({ serviceId, imagePublicId });
+  };
+
+  const handleSetCoverImage = async (serviceId, imagePublicId) => {
+    if (!imagePublicId || coverSettingId) return;
+    const key = `${serviceId}:${imagePublicId}`;
+    try {
+      setCoverSettingId(key);
+      await dispatch(setServiceCoverImage({ serviceId, publicId: imagePublicId })).unwrap();
+    } catch (error) {
+      console.error('Error setting cover image:', error);
+    } finally {
+      setCoverSettingId(null);
+    }
   };
 
   const handleDeletePDF = (serviceId, pdfPublicId) => {
@@ -327,6 +344,67 @@ const AdminServices = () => {
 
   const reload = () => {
     dispatch(getAllServicesAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
+  };
+
+  const renderPortfolioImages = (service, isEditing) => {
+    const images = service.portfolioImages || [];
+    if (images.length === 0) {
+      return <p className="text-sm text-[var(--text-secondary)]">No images</p>;
+    }
+
+    return (
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {images.map((img, idx) => {
+          const isCover = idx === 0 && !isDefaultServiceImage(img);
+          const canSetCover = Boolean(img.public_id) && !isDefaultServiceImage(img);
+          const isSetting =
+            coverSettingId === `${service._id}:${img.public_id}`;
+
+          return (
+            <div
+              key={img.public_id || img.url || idx}
+              className={`relative overflow-hidden rounded-xl border-2 ${
+                isCover ? 'border-[var(--purple-primary)]' : 'border-purple-100'
+              }`}
+            >
+              <img
+                src={img.url}
+                alt={`Portfolio ${idx + 1}`}
+                className="aspect-[4/3] w-full object-cover"
+              />
+              {isCover && (
+                <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[var(--purple-primary)] px-2 py-0.5 text-[10px] font-semibold text-white">
+                  <Star className="h-3 w-3 fill-current" />
+                  Cover
+                </span>
+              )}
+              <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1">
+                {canSetCover && !isCover && (
+                  <button
+                    type="button"
+                    onClick={() => handleSetCoverImage(service._id, img.public_id)}
+                    disabled={Boolean(coverSettingId)}
+                    className="rounded-lg bg-white/95 px-2 py-1 text-[10px] font-semibold text-[var(--purple-primary)] shadow-sm transition hover:bg-white disabled:opacity-60"
+                  >
+                    {isSetting ? 'Setting…' : 'Set as cover'}
+                  </button>
+                )}
+                {isEditing && img.public_id && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteImage(service._id, img.public_id)}
+                    className="ml-auto rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
+                    title="Delete image"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   if (isLoading && (!services || services.length === 0)) {
@@ -688,50 +766,24 @@ const AdminServices = () => {
                       <ImageIcon className="h-4 w-4 text-[var(--text-secondary)]/70" />
                       Portfolio Images
                     </label>
+                    <p className="mb-3 text-xs text-[var(--text-secondary)]">
+                      The image marked <strong>Cover</strong> appears on service cards and listings. Use
+                      &quot;Set as cover&quot; to choose which photo shows first.
+                    </p>
                     {isEditing ? (
                       <div>
-                        <div className="mb-4 columns-2 md:columns-4 gap-4 [column-fill:_balance]">
-                          {service.portfolioImages && service.portfolioImages.map((img, idx) => (
-                            <div key={idx} className="relative mb-4 break-inside-avoid rounded-lg overflow-hidden">
-                              <img
-                                src={img.url}
-                                alt={`Portfolio ${idx + 1}`}
-                                className="w-full h-auto object-contain block"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteImage(service._id, img.public_id)}
-                                className="absolute right-2 top-2 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                        {renderPortfolioImages(service, true)}
                         <input
                           type="file"
                           multiple
                           accept="image/*"
                           onChange={handleImageChange}
-                          className={inputClass}
+                          className={`${inputClass} mt-4`}
                         />
                         <p className="mt-1 text-xs text-[var(--text-secondary)]">Select new images to add</p>
                       </div>
                     ) : (
-                      <div className="columns-2 md:columns-4 gap-4 [column-fill:_balance]">
-                        {service.portfolioImages && service.portfolioImages.length > 0 ? (
-                          service.portfolioImages.map((img, idx) => (
-                            <img
-                              key={idx}
-                              src={img.url}
-                              alt={`Portfolio ${idx + 1}`}
-                              className="w-full h-auto object-contain block mb-4 break-inside-avoid rounded-lg overflow-hidden"
-                            />
-                          ))
-                        ) : (
-                          <p className="text-sm text-[var(--text-secondary)]">No images</p>
-                        )}
-                      </div>
+                      renderPortfolioImages(service, false)
                     )}
                   </div>
 

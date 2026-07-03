@@ -10,6 +10,11 @@ export async function validateCategorySelection({
   serviceCategory,
   subCategories,
   keywords,
+  // Values already persisted on the service. These are "grandfathered" so that
+  // legacy data (e.g. a keyword later removed from the category taxonomy) does
+  // not block unrelated edits such as uploading new images.
+  existingSubCategories = [],
+  existingKeywords = [],
 }) {
   const categoryName = String(serviceCategory || "").trim();
   if (!categoryName) {
@@ -30,6 +35,13 @@ export async function validateCategorySelection({
 
   const allowedSub = new Set((category.subCategories || []).map(String));
   const allowedKeywords = new Set((category.keywords || []).map(String));
+
+  for (const s of normalizeArray(existingSubCategories).filter(Boolean)) {
+    allowedSub.add(String(s));
+  }
+  for (const k of normalizeArray(existingKeywords).filter(Boolean)) {
+    allowedKeywords.add(String(k));
+  }
 
   const invalidSubCategories = chosenSubCategories.filter((s) => !allowedSub.has(String(s)));
   const invalidKeywords = chosenKeywords.filter((k) => !allowedKeywords.has(String(k)));

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { canBecomeProvider } from '../../utils/userHelpers';
 
 const CheckIcon = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -25,7 +27,11 @@ const providerBenefits = [
   'Know more about Providers',
 ];
 
-const AudienceSection = () => (
+const AudienceSection = () => {
+  const user = useSelector((state) => state.auth.user);
+  const showBecomeProvider = canBecomeProvider(user);
+
+  return (
   <section className="grid lg:grid-cols-2">
     <div id="for-seekers" className="bg-gradient-to-br from-[var(--purple-primary)] to-[var(--purple-secondary)] text-white p-12 lg:p-20 relative overflow-hidden scroll-mt-24">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(219,88,159,0.3),transparent_70%)]" />
@@ -70,15 +76,18 @@ const AudienceSection = () => (
             </li>
           ))}
         </ul>
-        <Link
-          to="/become-provider"
-          className="inline-flex px-10 py-4 bg-white text-[var(--magenta)] rounded-2xl hover:bg-fuchsia-50 hover:scale-105 transition-all font-bold shadow-2xl"
-        >
-          Join as Provider
-        </Link>
+        {showBecomeProvider && (
+          <Link
+            to="/become-provider"
+            className="inline-flex px-10 py-4 bg-white text-[var(--magenta)] rounded-2xl hover:bg-fuchsia-50 hover:scale-105 transition-all font-bold shadow-2xl"
+          >
+            Join as Provider
+          </Link>
+        )}
       </div>
     </div>
   </section>
-);
+  );
+};
 
 export default AudienceSection;

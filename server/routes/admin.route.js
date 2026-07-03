@@ -7,6 +7,7 @@ import {
     getAllServices,
     updateServiceDetails,
     deleteServiceImage,
+    setServiceCoverImage,
     deleteServicePDF,
     getCategoryClicks,
     getProviderClicks,
@@ -92,6 +93,13 @@ router.delete(
     protect,
     isAdmin,
     deleteServiceImage
+);
+
+router.patch(
+    "/service/:serviceId/cover-image",
+    protect,
+    isAdmin,
+    setServiceCoverImage
 );
 
 router.delete(

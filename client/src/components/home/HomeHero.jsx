@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, MapPin, Calculator, BookOpen, ChefHat, Dumbbell } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { canBecomeProvider } from '../../utils/userHelpers';
 
 const floatingServices = [
   {
@@ -34,7 +36,11 @@ const floatingServices = [
   },
 ];
 
-const HomeHero = () => (
+const HomeHero = () => {
+  const user = useSelector((state) => state.auth.user);
+  const showBecomeProvider = canBecomeProvider(user);
+
+  return (
   <section className="relative overflow-hidden pt-28 pb-20 lg:pt-32 lg:pb-28 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(219,88,159,0.05),transparent_50%)]" />
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(104,67,154,0.05),transparent_50%)]" />
@@ -68,12 +74,14 @@ const HomeHero = () => (
               Find Services
               <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link
-              to="/become-provider"
-              className="inline-flex items-center justify-center px-8 py-4 border-2 border-purple-200 text-[var(--purple-primary)] rounded-2xl hover:bg-purple-50 hover:border-[var(--purple-primary)] transition-all font-semibold"
-            >
-              Become a Provider
-            </Link>
+            {showBecomeProvider && (
+              <Link
+                to="/become-provider"
+                className="inline-flex items-center justify-center px-8 py-4 border-2 border-purple-200 text-[var(--purple-primary)] rounded-2xl hover:bg-purple-50 hover:border-[var(--purple-primary)] transition-all font-semibold"
+              >
+                Become a Provider
+              </Link>
+            )}
           </div>
         </motion.div>
 
@@ -132,6 +140,7 @@ const HomeHero = () => (
       </div>
     </div>
   </section>
-);
+  );
+};
 
 export default HomeHero;

@@ -161,6 +161,23 @@ export const updateServiceDetails = createAsyncThunk(
   }
 );
 
+// Set service cover image (admin) — first image is shown on service cards
+export const setServiceCoverImage = createAsyncThunk(
+  "admin/setServiceCoverImage",
+  async ({ serviceId, publicId }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/admin/service/${serviceId}/cover-image`, {
+        publicId,
+      });
+      toast.success(res.data?.message || "Cover image updated");
+      return { serviceId, service: res.data.service };
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update cover image");
+      return rejectWithValue(err.response?.data?.message || "Failed to update cover image");
+    }
+  }
+);
+
 // Delete service image (admin)
 export const deleteServiceImage = createAsyncThunk(
   "admin/deleteServiceImage",
@@ -506,6 +523,22 @@ const adminSlice = createSlice({
         if (index !== -1) {
           state.services[index] = service;
         }
+      })
+      // Set service cover image
+      .addCase(setServiceCoverImage.fulfilled, (state, action) => {
+        const { serviceId, service } = action.payload;
+        const index = state.services.findIndex((s) => s._id === serviceId);
+        if (index !== -1) {
+          state.services[index] = service;
+        }
+        state.providers = (state.providers || []).map((provider) => {
+          if (!provider.serviceOfferings?.length) return provider;
+          const offeringIndex = provider.serviceOfferings.findIndex((o) => o._id === serviceId);
+          if (offeringIndex === -1) return provider;
+          const nextOfferings = [...provider.serviceOfferings];
+          nextOfferings[offeringIndex] = service;
+          return { ...provider, serviceOfferings: nextOfferings };
+        });
       })
       // Delete service PDF
       .addCase(deleteServicePDF.fulfilled, (state, action) => {

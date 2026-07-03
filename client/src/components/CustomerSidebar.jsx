@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { motion } from 'framer-motion';
 import SidebarPanelGreeting from './SidebarPanelGreeting';
+import { canBecomeProvider } from '../utils/userHelpers';
 
 const CustomerSidebar = ({ isOpen = true, onClose }) => {
   const portalContainerRef = useRef(null);
@@ -62,7 +63,9 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
       : []),
     ...(user?._id ? [{ icon: Heart, label: 'Wishlist', path: '/community/wishlist' }] : []),
     { icon: User, label: 'Update Profile', path: '/community/update-profile' },
-    { icon: UserPlus, label: 'Become Provider', path: '/community/become-provider' },
+    ...(canBecomeProvider(user)
+      ? [{ icon: UserPlus, label: 'Become Provider', path: '/community/become-provider' }]
+      : []),
   ];
 
   const handleLogout = () => {
