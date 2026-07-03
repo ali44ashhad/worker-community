@@ -354,7 +354,7 @@ const UpdateProfile = () => {
     >
       <section
         className={`border-b border-purple-100/60 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20 pb-8 ${
-          isPanelRoute ? 'pt-6' : 'pt-24 sm:pt-28'
+          isPanelRoute ? 'pt-6' : 'pt-6 sm:pt-8'
         }`}
       >
         <div className="mx-auto max-w-2xl px-4 sm:px-6">

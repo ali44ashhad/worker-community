@@ -31,7 +31,7 @@ const Terms = () => {
 
   return (
     <div className="home-page min-h-screen bg-[var(--background-subtle)]">
-      <section className="relative overflow-hidden border-b border-purple-100/60 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20 pt-28 pb-16 lg:pt-32 lg:pb-20">
+      <section className="relative overflow-hidden border-b border-purple-100/60 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20 pt-8 pb-16 lg:pt-10 lg:pb-20">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <motion.div {...fadeUp}>
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--purple-primary)]">Legal</p>

@@ -4,10 +4,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getAllProviders } from '../features/providerSlice';
 import { fetchWishlist, removeFromWishlist } from '../features/wishlistSlice';
-import { ArrowRight, Heart, ImageIcon, MessageCircle, X } from 'lucide-react';
+import { ArrowRight, Heart, MessageCircle, X } from 'lucide-react';
 import { getFullName, getInitials } from '../utils/userHelpers';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import ServiceCover from '../components/service/ServiceCover';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 axios.defaults.withCredentials = true;
@@ -115,7 +116,7 @@ const Cart = () => {
     >
       <section
         className={`border-b border-purple-100/60 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20 pb-8 ${
-          isPanelRoute ? 'pt-6' : 'pt-24 sm:pt-28'
+          isPanelRoute ? 'pt-6' : 'pt-6 sm:pt-8'
         }`}
       >
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
@@ -168,7 +169,6 @@ const Cart = () => {
         ) : (
           <div className="space-y-4">
             {wishlistServices.map((service) => {
-              const image = service?.portfolioImages?.[0]?.url;
               const title = service?.servicename || service?.serviceCategory || 'Service';
               const description = service?.description || '';
               const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
@@ -196,15 +196,13 @@ const Cart = () => {
                     <button
                       type="button"
                       onClick={() => handleServiceClick(service._id)}
-                      className="service-image-zoom h-28 w-full shrink-0 rounded-xl bg-gradient-to-br from-purple-50 to-fuchsia-50/50 sm:h-32 sm:w-32"
+                      className="service-image-zoom h-28 w-full shrink-0 overflow-hidden rounded-xl sm:h-32 sm:w-32"
                     >
-                      {image ? (
-                        <img src={image} alt={title} className="service-image-zoom__img h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <ImageIcon className="h-8 w-8 text-purple-200" />
-                        </div>
-                      )}
+                      <ServiceCover
+                        service={service}
+                        size="sm"
+                        imageClassName="service-image-zoom__img h-full w-full object-cover"
+                      />
                     </button>
 
                     <div className="min-w-0 flex-1">

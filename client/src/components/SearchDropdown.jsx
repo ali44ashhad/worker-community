@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { getAllProviders } from '../features/providerSlice';
 import { getActiveCategories } from '../features/adminSlice';
+import { getAllPublicServices } from '../features/serviceSlice';
 import { HiOutlineSearch } from 'react-icons/hi';
 import { FiTrendingUp } from 'react-icons/fi';
 import { getFullName } from '../utils/userHelpers';
 import { slugifyCategoryName } from '../utils/slug';
+import ServiceCover from './service/ServiceCover';
 
 const SearchDropdown = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { allProviders } = useSelector((state) => state.provider);
+  const { services, isFetching } = useSelector((state) => state.services);
   const { activeCategories } = useSelector((state) => state.admin);
   const [searchQuery, setSearchQuery] = useState('');
-  const [allServices, setAllServices] = useState([]);
   const dropdownRef = useRef(null);
 
   // Fetch DB-driven categories once (used for category list)
@@ -24,12 +24,12 @@ const SearchDropdown = ({ isOpen, onClose }) => {
     }
   }, [isOpen, activeCategories?.length, dispatch]);
 
-  // Fetch providers if not already loaded
+  // Fetch all services for search (not paginated)
   useEffect(() => {
-    if (isOpen && (!allProviders || allProviders.length === 0)) {
-      dispatch(getAllProviders());
+    if (isOpen && (!services || services.length === 0)) {
+      dispatch(getAllPublicServices());
     }
-  }, [isOpen, allProviders.length, dispatch]);
+  }, [isOpen, services?.length, dispatch]);
 
   // Reset search query when dropdown closes
   useEffect(() => {
@@ -38,27 +38,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  // Extract all services from providers
-  useEffect(() => {
-    const extractedServices = [];
-    allProviders.forEach(provider => {
-      if (provider?.serviceOfferings && Array.isArray(provider.serviceOfferings)) {
-        provider.serviceOfferings.forEach(service => {
-          extractedServices.push({
-            ...service,
-            provider: {
-              ...provider,
-              user: provider.user,
-              _id: provider._id,
-              bio: provider.bio,
-              experience: provider.experience
-            }
-          });
-        });
-      }
-    });
-    setAllServices(extractedServices);
-  }, [allProviders]);
+  const allServices = services || [];
 
   // Filter services based on search query
   const filteredServices = React.useMemo(() => {
@@ -168,15 +148,17 @@ const SearchDropdown = ({ isOpen, onClose }) => {
             <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
               Services ({filteredServices.length})
             </h3>
-            {filteredServices.length === 0 ? (
+            {isFetching && allServices.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-sm">Loading services...</p>
+              </div>
+            ) : filteredServices.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 text-sm">No services found matching "{searchQuery}"</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {filteredServices.map((service) => {
-                  const portfolioImages = service?.portfolioImages || [];
-                  const mainImage = portfolioImages[0]?.url || '/CommuN-logo.png';
                   const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';
                   const description = service?.description || 'No description available.';
                   const truncatedDescription = description.length > 80
@@ -189,12 +171,11 @@ const SearchDropdown = ({ isOpen, onClose }) => {
                       onClick={() => handleServiceClick(service._id)}
                       className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer group"
                     >
-                      {/* Service Image */}
-                      <div className="service-image-zoom h-16 w-16 shrink-0 rounded-md border border-gray-300 bg-gray-200">
-                        <img
-                          src={mainImage}
-                          alt="Service"
-                          className="service-image-zoom__img h-full w-full object-cover"
+                      <div className="service-image-zoom h-16 w-16 shrink-0 overflow-hidden rounded-md border border-gray-300">
+                        <ServiceCover
+                          service={service}
+                          size="xs"
+                          imageClassName="service-image-zoom__img h-full w-full object-cover"
                         />
                       </div>
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import ServiceCard from '../components/service/ServiceCard';
@@ -6,7 +6,7 @@ import HomePageLoader from '../components/loaders/HomePageLoader';
 import { Search, RefreshCw } from 'lucide-react';
 import { getFullName } from '../utils/userHelpers';
 import Pagination from '../components/Pagination';
-import { getPublicServices, getCommunityServices } from '../features/serviceSlice';
+import { getAllPublicServices, getAllCommunityServices } from '../features/serviceSlice';
 import { formatCommunDisplayName } from '../utils/communName';
 
 const chipClass = (active) =>
@@ -18,7 +18,7 @@ const chipClass = (active) =>
 
 const Services = ({ communityScope = false, compact = false, embedded = false }) => {
   const dispatch = useDispatch();
-  const { services, isFetching, error, pagination, communityCommunName, needsCommunity } = useSelector(
+  const { services, isFetching, error, communityCommunName, needsCommunity } = useSelector(
     (state) => state.services
   );
 
@@ -28,25 +28,22 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [minRating, setMinRating] = useState(0);
-  const [filteredServices, setFilteredServices] = useState([]);
-  const [allServices, setAllServices] = useState([]);
 
   useEffect(() => {
     if (communityScope) {
-      dispatch(getCommunityServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
+      dispatch(getAllCommunityServices());
       return;
     }
-    dispatch(getPublicServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
-  }, [dispatch, currentPage, communityScope]);
+    dispatch(getAllPublicServices());
+  }, [dispatch, communityScope]);
 
-  useEffect(() => {
-    setAllServices(services || []);
-  }, [services]);
+  const allServices = services || [];
 
-  useEffect(() => {
+  const filteredServices = useMemo(() => {
     let filtered = [...allServices];
 
     if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter((service) => {
         const servicename = service?.servicename?.toLowerCase() || '';
         const category = service?.serviceCategory?.toLowerCase() || '';
@@ -54,7 +51,6 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
         const keywords = (service?.keywords || []).map((k) => k?.toLowerCase()).join(' ');
         const subCategories = (service?.subCategories || []).map((s) => s?.toLowerCase()).join(' ');
         const providerName = getFullName(service?.provider?.user)?.toLowerCase() || '';
-        const query = searchQuery.toLowerCase();
 
         return (
           servicename.includes(query) ||
@@ -81,8 +77,13 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
       filtered = filtered.filter((service) => (service?.averageRating || 0) >= minRating);
     }
 
-    setFilteredServices(filtered);
-  }, [searchQuery, selectedCategory, selectedSubcategory, minRating, allServices]);
+    return filtered;
+  }, [allServices, searchQuery, selectedCategory, selectedSubcategory, minRating]);
+
+  const paginatedServices = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredServices.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredServices, currentPage, ITEMS_PER_PAGE]);
 
   const getUniqueCategories = () => {
     const categories = new Set();
@@ -117,10 +118,10 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
 
   const handleRefresh = () => {
     if (communityScope) {
-      dispatch(getCommunityServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
+      dispatch(getAllCommunityServices());
       return;
     }
-    dispatch(getPublicServices({ page: currentPage, limit: ITEMS_PER_PAGE }));
+    dispatch(getAllPublicServices());
   };
 
   const handleClearFilters = () => {
@@ -142,7 +143,7 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
       transition={{ duration: 0.5 }}
     >
       {!compact && !embedded && (
-      <section className="relative overflow-hidden pt-28 pb-12 lg:pt-32 lg:pb-14 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
+      <section className="relative overflow-hidden pt-8 pb-12 lg:pt-10 lg:pb-14 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(217,70,239,0.05),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(107,70,193,0.05),transparent_50%)]" />
 
@@ -392,15 +393,15 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
               {!isFetching && !error && filteredServices.length > 0 && (
                 <>
                   <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {filteredServices.map((service) => (
+                    {paginatedServices.map((service) => (
                       <ServiceCard key={service._id} service={service} />
                     ))}
                   </div>
 
                   <Pagination
-                    totalItems={pagination?.total || filteredServices.length}
+                    totalItems={filteredServices.length}
                     itemsPerPage={ITEMS_PER_PAGE}
-                    currentPage={pagination?.page || currentPage}
+                    currentPage={currentPage}
                     onPageChange={setCurrentPage}
                   />
                 </>

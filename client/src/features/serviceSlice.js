@@ -43,6 +43,60 @@ export const getCommunityServices = createAsyncThunk(
   }
 );
 
+const fetchAllServicePages = async (url, baseParams = {}) => {
+  const limit = 50;
+  let page = 1;
+  let allServices = [];
+  let pagination = null;
+  let communityCommunName = null;
+  let needsCommunity = false;
+
+  while (true) {
+    const res = await axios.get(url, { params: { ...baseParams, page, limit } });
+    const batch = res.data.services || [];
+    allServices = allServices.concat(batch);
+    pagination = res.data.pagination || null;
+    communityCommunName = res.data.communityCommunName ?? communityCommunName;
+    needsCommunity = Boolean(res.data.needsCommunity);
+
+    if (needsCommunity || !pagination?.totalPages || page >= pagination.totalPages) {
+      break;
+    }
+    page += 1;
+  }
+
+  return {
+    services: allServices,
+    pagination: pagination
+      ? { ...pagination, page: 1, limit, total: allServices.length, totalPages: 1 }
+      : { page: 1, limit, total: allServices.length, totalPages: 1 },
+    communityCommunName,
+    needsCommunity,
+  };
+};
+
+export const getAllPublicServices = createAsyncThunk(
+  "services/getAllPublic",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchAllServicePages(`${API_URL}/api/service-offering`);
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch services");
+    }
+  }
+);
+
+export const getAllCommunityServices = createAsyncThunk(
+  "services/getAllCommunity",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchAllServicePages(`${API_URL}/api/service-offering/community`);
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch community services");
+    }
+  }
+);
+
 const initialState = {
   services: [],
   pagination: null,
@@ -85,6 +139,36 @@ const serviceSlice = createSlice({
         state.needsCommunity = Boolean(action.payload?.needsCommunity);
       })
       .addCase(getCommunityServices.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
+      })
+      .addCase(getAllPublicServices.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(getAllPublicServices.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.services = action.payload?.services || [];
+        state.pagination = action.payload?.pagination || null;
+        state.communityCommunName = action.payload?.communityCommunName || null;
+        state.needsCommunity = false;
+      })
+      .addCase(getAllPublicServices.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
+      })
+      .addCase(getAllCommunityServices.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(getAllCommunityServices.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.services = action.payload?.services || [];
+        state.pagination = action.payload?.pagination || null;
+        state.communityCommunName = action.payload?.communityCommunName || null;
+        state.needsCommunity = Boolean(action.payload?.needsCommunity);
+      })
+      .addCase(getAllCommunityServices.rejected, (state, action) => {
         state.isFetching = false;
         state.error = action.payload;
       })

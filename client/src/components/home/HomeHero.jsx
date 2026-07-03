@@ -36,8 +36,8 @@ const floatingServices = [
 
 const HomeHero = () => (
   <section className="relative overflow-hidden pt-28 pb-20 lg:pt-32 lg:pb-28 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(217,70,239,0.05),transparent_50%)]" />
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(107,70,193,0.05),transparent_50%)]" />
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(219,88,159,0.05),transparent_50%)]" />
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(104,67,154,0.05),transparent_50%)]" />
 
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
       <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -47,7 +47,7 @@ const HomeHero = () => (
           transition={{ duration: 0.6 }}
         > 
 
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold bg-gradient-to-br from-[var(--text-primary)] via-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent mb-6 leading-[1.1]">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold bg-gradient-to-br from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent mb-6 leading-[1.1]">
             Your Locality.
             <br />
             Your People.

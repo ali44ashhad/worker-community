@@ -12,7 +12,7 @@ const CommunityCta = () => (
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
       >
-        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[var(--purple-primary)] mb-6">
+        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black mb-6">
           Ready to Connect with Your Community?
         </h2>
 
@@ -24,7 +24,7 @@ const CommunityCta = () => (
         <div className="flex flex-col sm:flex-row gap-5 justify-center">
           <Link
             to="/login"
-            className="inline-flex items-center justify-center px-10 py-5 bg-[var(--purple-primary)] text-white rounded-2xl hover:bg-[var(--magenta)] hover:scale-105 transition-all duration-300 font-bold shadow-xl text-lg"
+            className="inline-flex items-center justify-center px-10 py-5 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white rounded-2xl hover:shadow-xl hover:scale-105 transition-all duration-300 font-bold text-lg"
           >
             Get Started Now
             <ChevronRight className="ml-2 w-5 h-5" />
@@ -32,7 +32,7 @@ const CommunityCta = () => (
 
           <Link
             to="/about"
-            className="inline-flex items-center justify-center px-10 py-5 border-2 border-[var(--purple-primary)] text-[var(--purple-primary)] rounded-2xl hover:bg-[var(--purple-primary)] hover:text-white transition-all duration-300 font-bold text-lg"
+            className="inline-flex items-center justify-center px-10 py-5 border-2 border-[var(--purple-primary)] text-[var(--purple-primary)] rounded-2xl hover:bg-purple-50 transition-all duration-300 font-bold text-lg"
           >
             Learn More
           </Link>

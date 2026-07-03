@@ -224,7 +224,7 @@ const SpecificCategory = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <section className="pt-28 pb-16 flex items-center justify-center min-h-[60vh]">
+        <section className="pt-8 pb-16 flex items-center justify-center min-h-[60vh]">
           <div className="text-center px-4">
             <div className="bg-white/80 backdrop-blur-sm border border-purple-100/50 rounded-3xl p-8 max-w-md mx-auto shadow-lg shadow-purple-500/5">
               <p className="text-xl font-semibold text-[var(--text-primary)] mb-2">Category Not Found</p>
@@ -254,7 +254,7 @@ const SpecificCategory = () => {
       transition={{ duration: 0.5 }}
     >
       {/* Hero */}
-      <section className="relative overflow-hidden pt-28 pb-12 lg:pt-32 lg:pb-14 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
+      <section className="relative overflow-hidden pt-8 pb-12 lg:pt-10 lg:pb-14 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(217,70,239,0.05),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(107,70,193,0.05),transparent_50%)]" />
 

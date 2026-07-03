@@ -14,9 +14,10 @@
 
 :root {
   /* CommuN home page theme (Figma) */
-  --purple-primary: #6b46c1;
-  --purple-secondary: #553c9a;
-  --magenta: #d946ef;
+  --purple-primary: #68439a;
+  --purple-secondary: #52347a;
+  --magenta: #db589f;
+  --magenta-light: #f0a8cc;
   --background-subtle: #fafbfc;
   --text-primary: #1a1a2e;
   --text-secondary: #475569;

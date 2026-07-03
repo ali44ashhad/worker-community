@@ -66,6 +66,8 @@ import ProviderAwareLayout from './components/ProviderAwareLayout'
 import { fetchCommunityFeatures, clearCommunityFeatures } from './features/communitySlice'
 import Terms from './pages/Terms'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import Breadcrumb from './components/Breadcrumb'
+import { BreadcrumbProvider } from './context/BreadcrumbContext'
 
 const App = () => {
 
@@ -135,11 +137,13 @@ const App = () => {
     isAdminRoute || isProviderLayoutRoute || isCustomerLayoutRoute || isSecretaryRoute;
 
   return (
+    <BreadcrumbProvider>
     <div className=''>
 
       <Toaster></Toaster>
 
       {!hideGlobalChrome && <Navbar></Navbar>}
+      {!hideGlobalChrome && <Breadcrumb />}
       <Routes>
         <Route path='/' element={<Home></Home>}></Route>
         <Route path='/about' element={<About></About>}></Route> 
@@ -350,6 +354,7 @@ const App = () => {
       {!hideGlobalChrome && <Footer></Footer>}
 
     </div>
+    </BreadcrumbProvider>
   )
 }
 

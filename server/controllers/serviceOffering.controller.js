@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import ServiceOffering from "../models/serviceOffering.model.js";
 import {
     buildPublicServicesPipeline,
@@ -198,4 +199,81 @@ const getTopServicesByClicks = async (req, res) => {
     }
 };
 
-export { getPublicServices, getCommunityServices, getTopServicesByClicks };
+/**
+ * @description Fetch a single service offering by id (includes provider profile + user)
+ * @route GET /api/service-offering/:id
+ * @access Public
+ */
+const getServiceOfferingById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const pipeline = [
+            { $match: { _id: new mongoose.Types.ObjectId(id) } },
+            {
+                $lookup: {
+                    from: "providerprofiles",
+                    localField: "provider",
+                    foreignField: "_id",
+                    as: "providerProfile",
+                },
+            },
+            { $unwind: { path: "$providerProfile", preserveNullAndEmptyArrays: true } },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { userId: "$providerProfile.user" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+                        {
+                            $project: {
+                                firstName: 1,
+                                lastName: 1,
+                                profileImage: 1,
+                                phoneNumber: 1,
+                                addressLine1: 1,
+                                addressLine2: 1,
+                                city: 1,
+                                state: 1,
+                                zip: 1,
+                                communName: 1,
+                                communityCommunName: 1,
+                                isActive: 1,
+                                accountStatus: 1,
+                                role: 1,
+                            },
+                        },
+                    ],
+                    as: "providerUser",
+                },
+            },
+            { $unwind: { path: "$providerUser", preserveNullAndEmptyArrays: true } },
+            {
+                $addFields: {
+                    provider: {
+                        _id: "$providerProfile._id",
+                        bio: "$providerProfile.bio",
+                        providerProfileCount: "$providerProfile.providerProfileCount",
+                        user: "$providerUser",
+                    },
+                },
+            },
+            { $project: { providerProfile: 0, providerUser: 0 } },
+            { $limit: 1 },
+        ];
+
+        const results = await ServiceOffering.aggregate(pipeline);
+        const service = results?.[0];
+
+        if (!service) {
+            return res.status(404).json({ success: false, message: "Service not found" });
+        }
+
+        return res.status(200).json({ success: true, service });
+    } catch (error) {
+        console.error("Error in getServiceOfferingById:", error?.message || error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+export { getPublicServices, getCommunityServices, getTopServicesByClicks, getServiceOfferingById };

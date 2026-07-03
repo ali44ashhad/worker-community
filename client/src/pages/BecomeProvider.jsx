@@ -606,7 +606,7 @@ const BecomeProvider = () => {
   return (
     <div className="relative min-h-screen bg-[var(--background-subtle)] pb-16">
       <div
-        className={`mx-auto max-w-6xl px-4 sm:px-6 ${isPanelRoute ? 'pt-6' : 'pt-24 sm:pt-28'}`}
+        className={`mx-auto max-w-6xl px-4 sm:px-6 ${isPanelRoute ? 'pt-6' : 'pt-6 sm:pt-8'}`}
       >
       <motion.div
         className="mb-10 grid items-start gap-8 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px]"

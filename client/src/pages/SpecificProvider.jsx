@@ -115,7 +115,7 @@ const SpecificProvider = () => {
       transition={{ duration: 0.4 }}
     >
       {/* Hero */}
-      <section className="relative overflow-hidden pt-28 pb-8 lg:pt-32 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
+      <section className="relative overflow-hidden pt-8 pb-8 lg:pt-10 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(217,70,239,0.05),transparent_50%)]" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="inline-block px-4 py-2 bg-gradient-to-r from-purple-100 to-fuchsia-100 rounded-full mb-4">

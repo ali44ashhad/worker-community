@@ -28,7 +28,7 @@ const providerBenefits = [
 const AudienceSection = () => (
   <section className="grid lg:grid-cols-2">
     <div id="for-seekers" className="bg-gradient-to-br from-[var(--purple-primary)] to-[var(--purple-secondary)] text-white p-12 lg:p-20 relative overflow-hidden scroll-mt-24">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(217,70,239,0.3),transparent_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(219,88,159,0.3),transparent_70%)]" />
       <div className="max-w-xl mx-auto relative">
         <h2 className="text-4xl sm:text-5xl font-bold mb-6">For Seekers</h2>
         <p className="text-lg text-purple-100 mb-10 leading-relaxed">
@@ -54,7 +54,7 @@ const AudienceSection = () => (
     </div>
 
     <div id="for-providers" className="bg-gradient-to-br from-[var(--magenta)] to-fuchsia-600 text-white p-12 lg:p-20 relative overflow-hidden scroll-mt-24">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(107,70,193,0.3),transparent_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(104,67,154,0.3),transparent_70%)]" />
       <div className="max-w-xl mx-auto relative">
         <h2 className="text-4xl sm:text-5xl font-bold mb-6">For Providers</h2>
         <p className="text-lg text-fuchsia-100 mb-10 leading-relaxed">

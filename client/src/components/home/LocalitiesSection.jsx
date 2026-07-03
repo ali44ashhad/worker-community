@@ -35,8 +35,8 @@ const comingSoonLocalities = [
 
 const LocalitiesSection = () => (
   <section id="localities" className="py-24 bg-gradient-to-br from-[var(--purple-primary)] via-[var(--purple-secondary)] to-[var(--purple-primary)] text-white relative overflow-hidden">
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(217,70,239,0.2),transparent_70%)]" />
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_50%,rgba(107,70,193,0.2),transparent_70%)]" />
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(219,88,159,0.2),transparent_70%)]" />
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_50%,rgba(104,67,154,0.2),transparent_70%)]" />
 
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
       <div className="text-center mb-16">
@@ -89,7 +89,7 @@ const LocalitiesSection = () => (
                     cy="50"
                     rx="30"
                     ry="27"
-                    fill="rgba(217,70,239,0.35)"
+                    fill="rgba(219,88,159,0.35)"
                     stroke="rgba(255,255,255,0.5)"
                     strokeWidth="1.5"
                   />

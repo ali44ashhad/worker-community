@@ -5,6 +5,7 @@ import { Briefcase, Pencil, Plus, Trash2 } from 'lucide-react';
 import { getMyProviderProfile } from '../../features/providerSlice';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import ServiceCover from '../../components/service/ServiceCover';
 
 const btnPrimary =
   'inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
@@ -146,7 +147,6 @@ const ManageServices = () => {
         ) : (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {services.map((service, index) => {
-              const coverImage = service.portfolioImages?.[0]?.url;
               return (
                 <motion.div
                   key={service._id}
@@ -156,20 +156,12 @@ const ManageServices = () => {
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                 >
                   <div className="flex items-center justify-center overflow-hidden bg-purple-50/30 p-4">
-                    {coverImage ? (
-                      <img
-                        src={coverImage}
-                        alt={service.serviceCategory}
-                        className="max-h-52 w-auto max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-                      />
-                    ) : (
-                      <img
-                        src="/CommuN-logo.png"
-                        alt="Default service"
-                        className="max-h-40 w-auto max-w-full object-contain"
-                        loading="lazy"
-                      />
-                    )}
+                    <ServiceCover
+                      service={service}
+                      size="md"
+                      imageClassName="max-h-52 w-auto max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+                      className="min-h-40 w-full"
+                    />
                   </div>
 
                   <div className="flex flex-1 flex-col p-5">

@@ -1,24 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { ArrowRight, Heart, ImageIcon, Star } from 'lucide-react';
+import { ArrowRight, Heart, Star } from 'lucide-react';
 import { addToWishlist, removeFromWishlist } from '../../features/wishlistSlice';
 import { toast } from 'react-hot-toast';
 import { getFullName } from '../../utils/userHelpers';
 import ProfileAvatar from '../ProfileAvatar';
+import ServiceCover from './ServiceCover';
 
 const ServiceCard = ({ service }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
-  const [imageError, setImageError] = useState(false);
 
   const serviceName = service?.servicename || '';
   const fullDescription = service?.description || 'No description available.';
-
-  const portfolioImages = service?.portfolioImages || [];
-  const mainImage = portfolioImages[0]?.url || '/CommuN-logo.png';
 
   const provider = service?.provider || {};
   const providerUser = provider?.user || {};
@@ -45,10 +42,6 @@ const ServiceCard = ({ service }) => {
       );
     }
     return stars;
-  };
-
-  const handleImageError = () => {
-    setImageError(true);
   };
 
   const handleCardClick = () => {
@@ -88,18 +81,11 @@ const ServiceCard = ({ service }) => {
           />
         </button>
 
-        {mainImage && !imageError ? (
-          <img
-            src={mainImage}
-            alt="Service portfolio"
-            className="service-image-zoom__img h-full w-full object-contain p-3"
-            onError={handleImageError}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <ImageIcon className="h-14 w-14 text-purple-200" />
-          </div>
-        )}
+        <ServiceCover
+          service={service}
+          size="sm"
+          imageClassName="service-image-zoom__img h-full w-full object-contain p-3"
+        />
       </div>
 
       <div className="flex flex-1 flex-col p-4">
