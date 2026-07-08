@@ -52,14 +52,21 @@ export const rejectUserRegistration = createAsyncThunk(
 
 export const fetchCommunityMembers = createAsyncThunk(
   "secretary/fetchMembers",
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10, search = "" } = {}, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/api/secretary/members`);
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("limit", String(limit));
+      if (search.trim()) {
+        params.append("search", search.trim());
+      }
+      const res = await axios.get(`${API_URL}/api/secretary/members?${params.toString()}`);
       const data = res.data?.data || {};
       return {
         users: data.users || [],
         needsCommunName: Boolean(data.needsCommunName),
         communityCommunName: data.communityCommunName || null,
+        pagination: data.pagination || null,
       };
     } catch (err) {
       const message = err.response?.data?.message || "Failed to load members";
@@ -271,6 +278,7 @@ const secretarySlice = createSlice({
       needsCommunName: false,
       communityCommunName: null,
     },
+    membersPagination: null,
     featureToggles: {},
     featureTogglesLoading: false,
     featureTogglesError: null,
@@ -337,6 +345,7 @@ const secretarySlice = createSlice({
           needsCommunName: action.payload.needsCommunName,
           communityCommunName: action.payload.communityCommunName,
         };
+        state.membersPagination = action.payload.pagination;
       })
       .addCase(fetchCommunityMembers.rejected, (state, action) => {
         state.membersLoading = false;

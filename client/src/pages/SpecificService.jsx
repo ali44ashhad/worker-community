@@ -15,15 +15,16 @@ import {
   Phone,
   Send,
   Check,
+  Eye,
   Briefcase,
-  Clock,
+  X,
 } from 'lucide-react';
 import Comment from '../components/Comment';
 import { addToWishlist, removeFromWishlist, fetchWishlist } from '../features/wishlistSlice';
 import { fetchCommentsByService } from '../features/commentSlice';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getFullName, formatAddress } from '../utils/userHelpers';
 import ProfileAvatar from '../components/ProfileAvatar';
 import ServiceCover from '../components/service/ServiceCover';
@@ -62,6 +63,7 @@ const SpecificService = () => {
   const [imageError, setImageError] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
+  const [isImageLightboxOpen, setIsImageLightboxOpen] = useState(false);
 
   const averageRating =
     comments.length > 0
@@ -146,6 +148,32 @@ const SpecificService = () => {
     fetchServiceById();
   }, [API_URL, id, service]);
 
+  useEffect(() => {
+    if (!isImageLightboxOpen) return undefined;
+
+    const imageCount = service ? getServiceDisplayImages(service).length : 0;
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setIsImageLightboxOpen(false);
+      if (imageCount <= 1) return;
+      if (e.key === 'ArrowLeft') {
+        setSelectedImageIndex((prev) => (prev - 1 + imageCount) % imageCount);
+        setImageError(false);
+      }
+      if (e.key === 'ArrowRight') {
+        setSelectedImageIndex((prev) => (prev + 1) % imageCount);
+        setImageError(false);
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isImageLightboxOpen, service]);
+
   if (!service) {
     return (
       <div className="home-page min-h-screen bg-[var(--background-subtle)] flex items-center justify-center">
@@ -170,6 +198,7 @@ const SpecificService = () => {
   const providerBio = service?.provider?.bio || '';
   const providerCreatedAt = service?.provider?.user?.createdAt;
   const serviceExperience = service?.experience || 0;
+  const totalViews = service?.serviceOfferingCount || 0;
   const providerAddress = formatAddress(service?.provider?.user) || 'Address not provided';
   const descriptionIsLong = serviceDescription.length > 220;
 
@@ -267,11 +296,11 @@ const SpecificService = () => {
 
   const heroChips = [
     ...subCategories.slice(0, 2).map((cat) => ({ label: cat, icon: Briefcase })),
-    serviceExperience > 0 && {
-      label: `${serviceExperience}+ Year${serviceExperience !== 1 ? 's' : ''} Experience`,
-      icon: Clock,
+    {
+      label: `${totalViews} Total View${totalViews !== 1 ? 's' : ''}`,
+      icon: Eye,
     },
-  ].filter(Boolean);
+  ];
 
   const reviewsTabLabel =
     reviewCount > 0 ? `Reviews (${reviewCount})` : 'Reviews';
@@ -479,16 +508,27 @@ const SpecificService = () => {
             {/* Image gallery */}
             <div>
               <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-purple-50 to-fuchsia-50/50 border border-purple-100">
-                <div className="relative aspect-[16/10]">
+                <div className="relative flex aspect-[16/10] items-center justify-center">
                   {portfolioImages.length > 0 && currentImage && !imageError ? (
-                    <img
-                      src={currentImage}
-                      alt={`${serviceName} - ${selectedImageIndex + 1}`}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      onError={handleImageError}
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsImageLightboxOpen(true)}
+                      className="flex h-full w-full cursor-zoom-in items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-primary)]"
+                      aria-label="View full size image"
+                    >
+                      <img
+                        src={currentImage}
+                        alt={`${serviceName} - ${selectedImageIndex + 1}`}
+                        className="max-h-full max-w-full object-contain p-2 pointer-events-none"
+                        onError={handleImageError}
+                      />
+                    </button>
                   ) : (
-                    <ServiceCover service={service} size="xl" imageClassName="absolute inset-0 h-full w-full object-cover" />
+                    <ServiceCover
+                      service={service}
+                      size="xl"
+                      imageClassName="max-h-full max-w-full object-contain p-2"
+                    />
                   )}
 
                   {portfolioImages.length > 1 && (
@@ -528,13 +568,17 @@ const SpecificService = () => {
                         setSelectedImageIndex(index);
                         setImageError(false);
                       }}
-                      className={`shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`shrink-0 flex h-16 w-20 items-center justify-center overflow-hidden rounded-lg border-2 bg-gradient-to-br from-purple-50 to-fuchsia-50/50 transition-all ${
                         selectedImageIndex === index
                           ? 'border-[var(--purple-primary)]'
                           : 'border-purple-100 hover:border-purple-300'
                       }`}
                     >
-                      <img src={img.url} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" />
+                      <img
+                        src={img.url}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="max-h-full max-w-full object-contain p-1"
+                      />
                     </button>
                   ))}
                   {portfolioImages.length > 6 && (
@@ -595,12 +639,7 @@ const SpecificService = () => {
                   <MapPin className="w-4 h-4 text-[var(--purple-primary)]" />
                   {providerAddress}
                 </span>
-                {serviceExperience > 0 && (
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-[var(--purple-primary)]" />
-                    {serviceExperience} year{serviceExperience !== 1 ? 's' : ''} experience
-                  </span>
-                )}
+                
               </div>
 
               {heroChips.length > 0 && (
@@ -768,6 +807,75 @@ const SpecificService = () => {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isImageLightboxOpen && currentImage && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 sm:p-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsImageLightboxOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Image preview"
+          >
+            <button
+              type="button"
+              onClick={() => setIsImageLightboxOpen(false)}
+              className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20"
+              aria-label="Close image preview"
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            {portfolioImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrevImage();
+                  }}
+                  className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20 sm:left-6"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNextImage();
+                  }}
+                  className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20 sm:right-6"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+
+            <motion.img
+              key={currentImage}
+              src={currentImage}
+              alt={`${serviceName} - ${selectedImageIndex + 1}`}
+              className="max-h-[90vh] max-w-full object-contain"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {portfolioImages.length > 1 && (
+              <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm font-medium text-white">
+                {selectedImageIndex + 1} / {portfolioImages.length}
+              </span>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

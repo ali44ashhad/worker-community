@@ -323,14 +323,8 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
             </div>
 
             {/* Services grid */}
-            <div className="flex-1 min-w-0">
-              {!isFetching && !error && filteredServices.length > 0 && (
-                <p className="mb-5 text-sm font-medium text-[var(--text-secondary)]">
-                  Showing{' '}
-                  <span className="text-[var(--purple-primary)] font-semibold">{filteredServices.length}</span>
-                  {filteredServices.length === 1 ? ' service' : ' services'}
-                </p>
-              )}
+            <div className="flex-1min-w-0">
+           
 
               {isFetching && (
                 <div className="mt-8">

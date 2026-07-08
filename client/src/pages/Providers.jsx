@@ -197,15 +197,7 @@ const Providers = () => {
 
             {/* Providers grid */}
             <div className="flex-1 min-w-0">
-              {!isFetchingAll && !error && filteredProviders.length > 0 && (
-                <p className="mb-5 text-sm font-medium text-[var(--text-secondary)]">
-                  Showing{' '}
-                  <span className="text-[var(--purple-primary)] font-semibold">
-                    {filteredProviders.length}
-                  </span>
-                  {filteredProviders.length === 1 ? ' provider' : ' providers'}
-                </p>
-              )}
+             
 
               {isFetchingAll && (
                 <div className="mt-8">

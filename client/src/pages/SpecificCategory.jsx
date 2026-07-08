@@ -492,13 +492,7 @@ const SpecificCategory = () => {
 
             {/* Services grid */}
             <div className="flex-1 min-w-0">
-              {!isFetchingAll && !error && filteredServices.length > 0 && (
-                <p className="mb-5 text-sm font-medium text-[var(--text-secondary)]">
-                  Showing{' '}
-                  <span className="text-[var(--purple-primary)] font-semibold">{filteredServices.length}</span>
-                  {filteredServices.length === 1 ? ' service' : ' services'} in {categoryName}
-                </p>
-              )}
+              
 
               {isFetchingAll && (
                 <div className="mt-8">

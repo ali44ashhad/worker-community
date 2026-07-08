@@ -88,7 +88,7 @@ const TopCategories = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div {...fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <p className="text-sm text-[var(--text-secondary)]">
-              Showing <span className="font-semibold text-[var(--purple-primary)]">{categories.length}</span> categories
+             <span className="font-semibold text-[var(--purple-primary)]"> </span> 
             </p>
             <Link
               to="/category"

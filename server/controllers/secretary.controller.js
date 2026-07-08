@@ -127,28 +127,59 @@ const listCommunityMembers = async (req, res) => {
     try {
         const secretary = req.user;
         const communityHandle = secretary.communName ? String(secretary.communName).trim().toLowerCase() : "";
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 10));
+        const search = String(req.query.search || "").trim();
+        const skip = (page - 1) * limit;
 
         if (!communityHandle) {
             return res.status(200).json({
                 success: true,
-                data: { users: [], needsCommunName: true },
+                data: { users: [], needsCommunName: true, pagination: null },
                 message: "No Commun handle on this secretary account. Ask an admin to set it.",
             });
         }
 
-        const users = await User.find({
+        const baseQuery = {
             communityCommunName: communityHandle,
             role: { $nin: ["admin", "secretary"] },
             _id: { $ne: secretary._id },
-        })
+        };
+
+        if (search) {
+            baseQuery.$or = [
+                { firstName: { $regex: search, $options: "i" } },
+                { lastName: { $regex: search, $options: "i" } },
+                { email: { $regex: search, $options: "i" } },
+                { phoneNumber: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        const totalMembers = await User.countDocuments(baseQuery);
+        const users = await User.find(baseQuery)
             .select("-password")
             .sort({ createdAt: -1 })
-            .limit(500)
+            .skip(skip)
+            .limit(limit)
             .lean();
+
+        const totalPages = Math.max(1, Math.ceil(totalMembers / limit));
 
         return res.status(200).json({
             success: true,
-            data: { users, communityCommunName: communityHandle, needsCommunName: false },
+            data: {
+                users,
+                communityCommunName: communityHandle,
+                needsCommunName: false,
+                pagination: {
+                    currentPage: page,
+                    totalPages,
+                    totalMembers,
+                    hasNextPage: page < totalPages,
+                    hasPrevPage: page > 1,
+                    limit,
+                },
+            },
         });
     } catch (error) {
         console.error("listCommunityMembers:", error.message);

@@ -57,6 +57,7 @@ const SecretaryDashboard = () => {
     members,
     membersLoading,
     membersMeta,
+    membersPagination,
     communityEvents,
     communityEventsLoading,
     broadcasts,
@@ -74,7 +75,7 @@ const SecretaryDashboard = () => {
 
   const stats = {
     pending: loading ? '…' : pendingUsers.length,
-    members: membersLoading ? '…' : members.length,
+    members: membersLoading ? '…' : (membersPagination?.totalMembers ?? members.length),
     broadcastCount: broadcastsLoading ? '…' : broadcasts.length,
     activeEvents: communityEventsLoading ? '…' : activeEventsCount,
   };
