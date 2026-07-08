@@ -15,7 +15,17 @@ const getSecretaryCommunityHandle = (secretary) =>
  */
 const listPendingRegistrations = async (req, res) => {
     try {
+        const communityHandle = getSecretaryCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(200).json({
+                success: true,
+                data: { users: [], needsCommunName: true, communityCommunName: null },
+                message: "No Commun handle on this secretary account. Ask an admin to set it.",
+            });
+        }
+
         const users = await User.find({
+            communityCommunName: communityHandle,
             accountStatus: "pending",
             isPublicMember: { $ne: true },
             role: { $nin: ["admin", "secretary"] },
@@ -25,7 +35,10 @@ const listPendingRegistrations = async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
 
-        return res.status(200).json({ success: true, data: { users } });
+        return res.status(200).json({
+            success: true,
+            data: { users, needsCommunName: false, communityCommunName: communityHandle },
+        });
     } catch (error) {
         console.error("listPendingRegistrations:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -37,10 +50,14 @@ const listPendingRegistrations = async (req, res) => {
  */
 const approveRegistration = async (req, res) => {
     try {
+        const communityHandle = getSecretaryCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(400).json({ success: false, message: "No Commun handle on this account." });
+        }
         const { userId } = req.params;
-        const user = await User.findById(userId);
+        const user = await User.findOne({ _id: userId, communityCommunName: communityHandle });
         if (!user) {
-            return res.status(404).json({ success: false, message: "User not found." });
+            return res.status(404).json({ success: false, message: "User not found in your community." });
         }
         if (user.role === "admin" || user.role === "secretary") {
             return res.status(400).json({ success: false, message: "Cannot change this account." });
@@ -82,10 +99,14 @@ const approveRegistration = async (req, res) => {
  */
 const rejectRegistration = async (req, res) => {
     try {
+        const communityHandle = getSecretaryCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(400).json({ success: false, message: "No Commun handle on this account." });
+        }
         const { userId } = req.params;
-        const user = await User.findById(userId);
+        const user = await User.findOne({ _id: userId, communityCommunName: communityHandle });
         if (!user) {
-            return res.status(404).json({ success: false, message: "User not found." });
+            return res.status(404).json({ success: false, message: "User not found in your community." });
         }
         if (user.role === "admin" || user.role === "secretary") {
             return res.status(400).json({ success: false, message: "Cannot change this account." });
@@ -183,6 +204,37 @@ const listCommunityMembers = async (req, res) => {
         });
     } catch (error) {
         console.error("listCommunityMembers:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * Fetch a single member profile within this secretary's community.
+ * @route GET /api/secretary/members/:userId
+ */
+const getCommunityMemberById = async (req, res) => {
+    try {
+        const communityHandle = getSecretaryCommunityHandle(req.user);
+        if (!communityHandle) {
+            return res.status(400).json({ success: false, message: "No Commun handle on this account." });
+        }
+
+        const { userId } = req.params;
+        const user = await User.findOne({
+            _id: userId,
+            communityCommunName: communityHandle,
+            role: { $nin: ["admin", "secretary"] },
+        })
+            .select("-password")
+            .lean();
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Member not found in your community." });
+        }
+
+        return res.status(200).json({ success: true, data: { user } });
+    } catch (error) {
+        console.error("getCommunityMemberById:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -663,6 +715,7 @@ export {
     approveRegistration,
     rejectRegistration,
     listCommunityMembers,
+    getCommunityMemberById,
     updateMemberStatus,
     getFeatureToggles,
     updateFeatureToggle,

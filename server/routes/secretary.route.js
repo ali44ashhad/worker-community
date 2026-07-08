@@ -6,6 +6,7 @@ import {
     approveRegistration,
     rejectRegistration,
     listCommunityMembers,
+    getCommunityMemberById,
     updateMemberStatus,
     getFeatureToggles,
     updateFeatureToggle,
@@ -23,6 +24,7 @@ const router = express.Router();
 
 router.get("/registrations/pending", protect, isSecretary, listPendingRegistrations);
 router.get("/members", protect, isSecretary, listCommunityMembers);
+router.get("/members/:userId", protect, isSecretary, getCommunityMemberById);
 router.patch("/members/:userId/status", protect, isSecretary, updateMemberStatus);
 router.patch("/registrations/:userId/approve", protect, isSecretary, approveRegistration);
 router.patch("/registrations/:userId/reject", protect, isSecretary, rejectRegistration);

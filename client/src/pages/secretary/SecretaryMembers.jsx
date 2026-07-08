@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Mail, Phone, Search, User, X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCommunityMembers, updateCommunityMemberStatus } from '../../features/secretarySlice';
-import { getFullName } from '../../utils/userHelpers';
+import { fetchCommunityMemberById, fetchCommunityMembers, updateCommunityMemberStatus } from '../../features/secretarySlice';
+import { formatAddress, getFullName } from '../../utils/userHelpers';
 import { formatCommunDisplayName } from '../../utils/communName';
 
 const PAGE_SIZE = 10;
 
 const SecretaryMembers = () => {
   const dispatch = useDispatch();
-  const { members, membersLoading, membersError, membersMeta, membersPagination } = useSelector(
+  const { members, membersLoading, membersError, membersMeta, membersPagination, memberProfile, memberProfileLoading } = useSelector(
     (state) => state.secretary
   );
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMemberId, setSelectedMemberId] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,6 +43,26 @@ const SecretaryMembers = () => {
 
   const pagination = membersPagination;
   const totalMembers = pagination?.totalMembers ?? members.length;
+  const selectedMember = memberProfile && memberProfile?._id === selectedMemberId ? memberProfile : null;
+  const selectedJoined = useMemo(() => {
+    if (!selectedMember?.createdAt) return '—';
+    return new Date(selectedMember.createdAt).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }, [selectedMember?.createdAt]);
+
+  const openProfile = (userId) => {
+    setSelectedMemberId(userId);
+    setIsProfileOpen(true);
+    dispatch(fetchCommunityMemberById(userId));
+  };
+
+  const closeProfile = () => {
+    setIsProfileOpen(false);
+    setSelectedMemberId(null);
+  };
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -129,7 +151,16 @@ const SecretaryMembers = () => {
                       : '—';
                     return (
                       <tr key={u._id} className="text-gray-800">
-                        <td className="py-3 pr-4 font-medium text-gray-900">{getFullName(u)}</td>
+                        <td className="py-3 pr-4 font-medium text-gray-900">
+                          <button
+                            type="button"
+                            onClick={() => openProfile(u._id)}
+                            className="max-w-[16rem] truncate text-left font-medium text-indigo-700 hover:text-indigo-900 hover:underline"
+                            title="View full profile"
+                          >
+                            {getFullName(u)}
+                          </button>
+                        </td>
                         <td className="py-3 pr-4 text-gray-600">{u.email || '—'}</td>
                         <td className="py-3 pr-4 text-gray-600">{u.phoneNumber || '—'}</td>
                         <td className="py-3 pr-4 capitalize">{u.role || '—'}</td>
@@ -233,6 +264,104 @@ const SecretaryMembers = () => {
           </>
         ) : null}
       </motion.div>
+
+      <AnimatePresence>
+        {isProfileOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeProfile}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Member profile"
+          >
+            <motion.div
+              className="w-full max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl"
+              initial={{ opacity: 0, scale: 0.97, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 10 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3 border-b border-gray-100 bg-white px-6 py-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Member profile</p>
+                  <h2 className="mt-1 truncate text-lg font-semibold text-gray-900">
+                    {selectedMember ? getFullName(selectedMember) : 'Loading…'}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeProfile}
+                  className="rounded-xl border border-gray-200 bg-white p-2 text-gray-600 transition-colors hover:bg-gray-50"
+                  aria-label="Close profile"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="px-6 py-5">
+                {memberProfileLoading && !selectedMember ? (
+                  <div className="py-10 text-center text-sm text-gray-600">Loading profile…</div>
+                ) : selectedMember ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Contact</p>
+                      <div className="mt-3 space-y-2 text-sm">
+                        <p className="flex items-center gap-2 text-gray-800">
+                          <Mail className="h-4 w-4 text-indigo-600" />
+                          <span className="truncate">{selectedMember.email || '—'}</span>
+                        </p>
+                        <p className="flex items-center gap-2 text-gray-800">
+                          <Phone className="h-4 w-4 text-indigo-600" />
+                          <span className="truncate">{selectedMember.phoneNumber || '—'}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Account</p>
+                      <div className="mt-3 space-y-2 text-sm text-gray-800">
+                        <p className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-indigo-600" />
+                          <span className="capitalize">{selectedMember.role || '—'}</span>
+                        </p>
+                        <p>
+                          <span className="text-gray-500">Status:</span>{' '}
+                          <span className="font-semibold">{selectedMember.accountStatus || 'approved'}</span>
+                        </p>
+                        <p>
+                          <span className="text-gray-500">Joined:</span> {selectedJoined}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-2 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Address</p>
+                      <p className="mt-3 text-sm text-gray-800">{formatAddress(selectedMember) || '—'}</p>
+                    </div>
+
+                    {(selectedMember.communName || selectedMember.communityCommunName || selectedMember.requestedCommunityName) && (
+                      <div className="sm:col-span-2 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Community</p>
+                        <p className="mt-3 text-sm font-medium text-indigo-700">
+                          {selectedMember.requestedCommunityName && !selectedMember.communityCommunName
+                            ? `${selectedMember.requestedCommunityName} (requested)`
+                            : formatCommunDisplayName(selectedMember.communName || selectedMember.communityCommunName)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="py-10 text-center text-sm text-gray-600">Profile not found.</div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

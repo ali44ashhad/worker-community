@@ -131,8 +131,8 @@ const SpecificService = () => {
   useEffect(() => {
     const fetchServiceById = async () => {
       if (!id) return;
-      // If it wasn't found in the first providers page, fetch directly.
-      if (service) return;
+  // Always refresh from API so click counters match admin panel.
+      // `allProviders` data can be partial/stale.
       try {
         const res = await axios.get(`${API_URL}/api/service-offering/${id}`);
         if (res?.data?.service) {
@@ -146,7 +146,7 @@ const SpecificService = () => {
     };
 
     fetchServiceById();
-  }, [API_URL, id, service]);
+  }, [API_URL, id]);
 
   useEffect(() => {
     if (!isImageLightboxOpen) return undefined;
@@ -198,7 +198,9 @@ const SpecificService = () => {
   const providerBio = service?.provider?.bio || '';
   const providerCreatedAt = service?.provider?.user?.createdAt;
   const serviceExperience = service?.experience || 0;
-  const totalViews = service?.serviceOfferingCount || 0;
+  // Admin dashboard "Top providers" uses provider profile clicks (`providerProfileCount`),
+  // so we show the same number here to keep it consistent.
+  const totalViews = service?.provider?.providerProfileCount || 0;
   const providerAddress = formatAddress(service?.provider?.user) || 'Address not provided';
   const descriptionIsLong = serviceDescription.length > 220;
 
@@ -297,7 +299,7 @@ const SpecificService = () => {
   const heroChips = [
     ...subCategories.slice(0, 2).map((cat) => ({ label: cat, icon: Briefcase })),
     {
-      label: `${totalViews} Total View${totalViews !== 1 ? 's' : ''}`,
+      label: `${totalViews} View${totalViews !== 1 ? 's' : ''}`,
       icon: Eye,
     },
   ];
@@ -310,25 +312,6 @@ const SpecificService = () => {
       case 'about':
         return (
           <div className="space-y-8">
-            {/* <div>
-              <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">About This Business</h2>
-              <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
-                {serviceDescription}
-              </p>
-              {whatsIncludedItems.length > 0 && (
-                <ul className="mt-6 space-y-3">
-                  {whatsIncludedItems.map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
-                        <Check className="h-3 w-3 text-[var(--purple-primary)]" />
-                      </span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div> */}
-
             <div className=""> 
               <div className="flex items-start gap-4">
                 <ProfileAvatar

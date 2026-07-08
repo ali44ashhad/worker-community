@@ -12,7 +12,11 @@ export const fetchPendingRegistrations = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await axios.get(`${API_URL}/api/secretary/registrations/pending`);
-      return res.data?.data?.users || [];
+      return {
+        users: res.data?.data?.users || [],
+        needsCommunName: Boolean(res.data?.data?.needsCommunName),
+        communityCommunName: res.data?.data?.communityCommunName || null,
+      };
     } catch (err) {
       const message = err.response?.data?.message || "Failed to load pending registrations";
       return rejectWithValue(message);
@@ -265,12 +269,29 @@ export const deleteBroadcast = createAsyncThunk(
   }
 );
 
+export const fetchCommunityMemberById = createAsyncThunk(
+  "secretary/fetchMemberById",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/secretary/members/${userId}`);
+      return res.data?.data?.user;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to load member profile";
+      return rejectWithValue(message);
+    }
+  }
+);
+
 const secretarySlice = createSlice({
   name: "secretary",
   initialState: {
     pendingUsers: [],
     loading: false,
     error: null,
+    pendingMeta: {
+      needsCommunName: false,
+      communityCommunName: null,
+    },
     members: [],
     membersLoading: false,
     membersError: null,
@@ -279,6 +300,9 @@ const secretarySlice = createSlice({
       communityCommunName: null,
     },
     membersPagination: null,
+    memberProfile: null,
+    memberProfileLoading: false,
+    memberProfileError: null,
     featureToggles: {},
     featureTogglesLoading: false,
     featureTogglesError: null,
@@ -322,7 +346,9 @@ const secretarySlice = createSlice({
       })
       .addCase(fetchPendingRegistrations.fulfilled, (state, action) => {
         state.loading = false;
-        state.pendingUsers = action.payload;
+        state.pendingUsers = action.payload.users || [];
+        state.pendingMeta.needsCommunName = Boolean(action.payload.needsCommunName);
+        state.pendingMeta.communityCommunName = action.payload.communityCommunName || null;
       })
       .addCase(fetchPendingRegistrations.rejected, (state, action) => {
         state.loading = false;
@@ -355,6 +381,19 @@ const secretarySlice = createSlice({
         const updated = action.payload;
         if (!updated?._id) return;
         state.members = state.members.map((u) => (u._id === updated._id ? { ...u, ...updated } : u));
+      })
+      .addCase(fetchCommunityMemberById.pending, (state) => {
+        state.memberProfileLoading = true;
+        state.memberProfileError = null;
+        state.memberProfile = null;
+      })
+      .addCase(fetchCommunityMemberById.fulfilled, (state, action) => {
+        state.memberProfileLoading = false;
+        state.memberProfile = action.payload || null;
+      })
+      .addCase(fetchCommunityMemberById.rejected, (state, action) => {
+        state.memberProfileLoading = false;
+        state.memberProfileError = action.payload;
       })
       .addCase(fetchFeatureToggles.pending, (state) => {
         state.featureTogglesLoading = true;
