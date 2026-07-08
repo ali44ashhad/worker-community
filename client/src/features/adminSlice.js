@@ -360,6 +360,25 @@ export const createSecretaryAdmin = createAsyncThunk(
   }
 );
 
+export const updateSecretaryDetailsAdmin = createAsyncThunk(
+  "admin/updateSecretaryDetails",
+  async ({ userId, email, firstName, lastName }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/admin/secretaries/${userId}`, {
+        email,
+        firstName,
+        lastName,
+      });
+      toast.success(res.data?.message || "Secretary updated.");
+      return res.data?.data?.user;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update secretary";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 /* ----------------- SLICE ----------------- */
 
 const adminSlice = createSlice({
@@ -651,6 +670,11 @@ const adminSlice = createSlice({
       .addCase(createSecretaryAdmin.rejected, (state, action) => {
         state.secretariesLoading = false;
         state.error = action.payload;
+      })
+      .addCase(updateSecretaryDetailsAdmin.fulfilled, (state, action) => {
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.secretaries = (state.secretaries || []).map((u) => (u._id === updated._id ? updated : u));
       });
   },
 });

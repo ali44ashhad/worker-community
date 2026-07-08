@@ -594,7 +594,7 @@ const SpecificService = () => {
                   )}
                 </div>
               )}
-            </div>
+            </div>   
 
             {/* Service header info */}
             <div className="flex flex-col">

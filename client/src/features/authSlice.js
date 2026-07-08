@@ -119,9 +119,7 @@ export const changePasswordUser = createAsyncThunk(
       return rejectWithValue(error.response?.data?.message || "Password update failed");
     }
   }
-);
-
-// ========================== INITIAL STATE ==========================
+);    
 const initialState = {
   user: null,
   isLoading: false,

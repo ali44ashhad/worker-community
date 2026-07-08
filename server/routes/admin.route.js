@@ -18,6 +18,7 @@ import {
     updateCategoryAdmin,
     updateCategoryStatusAdmin,
     getSecretaries,
+    updateSecretaryDetails,
     createSecretary
 } from "../controllers/admin.controller.js";
 import {
@@ -135,6 +136,13 @@ router.post(
     protect,
     isAdmin,
     createSecretary
+);
+
+router.patch(
+    "/secretaries/:userId",
+    protect,
+    isAdmin,
+    updateSecretaryDetails
 );
 
 // ========================== CATEGORY MANAGEMENT (Admin) ==========================

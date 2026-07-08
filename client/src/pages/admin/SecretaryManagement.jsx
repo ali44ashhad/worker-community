@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { UserPlus, Users } from 'lucide-react';
-import { getSecretariesAdmin, createSecretaryAdmin } from '../../features/adminSlice';
+import { Mail, Pencil, Save, UserPlus, Users, X } from 'lucide-react';
+import { getSecretariesAdmin, createSecretaryAdmin, updateSecretaryDetailsAdmin } from '../../features/adminSlice';
 import ProfileAvatar from '../../components/ProfileAvatar';
 import { getFullName } from '../../utils/userHelpers';
 import { formatCommunDisplayName } from '../../utils/communName';
@@ -46,6 +46,9 @@ const Card = ({ icon: Icon, title, description, children }) => (
 const SecretaryManagement = () => {
   const dispatch = useDispatch();
   const { secretaries, secretariesLoading } = useSelector((state) => state.admin);
+  const [editingId, setEditingId] = useState(null);
+  const [editValues, setEditValues] = useState({ firstName: '', lastName: '', email: '' });
+  const [savingId, setSavingId] = useState(null);
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -94,6 +97,47 @@ const SecretaryManagement = () => {
         communName: '',
         password: '',
       });
+    }
+  };
+
+  const startEdit = (u) => {
+    setEditingId(u._id);
+    setEditValues({
+      firstName: String(u.firstName || '').trim(),
+      lastName: String(u.lastName || '').trim(),
+      email: String(u.email || '').trim(),
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditValues({ firstName: '', lastName: '', email: '' });
+    setSavingId(null);
+  };
+
+  const saveEdit = async (u) => {
+    if (!u?._id) return;
+    const next = {
+      firstName: String(editValues.firstName || '').trim(),
+      lastName: String(editValues.lastName || '').trim(),
+      email: String(editValues.email || '').trim().toLowerCase(),
+    };
+    if (!next.firstName || !next.lastName || !next.email) return;
+    try {
+      setSavingId(u._id);
+      await dispatch(
+        updateSecretaryDetailsAdmin({
+          userId: u._id,
+          firstName: next.firstName,
+          lastName: next.lastName,
+          email: next.email,
+        })
+      ).unwrap();
+      cancelEdit();
+    } catch (err) {
+      // toast is already handled in the thunk; keep console for debugging
+      console.error('updateSecretaryDetailsAdmin failed:', err);
+      setSavingId(null);
     }
   };
 
@@ -256,7 +300,78 @@ const SecretaryManagement = () => {
                         <p className="truncate text-sm font-medium text-[var(--text-primary)]">
                           {getFullName(u)}
                         </p>
-                        <p className="truncate text-xs text-[var(--text-secondary)]">{u.email}</p>
+                        {editingId === u._id ? (
+                          <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <div className="grid w-full gap-2 sm:max-w-lg sm:grid-cols-3">
+                              <input
+                                type="text"
+                                value={editValues.firstName}
+                                onChange={(e) => setEditValues((p) => ({ ...p, firstName: e.target.value }))}
+                                className={inputClass}
+                                placeholder="First name"
+                                disabled={savingId === u._id}
+                              />
+                              <input
+                                type="text"
+                                value={editValues.lastName}
+                                onChange={(e) => setEditValues((p) => ({ ...p, lastName: e.target.value }))}
+                                className={inputClass}
+                                placeholder="Last name"
+                                disabled={savingId === u._id}
+                              />
+                              <div className="relative sm:col-span-3">
+                                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]/60" />
+                                <input
+                                  type="email"
+                                  value={editValues.email}
+                                  onChange={(e) => setEditValues((p) => ({ ...p, email: e.target.value }))}
+                                  className={`${inputClass} pl-9`}
+                                  placeholder="new-email@example.com"
+                                  autoComplete="email"
+                                  disabled={savingId === u._id}
+                                />
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => saveEdit(u)}
+                                disabled={
+                                  savingId === u._id ||
+                                  !String(editValues.firstName || '').trim() ||
+                                  !String(editValues.lastName || '').trim() ||
+                                  !String(editValues.email || '').trim()
+                                }
+                                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-3 py-2 text-xs font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                <Save className="h-4 w-4" />
+                                {savingId === u._id ? 'Saving…' : 'Save'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelEdit}
+                                disabled={savingId === u._id}
+                                className="inline-flex items-center gap-2 rounded-xl border border-purple-100 bg-white px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                <X className="h-4 w-4" />
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-0.5 flex items-center gap-2">
+                            <p className="truncate text-xs text-[var(--text-secondary)]">{u.email}</p>
+                            <button
+                              type="button"
+                              onClick={() => startEdit(u)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-purple-100 bg-white px-2 py-1 text-[10px] font-semibold text-[var(--purple-primary)] transition-colors hover:bg-purple-50"
+                              title="Edit secretary details"
+                            >
+                              <Pencil className="h-3 w-3" />
+                              Edit
+                            </button>
+                          </div>
+                        )}
                         {u.communName && (
                           <p className="truncate text-xs font-medium text-[var(--purple-primary)]">
                             {formatCommunDisplayName(u.communName)}

@@ -1171,6 +1171,77 @@ const getSecretaries = async (req, res) => {
 };
 
 /**
+ * @description Update a secretary's details (admin)
+ * @route PATCH /api/admin/secretaries/:userId
+ * @body { email?: string, firstName?: string, lastName?: string }
+ */
+const updateSecretaryDetails = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const emailRaw = req.body?.email;
+        const firstNameRaw = req.body?.firstName;
+        const lastNameRaw = req.body?.lastName;
+
+        const secretary = await User.findById(userId);
+        if (!secretary) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        if (secretary.role !== "secretary") {
+            return res.status(400).json({ success: false, message: "This user is not a secretary." });
+        }
+
+        if (emailRaw !== undefined) {
+            const nextEmail = String(emailRaw || "").trim().toLowerCase();
+            if (!nextEmail) {
+                return res.status(400).json({ success: false, message: "Email is required." });
+            }
+            const emailTaken = await User.findOne({ email: nextEmail, _id: { $ne: secretary._id } }).select("_id");
+            if (emailTaken) {
+                return res.status(409).json({ success: false, message: "Email is already registered." });
+            }
+            secretary.email = nextEmail;
+        }
+
+        if (firstNameRaw !== undefined) {
+            const nextFirst = String(firstNameRaw || "").trim();
+            if (!nextFirst) {
+                return res.status(400).json({ success: false, message: "First name is required." });
+            }
+            secretary.firstName = nextFirst;
+        }
+
+        if (lastNameRaw !== undefined) {
+            const nextLast = String(lastNameRaw || "").trim();
+            if (!nextLast) {
+                return res.status(400).json({ success: false, message: "Last name is required." });
+            }
+            secretary.lastName = nextLast;
+        }
+
+        await secretary.save();
+
+        const safe = secretary.toObject();
+        delete safe.password;
+
+        return res.status(200).json({
+            success: true,
+            message: "Secretary updated.",
+            data: { user: safe },
+        });
+    } catch (error) {
+        console.error("Error in updateSecretaryDetails:", error.message);
+        if (error?.name === "ValidationError") {
+            return res.status(400).json({ success: false, message: error.message });
+        }
+        if (error?.code === 11000) {
+            return res.status(409).json({ success: false, message: "Email is already registered." });
+        }
+        return res.status(500).json({ success: false, message: error.message || "Internal Server Error" });
+    }
+};
+
+/**
  * @description Onboard a new secretary account (admin)
  * @route POST /api/admin/secretaries
  * @body firstName, lastName, phoneNumber, email, communName, password
@@ -1270,5 +1341,6 @@ export {
     updateCategoryAdmin,
     updateCategoryStatusAdmin,
     getSecretaries,
+    updateSecretaryDetails,
     createSecretary
 };
