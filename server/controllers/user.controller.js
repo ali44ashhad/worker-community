@@ -18,6 +18,64 @@ import CommunityEvent from "../models/communityEvent.model.js";
 import { validateEventExpiry } from "../utils/communityEvents.js";
 import { buildAttachmentsFromRequest, deleteEventAttachments } from "../utils/eventAttachments.js";
 
+/**
+ * Community directory for members (customer/provider): list approved active members by flat number.
+ * @route GET /api/user/community-directory
+ * @access Private
+ */
+const listCommunityDirectory = async (req, res) => {
+    try {
+        const communityHandle = req.user?.communityCommunName
+            ? String(req.user.communityCommunName).trim().toLowerCase()
+            : "";
+
+        if (!communityHandle) {
+            return res.status(200).json({
+                success: true,
+                data: { members: [], needsCommunity: true, communityCommunName: null },
+            });
+        }
+
+        const members = await User.find({
+            communityCommunName: communityHandle,
+            role: { $nin: ["admin", "secretary"] },
+            isActive: { $ne: false },
+            $or: [{ accountStatus: { $exists: false } }, { accountStatus: "approved" }],
+        })
+            .select(
+                "firstName lastName email phoneNumber role profileImage flatNumber communityCommunName addressLine1 addressLine2 city state zip createdAt"
+            )
+            .lean();
+
+        const hasFlat = (m) => Boolean(String(m?.flatNumber || "").trim());
+        const fullName = (m) =>
+            `${m?.firstName || ""} ${m?.lastName || ""}`.trim().toLowerCase();
+
+        members.sort((a, b) => {
+            const aHas = hasFlat(a);
+            const bHas = hasFlat(b);
+            // Members with a flat number first, then unlisted
+            if (aHas !== bHas) return aHas ? -1 : 1;
+            if (aHas) {
+                const flatCmp = String(a.flatNumber).localeCompare(String(b.flatNumber), undefined, {
+                    numeric: true,
+                    sensitivity: "base",
+                });
+                if (flatCmp !== 0) return flatCmp;
+            }
+            return fullName(a).localeCompare(fullName(b));
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: { members, needsCommunity: false, communityCommunName: communityHandle },
+        });
+    } catch (error) {
+        console.error("listCommunityDirectory:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 // Helper function to generate a token and set the cookie.
 const generateToken = (userId, res) => {
     const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
@@ -505,16 +563,28 @@ const register = async (req, res) => {
         try {
             if (secretaryForCommunity?.email) {
                 const memberName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
-                await sendSecretaryNewSignupEmail({
+                const mailResult = await sendSecretaryNewSignupEmail({
                     toEmail: String(secretaryForCommunity.email).trim().toLowerCase(),
                     communityCommunName: cn,
                     memberName: memberName || "New member",
                     memberEmail: user.email,
                     memberPhone: user.phoneNumber,
                 });
+                if (!mailResult?.sent) {
+                    console.error(
+                        "Secretary signup notification was not sent:",
+                        mailResult?.reason || "unknown",
+                        "to=",
+                        secretaryForCommunity.email
+                    );
+                }
+            } else {
+                console.error("Secretary signup notification skipped — secretary has no email.", {
+                    communName: cn,
+                });
             }
         } catch (mailError) {
-            console.log("Secretary signup notification email failed:", mailError?.message || mailError);
+            console.error("Secretary signup notification email failed:", mailError?.message || mailError);
         }
 
         generateToken(user._id, res);
@@ -686,16 +756,28 @@ const joinCommunity = async (req, res) => {
         try {
             if (secretaryForCommunity?.email) {
                 const memberName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
-                await sendSecretaryNewSignupEmail({
+                const mailResult = await sendSecretaryNewSignupEmail({
                     toEmail: String(secretaryForCommunity.email).trim().toLowerCase(),
                     communityCommunName: cn,
                     memberName: memberName || "New member",
                     memberEmail: user.email,
                     memberPhone: user.phoneNumber,
                 });
+                if (!mailResult?.sent) {
+                    console.error(
+                        "Secretary join-community notification was not sent:",
+                        mailResult?.reason || "unknown",
+                        "to=",
+                        secretaryForCommunity.email
+                    );
+                }
+            } else {
+                console.error("Secretary join-community notification skipped — secretary has no email.", {
+                    communName: cn,
+                });
             }
         } catch (mailError) {
-            console.log("Secretary join-community notification failed:", mailError?.message || mailError);
+            console.error("Secretary join-community notification failed:", mailError?.message || mailError);
         }
 
         user.password = undefined;
@@ -1176,6 +1258,7 @@ export {
     listMemberCommunityEvents,
     createMemberCommunityEvent,
     deleteMemberCommunityEvent,
+    listCommunityDirectory,
     joinCommunity,
     updateUserProfile,
     changePassword,

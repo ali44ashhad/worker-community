@@ -1,6 +1,8 @@
-import transporter, { getSmtpFromEmail, isSmtpConfigured } from "../config/smtp.js";
+import transporter, { getSmtpFromEmail, isSmtpConfigured, getSmtpStatus } from "../config/smtp.js";
 import { formatCommunDisplayName } from "./communName.js";
 import { getFrontendBase } from "./frontendUrl.js";
+
+let loggedSmtpMisconfig = false;
 
 function escapeHtml(input) {
     return String(input ?? "")
@@ -151,20 +153,50 @@ function renderEmailLayout({
 
 async function sendEmail({ toEmail, subject, text, html }) {
     if (!isSmtpConfigured()) {
-        return { sent: false };
+        if (!loggedSmtpMisconfig) {
+            loggedSmtpMisconfig = true;
+            const status = getSmtpStatus();
+            console.error(
+                "[email] SMTP is not configured — approval/notification emails will NOT be sent.",
+                "Missing:",
+                status.missing.join(", ") || "(unknown)",
+                "Set SMTP_HOST, SMTP_USER, SMTP_PASS (and optionally SMTP_FROM, SMTP_PORT) on the server, then restart PM2."
+            );
+        }
+        return { sent: false, reason: "smtp_not_configured" };
     }
 
     const from = getSmtpFromEmail();
+    const to = String(toEmail || "").trim().toLowerCase();
+    if (!to) {
+        console.error("[email] Refusing to send — empty recipient.", { subject });
+        return { sent: false, reason: "missing_recipient" };
+    }
 
-    await transporter.sendMail({
-        from,
-        to: toEmail,
-        subject,
-        text,
-        html,
-    });
-
-    return { sent: true };
+    try {
+        const info = await transporter.sendMail({
+            from,
+            to,
+            subject,
+            text,
+            html,
+        });
+        console.log("[email] Sent:", {
+            to,
+            subject,
+            messageId: info?.messageId || null,
+        });
+        return { sent: true, messageId: info?.messageId || null };
+    } catch (err) {
+        console.error("[email] sendMail failed:", {
+            to,
+            subject,
+            message: err?.message || String(err),
+            code: err?.code || null,
+            responseCode: err?.responseCode || null,
+        });
+        throw err;
+    }
 }
 
 export async function sendPasswordResetEmail({ toEmail, resetUrl }) {
@@ -200,6 +232,41 @@ export async function sendSecretaryNewSignupEmail({
         introHtml: `<p style="margin:0 0 10px">A new member signed up in your community <b>${escapeHtml(
             communityLabel
         )}</b> and is pending approval.</p>`,
+        detailsRows: [
+            { label: "Name", valueHtml: escapeHtml(memberName) },
+            {
+                label: "Email",
+                valueHtml: `<a href="mailto:${encodeURIComponent(memberEmail)}" style="color:#6b46c1;text-decoration:none;font-weight:700">${escapeHtml(
+                    memberEmail
+                )}</a>`,
+            },
+            { label: "Phone", valueHtml: escapeHtml(memberPhone || "-") },
+        ],
+        cta: { href: reviewsUrl, label: "Review Pending" },
+        footerNote:
+            "If the link doesn’t open, log in to your secretary dashboard and open “Approvals”.",
+    });
+    return await sendEmail({ toEmail, subject, text, html });
+}
+
+export async function sendSecretaryProviderApplicationEmail({
+    toEmail,
+    communityCommunName,
+    memberName,
+    memberEmail,
+    memberPhone,
+}) {
+    const communityLabel = formatCommunDisplayName(communityCommunName) || communityCommunName;
+    const subject = `New provider application pending approval (${communityLabel})`;
+    const text = `A community member applied to become a provider in (${communityLabel}) and is pending approval.\n\nName: ${memberName}\nEmail: ${memberEmail}\nPhone: ${memberPhone || "-"}\n\nPlease log in to review pending registrations.`;
+    const frontendBase = getFrontendBase();
+    const reviewsUrl = `${frontendBase.replace(/\/+$/, "")}/secretary/approvals`;
+    const html = renderEmailLayout({
+        preheader: `Provider application in ${communityLabel}`,
+        title: "New provider application pending approval",
+        introHtml: `<p style="margin:0 0 10px">A member in your community <b>${escapeHtml(
+            communityLabel
+        )}</b> applied to become a provider and is pending approval.</p>`,
         detailsRows: [
             { label: "Name", valueHtml: escapeHtml(memberName) },
             {

@@ -3,13 +3,15 @@ import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Calendar,
+  Building2,
   Heart,
   Home,
   LogOut,
   Megaphone,
-  Tag,
+  PhoneCall,
   User,
   UserPlus,
+  Users2,
   Wrench,
   X,
   MessageCircle,
@@ -49,9 +51,10 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
 
   const menuItems = [
     { icon: Home, label: 'Home', path: '/' },
-    ...(!isPublicMember
+    ...(!isPublicMember && communityFeatures.hasCommunity
       ? [
           { icon: Wrench, label: 'Services', path: '/community/services' },
+
           { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
         ]
       : []),
@@ -61,6 +64,9 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
     ...(communityFeatures.events
       ? [{ icon: Calendar, label: 'Events', path: '/community/events' }]
       : []),
+      { icon: Users2, label: 'Vendors', path: '/community/vendors' },
+      { icon: Building2, label: 'Directories', path: '/community/directory' },
+      { icon: PhoneCall, label: 'Emergency Contacts', path: '/community/emergency-contacts' },
     ...(user?._id ? [{ icon: Heart, label: 'Wishlist', path: '/community/wishlist' }] : []),
     { icon: User, label: 'Update Profile', path: '/community/update-profile' },
     ...(canBecomeProvider(user)

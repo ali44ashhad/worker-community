@@ -81,6 +81,42 @@ export const updateUserStatusAdmin = createAsyncThunk(
   }
 );
 
+// Get one user profile (admin)
+export const getUserByIdAdmin = createAsyncThunk(
+  "admin/getUserById",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/users/${userId}`);
+      return res.data.user;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to load user profile";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+// Change user community (admin)
+export const updateUserCommunityAdmin = createAsyncThunk(
+  "admin/updateUserCommunity",
+  async ({ userId, mode, communityCommunName, requestedCommunityName, accountStatus }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/admin/users/${userId}/community`, {
+        mode,
+        communityCommunName,
+        requestedCommunityName,
+        accountStatus,
+      });
+      toast.success(res.data?.message || "User community updated.");
+      return res.data.user;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update user community";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 // Update provider details (admin)
 export const updateProviderDetails = createAsyncThunk(
   "admin/updateProviderDetails",
@@ -494,7 +530,15 @@ const adminSlice = createSlice({
         const updatedUser = action.payload;
         const index = state.users.findIndex((u) => u._id === updatedUser._id);
         if (index !== -1) {
-          state.users[index] = updatedUser;
+          state.users[index] = { ...state.users[index], ...updatedUser };
+        }
+      })
+      // Update user community
+      .addCase(updateUserCommunityAdmin.fulfilled, (state, action) => {
+        const updatedUser = action.payload;
+        const index = state.users.findIndex((u) => u._id === updatedUser._id);
+        if (index !== -1) {
+          state.users[index] = { ...state.users[index], ...updatedUser };
         }
       })
       // Update provider details

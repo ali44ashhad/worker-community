@@ -19,6 +19,17 @@ import {
     getCategoryToggles,
     updateCategoryToggle,
 } from "../controllers/secretary.controller.js";
+import {
+    listVendorCategoriesForSecretary,
+    listVendorsForSecretary,
+    createVendorForSecretary,
+    deleteVendorForSecretary,
+} from "../controllers/vendor.controller.js";
+import {
+    listEmergencyContactsForSecretary,
+    createEmergencyContactForSecretary,
+    deleteEmergencyContactForSecretary,
+} from "../controllers/emergencyContact.controller.js";
 
 const router = express.Router();
 
@@ -38,5 +49,14 @@ router.delete("/events/:eventId", protect, isSecretary, deleteCommunityEvent);
 router.get("/broadcasts", protect, isSecretary, listBroadcasts);
 router.post("/broadcasts", protect, isSecretary, createBroadcast);
 router.delete("/broadcasts/:broadcastId", protect, isSecretary, deleteBroadcast);
+
+router.get("/vendors/categories", protect, isSecretary, listVendorCategoriesForSecretary);
+router.get("/vendors", protect, isSecretary, listVendorsForSecretary);
+router.post("/vendors", protect, isSecretary, createVendorForSecretary);
+router.delete("/vendors/:vendorId", protect, isSecretary, deleteVendorForSecretary);
+
+router.get("/emergency-contacts", protect, isSecretary, listEmergencyContactsForSecretary);
+router.post("/emergency-contacts", protect, isSecretary, createEmergencyContactForSecretary);
+router.delete("/emergency-contacts/:contactId", protect, isSecretary, deleteEmergencyContactForSecretary);
 
 export default router;

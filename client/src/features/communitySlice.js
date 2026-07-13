@@ -81,6 +81,42 @@ export const fetchCommunityBroadcasts = createAsyncThunk(
   }
 );
 
+export const fetchCommunityVendors = createAsyncThunk(
+  'community/fetchVendors',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/vendors/community`);
+      return res.data?.data || { categories: [], vendorsByCategory: {}, needsCommunity: false, communityCommunName: null };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to load vendors');
+    }
+  }
+);
+
+export const fetchCommunityEmergencyContacts = createAsyncThunk(
+  'community/fetchEmergencyContacts',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/emergency-contacts/community`);
+      return res.data?.data || { contacts: [], needsCommunity: false, communityCommunName: null };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to load emergency contacts');
+    }
+  }
+);
+
+export const fetchCommunityDirectory = createAsyncThunk(
+  'community/fetchDirectory',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/user/community-directory`);
+      return res.data?.data || { members: [], needsCommunity: false, communityCommunName: null };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to load directory');
+    }
+  }
+);
+
 const communitySlice = createSlice({
   name: 'community',
   initialState: {
@@ -105,6 +141,30 @@ const communitySlice = createSlice({
     },
     eventSending: false,
     eventDeletingId: null,
+    vendors: {
+      categories: [],
+      vendorsByCategory: {},
+    },
+    vendorsLoading: false,
+    vendorsError: null,
+    vendorsMeta: {
+      needsCommunity: false,
+      communityCommunName: null,
+    },
+    emergencyContacts: [],
+    emergencyContactsLoading: false,
+    emergencyContactsError: null,
+    emergencyContactsMeta: {
+      needsCommunity: false,
+      communityCommunName: null,
+    },
+    directoryMembers: [],
+    directoryLoading: false,
+    directoryError: null,
+    directoryMeta: {
+      needsCommunity: false,
+      communityCommunName: null,
+    },
   },
   reducers: {
     clearCommunityFeatures: (state) => {
@@ -124,6 +184,15 @@ const communitySlice = createSlice({
         eventsEnabled: false,
         communityCommunName: null,
       };
+      state.vendors = { categories: [], vendorsByCategory: {} };
+      state.vendorsError = null;
+      state.vendorsMeta = { needsCommunity: false, communityCommunName: null };
+      state.emergencyContacts = [];
+      state.emergencyContactsError = null;
+      state.emergencyContactsMeta = { needsCommunity: false, communityCommunName: null };
+      state.directoryMembers = [];
+      state.directoryError = null;
+      state.directoryMeta = { needsCommunity: false, communityCommunName: null };
     },
   },
   extraReducers: (builder) => {
@@ -196,6 +265,57 @@ const communitySlice = createSlice({
       })
       .addCase(deleteCommunityEvent.rejected, (state) => {
         state.eventDeletingId = null;
+      })
+      .addCase(fetchCommunityVendors.pending, (state) => {
+        state.vendorsLoading = true;
+        state.vendorsError = null;
+      })
+      .addCase(fetchCommunityVendors.fulfilled, (state, action) => {
+        state.vendorsLoading = false;
+        state.vendors = {
+          categories: action.payload.categories || [],
+          vendorsByCategory: action.payload.vendorsByCategory || {},
+        };
+        state.vendorsMeta = {
+          needsCommunity: Boolean(action.payload.needsCommunity),
+          communityCommunName: action.payload.communityCommunName || null,
+        };
+      })
+      .addCase(fetchCommunityVendors.rejected, (state, action) => {
+        state.vendorsLoading = false;
+        state.vendorsError = action.payload;
+      })
+      .addCase(fetchCommunityEmergencyContacts.pending, (state) => {
+        state.emergencyContactsLoading = true;
+        state.emergencyContactsError = null;
+      })
+      .addCase(fetchCommunityEmergencyContacts.fulfilled, (state, action) => {
+        state.emergencyContactsLoading = false;
+        state.emergencyContacts = action.payload.contacts || [];
+        state.emergencyContactsMeta = {
+          needsCommunity: Boolean(action.payload.needsCommunity),
+          communityCommunName: action.payload.communityCommunName || null,
+        };
+      })
+      .addCase(fetchCommunityEmergencyContacts.rejected, (state, action) => {
+        state.emergencyContactsLoading = false;
+        state.emergencyContactsError = action.payload;
+      })
+      .addCase(fetchCommunityDirectory.pending, (state) => {
+        state.directoryLoading = true;
+        state.directoryError = null;
+      })
+      .addCase(fetchCommunityDirectory.fulfilled, (state, action) => {
+        state.directoryLoading = false;
+        state.directoryMembers = action.payload.members || [];
+        state.directoryMeta = {
+          needsCommunity: Boolean(action.payload.needsCommunity),
+          communityCommunName: action.payload.communityCommunName || null,
+        };
+      })
+      .addCase(fetchCommunityDirectory.rejected, (state, action) => {
+        state.directoryLoading = false;
+        state.directoryError = action.payload;
       });
   },
 });

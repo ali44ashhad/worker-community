@@ -13,6 +13,8 @@ import {
   Users,
   X,
   MessageCircle,
+  PhoneCall,
+  UserRound,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -27,6 +29,8 @@ const menuItems = [
   { icon: Users, label: 'Member list', path: '/secretary/members' },
   { icon: Megaphone, label: 'Broadcast', path: '/secretary/broadcast' },
   { icon: Calendar, label: 'Events', path: '/secretary/events' },
+  { icon: UserRound, label: 'Vendors', path: '/secretary/vendors' },
+  { icon: PhoneCall, label: 'Emergency Contacts', path: '/secretary/emergency-contacts' },
   { icon: User, label: 'Update Profile', path: '/secretary/update-profile' },
   { icon: Home, label: 'Commun Home', path: '/' },
 ];

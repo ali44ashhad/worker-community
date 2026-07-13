@@ -282,6 +282,123 @@ export const fetchCommunityMemberById = createAsyncThunk(
   }
 );
 
+export const fetchVendorCategories = createAsyncThunk(
+  "secretary/fetchVendorCategories",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/secretary/vendors/categories`);
+      const data = res.data?.data || {};
+      return {
+        categories: data.categories || [],
+        needsCommunName: Boolean(data.needsCommunName),
+        communityCommunName: data.communityCommunName || null,
+      };
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to load vendor categories";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const fetchSecretaryVendors = createAsyncThunk(
+  "secretary/fetchSecretaryVendors",
+  async ({ category } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      if (category) params.append("category", category);
+      const qs = params.toString();
+      const res = await axios.get(`${API_URL}/api/secretary/vendors${qs ? `?${qs}` : ""}`);
+      const data = res.data?.data || {};
+      return {
+        vendors: data.vendors || [],
+        needsCommunName: Boolean(data.needsCommunName),
+        communityCommunName: data.communityCommunName || null,
+      };
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to load vendors";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const createSecretaryVendor = createAsyncThunk(
+  "secretary/createSecretaryVendor",
+  async ({ category, name, phone, email, service }, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/secretary/vendors`, { category, name, phone, email, service });
+      toast.success(res.data?.message || "Vendor created.");
+      return res.data?.data?.vendor;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to create vendor";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const deleteSecretaryVendor = createAsyncThunk(
+  "secretary/deleteSecretaryVendor",
+  async (vendorId, { rejectWithValue }) => {
+    try {
+      const res = await axios.delete(`${API_URL}/api/secretary/vendors/${vendorId}`);
+      toast.success(res.data?.message || "Vendor deleted.");
+      return vendorId;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to delete vendor";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const fetchEmergencyContacts = createAsyncThunk(
+  "secretary/fetchEmergencyContacts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/secretary/emergency-contacts`);
+      const data = res.data?.data || {};
+      return {
+        contacts: data.contacts || [],
+        needsCommunName: Boolean(data.needsCommunName),
+        communityCommunName: data.communityCommunName || null,
+      };
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to load emergency contacts";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const createEmergencyContact = createAsyncThunk(
+  "secretary/createEmergencyContact",
+  async ({ title, name, phone, notes }, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/secretary/emergency-contacts`, { title, name, phone, notes });
+      toast.success(res.data?.message || "Emergency contact created.");
+      return res.data?.data?.contact;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to create emergency contact";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const deleteEmergencyContact = createAsyncThunk(
+  "secretary/deleteEmergencyContact",
+  async (contactId, { rejectWithValue }) => {
+    try {
+      const res = await axios.delete(`${API_URL}/api/secretary/emergency-contacts/${contactId}`);
+      toast.success(res.data?.message || "Emergency contact deleted.");
+      return contactId;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to delete emergency contact";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 const secretarySlice = createSlice({
   name: "secretary",
   initialState: {
@@ -336,6 +453,28 @@ const secretarySlice = createSlice({
       needsCommunName: false,
       communityCommunName: null,
     },
+    vendorCategories: [],
+    vendorCategoriesLoading: false,
+    vendorCategoriesError: null,
+    vendorCategoriesMeta: {
+      needsCommunName: false,
+      communityCommunName: null,
+    },
+    vendors: [],
+    vendorsLoading: false,
+    vendorsError: null,
+    vendorCreating: false,
+    vendorDeletingId: null,
+
+    emergencyContacts: [],
+    emergencyContactsLoading: false,
+    emergencyContactsError: null,
+    emergencyContactsMeta: {
+      needsCommunName: false,
+      communityCommunName: null,
+    },
+    emergencyContactCreating: false,
+    emergencyContactDeletingId: null,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -519,6 +658,94 @@ const secretarySlice = createSlice({
       })
       .addCase(updateCategoryToggle.rejected, (state) => {
         state.categoryTogglesSaving = false;
+      })
+      .addCase(fetchVendorCategories.pending, (state) => {
+        state.vendorCategoriesLoading = true;
+        state.vendorCategoriesError = null;
+      })
+      .addCase(fetchVendorCategories.fulfilled, (state, action) => {
+        state.vendorCategoriesLoading = false;
+        state.vendorCategories = action.payload.categories || [];
+        state.vendorCategoriesMeta = {
+          needsCommunName: action.payload.needsCommunName,
+          communityCommunName: action.payload.communityCommunName,
+        };
+      })
+      .addCase(fetchVendorCategories.rejected, (state, action) => {
+        state.vendorCategoriesLoading = false;
+        state.vendorCategoriesError = action.payload;
+      })
+      .addCase(fetchSecretaryVendors.pending, (state) => {
+        state.vendorsLoading = true;
+        state.vendorsError = null;
+      })
+      .addCase(fetchSecretaryVendors.fulfilled, (state, action) => {
+        state.vendorsLoading = false;
+        state.vendors = action.payload.vendors || [];
+      })
+      .addCase(fetchSecretaryVendors.rejected, (state, action) => {
+        state.vendorsLoading = false;
+        state.vendorsError = action.payload;
+      })
+      .addCase(createSecretaryVendor.pending, (state) => {
+        state.vendorCreating = true;
+      })
+      .addCase(createSecretaryVendor.fulfilled, (state, action) => {
+        state.vendorCreating = false;
+        if (action.payload) state.vendors = [action.payload, ...state.vendors];
+        const category = action.payload?.category;
+        if (category && !state.vendorCategories.includes(category)) {
+          state.vendorCategories = [...state.vendorCategories, category].sort((a, b) => String(a).localeCompare(String(b)));
+        }
+      })
+      .addCase(createSecretaryVendor.rejected, (state) => {
+        state.vendorCreating = false;
+      })
+      .addCase(deleteSecretaryVendor.pending, (state, action) => {
+        state.vendorDeletingId = action.meta.arg;
+      })
+      .addCase(deleteSecretaryVendor.fulfilled, (state, action) => {
+        state.vendorDeletingId = null;
+        state.vendors = state.vendors.filter((v) => v._id !== action.payload);
+      })
+      .addCase(deleteSecretaryVendor.rejected, (state) => {
+        state.vendorDeletingId = null;
+      })
+      .addCase(fetchEmergencyContacts.pending, (state) => {
+        state.emergencyContactsLoading = true;
+        state.emergencyContactsError = null;
+      })
+      .addCase(fetchEmergencyContacts.fulfilled, (state, action) => {
+        state.emergencyContactsLoading = false;
+        state.emergencyContacts = action.payload.contacts || [];
+        state.emergencyContactsMeta = {
+          needsCommunName: action.payload.needsCommunName,
+          communityCommunName: action.payload.communityCommunName,
+        };
+      })
+      .addCase(fetchEmergencyContacts.rejected, (state, action) => {
+        state.emergencyContactsLoading = false;
+        state.emergencyContactsError = action.payload;
+      })
+      .addCase(createEmergencyContact.pending, (state) => {
+        state.emergencyContactCreating = true;
+      })
+      .addCase(createEmergencyContact.fulfilled, (state, action) => {
+        state.emergencyContactCreating = false;
+        if (action.payload) state.emergencyContacts = [action.payload, ...state.emergencyContacts];
+      })
+      .addCase(createEmergencyContact.rejected, (state) => {
+        state.emergencyContactCreating = false;
+      })
+      .addCase(deleteEmergencyContact.pending, (state, action) => {
+        state.emergencyContactDeletingId = action.meta.arg;
+      })
+      .addCase(deleteEmergencyContact.fulfilled, (state, action) => {
+        state.emergencyContactDeletingId = null;
+        state.emergencyContacts = state.emergencyContacts.filter((c) => c._id !== action.payload);
+      })
+      .addCase(deleteEmergencyContact.rejected, (state) => {
+        state.emergencyContactDeletingId = null;
       });
   },
 });

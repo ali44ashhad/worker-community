@@ -54,6 +54,8 @@ import SecretaryMembers from './pages/secretary/SecretaryMembers'
 import SecretaryBroadcast from './pages/secretary/SecretaryBroadcast'
 import SecretaryEvents from './pages/secretary/SecretaryEvents'
 import SecretaryServices from './pages/secretary/SecretaryServices'
+import SecretaryVendors from './pages/secretary/SecretaryVendors'
+import SecretaryContacts from './pages/secretary/SecretaryContacts'
 import CommunityMgmt from './pages/admin/CommunityMgmt'
 import InterestCommunities from './pages/interest/InterestCommunities'
 import InterestCommunityChat from './pages/interest/InterestCommunityChat'
@@ -61,6 +63,9 @@ import SecretaryManagement from './pages/admin/SecretaryManagement'
 import PendingApproval from './pages/PendingApproval'
 import CommunityBroadcast from './pages/community/CommunityBroadcast'
 import CommunityEvents from './pages/community/CommunityEvents'
+import CommunityVendors from './pages/community/CommunityVendors'
+import CommunityEmergencyContacts from './pages/community/CommunityEmergencyContacts'
+import CommunityDirectory from './pages/community/CommunityDirectory'
 import MemberProtectedRoute from './components/MemberProtectedRoute'
 import ProviderAwareLayout from './components/ProviderAwareLayout'
 import { fetchCommunityFeatures, clearCommunityFeatures } from './features/communitySlice'
@@ -118,6 +123,9 @@ const App = () => {
     '/community/wishlist',
     '/community/become-provider',
     '/community/services',
+    '/community/vendors',
+    '/community/emergency-contacts',
+    '/community/directory',
     '/community/communities',
   ];
   const isMemberCommunityRoute =
@@ -277,6 +285,36 @@ const App = () => {
           }
         />
         <Route
+          path='/community/vendors'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <CommunityVendors />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
+          path='/community/emergency-contacts'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <CommunityEmergencyContacts />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
+          path='/community/directory'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <CommunityDirectory />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
           path='/community/become-provider'
           element={
             <MemberProtectedRoute requireCommunity>
@@ -338,6 +376,8 @@ const App = () => {
             <Route path="broadcast" element={<SecretaryBroadcast />} />
             <Route path="events" element={<SecretaryEvents />} />
             <Route path="services" element={<SecretaryServices />} />
+            <Route path="vendors" element={<SecretaryVendors />} />
+            <Route path="emergency-contacts" element={<SecretaryContacts />} />
             <Route
               path="communities"
               element={<InterestCommunities chatBasePath="/secretary/communities" />}

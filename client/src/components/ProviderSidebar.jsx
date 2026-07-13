@@ -3,12 +3,15 @@ import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Briefcase,
+  Building2,
   Calendar,
   Home,
   LayoutGrid,
   LogOut,
   Megaphone,
+  PhoneCall,
   User,
+  Users2,
   Wrench,
   X,
   MessageCircle,
@@ -47,7 +50,7 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
 
   const menuItems = [
     { icon: LayoutGrid, label: 'Dashboard', path: '/provider/dashboard' },
-    ...(!isPublicMember
+    ...(!isPublicMember && communityFeatures.hasCommunity
       ? [
           { icon: Wrench, label: 'Services', path: '/community/services' },
           { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
@@ -60,6 +63,10 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
     ...(communityFeatures.events
       ? [{ icon: Calendar, label: 'Events', path: '/community/events' }]
       : []),
+      
+      { icon: Users2, label: 'Vendors', path: '/community/vendors' },
+      { icon: Building2, label: 'Directories', path: '/community/directory' },
+      { icon: PhoneCall, label: 'Emergency Contacts', path: '/community/emergency-contacts' },
     { icon: User, label: 'Update Profile', path: '/provider/update-profile' },
     { icon: Home, label: 'Commun Home', path: '/' },
   ];

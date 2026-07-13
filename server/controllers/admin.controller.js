@@ -1077,7 +1077,7 @@ const getAllUsers = async (req, res) => {
 
         const totalUsers = await User.countDocuments(query);
         const users = await User.find(query)
-            .select('firstName lastName email phoneNumber role profileImage isActive createdAt flatNumber communityCommunName requestedCommunityName isPublicMember communName')
+            .select('firstName lastName email phoneNumber role profileImage isActive createdAt flatNumber communityCommunName requestedCommunityName isPublicMember communName accountStatus addressLine1 addressLine2 city state zip')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -1101,6 +1101,30 @@ const getAllUsers = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
+
+const adminUserPublicFields = (user) => ({
+    _id: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    role: user.role,
+    isActive: user.isActive,
+    accountStatus: user.accountStatus,
+    profileImage: user.profileImage,
+    flatNumber: user.flatNumber,
+    addressLine1: user.addressLine1,
+    addressLine2: user.addressLine2,
+    city: user.city,
+    state: user.state,
+    zip: user.zip,
+    communName: user.communName,
+    communityCommunName: user.communityCommunName,
+    requestedCommunityName: user.requestedCommunityName,
+    isPublicMember: user.isPublicMember,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+});
 
 /**
  * @description Activate/deactivate user (admin)
@@ -1131,20 +1155,131 @@ const updateUserStatus = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: `User ${isActive ? 'activated' : 'deactivated'} successfully.`,
-            user: {
-                _id: user._id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                phoneNumber: user.phoneNumber,
-                role: user.role,
-                isActive: user.isActive,
-                profileImage: user.profileImage,
-                createdAt: user.createdAt
-            }
+            user: adminUserPublicFields(user),
         });
     } catch (error) {
         console.error("Error in updateUserStatus controller:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Get one user's full profile (admin)
+ * @route GET /api/admin/users/:userId
+ * @access Private (Admin)
+ */
+const getUserByIdAdmin = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires");
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+        return res.status(200).json({
+            success: true,
+            user: adminUserPublicFields(user),
+        });
+    } catch (error) {
+        console.error("Error in getUserByIdAdmin:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @description Manually change a member's community (admin)
+ * @route PATCH /api/admin/users/:userId/community
+ * @body { mode: "listed"|"other"|"clear", communityCommunName?, requestedCommunityName?, accountStatus? }
+ * @access Private (Admin)
+ */
+const updateUserCommunityAdmin = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const mode = String(req.body?.mode || "listed").trim().toLowerCase();
+        const accountStatusRaw = req.body?.accountStatus;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        if (user.role === "secretary") {
+            return res.status(400).json({
+                success: false,
+                message: "Secretary community is defined by their Commun name. Edit the secretary account instead.",
+            });
+        }
+
+        if (user.role === "admin") {
+            return res.status(400).json({
+                success: false,
+                message: "Admin accounts are not linked to a community.",
+            });
+        }
+
+        if (!["listed", "other", "clear"].includes(mode)) {
+            return res.status(400).json({
+                success: false,
+                message: 'mode must be "listed", "other", or "clear".',
+            });
+        }
+
+        if (mode === "listed") {
+            const cn = normalizeCommunName(req.body?.communityCommunName);
+            if (!isValidCommunName(cn)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Please choose a valid Commun community.",
+                });
+            }
+            const secretary = await User.findOne({
+                role: "secretary",
+                isActive: true,
+                communName: cn,
+            }).select("_id");
+            if (!secretary) {
+                return res.status(400).json({
+                    success: false,
+                    message: "No active secretary found for that community.",
+                });
+            }
+            user.communityCommunName = cn;
+            user.isPublicMember = false;
+        } else if (mode === "other") {
+            const requested = String(req.body?.requestedCommunityName || "").trim();
+            user.communityCommunName = "";
+            user.isPublicMember = true;
+            user.requestedCommunityName = requested;
+        } else {
+            user.communityCommunName = "";
+            user.isPublicMember = false;
+            user.requestedCommunityName = "";
+        }
+
+        if (accountStatusRaw !== undefined && accountStatusRaw !== null && accountStatusRaw !== "") {
+            const nextStatus = String(accountStatusRaw).trim().toLowerCase();
+            if (!["pending", "approved", "rejected"].includes(nextStatus)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "accountStatus must be pending, approved, or rejected.",
+                });
+            }
+            user.accountStatus = nextStatus;
+        } else if (mode === "listed") {
+            // Admin override — member can use the community immediately.
+            user.accountStatus = "approved";
+        } else if (mode === "other") {
+            user.accountStatus = "approved";
+        }
+
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "User community updated successfully.",
+            user: adminUserPublicFields(user),
+        });
+    } catch (error) {
+        console.error("Error in updateUserCommunityAdmin:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -1336,6 +1471,8 @@ export {
     getProviderClicks,
     getAllUsers,
     updateUserStatus,
+    getUserByIdAdmin,
+    updateUserCommunityAdmin,
     getAllCategoriesAdmin,
     createCategoryAdmin,
     updateCategoryAdmin,

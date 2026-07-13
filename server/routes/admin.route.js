@@ -13,6 +13,8 @@ import {
     getProviderClicks,
     getAllUsers,
     updateUserStatus,
+    getUserByIdAdmin,
+    updateUserCommunityAdmin,
     getAllCategoriesAdmin,
     createCategoryAdmin,
     updateCategoryAdmin,
@@ -72,6 +74,20 @@ router.patch(
     protect,
     isAdmin,
     updateUserStatus
+);
+
+router.get(
+    "/users/:userId",
+    protect,
+    isAdmin,
+    getUserByIdAdmin
+);
+
+router.patch(
+    "/users/:userId/community",
+    protect,
+    isAdmin,
+    updateUserCommunityAdmin
 );
 
 router.get(

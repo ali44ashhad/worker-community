@@ -6,6 +6,7 @@ import dns from "dns";
 
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 import dbConnect from "./config/database.js";
+import { getSmtpStatus } from "./config/smtp.js";
 import userRouter from "./routes/user.route.js";
 import cookieParser from "cookie-parser";
 import providerProfileRouter from "./routes/providerProfile.route.js";
@@ -17,6 +18,8 @@ import serviceOfferingRouter from "./routes/serviceOffering.route.js";
 import sitemapRouter from "./routes/sitemap.route.js";
 import categoryRouter from "./routes/category.route.js";
 import interestCommunityRouter from "./routes/interestCommunity.route.js";
+import vendorRouter from "./routes/vendor.route.js";
+import emergencyContactRouter from "./routes/emergencyContact.route.js";
 import { initChatSocket } from "./socket/chatSocket.js";
 import cors from "cors";
 import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
@@ -98,6 +101,8 @@ app.use('/api/bookings', bookingRouter);
 app.use('/api/comments', commentRouter);
 app.use('/api/admin',adminRouter)
 app.use('/api/secretary', secretaryRouter);
+app.use('/api/vendors', vendorRouter);
+app.use('/api/emergency-contacts', emergencyContactRouter);
 app.use('/api/interest-communities', interestCommunityRouter);
 app.use('/api', sitemapRouter);
 
@@ -161,6 +166,16 @@ if (!isVercel) {
       httpServer.listen(port, () => {
         console.log(`Server is listening at port: ${port}`);
         console.log(`Socket.io chat enabled`);
+        const smtp = getSmtpStatus();
+        if (smtp.configured) {
+          console.log(`[email] SMTP ready (host=${smtp.host}, port=${smtp.port}, from=${smtp.from})`);
+        } else {
+          console.error(
+            `[email] SMTP NOT configured — secretary approval emails will not send. Missing: ${
+              smtp.missing.join(", ") || "SMTP_*"
+            }`
+          );
+        }
       });
     })
     .catch((err) => {

@@ -10,6 +10,7 @@ import {
     sendLoginOtp,
     verifyLoginOtp,
     getCommunityFeatures,
+    listCommunityDirectory,
     listCommunityBroadcasts,
     listMemberCommunityEvents,
     createMemberCommunityEvent,
@@ -38,6 +39,7 @@ userRouter.post('/login', login);
 userRouter.post('/logout', logout);
 userRouter.get('/check-auth', protect, checkAuth);
 userRouter.get('/community-features', protect, getCommunityFeatures);
+userRouter.get('/community-directory', protect, listCommunityDirectory);
 userRouter.get('/community-broadcasts', protect, listCommunityBroadcasts);
 userRouter.get('/community-events', protect, listMemberCommunityEvents);
 userRouter.post('/community-events', protect, eventAttachmentUpload, createMemberCommunityEvent);
