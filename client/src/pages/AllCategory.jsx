@@ -110,7 +110,7 @@ const AllCategory = () => {
                         <p className="mb-4 line-clamp-2 min-h-[2.5rem] text-sm leading-snug text-[var(--text-secondary)]">
                           {getCategoryDescription(category)}
                         </p>
-                        <div className="mb-4 flex min-h-[3.25rem] flex-wrap content-start gap-1.5">
+                        {/* <div className="mb-4 flex min-h-[3.25rem] flex-wrap content-start gap-1.5">
                           {displayedKeywords.map((keyword) => (
                             <span
                               key={keyword}
@@ -124,7 +124,7 @@ const AllCategory = () => {
                               +{category.keywords.length - 4}
                             </span>
                           )}
-                        </div>
+                        </div> */}
                         <div className="mt-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-[var(--purple-primary)] transition-all group-hover:gap-2">
                           Explore
                           <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

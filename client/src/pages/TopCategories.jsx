@@ -68,12 +68,12 @@ const TopCategories = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-fuchsia-100 rounded-full mb-6">
+            {/* <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-fuchsia-100 rounded-full mb-6">
               <TrendingUp className="w-4 h-4 text-[var(--purple-primary)]" />
               <span className="text-sm font-semibold bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
                 Most Clicked
               </span>
-            </div>
+            </div> */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-[var(--text-primary)] via-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent mb-4 leading-[1.1]">
               Top Categories
             </h1>
@@ -143,9 +143,7 @@ const TopCategories = () => {
                           >
                             <CategoryIcon icon={category.icon} name={category.name} className="h-8 w-8" />
                           </div>
-                          <div className="shrink-0 rounded-2xl border border-purple-100 bg-white/90 px-3 py-2 text-xs font-semibold text-[var(--text-secondary)]">
-                            <span className="text-[var(--purple-primary)]">{category.totalClicks || 0}</span> clicks
-                          </div>
+                          
                         </div>
 
                         <h3 className="mb-2 line-clamp-1 min-h-[1.75rem] text-xl font-bold text-[var(--text-primary)] group-hover:text-[var(--purple-primary)] transition-colors">
@@ -154,7 +152,7 @@ const TopCategories = () => {
                         <p className="mb-4 line-clamp-2 min-h-[2.5rem] text-sm leading-snug text-[var(--text-secondary)]">
                           {getCategoryDescription(category)}
                         </p>
-                        <div className="mb-4 flex min-h-[3.25rem] flex-wrap content-start gap-1.5">
+                        {/* <div className="mb-4 flex min-h-[3.25rem] flex-wrap content-start gap-1.5">
                           {displayedKeywords.map((keyword) => (
                             <span
                               key={keyword}
@@ -168,7 +166,7 @@ const TopCategories = () => {
                               +{category.keywords.length - 4}
                             </span>
                           )}
-                        </div>
+                        </div> */}
                         <div className="mt-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-[var(--purple-primary)] transition-all group-hover:gap-2">
                           Explore
                           <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

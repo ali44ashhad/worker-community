@@ -120,7 +120,7 @@ const ProviderClicks = () => {
             Provider Clicks
           </h1>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Cumulative profile and service clicks per provider. Click a row to expand services.
+            Provider profile clicks and service clicks per provider. Click a row to expand services.
           </p>
         </div>
       </section>
@@ -138,16 +138,19 @@ const ProviderClicks = () => {
           <div className="overflow-hidden rounded-xl border border-purple-100/50">
             <div className="hidden border-b border-purple-100 bg-purple-50/40 px-4 py-3 md:block sm:px-5">
               <div className="grid grid-cols-12 items-center gap-4">
-                <div className="col-span-5 text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                <div className="col-span-4 text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Provider
                 </div>
                 <div className="col-span-2 text-center text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
-                  Total clicks
+                  Provider clicks
+                </div>
+                <div className="col-span-2 text-center text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Service clicks
                 </div>
                 <div className="col-span-2 text-center text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Services
                 </div>
-                <div className="col-span-3" />
+                <div className="col-span-2" />
               </div>
             </div>
 
@@ -179,9 +182,15 @@ const ProviderClicks = () => {
                           </p>
                           <div className="flex shrink-0 items-center gap-4">
                             <div className="text-right">
-                              <p className="text-[10px] text-[var(--text-secondary)]">Clicks</p>
+                              <p className="text-[10px] text-[var(--text-secondary)]">Provider</p>
                               <p className="text-sm font-semibold text-[var(--purple-primary)]">
-                                {providerData.totalClicks || 0}
+                                {providerData.profileClicks ?? providerData.provider?.providerProfileCount ?? 0}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] text-[var(--text-secondary)]">Service</p>
+                              <p className="text-sm font-semibold text-[var(--purple-primary)]">
+                                {providerData.serviceClicks || 0}
                               </p>
                             </div>
                             <div className="text-right">
@@ -199,18 +208,23 @@ const ProviderClicks = () => {
                         </div>
 
                         <div className="hidden grid-cols-12 items-center gap-4 md:grid">
-                          <div className="col-span-5">
+                          <div className="col-span-4">
                             <p className="text-sm font-medium text-[var(--text-primary)]">{providerName}</p>
                           </div>
                           <div className="col-span-2 text-center">
                             <p className="text-base font-semibold text-[var(--purple-primary)]">
-                              {providerData.totalClicks || 0}
+                              {providerData.profileClicks ?? providerData.provider?.providerProfileCount ?? 0}
+                            </p>
+                          </div>
+                          <div className="col-span-2 text-center">
+                            <p className="text-base font-semibold text-[var(--purple-primary)]">
+                              {providerData.serviceClicks || 0}
                             </p>
                           </div>
                           <div className="col-span-2 text-center text-sm text-[var(--text-secondary)]">
                             {providerData.serviceCount || 0}
                           </div>
-                          <div className="col-span-3 flex justify-end">
+                          <div className="col-span-2 flex justify-end">
                             <ChevronDown
                               className={`h-4 w-4 text-[var(--text-secondary)] transition-transform ${
                                 isExpanded ? 'rotate-180' : '-rotate-90'

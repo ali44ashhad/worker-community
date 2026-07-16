@@ -198,9 +198,8 @@ const SpecificService = () => {
   const providerBio = service?.provider?.bio || '';
   const providerCreatedAt = service?.provider?.user?.createdAt;
   const serviceExperience = service?.experience || 0;
-  // Admin dashboard "Top providers" uses provider profile clicks (`providerProfileCount`),
-  // so we show the same number here to keep it consistent.
-  const totalViews = service?.provider?.providerProfileCount || 0;
+  // Show this service's own clicks (same as Provider Clicks → service row).
+  const totalViews = service?.serviceOfferingCount || 0;
   const providerAddress = formatAddress(service?.provider?.user) || 'Address not provided';
   const descriptionIsLong = serviceDescription.length > 220;
 

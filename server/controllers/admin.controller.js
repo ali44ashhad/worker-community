@@ -997,9 +997,11 @@ const getProviderClicks = async (req, res) => {
                 services: []
             };
 
-            // Calculate total clicks: providerProfileCount + sum of all service clicks
-            const providerProfileClicks = provider.providerProfileCount || 0;
-            const totalClicks = providerProfileClicks + serviceData.totalServiceClicks;
+            // Provider clicks ko sirf services ke clicks ka sum rakha jaa raha hai.
+            // (providerProfileCount ko is metric me include nahi kiya ja raha)
+            const serviceTotalClicks = serviceData.totalServiceClicks || 0;
+            const providerClicks = serviceTotalClicks;
+            const totalClicks = providerClicks;
 
             // Sort services by clicks descending
             const sortedServices = serviceData.services.sort((a, b) => b.serviceOfferingCount - a.serviceOfferingCount);
@@ -1011,16 +1013,22 @@ const getProviderClicks = async (req, res) => {
                         firstName: provider.user?.firstName || '',
                         lastName: provider.user?.lastName || ''
                     },
-                    providerProfileCount: providerProfileClicks
+                    providerProfileCount: providerClicks
                 },
+                profileClicks: providerClicks,
+                serviceClicks: serviceTotalClicks,
                 totalClicks: totalClicks,
                 serviceCount: serviceData.serviceCount,
                 services: sortedServices
             };
         });
 
-        // Sort providers by total clicks descending
-        result.sort((a, b) => b.totalClicks - a.totalClicks);
+        // Sort providers by profile clicks first (\"provider clicks\"), then service clicks
+        result.sort((a, b) => {
+            const byProfile = (b.profileClicks || 0) - (a.profileClicks || 0);
+            if (byProfile !== 0) return byProfile;
+            return (b.serviceClicks || 0) - (a.serviceClicks || 0);
+        });
 
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
         const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);

@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { getAllProviders } from '../features/providerSlice';
+import { getAllPublicServices } from '../features/serviceSlice';
 import ServiceCard from '../components/service/ServiceCard';
 import HomePageLoader from '../components/loaders/HomePageLoader'; 
 import { Search, RefreshCw, ArrowLeft } from 'lucide-react';
 import { getActiveCategories } from '../features/adminSlice';
 import { slugifyCategoryName } from '../utils/slug';
 import { getCategoryDescription } from '../utils/categoryDisplay';
+import { getFullName } from '../utils/userHelpers';
 
 const chipClass = (active) =>
   `px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
@@ -24,7 +25,7 @@ const SpecificCategory = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { allProviders, isFetchingAll, error } = useSelector((state) => state.provider);
+  const { services, isFetching, error } = useSelector((state) => state.services);
   const { activeCategories } = useSelector((state) => state.admin);
 
   const categorySlug = String(id || '').toLowerCase();
@@ -35,7 +36,6 @@ const SpecificCategory = () => {
   const [priceSort, setPriceSort] = useState('All');
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [filteredServices, setFilteredServices] = useState([]);
-  const [allServices, setAllServices] = useState([]);
 
   useEffect(() => {
     if (!activeCategories || activeCategories.length === 0) {
@@ -68,31 +68,13 @@ const SpecificCategory = () => {
   const categoryData = RULES[categoryName];
 
   useEffect(() => {
-    dispatch(getAllProviders());
+    dispatch(getAllPublicServices());
   }, [dispatch]);
 
-  useEffect(() => {
-    const extractedServices = [];
-    allProviders.forEach((provider) => {
-      if (provider?.serviceOfferings && Array.isArray(provider.serviceOfferings)) {
-        provider.serviceOfferings.forEach((service) => {
-          if (service?.serviceCategory === categoryName) {
-            extractedServices.push({
-              ...service,
-              provider: {
-                ...provider,
-                user: provider.user,
-                _id: provider._id,
-                bio: provider.bio,
-                experience: provider.experience,
-              },
-            });
-          }
-        });
-      }
-    });
-    setAllServices(extractedServices);
-  }, [allProviders, categoryName]);
+  const allServices = useMemo(
+    () => (services || []).filter((service) => service?.serviceCategory === categoryName),
+    [services, categoryName]
+  );
 
   const getPriceRange = () => {
     const prices = allServices
@@ -123,7 +105,7 @@ const SpecificCategory = () => {
         const description = service?.description?.toLowerCase() || '';
         const keywords = (service?.keywords || []).map((k) => k?.toLowerCase()).join(' ');
         const subCategories = (service?.subCategories || []).map((s) => s?.toLowerCase()).join(' ');
-        const providerName = service?.provider?.user?.name?.toLowerCase() || '';
+        const providerName = getFullName(service?.provider?.user)?.toLowerCase() || '';
         const query = searchQuery.toLowerCase();
 
         return (
@@ -168,6 +150,11 @@ const SpecificCategory = () => {
         const priceB = typeof b?.price === 'number' ? b.price : parseFloat(b?.price) || 0;
         return priceB - priceA;
       });
+    } else {
+      // Default: most-clicked services first
+      filtered.sort(
+        (a, b) => (b?.serviceOfferingCount || 0) - (a?.serviceOfferingCount || 0)
+      );
     }
 
     setFilteredServices(filtered);
@@ -189,7 +176,7 @@ const SpecificCategory = () => {
     priceRange[1] !== maxPrice;
 
   const handleRefresh = () => {
-    dispatch(getAllProviders());
+    dispatch(getAllPublicServices());
   };
 
   const handleClearFilters = () => {
@@ -494,13 +481,13 @@ const SpecificCategory = () => {
             <div className="flex-1 min-w-0">
               
 
-              {isFetchingAll && (
+              {isFetching && (
                 <div className="mt-8">
                   <HomePageLoader />
                 </div>
               )}
 
-              {error && !isFetchingAll && (
+              {error && !isFetching && (
                 <div className="text-center py-12">
                   <div className="bg-red-50 border border-red-200 rounded-3xl p-8 max-w-md mx-auto">
                     <p className="text-red-600 font-semibold">Error loading services</p>
@@ -516,7 +503,7 @@ const SpecificCategory = () => {
                 </div>
               )}
 
-              {!isFetchingAll && !error && filteredServices.length === 0 && (
+              {!isFetching && !error && filteredServices.length === 0 && (
                 <div className="text-center py-12">
                   <div className="bg-white/80 backdrop-blur-sm border border-purple-100/50 rounded-3xl p-8 max-w-md mx-auto shadow-lg shadow-purple-500/5">
                     <Search className="mx-auto mb-4 w-12 h-12 text-purple-300" />
@@ -539,7 +526,7 @@ const SpecificCategory = () => {
                 </div>
               )}
 
-              {!isFetchingAll && !error && filteredServices.length > 0 && (
+              {!isFetching && !error && filteredServices.length > 0 && (
                 <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
                   {filteredServices.map((service) => (
                     <ServiceCard key={service._id} service={service} />

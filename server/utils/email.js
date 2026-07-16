@@ -151,6 +151,19 @@ function renderEmailLayout({
     `;
 }
 
+function isPlausibleRecipientEmail(email) {
+    const to = String(email || "").trim().toLowerCase();
+    if (!to) return false;
+    // Basic shape
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return false;
+    const [local, domain] = to.split("@");
+    // Block obvious placeholders that always bounce (e.g. d@gmail.com)
+    if (!local || local.length < 2) return false;
+    if (/^(test|dummy|fake|asdf|xyz|abc|noreply|no-reply)$/i.test(local)) return false;
+    if (/(^|\.)example\.(com|org|net)$/i.test(domain)) return false;
+    return true;
+}
+
 async function sendEmail({ toEmail, subject, text, html }) {
     if (!isSmtpConfigured()) {
         if (!loggedSmtpMisconfig) {
@@ -171,6 +184,10 @@ async function sendEmail({ toEmail, subject, text, html }) {
     if (!to) {
         console.error("[email] Refusing to send — empty recipient.", { subject });
         return { sent: false, reason: "missing_recipient" };
+    }
+    if (!isPlausibleRecipientEmail(to)) {
+        console.error("[email] Refusing to send — invalid/placeholder recipient.", { to, subject });
+        return { sent: false, reason: "invalid_recipient" };
     }
 
     try {

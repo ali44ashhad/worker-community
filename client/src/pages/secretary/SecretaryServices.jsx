@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToggleRight, Wrench } from 'lucide-react';
@@ -13,6 +13,9 @@ import Services from '../Services';
 const cardClass =
   'rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-6';
 
+const selectClass =
+  'w-full rounded-xl border border-purple-100 bg-white px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)]';
+
 const SecretaryServices = () => {
   const dispatch = useDispatch();
   const {
@@ -23,9 +26,27 @@ const SecretaryServices = () => {
     categoryTogglesMeta,
   } = useSelector((state) => state.secretary);
 
+  const [selectedCategory, setSelectedCategory] = useState('');
+
   useEffect(() => {
     dispatch(fetchCategoryToggles());
   }, [dispatch]);
+
+  // Keep selection valid when the list refreshes after a toggle update
+  useEffect(() => {
+    if (!categoryToggles.length) {
+      setSelectedCategory('');
+      return;
+    }
+    if (!selectedCategory || !categoryToggles.some((c) => c.name === selectedCategory)) {
+      setSelectedCategory(categoryToggles[0].name);
+    }
+  }, [categoryToggles, selectedCategory]);
+
+  const selectedItem = useMemo(
+    () => categoryToggles.find((c) => c.name === selectedCategory) || null,
+    [categoryToggles, selectedCategory]
+  );
 
   return (
     <motion.div
@@ -92,33 +113,54 @@ const SecretaryServices = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {categoryToggles.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex flex-col gap-3 rounded-xl border border-purple-100/70 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="secretary-category-select"
+                  className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]"
                 >
+                  Category
+                </label>
+                <select
+                  id="secretary-category-select"
+                  className={selectClass}
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  disabled={categoryTogglesLoading || categoryTogglesSaving}
+                >
+                  {categoryToggles.map((item) => (
+                    <option key={item.name} value={item.name}>
+                      {item.name}
+                      {item.enabled ? '' : ' (disabled)'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedItem && (
+                <div className="flex flex-col gap-3 rounded-xl border border-purple-100/70 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="font-semibold text-[var(--text-primary)]">{item.name}</p>
+                    <p className="font-semibold text-[var(--text-primary)]">{selectedItem.name}</p>
                     <p className="text-xs text-[var(--text-secondary)]">
-                      {item.serviceCount} {item.serviceCount === 1 ? 'service' : 'services'} in your community
+                      {selectedItem.serviceCount}{' '}
+                      {selectedItem.serviceCount === 1 ? 'service' : 'services'} in your community
                     </p>
                   </div>
                   <ToggleSwitch
-                    enabled={Boolean(item.enabled)}
-                    label={`${item.name} ${item.enabled ? 'on' : 'off'}`}
+                    enabled={Boolean(selectedItem.enabled)}
+                    label={`${selectedItem.name} ${selectedItem.enabled ? 'on' : 'off'}`}
                     disabled={categoryTogglesLoading || categoryTogglesSaving}
                     onToggle={() =>
                       dispatch(
                         updateCategoryToggle({
-                          categoryName: item.name,
-                          enabled: !item.enabled,
+                          categoryName: selectedItem.name,
+                          enabled: !selectedItem.enabled,
                         })
                       )
                     }
                   />
                 </div>
-              ))}
+              )}
             </div>
           )}
         </motion.div>

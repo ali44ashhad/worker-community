@@ -39,14 +39,13 @@ const Login = () => {
 
     if (userRole === 'admin') {
       navigate('/admin/dashboard');
-    } else if (userRole === 'secretary') {
-      navigate('/secretary/dashboard');
     } else if (accountStatus === 'pending' || accountStatus === 'rejected') {
       navigate('/pending-approval');
-    } else if (userRole === 'provider') {
-      navigate('/provider/dashboard');
+    } else if (userRole === 'secretary') {
+      navigate('/secretary/services');
     } else {
-      navigate('/');
+      // customer, provider, and other non-admin panel users
+      navigate('/community/services');
     }
   };
 
