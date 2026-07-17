@@ -68,9 +68,13 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
     ...(communityFeatures.events
       ? [{ icon: Calendar, label: 'Events', path: '/community/events' }]
       : []),
-      { icon: Users2, label: 'Vendors', path: '/community/vendors' },
-      { icon: Building2, label: 'Directories', path: '/community/directory' },
-      { icon: PhoneCall, label: 'Emergency Contacts', path: '/community/emergency-contacts' },
+    ...(!isPublicMember
+      ? [
+          { icon: Users2, label: 'Vendors', path: '/community/vendors' },
+          { icon: Building2, label: 'Directories', path: '/community/directory' },
+          { icon: PhoneCall, label: 'Emergency Contacts', path: '/community/emergency-contacts' },
+        ]
+      : []),
     ...(user?._id ? [{ icon: Heart, label: 'Wishlist', path: '/community/wishlist' }] : []),
     { icon: User, label: 'Update Profile', path: '/community/update-profile' },
     ...(canBecomeProvider(user)

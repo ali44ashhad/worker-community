@@ -411,7 +411,20 @@ const getAllProviders = async (req, res) => {
                     as: "serviceOfferings",
                 },
             },
-            { $sort: { createdAt: -1 } },
+            {
+                $addFields: {
+                    totalServiceClicks: {
+                        $sum: {
+                            $map: {
+                                input: { $ifNull: ["$serviceOfferings", []] },
+                                as: "s",
+                                in: { $ifNull: ["$$s.serviceOfferingCount", 0] },
+                            },
+                        },
+                    },
+                },
+            },
+            { $sort: { totalServiceClicks: -1, createdAt: -1 } },
             {
                 $facet: {
                     data: [{ $skip: skip }, { $limit: limit }],

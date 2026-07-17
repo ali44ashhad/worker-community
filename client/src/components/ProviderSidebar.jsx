@@ -67,10 +67,13 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
     ...(communityFeatures.events
       ? [{ icon: Calendar, label: 'Events', path: '/community/events' }]
       : []),
-      
-      { icon: Users2, label: 'Vendors', path: '/community/vendors' },
-      { icon: Building2, label: 'Directories', path: '/community/directory' },
-      { icon: PhoneCall, label: 'Emergency Contacts', path: '/community/emergency-contacts' },
+    ...(!isPublicMember
+      ? [
+          { icon: Users2, label: 'Vendors', path: '/community/vendors' },
+          { icon: Building2, label: 'Directories', path: '/community/directory' },
+          { icon: PhoneCall, label: 'Emergency Contacts', path: '/community/emergency-contacts' },
+        ]
+      : []),
     { icon: User, label: 'Update Profile', path: '/provider/update-profile' },
     { icon: Home, label: 'Commun Home', path: '/' },
   ];

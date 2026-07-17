@@ -7,6 +7,7 @@ import { HiOutlineSearch } from 'react-icons/hi';
 import { FiTrendingUp } from 'react-icons/fi';
 import { getFullName } from '../utils/userHelpers';
 import { slugifyCategoryName } from '../utils/slug';
+import { textIncludesSearch } from '../utils/searchText';
 import ServiceCover from './service/ServiceCover';
 
 const SearchDropdown = ({ isOpen, onClose }) => {
@@ -44,21 +45,23 @@ const SearchDropdown = ({ isOpen, onClose }) => {
   const filteredServices = React.useMemo(() => {
     if (!searchQuery.trim()) return [];
     
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.trim();
     return allServices.filter(service => {
-      const servicename = service?.servicename?.toLowerCase() || '';
-      const category = service?.serviceCategory?.toLowerCase() || '';
-      const description = service?.description?.toLowerCase() || '';
-      const keywords = (service?.keywords || []).map(k => k?.toLowerCase()).join(' ');
-      const subCategories = (service?.subCategories || []).map(s => s?.toLowerCase()).join(' ');
-      const providerName = getFullName(service?.provider?.user)?.toLowerCase() || '';
-      
-      return servicename.includes(query) ||
-             category.includes(query) || 
-             description.includes(query) || 
-             keywords.includes(query) ||
-             subCategories.includes(query) ||
-             providerName.includes(query);
+      const servicename = service?.servicename || '';
+      const category = service?.serviceCategory || '';
+      const description = service?.description || '';
+      const keywords = (service?.keywords || []).join(' ');
+      const subCategories = (service?.subCategories || []).join(' ');
+      const providerName = getFullName(service?.provider?.user) || '';
+
+      return (
+        textIncludesSearch(servicename, query) ||
+        textIncludesSearch(category, query) ||
+        textIncludesSearch(description, query) ||
+        textIncludesSearch(keywords, query) ||
+        textIncludesSearch(subCategories, query) ||
+        textIncludesSearch(providerName, query)
+      );
     }).slice(0, 10); // Limit to 10 results
   }, [searchQuery, allServices]);
 

@@ -76,14 +76,21 @@ const AudienceSection = () => {
             </li>
           ))}
         </ul>
-        {showBecomeProvider && (
+        {!user ? (
+          <Link
+            to="/login"
+            className="inline-flex px-10 py-4 bg-white text-[var(--magenta)] rounded-2xl hover:bg-fuchsia-50 hover:scale-105 transition-all font-bold shadow-2xl"
+          >
+            Login to become a Provider
+          </Link>
+        ) : showBecomeProvider ? (
           <Link
             to="/become-provider"
             className="inline-flex px-10 py-4 bg-white text-[var(--magenta)] rounded-2xl hover:bg-fuchsia-50 hover:scale-105 transition-all font-bold shadow-2xl"
           >
             Join as Provider
           </Link>
-        )}
+        ) : null}
       </div>
     </div>
   </section>

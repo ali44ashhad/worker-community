@@ -9,6 +9,7 @@ import { Search, RefreshCw, ArrowLeft } from 'lucide-react';
 import { getActiveCategories } from '../features/adminSlice';
 import { slugifyCategoryName } from '../utils/slug';
 import { getCategoryDescription } from '../utils/categoryDisplay';
+import { textIncludesSearch } from '../utils/searchText';
 import { getFullName } from '../utils/userHelpers';
 
 const chipClass = (active) =>
@@ -101,19 +102,19 @@ const SpecificCategory = () => {
 
     if (searchQuery.trim()) {
       filtered = filtered.filter((service) => {
-        const servicename = service?.servicename?.toLowerCase() || '';
-        const description = service?.description?.toLowerCase() || '';
-        const keywords = (service?.keywords || []).map((k) => k?.toLowerCase()).join(' ');
-        const subCategories = (service?.subCategories || []).map((s) => s?.toLowerCase()).join(' ');
-        const providerName = getFullName(service?.provider?.user)?.toLowerCase() || '';
-        const query = searchQuery.toLowerCase();
+        const servicename = service?.servicename || '';
+        const description = service?.description || '';
+        const keywords = (service?.keywords || []).join(' ');
+        const subCategories = (service?.subCategories || []).join(' ');
+        const providerName = getFullName(service?.provider?.user) || '';
+        const query = searchQuery.trim();
 
         return (
-          servicename.includes(query) ||
-          description.includes(query) ||
-          keywords.includes(query) ||
-          subCategories.includes(query) ||
-          providerName.includes(query)
+          textIncludesSearch(servicename, query) ||
+          textIncludesSearch(description, query) ||
+          textIncludesSearch(keywords, query) ||
+          textIncludesSearch(subCategories, query) ||
+          textIncludesSearch(providerName, query)
         );
       });
     }

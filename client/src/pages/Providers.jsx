@@ -7,6 +7,7 @@ import HomePageLoader from '../components/loaders/HomePageLoader';
 import { Search, RefreshCw } from 'lucide-react';
 import { getFullName } from '../utils/userHelpers';
 import Pagination from '../components/Pagination';
+import { textIncludesSearch } from '../utils/searchText';
 
 const chipClass = (active) =>
   `px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
@@ -43,12 +44,13 @@ const Providers = () => {
           .map((k) => k?.toLowerCase())
           .join(' ');
 
-        const query = searchQuery.toLowerCase();
+        const query = searchQuery.trim();
+
         return (
-          userName.includes(query) ||
-          bio.includes(query) ||
-          categories.includes(query) ||
-          keywords.includes(query)
+          textIncludesSearch(userName, query) ||
+          textIncludesSearch(bio, query) ||
+          textIncludesSearch(categories, query) ||
+          textIncludesSearch(keywords, query)
         );
       });
     }
@@ -113,7 +115,7 @@ const Providers = () => {
             </h1>
             <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
               Meet talented people in your community — tutors, bakers, fitness coaches, and more,
-              ready to help right in your neighbourhood.
+              ranked by popularity so the most contacted providers appear first.
             </p>
           </motion.div>
         </div>

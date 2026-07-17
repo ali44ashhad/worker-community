@@ -8,6 +8,7 @@ import { getFullName } from '../utils/userHelpers';
 import Pagination from '../components/Pagination';
 import { getAllPublicServices, getAllCommunityServices } from '../features/serviceSlice';
 import { formatCommunDisplayName } from '../utils/communName';
+import { textIncludesSearch } from '../utils/searchText';
 
 const chipClass = (active) =>
   `px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
@@ -43,22 +44,22 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
     let filtered = [...allServices];
 
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+      const query = searchQuery.trim();
       filtered = filtered.filter((service) => {
-        const servicename = service?.servicename?.toLowerCase() || '';
-        const category = service?.serviceCategory?.toLowerCase() || '';
-        const description = service?.description?.toLowerCase() || '';
-        const keywords = (service?.keywords || []).map((k) => k?.toLowerCase()).join(' ');
-        const subCategories = (service?.subCategories || []).map((s) => s?.toLowerCase()).join(' ');
-        const providerName = getFullName(service?.provider?.user)?.toLowerCase() || '';
+        const servicename = service?.servicename || '';
+        const category = service?.serviceCategory || '';
+        const description = service?.description || '';
+        const keywords = (service?.keywords || []).join(' ');
+        const subCategories = (service?.subCategories || []).join(' ');
+        const providerName = getFullName(service?.provider?.user) || '';
 
         return (
-          servicename.includes(query) ||
-          category.includes(query) ||
-          description.includes(query) ||
-          keywords.includes(query) ||
-          subCategories.includes(query) ||
-          providerName.includes(query)
+          textIncludesSearch(servicename, query) ||
+          textIncludesSearch(category, query) ||
+          textIncludesSearch(description, query) ||
+          textIncludesSearch(keywords, query) ||
+          textIncludesSearch(subCategories, query) ||
+          textIncludesSearch(providerName, query)
         );
       });
     }

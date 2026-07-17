@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ChevronRight, Quote, Star, Users, Heart, Briefcase } from 'lucide-react';
-import { canBecomeProvider } from '../utils/userHelpers';
+
+const getSecondaryCta = (user) => {
+  if (!user) {
+    return { to: '/login', label: 'Login to become a Provider' };
+  }
+
+  switch (user.role) {
+    case 'provider':
+      return { to: '/provider/dashboard', label: 'Go to Dashboard' };
+    case 'secretary':
+      return { to: '/secretary/dashboard', label: 'Go to Dashboard' };
+    case 'admin':
+      return { to: '/admin/dashboard', label: 'Go to Dashboard' };
+    case 'customer':
+    default:
+      return { to: '/become-provider', label: 'Become a Provider' };
+  }
+};
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -146,7 +163,7 @@ const TestimonialCard = ({ item, featured: isFeatured = false }) => (
 
 const Testimonials = () => {
   const user = useSelector((state) => state.auth.user);
-  const showBecomeProvider = canBecomeProvider(user);
+  const secondaryCta = useMemo(() => getSecondaryCta(user), [user]);
 
   return (
   <motion.div
@@ -260,14 +277,12 @@ const Testimonials = () => {
               Find Services
               <ChevronRight className="ml-2 h-5 w-5" />
             </Link>
-            {showBecomeProvider && (
-              <Link
-                to="/become-provider"
-                className="inline-flex items-center justify-center rounded-2xl border-2 border-purple-200 px-8 py-4 font-semibold text-[var(--purple-primary)] transition-all hover:border-[var(--purple-primary)] hover:bg-purple-50"
-              >
-                Become a Provider
-              </Link>
-            )}
+            <Link
+              to={secondaryCta.to}
+              className="inline-flex items-center justify-center rounded-2xl border-2 border-purple-200 px-8 py-4 font-semibold text-[var(--purple-primary)] transition-all hover:border-[var(--purple-primary)] hover:bg-purple-50"
+            >
+              {secondaryCta.label}
+            </Link>
           </div>
         </motion.div>
       </div>
