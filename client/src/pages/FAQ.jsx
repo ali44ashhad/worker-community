@@ -36,7 +36,7 @@ const faqSections = [
       {
         question: 'How can CommuN help me?',
         answer:
-          'CommuN helps you discover trusted local services nearby, such as home tutors, fitness trainers, home bakers, music teachers, doctors, lawyers, architects, electricians, plumbers, event planners, pet services, and much more.',
+          'CommuN helps you discover trusted local services nearby, such as:\n• Home tutors\n• Fitness trainers\n• Home bakers\n• Music teachers\n• Doctors\n• Lawyers\n• Architects\n• Electricians\n• Plumbers\n• Event planners\n• Pet services\n…and much more.',
       },
       {
         question: 'Is CommuN free to use?',
@@ -53,14 +53,29 @@ const faqSections = [
           'Google shows businesses across a broad area. CommuN helps you discover trusted people and services within your own neighbourhood—often including home-based businesses and professionals who may not even appear on Google.',
       },
       {
+        question: 'How do I search for services on the platform?',
+        answer:
+          "You can search for services using the search bar in the navbar. When you click on it, you'll see all available categories. Start typing to search for specific services by keyword, category, or provider name.",
+      },
+      {
         question: 'Can I contact providers directly?',
         answer:
           'Yes! You can connect directly with providers through the contact information available on their profile.',
       },
       {
+        question: 'What if I\'m not satisfied with a service?',
+        answer:
+          'We encourage open communication between customers and providers. If you have any concerns, please reach out to the provider first. You can also leave feedback through our review system. For serious issues, please contact our support team.',
+      },
+      {
         question: 'Can I leave reviews?',
         answer:
           'Yes! After using a service (getting in touch with the provider through the platform), you can leave reviews and ratings to help other community members make informed decisions. Reviews help maintain quality and build trust within the community.',
+      },
+      {
+        question: 'Can I give ratings to any provider?',
+        answer:
+          'Yes! After using a service (getting in touch with the provider through the platform), you can give the provider star rating based on your satisfaction to the services provided to you.',
       },
     ],
   },
@@ -70,7 +85,7 @@ const faqSections = [
       {
         question: 'Who can register as a provider?',
         answer:
-          'Anyone offering a genuine product or service within the CommuNity can register, including tutors, fitness trainers, home bakers, consultants, freelancers, artists, doctors, lawyers, coaches, home businesses, and local professionals.',
+          'Anyone offering a genuine product or service within the CommuNity can register, including:\n• Tutors\n• Fitness trainers\n• Home bakers\n• Consultants\n• Freelancers\n• Artists\n• Doctors\n• Lawyers\n• Coaches\n• Home businesses\n• Local professionals',
       },
       {
         question: 'Why should I list my services on CommuN?',
@@ -89,7 +104,7 @@ const faqSections = [
       {
         question: 'Can I update my profile?',
         answer:
-          'Absolutely. You can update your profile, services, and contact details whenever needed.',
+          'Absolutely. You can update your profile, services, and contact details whenever needed. Open Provider Dashboard from the menu, then use Update Profile or Manage Services to keep your information current and help customers find you easily.',
       },
     ],
   },
@@ -119,7 +134,7 @@ const faqSections = [
       {
         question: 'Which areas does CommuN currently serve?',
         answer:
-          'CommuN is currently expanding CommuNity by CommuNity. New neighbourhoods will continue to be added over time and updated on the platform.',
+          'CommuN is currently expanding Community by Community. New neighbourhoods will continue to be added over time and updated on the platform.',
       },
       {
         question: 'Can I suggest my neighbourhood?',
@@ -129,7 +144,7 @@ const faqSections = [
       {
         question: 'What features are coming next?',
         answer:
-          'CommuN is continuously evolving. Future updates will include community groups, local events, secure payments, resident recommendations, RWA tools, announcements, neighbourhood commerce, and AI-powered local discovery.',
+          'CommuN is continuously evolving. Future updates will include:\n• CommuNity groups\n• Local events\n• Secure payments\n• Resident recommendations\n• RWA tools\n• Announcements\n• Neighbourhood commerce\n• AI-powered local discovery',
       },
     ],
   },
@@ -154,7 +169,7 @@ const faqSections = [
       {
         question: 'If I shift from one society to another, how do I join the new society?',
         answer:
-          'You can simply send us a request at info@commun.in with all details, and our backend team will help you out within 24 hours.',
+          'You can simply send us a request at info@commun.in and mention all details. Our backend team will help you out within 24 hours.',
       },
     ],
   },
@@ -178,7 +193,7 @@ const faqSections = [
       {
         question: 'Is CommuN just another directory?',
         answer:
-          'No! CommuN is much more than a directory. Our vision is to become the digital operating system for neighbourhoods—bringing together discovery, community engagement, local commerce, and neighbourhood management into one trusted platform.',
+          'No! CommuN is much more than a directory. Our vision is to become the digital operating system for neighbourhoods—bringing together discovery, CommuNity engagement, local commerce, and neighbourhood management into one trusted platform.',
       },
     ],
   },
