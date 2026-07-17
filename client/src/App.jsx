@@ -167,7 +167,7 @@ const App = () => {
         <Route 
           path='/become-provider' 
           element={
-            <UserProtectedRoute requireCommunity>
+            <UserProtectedRoute>
               <BecomeProvider></BecomeProvider>
             </UserProtectedRoute>
           }
@@ -317,7 +317,7 @@ const App = () => {
         <Route
           path='/community/become-provider'
           element={
-            <MemberProtectedRoute requireCommunity>
+            <MemberProtectedRoute>
               <ProviderAwareLayout>
                 <BecomeProvider />
               </ProviderAwareLayout>

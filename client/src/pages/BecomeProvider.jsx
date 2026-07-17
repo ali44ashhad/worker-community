@@ -578,13 +578,13 @@ const BecomeProvider = () => {
         setErrors({});
         setIsSubmitting(false);
         
-        // Refresh auth state (role may become provider while pending approval)
+        // Refresh auth state after role change
         await dispatch(checkAuth());
         
         if (data?.pendingApproval) {
           navigate('/pending-approval');
         } else {
-          navigate('/');
+          navigate('/provider/dashboard');
         }
       } else {
         toast.error(data?.message || 'Failed to submit provider registration.');

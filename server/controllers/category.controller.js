@@ -1,14 +1,41 @@
 import Category from "../models/category.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
 
-// Public: list active categories (used by frontend selectors)
+// Public: list active categories (sorted by most service clicks first)
 const getActiveCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true })
-      .sort({ name: 1 })
-      .select("name subCategories keywords icon isActive");
+    const [categories, clickStats] = await Promise.all([
+      Category.find({ isActive: true })
+        .select("name subCategories keywords icon isActive")
+        .lean(),
+      ServiceOffering.aggregate([
+        {
+          $group: {
+            _id: "$serviceCategory",
+            totalClicks: { $sum: { $ifNull: ["$serviceOfferingCount", 0] } },
+          },
+        },
+      ]),
+    ]);
 
-    return res.status(200).json({ success: true, categories });
+    const clicksByName = new Map(
+      clickStats.map((row) => [row._id, row.totalClicks || 0])
+    );
+
+    const sorted = [...categories].sort((a, b) => {
+      const clicksA = clicksByName.get(a.name) || 0;
+      const clicksB = clicksByName.get(b.name) || 0;
+      if (clicksB !== clicksA) return clicksB - clicksA;
+      return String(a.name || "").localeCompare(String(b.name || ""));
+    });
+
+    return res.status(200).json({
+      success: true,
+      categories: sorted.map((c) => ({
+        ...c,
+        totalClicks: clicksByName.get(c.name) || 0,
+      })),
+    });
   } catch (error) {
     console.error("Error in getActiveCategories:", error.message);
     return res.status(500).json({ success: false, message: "Internal Server Error" });

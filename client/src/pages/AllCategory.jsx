@@ -61,8 +61,8 @@ const AllCategory = () => {
               All Categories
             </h1>
             <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
-              Explore all available service categories. Each category offers specialized services
-              from talented community providers in your neighbourhood.
+              Explore all available service categories, ordered by popularity. Each category offers
+              specialized services from talented community providers in your neighbourhood.
             </p>
           </motion.div>
         </div>

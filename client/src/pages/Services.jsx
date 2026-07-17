@@ -18,7 +18,7 @@ const chipClass = (active) =>
 
 const Services = ({ communityScope = false, compact = false, embedded = false }) => {
   const dispatch = useDispatch();
-  const { services, isFetching, error, communityCommunName, needsCommunity } = useSelector(
+  const { services, isFetching, error, communityCommunName, needsCommunity, publicServices } = useSelector(
     (state) => state.services
   );
 
@@ -155,23 +155,25 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
           >
             <div className="inline-block px-4 py-2 bg-gradient-to-r from-purple-100 to-fuchsia-100 rounded-full mb-6">
               <span className="text-sm font-semibold bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
-                {communityScope ? 'Community Services' : 'Find Local Help'}
+                {communityScope ? (publicServices ? 'Public Services' : 'Community Services') : 'Find Local Help'}
               </span>
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-[var(--text-primary)] via-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent mb-4 leading-[1.1]">
-              {communityScope ? 'Your Community Services' : 'All Services'}
+              {communityScope ? (publicServices ? 'Public Member Services' : 'Your Community Services') : 'All Services'}
             </h1>
             <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
               {communityScope ? (
                 <>
-                  Browse services from providers in your Commun community
+                  Browse services from {publicServices ? 'public providers' : 'providers in your Commun community'}
                   {communityCommunName ? (
                     <span className="font-medium text-[var(--purple-primary)]">
                       {' '}
                       ({formatCommunDisplayName(communityCommunName)})
                     </span>
                   ) : null}
-                  . Only categories enabled by your secretary are shown here.
+                  {publicServices
+                    ? '. These services are from providers who are not linked to a community yet.'
+                    : '. Only categories enabled by your secretary are shown here.'}
                 </>
               ) : (
                 'Browse services from talented community providers — tutoring, baking, fitness, technology and more, right in your neighbourhood.'
@@ -190,14 +192,16 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
             </p>
             <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">Services</h1>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              Services from providers in your Commun community
+              Services from {publicServices ? 'public providers' : 'providers in your Commun community'}
               {communityCommunName ? (
                 <span className="font-medium text-[var(--purple-primary)]">
                   {' '}
                   ({formatCommunDisplayName(communityCommunName)})
                 </span>
               ) : null}
-              . Only categories enabled by your secretary are shown.
+              {publicServices
+                ? '. These services are from providers who are not linked to a community yet.'
+                : '. Only categories enabled by your secretary are shown.'}
             </p>
           </div>
         </section>

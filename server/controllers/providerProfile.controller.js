@@ -10,7 +10,6 @@ import {
     deleteFromS3,
     uploadBufferToS3,
 } from "../utils/s3Upload.js";
-import { sendSecretaryProviderApplicationEmail } from "../utils/email.js";
 
 /** Public provider listings only include users approved by secretary (legacy: missing status = approved). */
 const USER_PUBLIC_POPULATE_MATCH = {
@@ -668,12 +667,8 @@ const becomeProviderWithServices = async (req, res) => {
             return res.status(401).json({ success: false, message: "User not found." });
         }
 
-        if (!authUser.communityCommunName) {
-            return res.status(403).json({
-                success: false,
-                message: "You must be assigned to a Commun community before becoming a provider.",
-            });
-        }
+        // Public / Other members may become providers without a listed community.
+        // Their services appear on the public marketplace until they join a community.
 
         const existingProfile = await ProviderProfile.findOne({ user: userId });
         if (existingProfile) {
@@ -872,56 +867,17 @@ const becomeProviderWithServices = async (req, res) => {
             });
         }
 
-        await User.findByIdAndUpdate(userId, { role: "provider", accountStatus: "pending" });
+        await User.findByIdAndUpdate(userId, { role: "provider", accountStatus: "approved" });
         const updatedUser = await User.findById(userId).select(
             "role accountStatus communName communityCommunName firstName lastName email phoneNumber"
         );
 
-        try {
-            const cn = updatedUser?.communityCommunName;
-            if (cn) {
-                const secretary = await User.findOne({
-                    role: "secretary",
-                    isActive: true,
-                    communName: cn,
-                }).select("email");
-                if (secretary?.email) {
-                    const memberName = [updatedUser.firstName, updatedUser.lastName]
-                        .filter(Boolean)
-                        .join(" ")
-                        .trim();
-                    const mailResult = await sendSecretaryProviderApplicationEmail({
-                        toEmail: String(secretary.email).trim().toLowerCase(),
-                        communityCommunName: cn,
-                        memberName: memberName || "Provider applicant",
-                        memberEmail: updatedUser.email,
-                        memberPhone: updatedUser.phoneNumber,
-                    });
-                    if (!mailResult?.sent) {
-                        console.error(
-                            "Secretary provider-application notification was not sent:",
-                            mailResult?.reason || "unknown",
-                            "to=",
-                            secretary.email
-                        );
-                    }
-                } else {
-                    console.error("Secretary provider-application notification skipped — no secretary email.", {
-                        communName: cn,
-                    });
-                }
-            }
-        } catch (mailError) {
-            console.error(
-                "Secretary provider-application notification failed:",
-                mailError?.message || mailError
-            );
-        }
+        // Provider applications are auto-approved on submit (no secretary pending step).
 
         return res.status(201).json({
             success: true,
-            message: "Application submitted. A secretary will review your provider profile shortly.",
-            pendingApproval: true,
+            message: "You are now a provider. Your services are live.",
+            pendingApproval: false,
             profile: newProfile,
             services: createdServices,
             user: {

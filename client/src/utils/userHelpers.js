@@ -94,13 +94,13 @@ export const getUserCommunityInfo = (user) => {
 };
 
 /**
- * Whether the user may register as a provider (must be linked to a Commun community).
+ * Whether the user may register as a provider.
  * Anonymous visitors return true so marketing CTAs stay visible until login.
+ * Customers may apply whether they are in a listed Commun community or public/Other.
  */
 export const canBecomeProvider = (user) => {
   if (!user) return true;
-  if (user.role !== 'customer') return false;
-  return Boolean(user.communityCommunName);
+  return user.role === 'customer';
 };
 
 /**

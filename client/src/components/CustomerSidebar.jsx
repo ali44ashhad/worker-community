@@ -51,9 +51,13 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
 
   const menuItems = [
     { icon: Home, label: 'Home', path: '/' },
-    ...(!isPublicMember && communityFeatures.hasCommunity
+    ...(isPublicMember || communityFeatures.hasCommunity
       ? [
           { icon: Wrench, label: 'Services', path: '/community/services' },
+        ]
+      : []),
+    ...(!isPublicMember && communityFeatures.hasCommunity
+      ? [
 
           { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
         ]

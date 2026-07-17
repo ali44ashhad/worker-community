@@ -86,12 +86,48 @@ const getAdminDashboardStats = async (req, res) => {
             .limit(10)
             .select('serviceCategory serviceOfferingCount description portfolioImages provider');
 
-        // 7. Get top providers (based on providerProfileCount)
-        const topProviders = await ProviderProfile.find({})
-            .populate('user', 'firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip')
-            .sort({ providerProfileCount: -1 })
-            .limit(10)
-            .select('providerProfileCount bio user');
+        // 7. Get top providers ranked by sum of their service clicks
+        const topProvidersAgg = await ServiceOffering.aggregate([
+            {
+                $group: {
+                    _id: "$provider",
+                    totalServiceClicks: { $sum: { $ifNull: ["$serviceOfferingCount", 0] } },
+                    serviceCount: { $sum: 1 },
+                },
+            },
+            { $sort: { totalServiceClicks: -1, serviceCount: -1 } },
+            { $limit: 10 },
+        ]);
+
+        const topProviderIds = topProvidersAgg.map((row) => row._id).filter(Boolean);
+        const topProviderDocs = topProviderIds.length
+            ? await ProviderProfile.find({ _id: { $in: topProviderIds } })
+                .populate(
+                    "user",
+                    "firstName lastName profileImage email phoneNumber addressLine1 addressLine2 city state zip"
+                )
+                .select("bio user")
+                .lean()
+            : [];
+
+        const topProviderMap = new Map(
+            topProviderDocs.map((doc) => [doc._id.toString(), doc])
+        );
+
+        const topProviders = topProvidersAgg
+            .map((row) => {
+                const provider = topProviderMap.get(row._id.toString());
+                if (!provider) return null;
+                return {
+                    _id: provider._id,
+                    bio: provider.bio,
+                    user: provider.user,
+                    // Keep field name for existing dashboard UI, but value = service clicks sum
+                    providerProfileCount: row.totalServiceClicks || 0,
+                    serviceCount: row.serviceCount || 0,
+                };
+            })
+            .filter(Boolean);
 
         // 8. Send the final response
         return res.status(200).json({

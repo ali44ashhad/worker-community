@@ -21,6 +21,15 @@ export const getCommunityProviderMatch = (communityHandle) => ({
     ],
 });
 
+export const getPublicProviderMatch = () => ({
+    $or: [
+        { "providerUser.isPublicMember": true },
+        { "providerUser.communityCommunName": { $exists: false } },
+        { "providerUser.communityCommunName": null },
+        { "providerUser.communityCommunName": "" },
+    ],
+});
+
 const approvedActiveUserMatch = {
     isActive: { $ne: false },
     $or: [{ accountStatus: { $exists: false } }, { accountStatus: "approved" }],
@@ -61,6 +70,7 @@ export async function getCommunityCategoryStats(communityHandle) {
                         $project: {
                             communityCommunName: 1,
                             communName: 1,
+                            isPublicMember: 1,
                         },
                     },
                 ],
@@ -96,7 +106,7 @@ export async function getEnabledCategoriesForCommunity(communityHandle) {
     return resolveEnabledCategoryNames(toggles, categoryNames);
 }
 
-export function buildPublicServicesPipeline({ communityHandle, enabledCategories, skip, limit }) {
+export function buildPublicServicesPipeline({ communityHandle, enabledCategories, publicOnly = false, skip, limit }) {
     const userMatch = approvedActiveUserMatch;
 
     const pipeline = [
@@ -129,6 +139,7 @@ export function buildPublicServicesPipeline({ communityHandle, enabledCategories
                             zip: 1,
                             communName: 1,
                             communityCommunName: 1,
+                            isPublicMember: 1,
                         },
                     },
                 ],
@@ -140,6 +151,8 @@ export function buildPublicServicesPipeline({ communityHandle, enabledCategories
 
     if (communityHandle) {
         pipeline.push({ $match: getCommunityProviderMatch(communityHandle) });
+    } else if (publicOnly) {
+        pipeline.push({ $match: getPublicProviderMatch() });
     }
 
     if (Array.isArray(enabledCategories)) {

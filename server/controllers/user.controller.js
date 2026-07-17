@@ -750,11 +750,17 @@ const joinCommunity = async (req, res) => {
 
         user.communityCommunName = cn;
         user.isPublicMember = false;
-        user.accountStatus = "pending";
+        // Approved providers stay live; joining a community only scopes their services.
+        // Public customers still need secretary approval to join a listed community.
+        if (user.role === "provider" && (user.accountStatus || "approved") === "approved") {
+            user.accountStatus = "approved";
+        } else {
+            user.accountStatus = "pending";
+        }
         await user.save();
 
         try {
-            if (secretaryForCommunity?.email) {
+            if (secretaryForCommunity?.email && user.accountStatus === "pending") {
                 const memberName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
                 const mailResult = await sendSecretaryNewSignupEmail({
                     toEmail: String(secretaryForCommunity.email).trim().toLowerCase(),
@@ -771,7 +777,7 @@ const joinCommunity = async (req, res) => {
                         secretaryForCommunity.email
                     );
                 }
-            } else {
+            } else if (user.accountStatus === "pending") {
                 console.error("Secretary join-community notification skipped — secretary has no email.", {
                     communName: cn,
                 });
@@ -782,9 +788,14 @@ const joinCommunity = async (req, res) => {
 
         user.password = undefined;
 
+        const joinedAsApprovedProvider =
+            user.role === "provider" && (user.accountStatus || "approved") === "approved";
+
         return res.status(200).json({
             success: true,
-            message: "Join request submitted. A secretary will review your registration shortly.",
+            message: joinedAsApprovedProvider
+                ? "Community linked. Your services are now available in this community."
+                : "Join request submitted. A secretary will review your registration shortly.",
             user,
         });
     } catch (error) {

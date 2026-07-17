@@ -11,10 +11,13 @@ const inputClass =
   'w-full px-4 py-3 border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all duration-300';
 
 const btnPrimary =
-  'flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-3.5 font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60';
+  'flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60';
 
 const btnSecondary =
-  'flex items-center justify-center gap-2 rounded-xl border border-purple-100 bg-white px-5 py-3.5 font-semibold text-[var(--text-primary)] transition-all hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-60';
+  'flex items-center justify-center gap-2 rounded-xl border border-purple-100 bg-white px-5 py-3.5 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-60';
+
+const btnAction =
+  'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-5 py-3 text-sm font-semibold text-white shadow-md shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
 
 const STEP_LABELS = ['Name', 'Account', 'Phone', 'Community', 'Flat'];
 
@@ -459,7 +462,7 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
                   type="button"
                   onClick={sendOtp}
                   disabled={otpSending || formData.phoneNumber.length !== PHONE_DIGITS}
-                  className={btnPrimary}
+                  className={btnAction}
                 >
                   {otpSending ? 'Sending…' : otpSent ? 'Resend OTP' : 'Send OTP'}
                 </button>
@@ -482,7 +485,7 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
                       type="button"
                       onClick={verifyOtp}
                       disabled={otpVerifying || !otpCode}
-                      className={btnPrimary}
+                      className={btnAction}
                     >
                       {otpVerifying ? 'Verifying…' : 'Verify OTP'}
                     </button>
@@ -490,7 +493,7 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
                       type="button"
                       onClick={sendOtp}
                       disabled={otpSending || resendSeconds > 0}
-                      className={btnSecondary}
+                      className={`${btnSecondary} flex-1 shrink-0 whitespace-nowrap`}
                     >
                       {resendSeconds > 0 ? `Resend (${resendSeconds}s)` : 'Resend'}
                     </button>

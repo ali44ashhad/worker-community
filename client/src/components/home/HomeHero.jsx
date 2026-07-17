@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, MapPin, Calculator, BookOpen, ChefHat, Dumbbell } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { canBecomeProvider } from '../../utils/userHelpers';
 
 const floatingServices = [
   {
@@ -36,9 +35,27 @@ const floatingServices = [
   },
 ];
 
+const getSecondaryCta = (user) => {
+  if (!user) {
+    return { to: '/login', label: 'Get Started' };
+  }
+
+  switch (user.role) {
+    case 'provider':
+      return { to: '/provider/dashboard', label: 'Go to Dashboard' };
+    case 'secretary':
+      return { to: '/secretary/dashboard', label: 'Go to Dashboard' };
+    case 'admin':
+      return { to: '/admin/dashboard', label: 'Go to Dashboard' };
+    case 'customer':
+    default:
+      return { to: '/become-provider', label: 'Become a Provider' };
+  }
+};
+
 const HomeHero = () => {
   const user = useSelector((state) => state.auth.user);
-  const showBecomeProvider = canBecomeProvider(user);
+  const secondaryCta = useMemo(() => getSecondaryCta(user), [user]);
 
   return (
   <section className="relative overflow-hidden pt-28 pb-20 lg:pt-32 lg:pb-28 bg-gradient-to-br from-purple-50/30 via-white to-fuchsia-50/20">
@@ -74,14 +91,13 @@ const HomeHero = () => {
               Find Services
               <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            {showBecomeProvider && (
-              <Link
-                to="/become-provider"
-                className="inline-flex items-center justify-center px-8 py-4 border-2 border-purple-200 text-[var(--purple-primary)] rounded-2xl hover:bg-purple-50 hover:border-[var(--purple-primary)] transition-all font-semibold"
-              >
-                Become a Provider
-              </Link>
-            )}
+            <Link
+              to={secondaryCta.to}
+              className="inline-flex items-center justify-center px-8 py-4 border-2 border-purple-200 text-[var(--purple-primary)] rounded-2xl hover:bg-purple-50 hover:border-[var(--purple-primary)] transition-all font-semibold"
+            >
+              {secondaryCta.label}
+              <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
         </motion.div>
 

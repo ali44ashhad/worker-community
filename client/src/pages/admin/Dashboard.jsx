@@ -214,7 +214,7 @@ const Dashboard = () => {
 
           <Section
             title="Top providers"
-            description="Providers with the most profile clicks."
+            description="Providers with the most service clicks."
             icon={Star}
           >
             {dashboardStats?.topProviders?.length > 0 ? (

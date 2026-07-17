@@ -50,6 +50,7 @@ const fetchAllServicePages = async (url, baseParams = {}) => {
   let pagination = null;
   let communityCommunName = null;
   let needsCommunity = false;
+  let publicServices = false;
 
   while (true) {
     const res = await axios.get(url, { params: { ...baseParams, page, limit } });
@@ -58,6 +59,7 @@ const fetchAllServicePages = async (url, baseParams = {}) => {
     pagination = res.data.pagination || null;
     communityCommunName = res.data.communityCommunName ?? communityCommunName;
     needsCommunity = Boolean(res.data.needsCommunity);
+    publicServices = Boolean(res.data.publicServices) || publicServices;
 
     if (needsCommunity || !pagination?.totalPages || page >= pagination.totalPages) {
       break;
@@ -72,6 +74,7 @@ const fetchAllServicePages = async (url, baseParams = {}) => {
       : { page: 1, limit, total: allServices.length, totalPages: 1 },
     communityCommunName,
     needsCommunity,
+    publicServices,
   };
 };
 
@@ -102,6 +105,7 @@ const initialState = {
   pagination: null,
   communityCommunName: null,
   needsCommunity: false,
+  publicServices: false,
   isFetching: false,
   error: null,
 };
@@ -122,6 +126,7 @@ const serviceSlice = createSlice({
         state.pagination = action.payload?.pagination || null;
         state.communityCommunName = action.payload?.communityCommunName || null;
         state.needsCommunity = false;
+        state.publicServices = false;
       })
       .addCase(getPublicServices.rejected, (state, action) => {
         state.isFetching = false;
@@ -137,6 +142,7 @@ const serviceSlice = createSlice({
         state.pagination = action.payload?.pagination || null;
         state.communityCommunName = action.payload?.communityCommunName || null;
         state.needsCommunity = Boolean(action.payload?.needsCommunity);
+        state.publicServices = Boolean(action.payload?.publicServices);
       })
       .addCase(getCommunityServices.rejected, (state, action) => {
         state.isFetching = false;
@@ -152,6 +158,7 @@ const serviceSlice = createSlice({
         state.pagination = action.payload?.pagination || null;
         state.communityCommunName = action.payload?.communityCommunName || null;
         state.needsCommunity = false;
+        state.publicServices = false;
       })
       .addCase(getAllPublicServices.rejected, (state, action) => {
         state.isFetching = false;
@@ -167,6 +174,7 @@ const serviceSlice = createSlice({
         state.pagination = action.payload?.pagination || null;
         state.communityCommunName = action.payload?.communityCommunName || null;
         state.needsCommunity = Boolean(action.payload?.needsCommunity);
+        state.publicServices = Boolean(action.payload?.publicServices);
       })
       .addCase(getAllCommunityServices.rejected, (state, action) => {
         state.isFetching = false;

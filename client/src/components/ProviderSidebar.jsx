@@ -50,9 +50,13 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
 
   const menuItems = [
     { icon: LayoutGrid, label: 'Dashboard', path: '/provider/dashboard' },
-    ...(!isPublicMember && communityFeatures.hasCommunity
+    ...(isPublicMember || communityFeatures.hasCommunity
       ? [
           { icon: Wrench, label: 'Services', path: '/community/services' },
+        ]
+      : []),
+    ...(!isPublicMember && communityFeatures.hasCommunity
+      ? [
           { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
         ]
       : []),

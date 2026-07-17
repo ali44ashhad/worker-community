@@ -15,10 +15,11 @@ const parsePagination = (req) => {
     return { page, limit, skip };
 };
 
-const runServicesQuery = async ({ communityHandle, enabledCategories, page, limit, skip }) => {
+const runServicesQuery = async ({ communityHandle, enabledCategories, publicOnly = false, page, limit, skip }) => {
     const pipeline = buildPublicServicesPipeline({
         communityHandle,
         enabledCategories,
+        publicOnly,
         skip,
         limit,
     });
@@ -70,6 +71,27 @@ const getCommunityServices = async (req, res) => {
     try {
         const communityHandle = getMemberCommunityHandle(req.user);
         if (!communityHandle) {
+            if (req.user?.isPublicMember) {
+                const { page, limit, skip } = parsePagination(req);
+                const { services, pagination } = await runServicesQuery({
+                    communityHandle: null,
+                    enabledCategories: null,
+                    publicOnly: true,
+                    page,
+                    limit,
+                    skip,
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    services,
+                    pagination,
+                    communityCommunName: null,
+                    publicServices: true,
+                    needsCommunity: false,
+                });
+            }
+
             return res.status(200).json({
                 success: true,
                 services: [],
