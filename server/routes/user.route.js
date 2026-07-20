@@ -24,6 +24,7 @@ import {
     removeServiceFromWishlist 
 } from '../controllers/user.controller.js';
 import { protect } from '../middlewares/user.middleware.js';
+import { getInboxCounts, markInboxRead } from '../controllers/inbox.controller.js';
 import upload from '../middlewares/multer.js';
 import { eventAttachmentUpload } from '../middlewares/eventAttachmentUpload.js';
 
@@ -57,5 +58,7 @@ userRouter.post("/forgot-password", forgotPassword);
 userRouter.post("/reset-password/:token", resetPassword);
 userRouter.post('/wishlist/:serviceId', protect, addServiceToWishlist);
 userRouter.delete('/wishlist/:serviceId', protect, removeServiceFromWishlist);
+userRouter.get('/inbox/counts', protect, getInboxCounts);
+userRouter.post('/inbox/mark-read', protect, markInboxRead);
 
 export default userRouter;

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -42,7 +42,7 @@ const SpecificCategory = () => {
     if (!activeCategories || activeCategories.length === 0) {
       dispatch(getActiveCategories());
     }
-  }, [dispatch, activeCategories?.length]);
+  }, [dispatch, activeCategories]);
 
   const RULES = useMemo(() => {
     const rules = {};
@@ -77,7 +77,7 @@ const SpecificCategory = () => {
     [services, categoryName]
   );
 
-  const getPriceRange = () => {
+  const getPriceRange = useCallback(() => {
     const prices = allServices
       .map((service) => service?.price)
       .filter((price) => price !== undefined && price !== null && !isNaN(price))
@@ -88,14 +88,14 @@ const SpecificCategory = () => {
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     return [Math.floor(min), Math.ceil(max)];
-  };
+  }, [allServices]);
 
   useEffect(() => {
     if (allServices.length > 0) {
       const [min, max] = getPriceRange();
       setPriceRange([min, max]);
     }
-  }, [allServices]);
+  }, [allServices, getPriceRange]);
 
   useEffect(() => {
     let filtered = [...allServices];
@@ -166,7 +166,7 @@ const SpecificCategory = () => {
       return getPriceRange();
     }
     return [0, 0];
-  }, [allServices]);
+  }, [allServices, getPriceRange]);
 
   const hasActiveFilters =
     searchQuery ||

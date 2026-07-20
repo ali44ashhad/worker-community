@@ -146,7 +146,7 @@ const SpecificService = () => {
     };
 
     fetchServiceById();
-  }, [API_URL, id]);
+  }, [id]);
 
   useEffect(() => {
     if (!isImageLightboxOpen) return undefined;
@@ -286,14 +286,6 @@ const SpecificService = () => {
       await dispatch(addToWishlist(id));
     }
   };
-
-  const whatsIncludedItems = [
-    serviceCategory && `Professional ${serviceCategory} service`,
-    serviceExperience > 0 && `${serviceExperience} year${serviceExperience !== 1 ? 's' : ''} of experience`,
-    subCategories.length > 0 && `Specialized in: ${subCategories.join(', ')}`,
-    keywords.length > 0 &&
-      `Keywords: ${keywords.slice(0, 5).join(', ')}${keywords.length > 5 ? '...' : ''}`,
-  ].filter(Boolean);
 
   const heroChips = [
     ...subCategories.slice(0, 2).map((cat) => ({ label: cat, icon: Briefcase })),

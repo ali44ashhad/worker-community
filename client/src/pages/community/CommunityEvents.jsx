@@ -19,6 +19,7 @@ import { buildEventInterestMessage, buildWhatsAppUrl } from '../../utils/whatsap
 import EventAttachmentList from '../../components/EventAttachmentList';
 import CreateEventModal from '../../components/CreateEventModal';
 import { formatCommunDisplayName } from '../../utils/communName';
+import { getEventTypeLabel } from '../../utils/eventTypes';
 
 const cardClass =
   'rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-6';
@@ -53,7 +54,10 @@ const CommunityEvents = () => {
     dispatch(fetchCommunityEvents());
   }, [dispatch]);
 
-  const canCreate = eventsMeta.hasCommunity && eventsMeta.eventsEnabled;
+  const canCreate =
+    eventsMeta.hasCommunity &&
+    eventsMeta.eventsEnabled &&
+    (eventsMeta.enabledEventTypes?.length || 0) > 0;
 
   const handleCreateEvent = async (data) => {
     const result = await dispatch(createCommunityEvent(data));
@@ -165,6 +169,15 @@ const CommunityEvents = () => {
             <p className={emptyClass}>Events are not enabled for your community right now.</p>
           )}
 
+          {eventsMeta.hasCommunity &&
+            eventsMeta.eventsEnabled &&
+            !eventsLoading &&
+            (eventsMeta.enabledEventTypes?.length || 0) === 0 && (
+              <p className={emptyClass}>
+                Your secretary has not enabled any event types yet. Check back later.
+              </p>
+            )}
+
           {eventsLoading && events.length === 0 ? (
             <div className="py-12 text-center">
               <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
@@ -187,6 +200,9 @@ const CommunityEvents = () => {
                         <h3 className="text-base font-semibold text-[var(--text-primary)] sm:text-lg">
                           {item.title}
                         </h3>
+                        <p className="mt-1 text-xs font-medium text-[var(--purple-primary)]">
+                          {getEventTypeLabel(item.eventType)}
+                        </p>
                         <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
                           {item.description}
                         </p>
@@ -244,6 +260,8 @@ const CommunityEvents = () => {
         heading="Create event"
         subheading="Share a meetup, market, workshop, or any local gathering with your Commun."
         submitLabel="Post event"
+        eventTypeOptions={eventsMeta.enabledEventTypes}
+        requireEventType
       />
     </motion.div>
   );

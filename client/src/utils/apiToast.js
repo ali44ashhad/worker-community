@@ -22,11 +22,3 @@ export function shouldToastApiMessage(message, status, data) {
     if (isAuthApiError(status, data, message)) return false;
     return Boolean(message);
 }
-
-export function shouldToastRejectPayload(payload, meta) {
-    if (!payload) return false;
-    const message = typeof payload === "string" ? payload : payload?.message;
-    const status = meta?.status;
-    const data = meta?.data;
-    return shouldToastApiMessage(message, status, data);
-}

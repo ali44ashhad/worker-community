@@ -25,6 +25,8 @@ import { initChatSocket } from "./socket/chatSocket.js";
 import cors from "cors";
 import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
 import { isWebPushConfigured } from "./utils/webPush.js";
+import { isMobilePushConfigured } from "./utils/mobilePush.js";
+import { ALLOWED_ORIGINS, ALLOWED_ORIGINS_LIST } from "./config/allowedOrigins.js";
 
 const app = express();
 
@@ -43,13 +45,7 @@ app.set("etag", false);
 app.use(cookieParser()); 
 
 // 1. Allow CORS for ALL routes and ALL methods:
-const allowedOrigins = new Set([
-  "https://worker-community.vercel.app",
-  "https://www.commun.in",
-  "https://commun.in",
-  "http://localhost:5173",
-  "http://localhost:3000",
-]);
+const allowedOrigins = ALLOWED_ORIGINS;
 
 // Ensure CORS headers are present even on cached/early/error responses.
 app.use((req, res, next) => {
@@ -160,7 +156,7 @@ if (!isVercel) {
       const httpServer = http.createServer(app);
       const io = new Server(httpServer, {
         cors: {
-          origin: [...allowedOrigins],
+          origin: ALLOWED_ORIGINS_LIST,
           credentials: true,
         },
       });
@@ -184,6 +180,13 @@ if (!isVercel) {
         } else {
           console.error(
             "[push] Web Push NOT configured — set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY"
+          );
+        }
+        if (isMobilePushConfigured()) {
+          console.log("[push] Mobile Push (FCM/APNs via Firebase) configured");
+        } else {
+          console.error(
+            "[push] Mobile Push NOT configured — set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY"
           );
         }
       });

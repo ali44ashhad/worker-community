@@ -76,7 +76,7 @@ const BecomeProvider = () => {
     if (!activeCategories || activeCategories.length === 0) {
       dispatch(getActiveCategories());
     }
-  }, [dispatch, activeCategories?.length]);
+  }, [dispatch, activeCategories]);
 
   // State for provider bio
   const [providerBio, setProviderBio] = useState('');

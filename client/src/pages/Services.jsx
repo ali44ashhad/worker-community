@@ -38,7 +38,7 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
     dispatch(getAllPublicServices());
   }, [dispatch, communityScope]);
 
-  const allServices = services || [];
+  const allServices = useMemo(() => services || [], [services]);
 
   const filteredServices = useMemo(() => {
     let filtered = [...allServices];

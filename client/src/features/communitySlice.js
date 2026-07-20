@@ -39,12 +39,13 @@ export const fetchCommunityEvents = createAsyncThunk(
 
 export const createCommunityEvent = createAsyncThunk(
   'community/createEvent',
-  async ({ title, description, expiresAt, files = [], links = [] }, { rejectWithValue }) => {
+  async ({ title, description, expiresAt, eventType, files = [], links = [] }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
       formData.append('expiresAt', expiresAt);
+      formData.append('eventType', eventType);
       appendEventAttachmentsToFormData(formData, { files, links });
 
       const res = await axios.post(`${API_URL}/api/user/community-events`, formData, {
@@ -138,6 +139,7 @@ const communitySlice = createSlice({
       hasCommunity: false,
       eventsEnabled: false,
       communityCommunName: null,
+      enabledEventTypes: [],
     },
     eventSending: false,
     eventDeletingId: null,
@@ -183,6 +185,7 @@ const communitySlice = createSlice({
         hasCommunity: false,
         eventsEnabled: false,
         communityCommunName: null,
+        enabledEventTypes: [],
       };
       state.vendors = { categories: [], vendorsByCategory: {} };
       state.vendorsError = null;
@@ -238,6 +241,7 @@ const communitySlice = createSlice({
           hasCommunity: Boolean(action.payload.hasCommunity),
           eventsEnabled: Boolean(action.payload.eventsEnabled),
           communityCommunName: action.payload.communityCommunName || null,
+          enabledEventTypes: action.payload.enabledEventTypes || [],
         };
       })
       .addCase(fetchCommunityEvents.rejected, (state, action) => {

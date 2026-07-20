@@ -8,6 +8,7 @@ import secretaryReducer from '../features/secretarySlice.js';
 import communityReducer from '../features/communitySlice.js';
 import servicesReducer from '../features/serviceSlice.js';
 import interestCommunityReducer from '../features/interestCommunitySlice.js';
+import inboxReducer from '../features/inboxSlice.js';
 
 export const store = configureStore({
     reducer: {
@@ -20,5 +21,6 @@ export const store = configureStore({
         secretary: secretaryReducer,
         community: communityReducer,
         interestCommunity: interestCommunityReducer,
+        inbox: inboxReducer,
     },
 });

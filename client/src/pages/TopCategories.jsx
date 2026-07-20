@@ -119,7 +119,6 @@ const TopCategories = () => {
               {categories.slice(0, 6).map((category, i) => {
                 const gradient = GRADIENTS[i % GRADIENTS.length];
                 const slug = slugifyCategoryName(category.name);
-                const displayedKeywords = (category.keywords || []).slice(0, 4);
 
                 return (
                   <motion.div
@@ -152,21 +151,6 @@ const TopCategories = () => {
                         <p className="mb-4 line-clamp-2 min-h-[2.5rem] text-sm leading-snug text-[var(--text-secondary)]">
                           {getCategoryDescription(category)}
                         </p>
-                        {/* <div className="mb-4 flex min-h-[3.25rem] flex-wrap content-start gap-1.5">
-                          {displayedKeywords.map((keyword) => (
-                            <span
-                              key={keyword}
-                              className="rounded-full border border-purple-100 bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-[var(--purple-primary)]"
-                            >
-                              {keyword}
-                            </span>
-                          ))}
-                          {(category.keywords || []).length > 4 && (
-                            <span className="rounded-full border border-fuchsia-100 bg-fuchsia-50 px-2.5 py-0.5 text-xs font-medium text-fuchsia-600">
-                              +{category.keywords.length - 4}
-                            </span>
-                          )}
-                        </div> */}
                         <div className="mt-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-[var(--purple-primary)] transition-all group-hover:gap-2">
                           Explore
                           <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

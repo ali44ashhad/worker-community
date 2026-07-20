@@ -28,7 +28,7 @@ const Breadcrumb = () => {
     if (needsCategories && (!activeCategories || activeCategories.length === 0)) {
       dispatch(getActiveCategories());
     }
-  }, [dispatch, needsCategories, activeCategories?.length]);
+  }, [dispatch, needsCategories, activeCategories]);
 
   const crumbs = useMemo(
     () =>

@@ -20,6 +20,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { motion } from 'framer-motion';
 import SidebarPanelGreeting from './SidebarPanelGreeting';
+import SidebarNavBadge from './SidebarNavBadge';
+import { useInboxBadges } from '../hooks/useInboxBadges';
 
 const ProviderSidebar = ({ isOpen = true, onClose }) => {
   const portalContainerRef = useRef(null);
@@ -28,6 +30,7 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const communityFeatures = useSelector((state) => state.community.features);
+  const inboxCounts = useInboxBadges();
 
   useEffect(() => {
     const container = document.createElement('div');
@@ -52,20 +55,20 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
     { icon: LayoutGrid, label: 'Dashboard', path: '/provider/dashboard' },
     ...(isPublicMember || communityFeatures.hasCommunity
       ? [
-          { icon: Wrench, label: 'Services', path: '/community/services' },
+          { icon: Wrench, label: 'Services', path: '/community/services', inboxCategory: 'registration' },
         ]
       : []),
     ...(!isPublicMember && communityFeatures.hasCommunity
       ? [
-          { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
+          { icon: MessageCircle, label: 'Communities', path: '/community/communities', inboxCategory: 'communities' },
         ]
       : []),
     { icon: Briefcase, label: 'Manage Services', path: '/provider/manage-services' },
     ...(communityFeatures.broadcast
-      ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast' }]
+      ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast', inboxCategory: 'broadcast' }]
       : []),
     ...(communityFeatures.events
-      ? [{ icon: Calendar, label: 'Events', path: '/community/events' }]
+      ? [{ icon: Calendar, label: 'Events', path: '/community/events', inboxCategory: 'events' }]
       : []),
     ...(!isPublicMember
       ? [
@@ -143,7 +146,10 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
                   }`}
                 >
                   <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : ''}`} />
-                  {item.label}
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {item.inboxCategory ? (
+                    <SidebarNavBadge count={inboxCounts[item.inboxCategory]} active={isActive} />
+                  ) : null}
                 </Link>
               </motion.li>
             );

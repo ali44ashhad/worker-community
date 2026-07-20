@@ -23,14 +23,20 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(payload.title || 'CommuN', {
-      body: payload.body || '',
-      icon: payload.icon || '/CommuN-logo-white.png',
-      badge: payload.badge || '/CommuN-logo-white.png',
-      tag: payload.tag || 'commun',
-      data: payload.data || { url: '/' },
-      renotify: true,
-    })
+    (async () => {
+      await self.registration.showNotification(payload.title || 'CommuN', {
+        body: payload.body || '',
+        icon: payload.icon || '/CommuN-logo-white.png',
+        badge: payload.badge || '/CommuN-logo-white.png',
+        tag: payload.tag || 'commun',
+        data: payload.data || { url: '/' },
+        renotify: true,
+      });
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      clients.forEach((client) => {
+        client.postMessage({ type: 'INBOX_REFRESH' });
+      });
+    })()
   );
 });
 

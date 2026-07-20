@@ -83,7 +83,7 @@ const protect = async (req, res, next) => {
                 message: "Invalid session. Please log in again.",
             });
         }
-        console.log("Error in protect middleware:", error.message);
+        console.error("Error in protect middleware:", error.message);
         return res.status(401).json({
             success: false,
             code: "UNAUTHORIZED",
@@ -104,7 +104,7 @@ const isAdmin = (req, res, next) => {
         next();
     }
     catch (error) {
-        console.log("Error in isAdmin middleware:", error);
+        console.error("Error in isAdmin middleware:", error);
         return res.status(500).json({
             success: false,
             message: error.message
@@ -135,7 +135,7 @@ const isProvider = (req, res, next) => {
         next();
     }
     catch (error) {
-        console.log("Error in isProvider middleware:", error);
+        console.error("Error in isProvider middleware:", error);
         return res.status(500).json({
             success: false,
             message: error.message
@@ -154,7 +154,7 @@ const isSecretary = (req, res, next) => {
         }
         next();
     } catch (error) {
-        console.log("Error in isSecretary middleware:", error);
+        console.error("Error in isSecretary middleware:", error);
         return res.status(500).json({
             success: false,
             message: error.message
@@ -174,7 +174,7 @@ const isCustomer = (req, res, next) => {
         next();
     }
     catch (error) {
-        console.log("Error in isCustomer middleware:", error);
+        console.error("Error in isCustomer middleware:", error);
         return res.status(500).json({
             success: false,
             message: error.message

@@ -7,6 +7,7 @@ import {
   getMinExpiryDateInput,
   MAX_EVENT_DAYS,
 } from '../utils/communityEventDates';
+import { EVENT_TYPE_OPTIONS } from '../utils/eventTypes';
 
 const inputClass =
   'w-full rounded-xl border border-purple-100 bg-white px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:border-[var(--purple-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 transition-all disabled:cursor-not-allowed disabled:opacity-50';
@@ -16,10 +17,11 @@ const btnPrimary =
 const btnSecondary =
   'rounded-xl border border-purple-100 bg-white px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition-all hover:border-purple-200 hover:bg-purple-50 disabled:opacity-50';
 
-const emptyForm = () => ({
+const emptyForm = (defaultEventType = '') => ({
   title: '',
   description: '',
   expiresAt: getMinExpiryDateInput(),
+  eventType: defaultEventType,
   attachmentFiles: [],
   attachmentLinks: [],
 });
@@ -34,14 +36,22 @@ const CreateEventModal = ({
   heading = 'New event',
   subheading = `Set an expiry date up to ${MAX_EVENT_DAYS} days from today. Expired events are hidden from members.`,
   submitLabel = 'Create event',
+  eventTypeOptions = null,
+  requireEventType = false,
 }) => {
-  const [form, setForm] = useState(emptyForm);
+  const typeChoices =
+    eventTypeOptions && eventTypeOptions.length > 0
+      ? EVENT_TYPE_OPTIONS.filter(({ key }) => eventTypeOptions.includes(key))
+      : EVENT_TYPE_OPTIONS;
+
+  const defaultType = typeChoices[0]?.key || 'communityMeetup';
+  const [form, setForm] = useState(() => emptyForm(defaultType));
 
   useEffect(() => {
     if (!isOpen) {
-      setForm(emptyForm());
+      setForm(emptyForm(defaultType));
     }
-  }, [isOpen]);
+  }, [isOpen, defaultType]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -60,12 +70,13 @@ const CreateEventModal = ({
       title: form.title.trim(),
       description: form.description.trim(),
       expiresAt: form.expiresAt,
+      eventType: form.eventType || defaultType,
       files: form.attachmentFiles,
       links: form.attachmentLinks,
     });
 
     if (success) {
-      setForm(emptyForm());
+      setForm(emptyForm(defaultType));
       onClose();
     }
   };
@@ -155,6 +166,28 @@ const CreateEventModal = ({
                   </p>
                 </div>
 
+                {typeChoices.length > 0 && (
+                  <div>
+                    <label htmlFor="create-event-type" className={labelClass}>
+                      Event type {requireEventType ? '*' : ''}
+                    </label>
+                    <select
+                      id="create-event-type"
+                      value={form.eventType || defaultType}
+                      onChange={(e) => setForm((prev) => ({ ...prev, eventType: e.target.value }))}
+                      className={inputClass}
+                      required={requireEventType}
+                      disabled={disabled || isSubmitting || typeChoices.length === 1}
+                    >
+                      {typeChoices.map(({ key, label }) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label htmlFor="create-event-expires" className={labelClass}>
                     Expiry date *
@@ -201,7 +234,8 @@ const CreateEventModal = ({
                     isSubmitting ||
                     !form.title.trim() ||
                     !form.description.trim() ||
-                    !form.expiresAt
+                    !form.expiresAt ||
+                    (requireEventType && !form.eventType)
                   }
                   className={btnPrimary}
                 >

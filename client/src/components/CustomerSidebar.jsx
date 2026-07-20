@@ -20,6 +20,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
 import { motion } from 'framer-motion';
 import SidebarPanelGreeting from './SidebarPanelGreeting';
+import SidebarNavBadge from './SidebarNavBadge';
+import { useInboxBadges } from '../hooks/useInboxBadges';
 import { canBecomeProvider } from '../utils/userHelpers';
 
 const CustomerSidebar = ({ isOpen = true, onClose }) => {
@@ -48,25 +50,26 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
   const user = useSelector((state) => state.auth.user);
   const communityFeatures = useSelector((state) => state.community.features);
   const isPublicMember = Boolean(user?.isPublicMember);
+  const inboxCounts = useInboxBadges();
 
   const menuItems = [
     { icon: Home, label: 'Home', path: '/' },
     ...(isPublicMember || communityFeatures.hasCommunity
       ? [
-          { icon: Wrench, label: 'Services', path: '/community/services' },
+          { icon: Wrench, label: 'Services', path: '/community/services', inboxCategory: 'registration' },
         ]
       : []),
     ...(!isPublicMember && communityFeatures.hasCommunity
       ? [
 
-          { icon: MessageCircle, label: 'Communities', path: '/community/communities' },
+          { icon: MessageCircle, label: 'Communities', path: '/community/communities', inboxCategory: 'communities' },
         ]
       : []),
     ...(communityFeatures.broadcast
-      ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast' }]
+      ? [{ icon: Megaphone, label: 'Broadcast', path: '/community/broadcast', inboxCategory: 'broadcast' }]
       : []),
     ...(communityFeatures.events
-      ? [{ icon: Calendar, label: 'Events', path: '/community/events' }]
+      ? [{ icon: Calendar, label: 'Events', path: '/community/events', inboxCategory: 'events' }]
       : []),
     ...(!isPublicMember
       ? [
@@ -147,7 +150,10 @@ const CustomerSidebar = ({ isOpen = true, onClose }) => {
                   }`}
                 >
                   <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : ''}`} />
-                  {item.label}
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {item.inboxCategory ? (
+                    <SidebarNavBadge count={inboxCounts[item.inboxCategory]} active={isActive} />
+                  ) : null}
                 </Link>
               </motion.li>
             );

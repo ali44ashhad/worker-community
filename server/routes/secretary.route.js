@@ -10,6 +10,8 @@ import {
     updateMemberStatus,
     getFeatureToggles,
     updateFeatureToggle,
+    getEventToggles,
+    updateEventToggle,
     listCommunityEvents,
     createCommunityEvent,
     deleteCommunityEvent,
@@ -41,6 +43,8 @@ router.patch("/registrations/:userId/approve", protect, isSecretary, approveRegi
 router.patch("/registrations/:userId/reject", protect, isSecretary, rejectRegistration);
 router.get("/features/toggles", protect, isSecretary, getFeatureToggles);
 router.patch("/features/toggles", protect, isSecretary, updateFeatureToggle);
+router.get("/events/toggles", protect, isSecretary, getEventToggles);
+router.patch("/events/toggles", protect, isSecretary, updateEventToggle);
 router.get("/services/toggles", protect, isSecretary, getCategoryToggles);
 router.patch("/services/toggles", protect, isSecretary, updateCategoryToggle);
 router.get("/events", protect, isSecretary, listCommunityEvents);

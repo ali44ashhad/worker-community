@@ -126,6 +126,37 @@ export const updateFeatureToggle = createAsyncThunk(
   }
 );
 
+export const fetchEventToggles = createAsyncThunk(
+  "secretary/fetchEventToggles",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/secretary/events/toggles`);
+      const data = res.data?.data || {};
+      return {
+        toggles: data.toggles || {},
+        communityCommunName: data.communityCommunName || null,
+      };
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to load event type settings";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateEventToggle = createAsyncThunk(
+  "secretary/updateEventToggle",
+  async ({ key, enabled }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/secretary/events/toggles`, { key, enabled });
+      return res.data?.data?.toggles || {};
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update event type";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 export const fetchCategoryToggles = createAsyncThunk(
   "secretary/fetchCategoryToggles",
   async (_, { rejectWithValue }) => {
@@ -186,12 +217,13 @@ export const fetchCommunityEvents = createAsyncThunk(
 
 export const createCommunityEvent = createAsyncThunk(
   "secretary/createCommunityEvent",
-  async ({ title, description, expiresAt, files = [], links = [] }, { rejectWithValue }) => {
+  async ({ title, description, expiresAt, eventType, files = [], links = [] }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
       formData.append("expiresAt", expiresAt);
+      if (eventType) formData.append("eventType", eventType);
       appendEventAttachmentsToFormData(formData, { files, links });
 
       const res = await axios.post(`${API_URL}/api/secretary/events`, formData, {
@@ -428,6 +460,13 @@ const secretarySlice = createSlice({
     featureTogglesMeta: {
       communityCommunName: null,
     },
+    eventToggles: {},
+    eventTogglesLoading: false,
+    eventTogglesError: null,
+    eventTogglesSaving: false,
+    eventTogglesMeta: {
+      communityCommunName: null,
+    },
     communityEvents: [],
     communityEventsLoading: false,
     communityEventsError: null,
@@ -557,6 +596,29 @@ const secretarySlice = createSlice({
       })
       .addCase(updateFeatureToggle.rejected, (state) => {
         state.featureTogglesSaving = false;
+      })
+      .addCase(fetchEventToggles.pending, (state) => {
+        state.eventTogglesLoading = true;
+        state.eventTogglesError = null;
+      })
+      .addCase(fetchEventToggles.fulfilled, (state, action) => {
+        state.eventTogglesLoading = false;
+        state.eventToggles = action.payload.toggles;
+        state.eventTogglesMeta.communityCommunName = action.payload.communityCommunName;
+      })
+      .addCase(fetchEventToggles.rejected, (state, action) => {
+        state.eventTogglesLoading = false;
+        state.eventTogglesError = action.payload;
+      })
+      .addCase(updateEventToggle.pending, (state) => {
+        state.eventTogglesSaving = true;
+      })
+      .addCase(updateEventToggle.fulfilled, (state, action) => {
+        state.eventTogglesSaving = false;
+        state.eventToggles = action.payload;
+      })
+      .addCase(updateEventToggle.rejected, (state) => {
+        state.eventTogglesSaving = false;
       })
       .addCase(fetchCommunityEvents.pending, (state) => {
         state.communityEventsLoading = true;

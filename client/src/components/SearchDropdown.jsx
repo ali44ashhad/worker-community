@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getActiveCategories } from '../features/adminSlice';
@@ -23,14 +23,14 @@ const SearchDropdown = ({ isOpen, onClose }) => {
     if (isOpen && (!activeCategories || activeCategories.length === 0)) {
       dispatch(getActiveCategories());
     }
-  }, [isOpen, activeCategories?.length, dispatch]);
+  }, [isOpen, activeCategories, dispatch]);
 
   // Fetch all services for search (not paginated)
   useEffect(() => {
     if (isOpen && (!services || services.length === 0)) {
       dispatch(getAllPublicServices());
     }
-  }, [isOpen, services?.length, dispatch]);
+  }, [isOpen, services, dispatch]);
 
   // Reset search query when dropdown closes
   useEffect(() => {
@@ -39,10 +39,10 @@ const SearchDropdown = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  const allServices = services || [];
+  const allServices = useMemo(() => services || [], [services]);
 
   // Filter services based on search query
-  const filteredServices = React.useMemo(() => {
+  const filteredServices = useMemo(() => {
     if (!searchQuery.trim()) return [];
     
     const query = searchQuery.trim();
@@ -157,7 +157,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
               </div>
             ) : filteredServices.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500 text-sm">No services found matching "{searchQuery}"</p>
+                <p className="text-gray-500 text-sm">No services found matching &ldquo;{searchQuery}&rdquo;</p>
               </div>
             ) : (
               <div className="space-y-2">

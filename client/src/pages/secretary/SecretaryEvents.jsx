@@ -5,10 +5,13 @@ import { CalendarDays, Plus, ToggleRight, Trash2 } from 'lucide-react';
 import {
   fetchFeatureToggles,
   updateFeatureToggle,
+  fetchEventToggles,
+  updateEventToggle,
   fetchCommunityEvents,
   createCommunityEvent,
   deleteCommunityEvent,
 } from '../../features/secretarySlice';
+import { EVENT_TYPE_OPTIONS } from '../../utils/eventTypes';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import EventAttachmentList from '../../components/EventAttachmentList';
 import CreateEventModal from '../../components/CreateEventModal';
@@ -50,6 +53,10 @@ const SecretaryEvents = () => {
     featureTogglesSaving,
     featureTogglesError,
     featureTogglesMeta,
+    eventToggles,
+    eventTogglesLoading,
+    eventTogglesSaving,
+    eventTogglesError,
     communityEvents,
     communityEventsLoading,
     communityEventsError,
@@ -62,6 +69,7 @@ const SecretaryEvents = () => {
 
   useEffect(() => {
     dispatch(fetchFeatureToggles());
+    dispatch(fetchEventToggles());
     dispatch(fetchCommunityEvents());
   }, [dispatch]);
 
@@ -147,6 +155,48 @@ const SecretaryEvents = () => {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.03 }}
+          className={cardClass}
+        >
+          <SectionHeader
+            icon={ToggleRight}
+            title="Event types members can post"
+            description="Choose which kinds of events customers and providers can create. You can still create any type as secretary."
+          />
+          <ul className="space-y-3">
+            {EVENT_TYPE_OPTIONS.map(({ key, label }) => {
+              const enabled = Boolean(eventToggles[key]);
+              return (
+                <li
+                  key={key}
+                  className="flex flex-col gap-3 border-b border-purple-100/60 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{label}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      {enabled ? 'Visible to members' : 'Hidden from member create & list'}
+                    </p>
+                  </div>
+                  <ToggleSwitch
+                    enabled={enabled}
+                    label={`${label} ${enabled ? 'on' : 'off'}`}
+                    disabled={eventTogglesLoading || eventTogglesSaving}
+                    onToggle={() => dispatch(updateEventToggle({ key, enabled: !enabled }))}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+          {eventTogglesError && (
+            <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {eventTogglesError}
+            </p>
+          )}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 }}
           className={cardClass}
         >
@@ -192,6 +242,10 @@ const SecretaryEvents = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-[var(--text-primary)]">{item.title}</p>
+                          <span className="inline-flex rounded-full border border-purple-100 bg-purple-50/50 px-2.5 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
+                            {EVENT_TYPE_OPTIONS.find((t) => t.key === (item.eventType || 'communityMeetup'))?.label ||
+                              'Community meetup'}
+                          </span>
                           <span
                             className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                               active
@@ -238,6 +292,7 @@ const SecretaryEvents = () => {
         disabled={cannotCreate}
         disabledMessage="Set your Commun name in Admin → Secretary management before creating events."
         submitLabel="Create event"
+        requireEventType
       />
     </motion.div>
   );

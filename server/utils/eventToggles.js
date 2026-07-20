@@ -1,3 +1,5 @@
+import User from "../models/user.model.js";
+
 export const EVENT_TOGGLE_KEYS = [
     "communityMeetup",
     "marketDay",
@@ -5,6 +7,14 @@ export const EVENT_TOGGLE_KEYS = [
     "sports",
     "fundraiser",
 ];
+
+export const EVENT_TYPE_LABELS = {
+    communityMeetup: "Community meetup",
+    marketDay: "Market day",
+    workshop: "Workshop",
+    sports: "Sports",
+    fundraiser: "Fundraiser",
+};
 
 export const DEFAULT_EVENT_TOGGLES = {
     communityMeetup: true,
@@ -23,5 +33,44 @@ export const normalizeEventToggles = (raw) => {
     return out;
 };
 
-export const hasAnyEventEnabled = (toggles) =>
-    EVENT_TOGGLE_KEYS.some((key) => Boolean(toggles?.[key]));
+export const isEventTypeEnabled = (toggles, eventType) => {
+    const key = String(eventType || "communityMeetup").trim();
+    if (!EVENT_TOGGLE_KEYS.includes(key)) return false;
+    return Boolean(normalizeEventToggles(toggles)[key]);
+};
+
+export const getEnabledEventTypes = (toggles) =>
+    EVENT_TOGGLE_KEYS.filter((key) => isEventTypeEnabled(toggles, key));
+
+export const hasAnyEventTypeEnabled = (toggles) => getEnabledEventTypes(toggles).length > 0;
+
+export function parseEventType(raw, { required = false } = {}) {
+    const key = String(raw || "").trim();
+    if (!key) {
+        if (required) {
+            return { ok: false, message: "Event type is required." };
+        }
+        return { ok: true, eventType: "communityMeetup" };
+    }
+    if (!EVENT_TOGGLE_KEYS.includes(key)) {
+        return { ok: false, message: "Invalid event type." };
+    }
+    return { ok: true, eventType: key };
+}
+
+export async function getCommunityEventToggles(communityHandle) {
+    const handle = String(communityHandle || "")
+        .trim()
+        .toLowerCase();
+    if (!handle) return normalizeEventToggles();
+
+    const secretary = await User.findOne({
+        role: "secretary",
+        isActive: true,
+        communName: handle,
+    })
+        .select("eventToggles")
+        .lean();
+
+    return normalizeEventToggles(secretary?.eventToggles);
+}

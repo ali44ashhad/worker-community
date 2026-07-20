@@ -12,6 +12,13 @@ import { sendPasswordResetEmail, sendSecretaryNewSignupEmail } from "../utils/em
 import { getFrontendBase } from "../utils/frontendUrl.js";
 import { normalizeCommunName, isValidCommunName } from "../utils/communName.js";
 import { normalizeFeatureToggles } from "../utils/featureToggles.js";
+import {
+    getCommunityEventToggles,
+    getEnabledEventTypes,
+    isEventTypeEnabled,
+    normalizeEventToggles,
+    parseEventType,
+} from "../utils/eventToggles.js";
 import { sendPhoneOtp, verifyPhoneOtp, normalizePhoneDigits } from "../utils/twilio.js";
 import Broadcast from "../models/broadcast.model.js";
 import CommunityEvent from "../models/communityEvent.model.js";
@@ -117,7 +124,7 @@ const forgotPassword = async (req, res) => {
         try {
             await sendPasswordResetEmail({ toEmail: user.email, resetUrl });
         } catch (mailError) {
-            console.log("Password reset email failed:", mailError?.message || mailError);
+            console.error("Password reset email failed:", mailError?.message || mailError);
         }
 
         return res.status(200).json({
@@ -125,7 +132,7 @@ const forgotPassword = async (req, res) => {
             message: "If this email exists, we have sent a password reset link.",
         });
     } catch (error) {
-        console.log("Error in forgotPassword:", error.message);
+        console.error("Error in forgotPassword:", error.message);
         return res.status(500).json({ success: false, message: "Internal server error: " + error.message });
     }
 };
@@ -163,7 +170,7 @@ const resetPassword = async (req, res) => {
 
         return res.status(200).json({ success: true, message: "Password reset successfully. Please login." });
     } catch (error) {
-        console.log("Error in resetPassword:", error.message);
+        console.error("Error in resetPassword:", error.message);
         return res.status(500).json({ success: false, message: "Internal server error: " + error.message });
     }
 };
@@ -606,7 +613,7 @@ const register = async (req, res) => {
             user
         });
     } catch (error) {
-        console.log("Error while registering the User", error);
+        console.error("Error while registering the User", error);
         if (error.code === 11000) {
             const field = error.keyPattern?.email ? "email" : error.keyPattern?.communName ? "Commun name" : "field";
             return res.status(409).json({
@@ -654,7 +661,7 @@ const login = async (req, res) => {
             user
         });
     } catch (error) {
-        console.log("Error while logging in the user", error);
+        console.error("Error while logging in the user", error);
         return res.status(500).json({
             success: false,
             message: error.message
@@ -670,7 +677,7 @@ const logout = (req, res) => {
             message: "User logged out successfully",
         });
     } catch (error) {
-        console.log("Error during logout:", error.message);
+        console.error("Error during logout:", error.message);
         return res.status(500).json({
             success: false,
             message: error.message,
@@ -694,7 +701,7 @@ const checkAuth = (req, res) => {
             user
         });
     } catch (error) {
-        console.log("Error in checkAuth:", error.message);
+        console.error("Error in checkAuth:", error.message);
         return res.status(500).json({
             success: false,
             message: error.message,
@@ -875,7 +882,7 @@ const updateUserProfile = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error in updateUserProfile:", error.message);
+        console.error("Error in updateUserProfile:", error.message);
         return res.status(500).json({
             success: false,
             message: "Internal server error: " + error.message,
@@ -928,7 +935,7 @@ const changePassword = async (req, res) => {
             message: "Password updated successfully"
         });
     } catch (error) {
-        console.log("Error in changePassword:", error.message);
+        console.error("Error in changePassword:", error.message);
         return res.status(500).json({
             success: false,
             message: "Internal server error: " + error.message,
@@ -1015,12 +1022,16 @@ const getCommunityFeatures = async (req, res) => {
         }
 
         const featureToggles = normalizeFeatureToggles(secretary.featureToggles);
+        const eventToggles = normalizeEventToggles(secretary.eventToggles);
+        const enabledEventTypes = getEnabledEventTypes(eventToggles);
 
         return res.status(200).json({
             success: true,
             data: {
                 broadcast: Boolean(featureToggles.broadcast),
                 events: Boolean(featureToggles.events),
+                eventToggles,
+                enabledEventTypes,
                 communityCommunName: communityHandle,
                 hasCommunity: true,
             },
@@ -1125,11 +1136,15 @@ const listMemberCommunityEvents = async (req, res) => {
                     communityCommunName: communityHandle,
                     hasCommunity: true,
                     eventsEnabled: false,
+                    enabledEventTypes: [],
                 },
             });
         }
 
-        const events = await CommunityEvent.find({
+        const eventToggles = await getCommunityEventToggles(communityHandle);
+        const enabledEventTypes = getEnabledEventTypes(eventToggles);
+
+        const eventsRaw = await CommunityEvent.find({
             communityCommunName: communityHandle,
             expiresAt: { $gte: new Date() },
         })
@@ -1138,6 +1153,10 @@ const listMemberCommunityEvents = async (req, res) => {
             .limit(100)
             .lean();
 
+        const events = eventsRaw.filter((event) =>
+            isEventTypeEnabled(eventToggles, event.eventType || "communityMeetup")
+        );
+
         return res.status(200).json({
             success: true,
             data: {
@@ -1145,6 +1164,7 @@ const listMemberCommunityEvents = async (req, res) => {
                 communityCommunName: communityHandle,
                 hasCommunity: true,
                 eventsEnabled: true,
+                enabledEventTypes,
             },
         });
     } catch (error) {
@@ -1181,6 +1201,7 @@ const createMemberCommunityEvent = async (req, res) => {
         const title = String(req.body?.title || "").trim();
         const description = String(req.body?.description || "").trim();
         const expiryCheck = validateEventExpiry(req.body?.expiresAt);
+        const typeCheck = parseEventType(req.body?.eventType, { required: true });
 
         if (!title) {
             return res.status(400).json({ success: false, message: "Title is required." });
@@ -1190,6 +1211,17 @@ const createMemberCommunityEvent = async (req, res) => {
         }
         if (!expiryCheck.ok) {
             return res.status(400).json({ success: false, message: expiryCheck.message });
+        }
+        if (!typeCheck.ok) {
+            return res.status(400).json({ success: false, message: typeCheck.message });
+        }
+
+        const eventToggles = await getCommunityEventToggles(communityHandle);
+        if (!isEventTypeEnabled(eventToggles, typeCheck.eventType)) {
+            return res.status(403).json({
+                success: false,
+                message: "This event type is not enabled for your community.",
+            });
         }
         if (title.length > 120) {
             return res.status(400).json({ success: false, message: "Title must be 120 characters or less." });
@@ -1208,6 +1240,7 @@ const createMemberCommunityEvent = async (req, res) => {
             author: req.user._id,
             title,
             description,
+            eventType: typeCheck.eventType,
             expiresAt: expiryCheck.expiresAt,
             attachments: attachmentResult.attachments,
         });
@@ -1224,6 +1257,7 @@ const createMemberCommunityEvent = async (req, res) => {
                 body: title,
                 url: "/community/events",
                 tag: `event-${String(event._id)}`,
+                inboxCategory: "events",
             });
         } catch (pushError) {
             console.error("createMemberCommunityEvent push failed:", pushError?.message || pushError);

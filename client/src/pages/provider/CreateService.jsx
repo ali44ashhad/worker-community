@@ -43,7 +43,7 @@ const CreateService = () => {
     if (!activeCategories || activeCategories.length === 0) {
       dispatch(getActiveCategories());
     }
-  }, [dispatch, activeCategories?.length]);
+  }, [dispatch, activeCategories]);
 
   const RULES = useMemo(() => {
     const rules = {};

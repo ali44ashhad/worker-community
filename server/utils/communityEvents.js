@@ -31,18 +31,3 @@ export const validateEventExpiry = (raw) => {
 
     return { ok: true, expiresAt };
 };
-
-export const isEventActive = (event) => {
-    if (!event?.expiresAt) return false;
-    return new Date(event.expiresAt).getTime() >= Date.now();
-};
-
-export const getMaxExpiryDateInput = () => {
-    const max = new Date();
-    max.setDate(max.getDate() + MAX_EVENT_DAYS);
-    return max.toISOString().slice(0, 10);
-};
-
-export const getMinExpiryDateInput = () => {
-    return new Date().toISOString().slice(0, 10);
-};

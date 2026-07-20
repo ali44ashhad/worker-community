@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-hot-toast';
 import { FaStar } from 'react-icons/fa';
@@ -47,7 +47,7 @@ const Comment = ({ serviceId }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const commentsState = useSelector((state) => state.comments);
-  const comments = commentsState.byServiceId[serviceId] || [];
+  const comments = useMemo(() => commentsState.byServiceId[serviceId] || [], [commentsState.byServiceId, serviceId]);
   const serviceProvider = commentsState.serviceProviders[serviceId];
   const canReview = commentsState.canReviewByServiceId?.[serviceId];
   const isLoading = commentsState.isLoading;

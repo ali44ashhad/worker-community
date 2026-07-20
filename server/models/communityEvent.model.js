@@ -28,6 +28,12 @@ const communityEventSchema = new Schema(
             trim: true,
             maxlength: 2000,
         },
+        eventType: {
+            type: String,
+            enum: ["communityMeetup", "marketDay", "workshop", "sports", "fundraiser"],
+            default: "communityMeetup",
+            required: true,
+        },
         expiresAt: {
             type: Date,
             required: true,

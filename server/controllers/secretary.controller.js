@@ -3,6 +3,13 @@ import Broadcast from "../models/broadcast.model.js";
 import CommunityEvent from "../models/communityEvent.model.js";
 import { FEATURE_TOGGLE_KEYS, normalizeFeatureToggles } from "../utils/featureToggles.js";
 import { isCategoryEnabled, normalizeCategoryToggles } from "../utils/categoryToggles.js";
+import {
+    EVENT_TOGGLE_KEYS,
+    getCommunityEventToggles,
+    getEnabledEventTypes,
+    normalizeEventToggles,
+    parseEventType,
+} from "../utils/eventToggles.js";
 import { getCommunityCategoryStats } from "../utils/communityServices.js";
 import { validateEventExpiry } from "../utils/communityEvents.js";
 import { buildAttachmentsFromRequest, deleteEventAttachments } from "../utils/eventAttachments.js";
@@ -409,6 +416,71 @@ const updateFeatureToggle = async (req, res) => {
 };
 
 /**
+ * @route GET /api/secretary/events/toggles
+ */
+const getEventToggles = async (req, res) => {
+    try {
+        const toggles = normalizeEventToggles(req.user.eventToggles);
+        return res.status(200).json({
+            success: true,
+            data: {
+                toggles,
+                communityCommunName: req.user.communName || null,
+            },
+        });
+    } catch (error) {
+        console.error("getEventToggles:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @route PATCH /api/secretary/events/toggles
+ * Body: { key: string, enabled: boolean }
+ */
+const updateEventToggle = async (req, res) => {
+    try {
+        const { key, enabled } = req.body;
+        if (!EVENT_TOGGLE_KEYS.includes(key)) {
+            return res.status(400).json({ success: false, message: "Invalid event type." });
+        }
+        if (typeof enabled !== "boolean") {
+            return res.status(400).json({ success: false, message: "enabled must be true or false." });
+        }
+
+        const secretary = await User.findById(req.user._id);
+        if (!secretary || secretary.role !== "secretary") {
+            return res.status(403).json({ success: false, message: "Forbidden." });
+        }
+
+        if (!secretary.eventToggles) {
+            secretary.eventToggles = normalizeEventToggles();
+        }
+
+        const nextToggles = { ...normalizeEventToggles(secretary.eventToggles), [key]: enabled };
+        if (!getEnabledEventTypes(nextToggles).length) {
+            return res.status(400).json({
+                success: false,
+                message: "At least one event type must stay enabled for members.",
+            });
+        }
+
+        secretary.eventToggles = nextToggles;
+        secretary.markModified("eventToggles");
+        await secretary.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Event type setting updated.",
+            data: { toggles: normalizeEventToggles(secretary.eventToggles) },
+        });
+    } catch (error) {
+        console.error("updateEventToggle:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
  * @route GET /api/secretary/events
  */
 const listCommunityEvents = async (req, res) => {
@@ -454,6 +526,7 @@ const createCommunityEvent = async (req, res) => {
         const title = String(req.body?.title || "").trim();
         const description = String(req.body?.description || "").trim();
         const expiryCheck = validateEventExpiry(req.body?.expiresAt);
+        const typeCheck = parseEventType(req.body?.eventType, { required: false });
 
         if (!title) {
             return res.status(400).json({ success: false, message: "Title is required." });
@@ -463,6 +536,9 @@ const createCommunityEvent = async (req, res) => {
         }
         if (!expiryCheck.ok) {
             return res.status(400).json({ success: false, message: expiryCheck.message });
+        }
+        if (!typeCheck.ok) {
+            return res.status(400).json({ success: false, message: typeCheck.message });
         }
         if (title.length > 120) {
             return res.status(400).json({ success: false, message: "Title must be 120 characters or less." });
@@ -481,6 +557,7 @@ const createCommunityEvent = async (req, res) => {
             author: req.user._id,
             title,
             description,
+            eventType: typeCheck.eventType,
             expiresAt: expiryCheck.expiresAt,
             attachments: attachmentResult.attachments,
         });
@@ -497,6 +574,7 @@ const createCommunityEvent = async (req, res) => {
                 body: title,
                 url: "/community/events",
                 tag: `event-${String(event._id)}`,
+                inboxCategory: "events",
             });
         } catch (pushError) {
             console.error("createCommunityEvent push failed:", pushError?.message || pushError);
@@ -620,6 +698,7 @@ const createBroadcast = async (req, res) => {
                 body: title,
                 url: "/community/broadcast",
                 tag: `broadcast-${String(broadcast._id)}`,
+                inboxCategory: "broadcast",
             });
         } catch (pushError) {
             console.error("createBroadcast push failed:", pushError?.message || pushError);
@@ -781,6 +860,8 @@ export {
     updateMemberStatus,
     getFeatureToggles,
     updateFeatureToggle,
+    getEventToggles,
+    updateEventToggle,
     listCommunityEvents,
     createCommunityEvent,
     deleteCommunityEvent,

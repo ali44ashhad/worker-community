@@ -3,6 +3,8 @@ import PushSubscription from "../models/pushSubscription.model.js";
 import User from "../models/user.model.js";
 import InterestCommunityMembership from "../models/interestCommunityMembership.model.js";
 import { getFrontendBase } from "./frontendUrl.js";
+import { createInAppNotifications } from "./inAppNotify.js";
+import { sendMobilePushToUsers } from "./mobilePush.js";
 
 let configured = false;
 
@@ -93,16 +95,28 @@ async function sendToSubscriptions(subscriptions, payload) {
 /**
  * Send a push notification to one or more user IDs.
  */
-export async function sendPushToUsers(userIds, { title, body, url, tag, data } = {}) {
+export async function sendPushToUsers(userIds, { title, body, url, tag, data, inboxCategory } = {}) {
     const ids = [...new Set((userIds || []).map((id) => String(id)).filter(Boolean))];
     if (!ids.length) return { sent: 0, failed: 0 };
 
     try {
-        const subscriptions = await PushSubscription.find({ user: { $in: ids } }).lean();
-        if (!subscriptions.length) return { sent: 0, failed: 0 };
+        if (inboxCategory) {
+            await createInAppNotifications(ids, inboxCategory);
+        }
 
         const payload = buildPayload({ title, body, url, tag, data });
-        return await sendToSubscriptions(subscriptions, payload);
+        const subscriptions = await PushSubscription.find({ user: { $in: ids } }).lean();
+        const [webResult, mobileResult] = await Promise.all([
+            sendToSubscriptions(subscriptions, payload),
+            sendMobilePushToUsers(ids, { title, body, url, tag, data }),
+        ]);
+
+        return {
+            sent: (webResult?.sent || 0) + (mobileResult?.sent || 0),
+            failed: (webResult?.failed || 0) + (mobileResult?.failed || 0),
+            web: webResult,
+            mobile: mobileResult,
+        };
     } catch (err) {
         console.error("[push] sendPushToUsers:", err?.message || err);
         return { sent: 0, failed: 0 };
@@ -131,6 +145,7 @@ export async function notifySecretaryNewRegistration({ communityCommunName, memb
             body: `${name} requested to join your community.`,
             url: "/secretary/approvals",
             tag: `join-request-${handle}`,
+            inboxCategory: "approvals",
         }
     );
 }
@@ -144,6 +159,7 @@ export async function notifyUserRegistrationDecision({ userId, approved, communi
             : `Your registration for ${community} was not approved. Contact your community secretary if needed.`,
         url: approved ? "/community/services" : "/pending-approval",
         tag: `registration-${approved ? "approved" : "rejected"}`,
+        inboxCategory: "registration",
     });
 }
 
@@ -154,6 +170,7 @@ export async function notifyCommunityMembers({
     body,
     url,
     tag,
+    inboxCategory,
 }) {
     const handle = String(communityCommunName || "")
         .trim()
@@ -173,7 +190,7 @@ export async function notifyCommunityMembers({
         ids = ids.filter((id) => id !== String(excludeUserId));
     }
 
-    await sendPushToUsers(ids, { title, body, url, tag });
+    await sendPushToUsers(ids, { title, body, url, tag, inboxCategory });
 }
 
 export async function notifyInterestGroupMessage({
@@ -209,6 +226,7 @@ export async function notifyInterestGroupMessage({
             body: `${authorName || "Someone"}: ${preview}`,
             url: `/community/communities/${interestCommunityId}/chat`,
             tag: `chat-${interestCommunityId}-${handle}`,
+            inboxCategory: "communities",
         }
     );
 }

@@ -2,15 +2,14 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "seed:admin": "node utils/seedAdmin.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "start:socket": "node socketServer.js",
-    "server": "nodemon server.js"
+    "check": "node scripts/check-syntax.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +22,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "firebase-admin": "^14.2.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.1",
     "multer": "^2.0.2",

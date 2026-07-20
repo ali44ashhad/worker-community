@@ -1,5 +1,11 @@
 import PushSubscription from "../models/pushSubscription.model.js";
 import { getVapidPublicKey, isWebPushConfigured } from "../utils/webPush.js";
+import {
+    countMobileDevices,
+    isMobilePushConfigured,
+    registerMobileDevice,
+    unregisterMobileDevice,
+} from "../utils/mobilePush.js";
 
 /**
  * @route GET /api/push/vapid-public-key
@@ -87,17 +93,88 @@ export const unsubscribe = async (req, res) => {
 };
 
 /**
+ * @route POST /api/push/mobile/register
+ * Body: { token, platform: "android"|"ios", appId?, deviceId? }
+ */
+export const registerMobilePush = async (req, res) => {
+    try {
+        const token = String(req.body?.token || "").trim();
+        const platform = String(req.body?.platform || "").trim().toLowerCase();
+        const appId = String(req.body?.appId || "").trim();
+        const deviceId = String(req.body?.deviceId || "").trim();
+
+        if (!token) {
+            return res.status(400).json({ success: false, message: "token is required." });
+        }
+        if (!["android", "ios"].includes(platform)) {
+            return res.status(400).json({ success: false, message: "platform must be android or ios." });
+        }
+        if (!isMobilePushConfigured()) {
+            return res.status(503).json({
+                success: false,
+                message: "Mobile push notifications are not configured on the server.",
+            });
+        }
+
+        const userAgent = String(req.headers["user-agent"] || "").slice(0, 500);
+        await registerMobileDevice(req.user._id, { token, platform, appId, deviceId, userAgent });
+
+        return res.status(200).json({
+            success: true,
+            message: `Mobile push enabled for ${platform}.`,
+        });
+    } catch (error) {
+        console.error("registerMobilePush:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
+ * @route DELETE /api/push/mobile/unregister
+ * Body: { token }
+ */
+export const unregisterMobilePush = async (req, res) => {
+    try {
+        const token = String(req.body?.token || "").trim();
+        if (!token) {
+            return res.status(400).json({ success: false, message: "token is required." });
+        }
+
+        await unregisterMobileDevice(req.user._id, token);
+
+        return res.status(200).json({
+            success: true,
+            message: "Mobile push disabled.",
+        });
+    } catch (error) {
+        console.error("unregisterMobilePush:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+/**
  * @route GET /api/push/status
  */
 export const getStatus = async (req, res) => {
     try {
-        const count = await PushSubscription.countDocuments({ user: req.user._id });
+        const [webCount, mobileCount] = await Promise.all([
+            PushSubscription.countDocuments({ user: req.user._id }),
+            countMobileDevices(req.user._id),
+        ]);
         return res.status(200).json({
             success: true,
             data: {
-                configured: isWebPushConfigured(),
-                subscribed: count > 0,
-                deviceCount: count,
+                configured: isWebPushConfigured() || isMobilePushConfigured(),
+                web: {
+                    configured: isWebPushConfigured(),
+                    subscribed: webCount > 0,
+                    deviceCount: webCount,
+                },
+                mobile: {
+                    configured: isMobilePushConfigured(),
+                    subscribed: mobileCount > 0,
+                    deviceCount: mobileCount,
+                },
             },
         });
     } catch (error) {

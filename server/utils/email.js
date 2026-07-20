@@ -266,41 +266,6 @@ export async function sendSecretaryNewSignupEmail({
     return await sendEmail({ toEmail, subject, text, html });
 }
 
-export async function sendSecretaryProviderApplicationEmail({
-    toEmail,
-    communityCommunName,
-    memberName,
-    memberEmail,
-    memberPhone,
-}) {
-    const communityLabel = formatCommunDisplayName(communityCommunName) || communityCommunName;
-    const subject = `New provider application pending approval (${communityLabel})`;
-    const text = `A community member applied to become a provider in (${communityLabel}) and is pending approval.\n\nName: ${memberName}\nEmail: ${memberEmail}\nPhone: ${memberPhone || "-"}\n\nPlease log in to review pending registrations.`;
-    const frontendBase = getFrontendBase();
-    const reviewsUrl = `${frontendBase.replace(/\/+$/, "")}/secretary/approvals`;
-    const html = renderEmailLayout({
-        preheader: `Provider application in ${communityLabel}`,
-        title: "New provider application pending approval",
-        introHtml: `<p style="margin:0 0 10px">A member in your community <b>${escapeHtml(
-            communityLabel
-        )}</b> applied to become a provider and is pending approval.</p>`,
-        detailsRows: [
-            { label: "Name", valueHtml: escapeHtml(memberName) },
-            {
-                label: "Email",
-                valueHtml: `<a href="mailto:${encodeURIComponent(memberEmail)}" style="color:#6b46c1;text-decoration:none;font-weight:700">${escapeHtml(
-                    memberEmail
-                )}</a>`,
-            },
-            { label: "Phone", valueHtml: escapeHtml(memberPhone || "-") },
-        ],
-        cta: { href: reviewsUrl, label: "Review Pending" },
-        footerNote:
-            "If the link doesn’t open, log in to your secretary dashboard and open “Approvals”.",
-    });
-    return await sendEmail({ toEmail, subject, text, html });
-}
-
 export async function sendUserRegistrationApprovedEmail({ toEmail, communityCommunName }) {
     const frontendBase = getFrontendBase();
     const loginUrl = `${frontendBase.replace(/\/+$/, "")}/login`;

@@ -2,15 +2,10 @@ import "dotenv/config";
 import http from "http";
 import { Server } from "socket.io";
 import dbConnect from "./config/database.js";
+import { ALLOWED_ORIGINS } from "./config/allowedOrigins.js";
 import { initChatSocket } from "./socket/chatSocket.js";
 
-const allowedOrigins = new Set([
-  "https://worker-community.vercel.app",
-  "https://www.commun.in",
-  "https://commun.in",
-  "http://localhost:5173",
-  "http://localhost:3000",
-]);
+const allowedOrigins = ALLOWED_ORIGINS;
 
 async function start() {
   await dbConnect();

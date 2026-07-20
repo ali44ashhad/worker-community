@@ -77,8 +77,7 @@ const CommunityVendors = () => {
     }
   }, [dispatch, userCommunityHandle]);
 
-  const categories = vendors?.categories || [];
-  const vendorsByCategory = vendors?.vendorsByCategory || {};
+  const vendorsByCategory = useMemo(() => vendors?.vendorsByCategory || {}, [vendors?.vendorsByCategory]);
 
   const scopedVendorsByCategory = useMemo(() => {
     if (!userCommunityHandle) return {};
