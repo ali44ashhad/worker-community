@@ -43,18 +43,24 @@ const protect = async (req, res, next) => {
             const isCheckAuth = url.includes("/user/check-auth");
 
             if (accountStatus === "rejected" && !isCheckAuth) {
-                return res.status(403).json({
-                    success: false,
-                    code: "ACCOUNT_REJECTED",
-                    message: "Your registration was not approved. Please contact support if you need help.",
-                });
+                const allowRejectedPush = url.includes("/api/push/");
+                if (!allowRejectedPush) {
+                    return res.status(403).json({
+                        success: false,
+                        code: "ACCOUNT_REJECTED",
+                        message: "Your registration was not approved. Please contact support if you need help.",
+                    });
+                }
             }
             if (accountStatus === "pending" && !isCheckAuth) {
-                return res.status(403).json({
-                    success: false,
-                    code: "ACCOUNT_PENDING",
-                    message: "Your account is pending secretary approval.",
-                });
+                const allowPendingPush = url.includes("/api/push/");
+                if (!allowPendingPush) {
+                    return res.status(403).json({
+                        success: false,
+                        code: "ACCOUNT_PENDING",
+                        message: "Your account is pending secretary approval.",
+                    });
+                }
             }
         }
 

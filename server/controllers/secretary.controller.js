@@ -7,6 +7,10 @@ import { getCommunityCategoryStats } from "../utils/communityServices.js";
 import { validateEventExpiry } from "../utils/communityEvents.js";
 import { buildAttachmentsFromRequest, deleteEventAttachments } from "../utils/eventAttachments.js";
 import { sendUserRegistrationApprovedEmail, sendUserRegistrationRejectedEmail } from "../utils/email.js";
+import {
+    notifyUserRegistrationDecision,
+    notifyCommunityMembers,
+} from "../utils/webPush.js";
 
 const getSecretaryCommunityHandle = (secretary) =>
     secretary.communName ? String(secretary.communName).trim().toLowerCase() : "";
@@ -81,6 +85,16 @@ const approveRegistration = async (req, res) => {
             console.error("approveRegistration email failed:", mailError?.message || mailError);
         }
 
+        try {
+            await notifyUserRegistrationDecision({
+                userId: user._id,
+                approved: true,
+                communityCommunName: user.communityCommunName || communityHandle,
+            });
+        } catch (pushError) {
+            console.error("approveRegistration push failed:", pushError?.message || pushError);
+        }
+
         const safe = user.toObject();
         delete safe.password;
         return res.status(200).json({
@@ -128,6 +142,16 @@ const rejectRegistration = async (req, res) => {
             }
         } catch (mailError) {
             console.error("rejectRegistration email failed:", mailError?.message || mailError);
+        }
+
+        try {
+            await notifyUserRegistrationDecision({
+                userId: user._id,
+                approved: false,
+                communityCommunName: user.communityCommunName || communityHandle,
+            });
+        } catch (pushError) {
+            console.error("rejectRegistration push failed:", pushError?.message || pushError);
         }
 
         return res.status(200).json({
@@ -302,6 +326,18 @@ const updateMemberStatus = async (req, res) => {
             console.error("updateMemberStatus email failed:", mailError?.message || mailError);
         }
 
+        try {
+            if (accountStatus && accountStatus !== prevStatus && ["approved", "rejected"].includes(accountStatus)) {
+                await notifyUserRegistrationDecision({
+                    userId: user._id,
+                    approved: accountStatus === "approved",
+                    communityCommunName: user.communityCommunName || communityHandle,
+                });
+            }
+        } catch (pushError) {
+            console.error("updateMemberStatus push failed:", pushError?.message || pushError);
+        }
+
         const safe = user.toObject();
         delete safe.password;
         return res.status(200).json({
@@ -453,6 +489,19 @@ const createCommunityEvent = async (req, res) => {
             .populate("author", "firstName lastName role email phoneNumber")
             .lean();
 
+        try {
+            await notifyCommunityMembers({
+                communityCommunName: communityHandle,
+                excludeUserId: req.user._id,
+                title: "New community event",
+                body: title,
+                url: "/community/events",
+                tag: `event-${String(event._id)}`,
+            });
+        } catch (pushError) {
+            console.error("createCommunityEvent push failed:", pushError?.message || pushError);
+        }
+
         return res.status(201).json({
             success: true,
             message: "Event created.",
@@ -562,6 +611,19 @@ const createBroadcast = async (req, res) => {
             title,
             message,
         });
+
+        try {
+            await notifyCommunityMembers({
+                communityCommunName: communityHandle,
+                excludeUserId: req.user._id,
+                title: "Community broadcast",
+                body: title,
+                url: "/community/broadcast",
+                tag: `broadcast-${String(broadcast._id)}`,
+            });
+        } catch (pushError) {
+            console.error("createBroadcast push failed:", pushError?.message || pushError);
+        }
 
         return res.status(201).json({
             success: true,

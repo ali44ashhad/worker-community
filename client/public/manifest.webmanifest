@@ -1,0 +1,23 @@
+{
+  "name": "CommuN",
+  "short_name": "CommuN",
+  "description": "Neighbourhood Operating System — discover trusted local services in your community.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6B46C1",
+  "icons": [
+    {
+      "src": "/CommuN-logo-white.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/CommuN-logo-white.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

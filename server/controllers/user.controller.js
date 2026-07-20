@@ -17,6 +17,10 @@ import Broadcast from "../models/broadcast.model.js";
 import CommunityEvent from "../models/communityEvent.model.js";
 import { validateEventExpiry } from "../utils/communityEvents.js";
 import { buildAttachmentsFromRequest, deleteEventAttachments } from "../utils/eventAttachments.js";
+import {
+    notifySecretaryNewRegistration,
+    notifyCommunityMembers,
+} from "../utils/webPush.js";
 
 /**
  * Community directory for members (customer/provider): list approved active members by flat number.
@@ -587,6 +591,18 @@ const register = async (req, res) => {
             console.error("Secretary signup notification email failed:", mailError?.message || mailError);
         }
 
+        if (!isOtherCommunity && secretaryForCommunity) {
+            try {
+                const memberName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+                await notifySecretaryNewRegistration({
+                    communityCommunName: cn,
+                    memberName: memberName || "New member",
+                });
+            } catch (pushError) {
+                console.error("Secretary signup push failed:", pushError?.message || pushError);
+            }
+        }
+
         generateToken(user._id, res);
         user.password = undefined;
 
@@ -784,6 +800,18 @@ const joinCommunity = async (req, res) => {
             }
         } catch (mailError) {
             console.error("Secretary join-community notification failed:", mailError?.message || mailError);
+        }
+
+        if (user.accountStatus === "pending") {
+            try {
+                const memberName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+                await notifySecretaryNewRegistration({
+                    communityCommunName: cn,
+                    memberName: memberName || "New member",
+                });
+            } catch (pushError) {
+                console.error("Secretary join-community push failed:", pushError?.message || pushError);
+            }
         }
 
         user.password = undefined;
@@ -1203,6 +1231,19 @@ const createMemberCommunityEvent = async (req, res) => {
         const populated = await CommunityEvent.findById(event._id)
             .populate("author", "firstName lastName role email phoneNumber")
             .lean();
+
+        try {
+            await notifyCommunityMembers({
+                communityCommunName: communityHandle,
+                excludeUserId: req.user._id,
+                title: "New community event",
+                body: title,
+                url: "/community/events",
+                tag: `event-${String(event._id)}`,
+            });
+        } catch (pushError) {
+            console.error("createMemberCommunityEvent push failed:", pushError?.message || pushError);
+        }
 
         return res.status(201).json({
             success: true,

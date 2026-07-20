@@ -73,6 +73,7 @@ import Terms from './pages/Terms'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import Breadcrumb from './components/Breadcrumb'
 import { BreadcrumbProvider } from './context/BreadcrumbContext'
+import PushNotificationPrompt from './components/PushNotificationPrompt'
 
 const App = () => {
 
@@ -392,6 +393,8 @@ const App = () => {
       </Routes>
 
       {!hideGlobalChrome && <Footer></Footer>}
+
+      <PushNotificationPrompt />
 
     </div>
     </BreadcrumbProvider>

@@ -20,9 +20,11 @@ import categoryRouter from "./routes/category.route.js";
 import interestCommunityRouter from "./routes/interestCommunity.route.js";
 import vendorRouter from "./routes/vendor.route.js";
 import emergencyContactRouter from "./routes/emergencyContact.route.js";
+import pushRouter from "./routes/push.route.js";
 import { initChatSocket } from "./socket/chatSocket.js";
 import cors from "cors";
 import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
+import { isWebPushConfigured } from "./utils/webPush.js";
 
 const app = express();
 
@@ -104,6 +106,7 @@ app.use('/api/secretary', secretaryRouter);
 app.use('/api/vendors', vendorRouter);
 app.use('/api/emergency-contacts', emergencyContactRouter);
 app.use('/api/interest-communities', interestCommunityRouter);
+app.use('/api/push', pushRouter);
 app.use('/api', sitemapRouter);
 
 // Global error handler to prevent crashes on unexpected errors
@@ -174,6 +177,13 @@ if (!isVercel) {
             `[email] SMTP NOT configured — secretary approval emails will not send. Missing: ${
               smtp.missing.join(", ") || "SMTP_*"
             }`
+          );
+        }
+        if (isWebPushConfigured()) {
+          console.log("[push] Web Push (VAPID) configured");
+        } else {
+          console.error(
+            "[push] Web Push NOT configured — set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY"
           );
         }
       });

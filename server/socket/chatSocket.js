@@ -4,6 +4,7 @@ import InterestCommunity from "../models/interestCommunity.model.js";
 import InterestCommunityMembership from "../models/interestCommunityMembership.model.js";
 import InterestChatMessage from "../models/interestChatMessage.model.js";
 import { buildChatRoomId, getMemberCommunName } from "../utils/memberCommun.js";
+import { notifyInterestGroupMessage } from "../utils/webPush.js";
 
 const roomPresence = new Map();
 const roomTyping = new Map();
@@ -179,6 +180,25 @@ export function initChatSocket(io) {
                 };
 
                 io.to(roomId).emit("new_message", payload);
+
+                // Push to offline / other group members (fire-and-forget)
+                const authorName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+                InterestCommunity.findById(interestCommunityId)
+                    .select("name")
+                    .lean()
+                    .then((communityDoc) =>
+                        notifyInterestGroupMessage({
+                            interestCommunityId,
+                            communName,
+                            authorId: user._id,
+                            authorName: authorName || "Someone",
+                            text: messageText,
+                            communityName: communityDoc?.name,
+                        })
+                    )
+                    .catch((err) => {
+                        console.error("chat push failed:", err?.message || err);
+                    });
             } catch (err) {
                 socket.emit("chat_error", { message: "Failed to send message." });
             }
