@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { getApiBase } from "../utils/apiBase";
+import { shouldToastApiMessage } from "../utils/apiToast";
 
 const API_URL = getApiBase() || "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -27,7 +28,7 @@ export const joinInterestCommunity = createAsyncThunk(
       return id;
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to join";
-      toast.error(msg);
+      if (shouldToastApiMessage(msg, err.response?.status, err.response?.data)) toast.error(msg);
       return rejectWithValue(msg);
     }
   }
@@ -42,7 +43,7 @@ export const leaveInterestCommunity = createAsyncThunk(
       return id;
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to leave";
-      toast.error(msg);
+      if (shouldToastApiMessage(msg, err.response?.status, err.response?.data)) toast.error(msg);
       return rejectWithValue(msg);
     }
   }
@@ -69,7 +70,7 @@ export const createAdminInterestCommunity = createAsyncThunk(
       return res.data?.data?.community;
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to create";
-      toast.error(msg);
+      if (shouldToastApiMessage(msg, err.response?.status, err.response?.data)) toast.error(msg);
       return rejectWithValue(msg);
     }
   }
@@ -85,7 +86,7 @@ export const toggleAdminInterestCommunity = createAsyncThunk(
       return res.data?.data?.community;
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to update";
-      toast.error(msg);
+      if (shouldToastApiMessage(msg, err.response?.status, err.response?.data)) toast.error(msg);
       return rejectWithValue(msg);
     }
   }

@@ -21,6 +21,7 @@ import {
     notifySecretaryNewRegistration,
     notifyCommunityMembers,
 } from "../utils/webPush.js";
+import { JWT_EXPIRES_IN, setAuthCookie, clearAuthCookies } from "../utils/authCookie.js";
 
 /**
  * Community directory for members (customer/provider): list approved active members by flat number.
@@ -83,18 +84,9 @@ const listCommunityDirectory = async (req, res) => {
 // Helper function to generate a token and set the cookie.
 const generateToken = (userId, res) => {
     const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-        expiresIn: "7d"
+        expiresIn: JWT_EXPIRES_IN,
     });
-
-    const isProduction = process.env.NODE_ENV === "production";
-    res.cookie("jwt", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        path: "/",
-        ...(isProduction ? { domain: ".commun.in" } : {}),
-    });
+    setAuthCookie(res, token);
 };
 
 const forgotPassword = async (req, res) => {
@@ -672,15 +664,7 @@ const login = async (req, res) => {
 
 const logout = (req, res) => {
     try {
-        const isProduction = process.env.NODE_ENV === "production";
-        res.cookie("jwt", "", {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? "none" : "lax",
-            expires: new Date(0),
-            path: "/",
-            ...(isProduction ? { domain: ".commun.in" } : {}),
-        });
+        clearAuthCookies(res);
         res.status(200).json({
             success: true,
             message: "User logged out successfully",

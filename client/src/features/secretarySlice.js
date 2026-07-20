@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { getApiBase } from "../utils/apiBase";
+import { shouldToastApiMessage } from "../utils/apiToast";
 import { appendEventAttachmentsToFormData } from "../utils/eventAttachmentForm";
 
 const API_URL = getApiBase() || "http://localhost:3001";
@@ -33,7 +34,7 @@ export const approveUserRegistration = createAsyncThunk(
       return userId;
     } catch (err) {
       const message = err.response?.data?.message || "Approve failed";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -48,7 +49,7 @@ export const rejectUserRegistration = createAsyncThunk(
       return userId;
     } catch (err) {
       const message = err.response?.data?.message || "Reject failed";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -88,7 +89,7 @@ export const updateCommunityMemberStatus = createAsyncThunk(
       return res.data?.data?.user;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to update member";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -119,7 +120,7 @@ export const updateFeatureToggle = createAsyncThunk(
       return res.data?.data?.toggles || {};
     } catch (err) {
       const message = err.response?.data?.message || "Failed to update feature";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -159,7 +160,7 @@ export const updateCategoryToggle = createAsyncThunk(
       };
     } catch (err) {
       const message = err.response?.data?.message || "Failed to update service category";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -200,7 +201,7 @@ export const createCommunityEvent = createAsyncThunk(
       return res.data?.data?.event;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to create event";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -215,7 +216,7 @@ export const deleteCommunityEvent = createAsyncThunk(
       return eventId;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to delete event";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -248,7 +249,7 @@ export const createBroadcast = createAsyncThunk(
       return res.data?.data?.broadcast;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to send broadcast";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -263,7 +264,7 @@ export const deleteBroadcast = createAsyncThunk(
       return broadcastId;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to delete broadcast";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -330,7 +331,7 @@ export const createSecretaryVendor = createAsyncThunk(
       return res.data?.data?.vendor;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to create vendor";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -345,7 +346,7 @@ export const deleteSecretaryVendor = createAsyncThunk(
       return vendorId;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to delete vendor";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -378,7 +379,7 @@ export const createEmergencyContact = createAsyncThunk(
       return res.data?.data?.contact;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to create emergency contact";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -393,7 +394,7 @@ export const deleteEmergencyContact = createAsyncThunk(
       return contactId;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to delete emergency contact";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }

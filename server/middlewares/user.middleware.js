@@ -68,10 +68,26 @@ const protect = async (req, res, next) => {
         next();
 
     } catch (error) {
+        const name = error?.name || "";
+        if (name === "TokenExpiredError") {
+            return res.status(401).json({
+                success: false,
+                code: "JWT_EXPIRED",
+                message: "Your session expired. Please log in again.",
+            });
+        }
+        if (name === "JsonWebTokenError" || name === "NotBeforeError") {
+            return res.status(401).json({
+                success: false,
+                code: "JWT_INVALID",
+                message: "Invalid session. Please log in again.",
+            });
+        }
         console.log("Error in protect middleware:", error.message);
         return res.status(401).json({
             success: false,
-            message: "Unauthorized. " + error.message
+            code: "UNAUTHORIZED",
+            message: "Please login first to continue",
         });
     }
 };

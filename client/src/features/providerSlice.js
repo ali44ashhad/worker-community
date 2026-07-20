@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, isRejectedWithValue } from "@reduxjs/too
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { getApiBase } from "../utils/apiBase";
+import { shouldToastApiMessage } from "../utils/apiToast";
 
 const API_URL = getApiBase() || "http://localhost:3001";
 axios.defaults.withCredentials = true;
@@ -138,7 +139,9 @@ const providerSlice = createSlice({
           if (action.type === "provider/getAll/rejected" && state.allProviders.length > 0) {
             return;
           }
-          toast.error(action.payload);
+          if (shouldToastApiMessage(action.payload)) {
+            toast.error(action.payload);
+          }
         }
       });
   },

@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { logoutUser } from "./authSlice";
 import { getApiBase } from "../utils/apiBase";
+import { shouldToastApiMessage } from "../utils/apiToast";
 
 const API_URL = getApiBase() || "http://localhost:3001";
 axios.defaults.withCredentials = true;
@@ -63,7 +64,7 @@ const wishlistSlice = createSlice({
       .addCase(fetchWishlist.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
-        if (action.payload) toast.error(action.payload);
+        if (shouldToastApiMessage(action.payload)) toast.error(action.payload);
       })
 
       .addCase(addToWishlist.fulfilled, (state, action) => {
@@ -71,14 +72,14 @@ const wishlistSlice = createSlice({
         toast.success("Added to wishlist");
       })
       .addCase(addToWishlist.rejected, (state, action) => {
-        if (action.payload) toast.error(action.payload);
+        if (shouldToastApiMessage(action.payload)) toast.error(action.payload);
       })
       .addCase(removeFromWishlist.fulfilled, (state, action) => {
         state.ids = action.payload || state.ids;
         toast.success("Removed from wishlist");
       })
       .addCase(removeFromWishlist.rejected, (state, action) => {
-        if (action.payload) toast.error(action.payload);
+        if (shouldToastApiMessage(action.payload)) toast.error(action.payload);
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.ids = [];

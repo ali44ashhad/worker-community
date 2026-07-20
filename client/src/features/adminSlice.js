@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { getApiBase } from "../utils/apiBase";
+import { shouldToastApiMessage } from "../utils/apiToast";
 
 const API_URL = getApiBase() || "http://localhost:3001";
 axios.defaults.withCredentials = true;
@@ -75,7 +76,7 @@ export const updateUserStatusAdmin = createAsyncThunk(
       return res.data.user;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to update user status";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -90,7 +91,7 @@ export const getUserByIdAdmin = createAsyncThunk(
       return res.data.user;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to load user profile";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -111,7 +112,7 @@ export const updateUserCommunityAdmin = createAsyncThunk(
       return res.data.user;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to update user community";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -125,7 +126,8 @@ export const updateProviderDetails = createAsyncThunk(
       const res = await axios.put(`${API_URL}/api/admin/update-provider/${providerId}`, { bio });
       return res.data.provider;
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update provider");
+      const message = err.response?.data?.message || "Failed to update provider";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(err.response?.data?.message || "Failed to update provider");
     }
   }
@@ -150,7 +152,8 @@ export const updateProviderUserDetails = createAsyncThunk(
       toast.success("Provider updated successfully");
       return res.data.provider;
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update provider");
+      const message = err.response?.data?.message || "Failed to update provider";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(err.response?.data?.message || "Failed to update provider");
     }
   }
@@ -191,7 +194,8 @@ export const updateServiceDetails = createAsyncThunk(
       toast.success("Service updated successfully");
       return res.data.service;
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update service");
+      const message = err.response?.data?.message || "Failed to update service";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(err.response?.data?.message || "Failed to update service");
     }
   }
@@ -208,7 +212,8 @@ export const setServiceCoverImage = createAsyncThunk(
       toast.success(res.data?.message || "Cover image updated");
       return { serviceId, service: res.data.service };
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update cover image");
+      const message = err.response?.data?.message || "Failed to update cover image";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(err.response?.data?.message || "Failed to update cover image");
     }
   }
@@ -225,7 +230,8 @@ export const deleteServiceImage = createAsyncThunk(
       toast.success("Image deleted successfully");
       return { serviceId, service: res.data.service };
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete image");
+      const message = err.response?.data?.message || "Failed to delete image";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(err.response?.data?.message || "Failed to delete image");
     }
   }
@@ -242,7 +248,8 @@ export const deleteServicePDF = createAsyncThunk(
       toast.success("PDF deleted successfully");
       return { serviceId, service: res.data.service };
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete PDF");
+      const message = err.response?.data?.message || "Failed to delete PDF";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(err.response?.data?.message || "Failed to delete PDF");
     }
   }
@@ -331,7 +338,7 @@ export const createCategoryAdmin = createAsyncThunk(
       return res.data.category;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to create category";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -346,7 +353,7 @@ export const updateCategoryAdmin = createAsyncThunk(
       return res.data.category;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to update category";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -361,7 +368,7 @@ export const updateCategoryStatusAdmin = createAsyncThunk(
       return res.data.category;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to update category status";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -375,7 +382,7 @@ export const getSecretariesAdmin = createAsyncThunk(
       return res.data?.data?.secretaries || [];
     } catch (err) {
       const message = err.response?.data?.message || "Failed to load secretaries";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -390,7 +397,7 @@ export const createSecretaryAdmin = createAsyncThunk(
       return res.data.user;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to create secretary";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
@@ -409,7 +416,7 @@ export const updateSecretaryDetailsAdmin = createAsyncThunk(
       return res.data?.data?.user;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to update secretary";
-      toast.error(message);
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
       return rejectWithValue(message);
     }
   }
