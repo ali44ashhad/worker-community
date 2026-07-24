@@ -29,7 +29,6 @@ import {
   X,
 } from 'lucide-react';
 import { getFullName } from '../../utils/userHelpers';
-import { isDefaultServiceImage } from '../../utils/serviceImage';
 
 const inputClass =
   'w-full px-3.5 py-2.5 text-sm border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 focus:border-[var(--purple-primary)] transition-all';
@@ -347,7 +346,7 @@ const AdminServices = () => {
   };
 
   const renderPortfolioImages = (service, isEditing) => {
-    const images = service.portfolioImages || [];
+    const images = (service.portfolioImages || []).filter((img) => img?.url && img?.public_id);
     if (images.length === 0) {
       return <p className="text-sm text-[var(--text-secondary)]">No images</p>;
     }
@@ -355,8 +354,8 @@ const AdminServices = () => {
     return (
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {images.map((img, idx) => {
-          const isCover = idx === 0 && !isDefaultServiceImage(img);
-          const canSetCover = Boolean(img.public_id) && !isDefaultServiceImage(img);
+          const isCover = idx === 0;
+          const canSetCover = Boolean(img.public_id);
           const isSetting =
             coverSettingId === `${service._id}:${img.public_id}`;
 

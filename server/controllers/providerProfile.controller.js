@@ -9,6 +9,9 @@ import {
     deleteFromS3,
     uploadBufferToS3,
 } from "../utils/s3Upload.js";
+import {
+    resolveServicePortfolioImages,
+} from "../utils/generateServiceNameImage.js";
 
 /** Public provider listings only include users approved by secretary (legacy: missing status = approved). */
 const USER_PUBLIC_POPULATE_MATCH = {
@@ -97,19 +100,19 @@ const getS3PresignedUpload = async (req, res) => {
         const images = filesArray.filter(file => file.fieldname === 'portfolioImages');
         const pdfs = filesArray.filter(file => file.fieldname === 'portfolioPDFs');
         
-        // Work images / PDFs are optional; UI will show a default logo when none provided.
+        // Work images / PDFs are optional; if no images, generate a service-name cover on S3.
         
         const profile = await ProviderProfile.findOne({ user: userId });
         if (!profile) {
             return res.status(404).json({ success: false, message: "Provider profile not found." });
         }
 
-        // 1. Upload images to S3
+        // 1. Upload images to S3 (or generate name cover when none provided)
         const imageUploadPromises = images.map(file => uploadBufferToS3(file));
-        let portfolioImages = await Promise.all(imageUploadPromises);
-        if (!portfolioImages.length) {
-            portfolioImages = [{ url: "/CommuN-logo.png" }];
-        }
+        const portfolioImages = await resolveServicePortfolioImages(
+            await Promise.all(imageUploadPromises),
+            servicename
+        );
         
         // 2. Upload PDFs to S3
         const pdfUploadPromises = pdfs.map(file => uploadBufferToS3(file));
@@ -782,14 +785,14 @@ const becomeProviderWithServices = async (req, res) => {
                 const serviceImages = imagesByService[i] || [];
                 const servicePDFs = pdfsByService[i] || [];
 
-                // Work images/PDFs are optional
+                // Work images/PDFs are optional; missing images get a generated name cover on S3
 
                 // Upload images to S3
                 const imageUploadPromises = serviceImages.map(file => uploadBufferToS3(file));
-                let portfolioImages = await Promise.all(imageUploadPromises);
-                if (!portfolioImages.length) {
-                    portfolioImages = [{ url: "/CommuN-logo.png" }];
-                }
+                const portfolioImages = await resolveServicePortfolioImages(
+                    await Promise.all(imageUploadPromises),
+                    service.servicename
+                );
                 
                 // Upload PDFs to S3
                 const pdfUploadPromises = servicePDFs.map(file => uploadBufferToS3(file));
@@ -1015,20 +1018,15 @@ const updateServiceOffering = async (req, res) => {
         
         // Handle new images if uploaded
         if (images.length > 0) {
-            // If the service currently only has the default logo placeholder, remove it
-            service.portfolioImages = (service.portfolioImages || []).filter(
-                (img) => !(img && !img.public_id && img.url === "/CommuN-logo.png")
-            );
-
             const imageUploadPromises = images.map(file => uploadBufferToS3(file));
             const newImages = await Promise.all(imageUploadPromises);
-            
-            // Add new images to existing ones
-            service.portfolioImages = [...service.portfolioImages, ...newImages];
+            service.portfolioImages = [...(service.portfolioImages || []), ...newImages];
         }
-        if (!service.portfolioImages || service.portfolioImages.length === 0) {
-            service.portfolioImages = [{ url: "/CommuN-logo.png" }];
-        }
+
+        service.portfolioImages = await resolveServicePortfolioImages(
+            service.portfolioImages,
+            service.servicename
+        );
         
         // Handle new PDFs if uploaded
         if (pdfs.length > 0) {
@@ -1085,8 +1083,7 @@ const addServiceOfferingJson = async (req, res) => {
             keywords: nextKeywords,
         });
 
-        let nextImages = Array.isArray(portfolioImages) ? portfolioImages : [];
-        if (!nextImages.length) nextImages = [{ url: "/CommuN-logo.png" }];
+        const nextImages = await resolveServicePortfolioImages(portfolioImages, servicename);
         const nextPDFs = Array.isArray(portfolioPDFs) ? portfolioPDFs : [];
 
         const newService = new ServiceOffering({
@@ -1184,15 +1181,11 @@ const updateServiceOfferingJson = async (req, res) => {
             }
         }
 
-        // Replace assets from client-provided lists.
-        // If user provides real images, drop default placeholder.
-        let nextImages = Array.isArray(portfolioImages) ? portfolioImages : [];
-        nextImages = nextImages.filter((img) => img && img.url);
-        const hasRealImage = nextImages.some((img) => img.public_id);
-        if (hasRealImage) {
-            nextImages = nextImages.filter((img) => !(img && !img.public_id && img.url === "/CommuN-logo.png"));
-        }
-        if (!nextImages.length) nextImages = [{ url: "/CommuN-logo.png" }];
+        // Replace assets from client-provided lists; generate name cover if empty.
+        const nextImages = await resolveServicePortfolioImages(
+            Array.isArray(portfolioImages) ? portfolioImages.filter((img) => img && img.url) : [],
+            service.servicename
+        );
 
         const nextPDFs = Array.isArray(portfolioPDFs) ? portfolioPDFs : [];
 

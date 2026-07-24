@@ -22,8 +22,6 @@ const serviceOfferingSchema = new Schema({
     portfolioImages: [
         {
             url: { type: String, required: true },
-            // Optional: when service has no uploads we store default local logo (/CommuN-logo.png)
-            // which has no S3 object key in public_id.
             public_id: { type: String, required: false },
         },
     ],
