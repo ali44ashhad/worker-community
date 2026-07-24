@@ -2,7 +2,6 @@ import User from "../models/user.model.js";
 import ProviderProfile from "../models/providerProfile.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
 import { validateCategorySelection } from "../utils/categoryValidation.js";
-import Booking from "../models/booking.model.js"; // <-- You need to import Booking model here for dashboard stats
 import Comment from "../models/comment.model.js";
 import {
     S3_FOLDERS,
@@ -251,24 +250,8 @@ const getProviderDashboardStats = async (req, res) => {
         const providerProfileId = providerProfile._id;
         const serviceIds = providerProfile.serviceOfferings.map((service) => service._id);
 
-        // 2. Gather booking stats, rating stats, service engagement, and booking lists in parallel
-        const now = new Date();
-        const [bookingStats, recentBookings, upcomingBookings, ratingStats, serviceClickStats] = await Promise.all([
-            Booking.aggregate([
-                { $match: { provider: providerProfileId } },
-                { $group: { _id: "$status", count: { $sum: 1 } } }
-            ]),
-            Booking.find({ provider: providerProfileId })
-                .populate('customer', 'firstName lastName profileImage addressLine1 addressLine2 city state zip')
-                .sort({ createdAt: -1 })
-                .limit(5),
-            Booking.find({
-                provider: providerProfileId,
-                scheduledDate: { $gte: now }
-            })
-                .populate('customer', 'firstName lastName profileImage addressLine1 addressLine2 city state zip')
-                .sort({ scheduledDate: 1 })
-                .limit(5),
+        // 2. Gather rating stats and service engagement in parallel
+        const [ratingStats, serviceClickStats] = await Promise.all([
             serviceIds.length > 0
                 ? Comment.aggregate([
                     { $match: { serviceOffering: { $in: serviceIds } } },
@@ -280,8 +263,7 @@ const getProviderDashboardStats = async (req, res) => {
                         }
                     }
                 ])
-                : []
-            ,
+                : [],
             ServiceOffering.aggregate([
                 { $match: { provider: providerProfileId } },
                 {
@@ -293,24 +275,7 @@ const getProviderDashboardStats = async (req, res) => {
             ])
         ]);
 
-        // 3. Normalize status counts
-        const statusCounts = {
-            pending: 0,
-            accepted: 0,
-            rejected: 0,
-            completed: 0,
-            cancelled: 0
-        };
-
-        let totalBookings = 0;
-        bookingStats.forEach((stat) => {
-            if (statusCounts.hasOwnProperty(stat._id)) {
-                statusCounts[stat._id] = stat.count;
-            }
-            totalBookings += stat.count;
-        });
-
-        // 4. Compile rating stats
+        // 3. Compile rating stats
         let averageRating = 0;
         let totalReviews = 0;
 
@@ -319,17 +284,15 @@ const getProviderDashboardStats = async (req, res) => {
             totalReviews = ratingStats[0].totalReviews;
         }
 
-        // 5. Calculate profile/service engagement stats
+        // 4. Calculate profile/service engagement stats
         const totalServiceClicks = serviceClickStats.length > 0
             ? serviceClickStats[0].totalServiceClicks || 0
             : 0;
 
-        // 6. Respond with aggregated dashboard data
+        // 5. Respond with aggregated dashboard data
         return res.status(200).json({
             success: true,
             data: {
-                totalBookings,
-                statusCounts,
                 totalServices: providerProfile.serviceOfferings.length,
                 averageRating,
                 totalReviews,
@@ -340,8 +303,6 @@ const getProviderDashboardStats = async (req, res) => {
                     serviceCategory: service.serviceCategory,
                     clicks: service.serviceOfferingCount || 0
                 })),
-                recentBookings,
-                upcomingBookings,
             }
         });
 

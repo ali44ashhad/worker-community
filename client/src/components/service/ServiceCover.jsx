@@ -36,11 +36,11 @@ const ServiceCover = ({
 
   return (
     <div
-      className={`flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--purple-primary)] to-[var(--magenta)] p-3 text-center ${className} ${placeholderClassName}`}
+      className={`flex h-full w-full items-center justify-center bg-white p-3 text-center ${className} ${placeholderClassName}`}
       aria-label={displayName}
     >
       <p
-        className={`font-bold text-white break-words [overflow-wrap:anywhere] ${textSizeClasses[size] || textSizeClasses.md}`}
+        className={`font-bold text-[var(--text-primary)] break-words [overflow-wrap:anywhere] ${textSizeClasses[size] || textSizeClasses.md}`}
       >
         {displayName}
       </p>

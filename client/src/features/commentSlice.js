@@ -26,7 +26,11 @@ export const canReviewService = createAsyncThunk(
   async (serviceId, { rejectWithValue }) => {
     try {
       const res = await axios.get(`${API_URL}/api/comments/can-review/${serviceId}`);
-      return { serviceId, canReview: Boolean(res.data?.canReview) };
+      return {
+        serviceId,
+        canReview: Boolean(res.data?.canReview),
+        reason: res.data?.reason || null,
+      };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to check review eligibility");
     }
@@ -140,6 +144,7 @@ const initialState = {
   byServiceId: {},
   serviceProviders: {}, // Store service provider info by serviceId
   canReviewByServiceId: {},
+  canReviewReasonByServiceId: {},
   isLoading: false,
   error: null,
 };
@@ -168,8 +173,9 @@ const commentSlice = createSlice({
       })
 
       .addCase(canReviewService.fulfilled, (state, action) => {
-        const { serviceId, canReview } = action.payload;
+        const { serviceId, canReview, reason } = action.payload;
         state.canReviewByServiceId[serviceId] = canReview;
+        state.canReviewReasonByServiceId[serviceId] = reason || null;
       })
 
       .addCase(createServiceComment.pending, (state) => {

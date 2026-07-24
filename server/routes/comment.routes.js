@@ -33,8 +33,8 @@ commentRouter.get(
 );
 
 // @route   GET /api/comments/can-review/:serviceId
-// @desc    Check if logged-in customer can review this service
-// @access  Private (Customer)
+// @desc    Check if logged-in user can review this service (anyone except the owner)
+// @access  Private
 commentRouter.get(
     "/can-review/:serviceId",
     protect,

@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   LogOut,
   Megaphone,
+  Star,
   User,
   Wrench,
   Users,
@@ -26,6 +27,7 @@ import { useInboxBadges } from '../hooks/useInboxBadges';
 const menuItems = [
   { icon: LayoutGrid, label: 'Dashboard', path: '/secretary/dashboard' },
   { icon: Wrench, label: 'Services', path: '/secretary/services' },
+  { icon: Star, label: 'Reviews', path: '/secretary/reviews' },
   { icon: MessageCircle, label: 'Communities', path: '/secretary/communities', inboxCategory: 'communities' },
   { icon: ClipboardCheck, label: 'Approve / reject', path: '/secretary/approvals', inboxCategory: 'approvals' },
   { icon: Users, label: 'Member list', path: '/secretary/members' },

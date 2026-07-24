@@ -432,6 +432,57 @@ export const deleteEmergencyContact = createAsyncThunk(
   }
 );
 
+export const fetchSecretaryReviews = createAsyncThunk(
+  "secretary/fetchReviews",
+  async ({ page = 1, limit = 10, search = "" } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("limit", String(limit));
+      if (search.trim()) params.append("search", search.trim());
+      const res = await axios.get(`${API_URL}/api/secretary/reviews?${params.toString()}`);
+      return {
+        reviews: res.data?.reviews || [],
+        pagination: res.data?.pagination || null,
+        needsCommunName: Boolean(res.data?.needsCommunName),
+        communityCommunName: res.data?.communityCommunName || null,
+      };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to load reviews");
+    }
+  }
+);
+
+export const updateSecretaryReview = createAsyncThunk(
+  "secretary/updateReview",
+  async ({ commentId, comment, rating }, { rejectWithValue }) => {
+    try {
+      const res = await axios.put(`${API_URL}/api/secretary/reviews/${commentId}`, { comment, rating });
+      toast.success(res.data?.message || "Review updated.");
+      return res.data?.review;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update review";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const deleteSecretaryReview = createAsyncThunk(
+  "secretary/deleteReview",
+  async (commentId, { rejectWithValue }) => {
+    try {
+      const res = await axios.delete(`${API_URL}/api/secretary/reviews/${commentId}`);
+      toast.success(res.data?.message || "Review deleted.");
+      return commentId;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to delete review";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 const secretarySlice = createSlice({
   name: "secretary",
   initialState: {
@@ -515,6 +566,17 @@ const secretarySlice = createSlice({
     },
     emergencyContactCreating: false,
     emergencyContactDeletingId: null,
+
+    reviews: [],
+    reviewsLoading: false,
+    reviewsError: null,
+    reviewsPagination: null,
+    reviewsMeta: {
+      needsCommunName: false,
+      communityCommunName: null,
+    },
+    reviewUpdating: false,
+    reviewDeletingId: null,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -809,6 +871,51 @@ const secretarySlice = createSlice({
       })
       .addCase(deleteEmergencyContact.rejected, (state) => {
         state.emergencyContactDeletingId = null;
+      })
+      .addCase(fetchSecretaryReviews.pending, (state) => {
+        state.reviewsLoading = true;
+        state.reviewsError = null;
+      })
+      .addCase(fetchSecretaryReviews.fulfilled, (state, action) => {
+        state.reviewsLoading = false;
+        state.reviews = action.payload.reviews || [];
+        state.reviewsPagination = action.payload.pagination;
+        state.reviewsMeta = {
+          needsCommunName: action.payload.needsCommunName,
+          communityCommunName: action.payload.communityCommunName,
+        };
+      })
+      .addCase(fetchSecretaryReviews.rejected, (state, action) => {
+        state.reviewsLoading = false;
+        state.reviewsError = action.payload;
+      })
+      .addCase(updateSecretaryReview.pending, (state) => {
+        state.reviewUpdating = true;
+      })
+      .addCase(updateSecretaryReview.fulfilled, (state, action) => {
+        state.reviewUpdating = false;
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.reviews = state.reviews.map((r) => (r._id === updated._id ? updated : r));
+      })
+      .addCase(updateSecretaryReview.rejected, (state) => {
+        state.reviewUpdating = false;
+      })
+      .addCase(deleteSecretaryReview.pending, (state, action) => {
+        state.reviewDeletingId = action.meta.arg;
+      })
+      .addCase(deleteSecretaryReview.fulfilled, (state, action) => {
+        state.reviewDeletingId = null;
+        state.reviews = state.reviews.filter((r) => r._id !== action.payload);
+        if (state.reviewsPagination) {
+          state.reviewsPagination = {
+            ...state.reviewsPagination,
+            totalReviews: Math.max(0, (state.reviewsPagination.totalReviews || 1) - 1),
+          };
+        }
+      })
+      .addCase(deleteSecretaryReview.rejected, (state) => {
+        state.reviewDeletingId = null;
       });
   },
 });

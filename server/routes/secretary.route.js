@@ -32,6 +32,11 @@ import {
     createEmergencyContactForSecretary,
     deleteEmergencyContactForSecretary,
 } from "../controllers/emergencyContact.controller.js";
+import {
+    listReviewsSecretary,
+    updateReviewSecretary,
+    deleteReviewSecretary,
+} from "../controllers/reviewModeration.controller.js";
 
 const router = express.Router();
 
@@ -62,5 +67,9 @@ router.delete("/vendors/:vendorId", protect, isSecretary, deleteVendorForSecreta
 router.get("/emergency-contacts", protect, isSecretary, listEmergencyContactsForSecretary);
 router.post("/emergency-contacts", protect, isSecretary, createEmergencyContactForSecretary);
 router.delete("/emergency-contacts/:contactId", protect, isSecretary, deleteEmergencyContactForSecretary);
+
+router.get("/reviews", protect, isSecretary, listReviewsSecretary);
+router.put("/reviews/:commentId", protect, isSecretary, updateReviewSecretary);
+router.delete("/reviews/:commentId", protect, isSecretary, deleteReviewSecretary);
 
 export default router;

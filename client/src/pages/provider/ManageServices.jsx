@@ -137,7 +137,7 @@ const ManageServices = () => {
             </div>
             <h2 className="text-lg font-semibold text-[var(--text-primary)]">No services yet</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-[var(--text-secondary)]">
-              You have not added any services yet. Create your first service to start receiving bookings.
+              You have not added any services yet. Create your first service to start getting interest from customers.
             </p>
             <button type="button" onClick={handleAddService} className={`mt-6 ${btnPrimary}`}>
               <Plus className="h-4 w-4" />

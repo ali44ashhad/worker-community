@@ -1,16 +1,14 @@
 import Comment from "../models/comment.model.js";
-import User from "../models/user.model.js";
 import ProviderProfile from "../models/providerProfile.model.js";
 import ServiceOffering from "../models/serviceOffering.model.js";
-import Booking from "../models/booking.model.js";
+import { getMemberCommunityHandle } from "../utils/communityServices.js";
+import {
+    getCommentListCache,
+    invalidateCommentCaches,
+    isCommentInCommunity,
+} from "../utils/reviewScope.js";
 
-// In-memory cache for top services and categories
-// Cache structure: { key: { data: any, expiresAt: number } }
-const cache = {
-    topServices: null,
-    topCategories: null
-};
-
+// In-memory cache for top services and categories (shared via reviewScope)
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // Helper function to check if cache is valid
@@ -19,11 +17,9 @@ const isCacheValid = (cacheEntry) => {
     return Date.now() < cacheEntry.expiresAt;
 };
 
-// Helper function to invalidate cache
-const invalidateCache = () => {
-    cache.topServices = null;
-    cache.topCategories = null;
-};
+const invalidateCache = invalidateCommentCaches;
+
+export { invalidateCommentCaches };
 
 /**
  * @description Create a new comment for a service offering
@@ -35,11 +31,7 @@ const createComment = async (req, res) => {
         // This ID is the SERVICE OFFERING ID
         const { serviceId } = req.params; 
         const { comment, rating } = req.body;
-        const customerId = req.user._id; // This is the customer's USER ID
-
-        if (req.user?.role !== "customer") {
-            return res.status(403).json({ success: false, message: "Only customers can post reviews." });
-        }
+        const reviewerId = req.user._id;
 
         if (!comment) {
             return res.status(400).json({ success: false, message: "Comment text is required." });
@@ -55,31 +47,16 @@ const createComment = async (req, res) => {
             return res.status(404).json({ success: false, message: "Service offering not found." });
         }
 
-        // 1.5. Only allow review if customer has an accepted/completed booking with this provider+category.
-        // Note: Booking model doesn't store serviceOffering id, so this is the strongest check available today.
-        const hasBooking = await Booking.exists({
-            customer: customerId,
-            provider: serviceOffering.provider,
-            serviceCategory: serviceOffering.serviceCategory,
-            status: { $in: ["accepted", "completed"] },
-        });
-        if (!hasBooking) {
-            return res.status(403).json({
-                success: false,
-                message: "You can only review a service after you have booked it.",
-            });
+        // 2. Any logged-in user may review, except the owner of this service
+        const owningProviderProfile = await ProviderProfile.findById(serviceOffering.provider).select("user");
+        if (owningProviderProfile && owningProviderProfile.user.toString() === reviewerId.toString()) {
+            return res.status(400).json({ success: false, message: "You cannot review your own service." });
         }
 
-        // 2. Prevent a user from commenting on their own service (via owning provider profile)
-        const owningProviderProfile = await ProviderProfile.findById(serviceOffering.provider);
-        if (owningProviderProfile && owningProviderProfile.user.toString() === customerId.toString()) {
-            return res.status(400).json({ success: false, message: "You cannot comment on your own service." });
-        }
-
-        // 3. Check if the customer has already commented on this service
+        // 3. One review per user per service
         const existingComment = await Comment.findOne({
             serviceOffering: serviceId,
-            customer: customerId
+            customer: reviewerId
         });
         if (existingComment) {
             return res.status(400).json({ success: false, message: "You have already reviewed this service. You can only leave one review per service." });
@@ -89,7 +66,7 @@ const createComment = async (req, res) => {
         const newComment = await Comment.create({
             serviceOffering: serviceId,
             provider: serviceOffering.provider, // optional legacy linkage
-            customer: customerId,
+            customer: reviewerId,
             comment,
             rating: parseInt(rating)
         });
@@ -113,32 +90,35 @@ const createComment = async (req, res) => {
 };
 
 /**
- * @description Check if logged-in customer can review this service
+ * @description Check if logged-in user can review this service
  * @route GET /api/comments/can-review/:serviceId
- * @access Private (Customer)
+ * @access Private (any logged-in user except the service owner)
  */
 const canReviewService = async (req, res) => {
     try {
         const { serviceId } = req.params;
         const user = req.user;
 
-        if (!user || user.role !== "customer") {
-            return res.status(200).json({ success: true, canReview: false });
+        if (!user) {
+            return res.status(200).json({ success: true, canReview: false, reason: "login_required" });
         }
 
-        const serviceOffering = await ServiceOffering.findById(serviceId).select("provider serviceCategory");
+        const serviceOffering = await ServiceOffering.findById(serviceId).select("provider");
         if (!serviceOffering) {
             return res.status(404).json({ success: false, message: "Service offering not found." });
         }
 
-        const hasBooking = await Booking.exists({
-            customer: user._id,
-            provider: serviceOffering.provider,
-            serviceCategory: serviceOffering.serviceCategory,
-            status: { $in: ["accepted", "completed"] },
-        });
+        const owningProviderProfile = await ProviderProfile.findById(serviceOffering.provider).select("user");
+        const isOwner =
+            owningProviderProfile &&
+            owningProviderProfile.user &&
+            owningProviderProfile.user.toString() === user._id.toString();
 
-        return res.status(200).json({ success: true, canReview: Boolean(hasBooking) });
+        if (isOwner) {
+            return res.status(200).json({ success: true, canReview: false, reason: "own_service" });
+        }
+
+        return res.status(200).json({ success: true, canReview: true });
     } catch (error) {
         console.error("Error in canReviewService controller:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -224,9 +204,19 @@ const updateComment = async (req, res) => {
             return res.status(404).json({ success: false, message: "Comment not found." });
         }
 
-        // Check if the user is the author
+        // Check if the user is the author OR admin OR in-scope secretary
         if (existingComment.customer.toString() !== customerId.toString()) {
-            return res.status(403).json({ success: false, message: "You can only update your own comments." });
+            const isAdmin = req.user.role === "admin";
+            let isSecretaryInScope = false;
+            if (req.user.role === "secretary") {
+                const handle = getMemberCommunityHandle(req.user);
+                if (handle) {
+                    isSecretaryInScope = await isCommentInCommunity(existingComment, handle);
+                }
+            }
+            if (!isAdmin && !isSecretaryInScope) {
+                return res.status(403).json({ success: false, message: "You can only update your own comments." });
+            }
         }
         
         existingComment.comment = comment;
@@ -275,11 +265,18 @@ const deleteComment = async (req,res) => {
             return res.status(404).json({ success: false, message: "Comment not found." });
         }
 
-        // Check if user is the author OR an admin
+        // Author, admin, or secretary (community-scoped) may delete
         const isAuthor = comment.customer.toString() === user._id.toString();
         const isAdmin = user.role === 'admin';
+        let isSecretaryInScope = false;
+        if (user.role === 'secretary') {
+            const handle = getMemberCommunityHandle(user);
+            if (handle) {
+                isSecretaryInScope = await isCommentInCommunity(comment, handle);
+            }
+        }
 
-        if (!isAuthor && !isAdmin) {
+        if (!isAuthor && !isAdmin && !isSecretaryInScope) {
             return res.status(403).json({ success: false, message: "You are not authorized to delete this comment." });
         }
 
@@ -506,10 +503,10 @@ const getTopServices = async (req, res) => {
 
         // Check cache first
         const cacheKey = `topServices_${limit}`;
-        if (isCacheValid(cache.topServices)) {
+        if (isCacheValid(getCommentListCache().topServices)) {
             return res.status(200).json({
                 success: true,
-                services: cache.topServices.data
+                services: getCommentListCache().topServices.data
             });
         }
 
@@ -557,7 +554,7 @@ const getTopServices = async (req, res) => {
                 reviewCount: 0,
             }));
 
-            cache.topServices = {
+            getCommentListCache().topServices = {
                 data: servicesWithRatings,
                 expiresAt: Date.now() + CACHE_TTL,
             };
@@ -621,7 +618,7 @@ const getTopServices = async (req, res) => {
         });
 
         // Store in cache
-        cache.topServices = {
+        getCommentListCache().topServices = {
             data: servicesWithRatings,
             expiresAt: Date.now() + CACHE_TTL
         };
@@ -647,10 +644,10 @@ const getTopCategories = async (req, res) => {
         const limit = parseInt(req.query.limit) || 6;
 
         // Check cache first
-        if (isCacheValid(cache.topCategories)) {
+        if (isCacheValid(getCommentListCache().topCategories)) {
             return res.status(200).json({
                 success: true,
-                categories: cache.topCategories.data
+                categories: getCommentListCache().topCategories.data
             });
         }
 
@@ -719,7 +716,7 @@ const getTopCategories = async (req, res) => {
         ]);
 
         // Store in cache
-        cache.topCategories = {
+        getCommentListCache().topCategories = {
             data: categoryStats,
             expiresAt: Date.now() + CACHE_TTL
         };

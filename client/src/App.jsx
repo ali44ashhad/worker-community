@@ -37,6 +37,8 @@ import ProviderProtectedRoute from './components/ProviderProtectedRoute'
 import Dashboard from './pages/admin/Dashboard'
 import UpdateProviders from './pages/admin/UpdateProviders'
 import AdminServices from './pages/admin/AdminServices'
+import AdminReviews from './pages/admin/AdminReviews'
+import AdminBanners from './pages/admin/AdminBanners'
 import CategoryClicks from './pages/admin/CategoryClicks'
 import ProviderClicks from './pages/admin/ProviderClicks'
 import UserManagement from './pages/admin/UserManagement'
@@ -54,6 +56,7 @@ import SecretaryMembers from './pages/secretary/SecretaryMembers'
 import SecretaryBroadcast from './pages/secretary/SecretaryBroadcast'
 import SecretaryEvents from './pages/secretary/SecretaryEvents'
 import SecretaryServices from './pages/secretary/SecretaryServices'
+import SecretaryReviews from './pages/secretary/SecretaryReviews'
 import SecretaryVendors from './pages/secretary/SecretaryVendors'
 import SecretaryContacts from './pages/secretary/SecretaryContacts'
 import CommunityMgmt from './pages/admin/CommunityMgmt'
@@ -359,6 +362,8 @@ const App = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="providers" element={<UpdateProviders />} />
           <Route path="services" element={<AdminServices />} />
+          <Route path="reviews" element={<AdminReviews />} />
+          <Route path="banners" element={<AdminBanners />} />
           <Route path="category-clicks" element={<CategoryClicks />} />
           <Route path="provider-clicks" element={<ProviderClicks />} />
           <Route path="categories" element={<CategoryManagement />} />
@@ -377,6 +382,7 @@ const App = () => {
             <Route path="broadcast" element={<SecretaryBroadcast />} />
             <Route path="events" element={<SecretaryEvents />} />
             <Route path="services" element={<SecretaryServices />} />
+            <Route path="reviews" element={<SecretaryReviews />} />
             <Route path="vendors" element={<SecretaryVendors />} />
             <Route path="emergency-contacts" element={<SecretaryContacts />} />
             <Route

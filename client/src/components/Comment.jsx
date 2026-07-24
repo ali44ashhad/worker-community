@@ -50,6 +50,7 @@ const Comment = ({ serviceId }) => {
   const comments = useMemo(() => commentsState.byServiceId[serviceId] || [], [commentsState.byServiceId, serviceId]);
   const serviceProvider = commentsState.serviceProviders[serviceId];
   const canReview = commentsState.canReviewByServiceId?.[serviceId];
+  const canReviewReason = commentsState.canReviewReasonByServiceId?.[serviceId];
   const isLoading = commentsState.isLoading;
 
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -290,8 +291,12 @@ const Comment = ({ serviceId }) => {
               </p>
             ) : canReview === false ? (
               <p className="text-sm text-[var(--text-secondary)]">
-                You can review only after you book this service.
+                {canReviewReason === 'own_service'
+                  ? 'You cannot review your own service.'
+                  : 'You cannot review this service.'}
               </p>
+            ) : canReview !== true ? (
+              <p className="text-sm text-[var(--text-secondary)]">Checking review access…</p>
             ) : !showReviewForm ? (
               <button type="button" onClick={() => setShowReviewForm(true)} className={btnPrimary}>
                 Write Review

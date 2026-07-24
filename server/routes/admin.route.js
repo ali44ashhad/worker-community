@@ -29,6 +29,17 @@ import {
     toggleCommunity,
     deleteCommunity,
 } from "../controllers/adminInterestCommunity.controller.js";
+import {
+    listReviewsAdmin,
+    updateReviewAdmin,
+    deleteReviewAdmin,
+} from "../controllers/reviewModeration.controller.js";
+import {
+    listBannersAdmin,
+    createBannerAdmin,
+    updateBannerStatusAdmin,
+    deleteBannerAdmin,
+} from "../controllers/banner.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
 
@@ -194,5 +205,14 @@ router.get("/interest-communities", protect, isAdmin, listAllAdmin);
 router.post("/interest-communities", protect, isAdmin, createCommunity);
 router.patch("/interest-communities/:id/toggle", protect, isAdmin, toggleCommunity);
 router.delete("/interest-communities/:id", protect, isAdmin, deleteCommunity);
+
+router.get("/reviews", protect, isAdmin, listReviewsAdmin);
+router.put("/reviews/:commentId", protect, isAdmin, updateReviewAdmin);
+router.delete("/reviews/:commentId", protect, isAdmin, deleteReviewAdmin);
+
+router.get("/banners", protect, isAdmin, listBannersAdmin);
+router.post("/banners", protect, isAdmin, upload.single("image"), createBannerAdmin);
+router.patch("/banners/:bannerId/status", protect, isAdmin, updateBannerStatusAdmin);
+router.delete("/banners/:bannerId", protect, isAdmin, deleteBannerAdmin);
 
 export default router;

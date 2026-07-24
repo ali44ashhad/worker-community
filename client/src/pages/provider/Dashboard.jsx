@@ -1,12 +1,11 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Briefcase, Calendar, ClipboardList, Star } from 'lucide-react';
+import { Briefcase, Eye, MousePointerClick, Star } from 'lucide-react';
 import { getProviderDashboardStats } from '../../features/providerSlice';
-import { getFullName, getFirstName } from '../../utils/userHelpers';
+import { getFirstName } from '../../utils/userHelpers';
 import { formatCommunDisplayName } from '../../utils/communName';
 import { Link } from 'react-router-dom';
-import ProfileAvatar from '../../components/ProfileAvatar';
 
 const cardClass =
   'rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-6';
@@ -15,14 +14,6 @@ const btnPrimary =
   'inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90';
 const btnSecondary =
   'inline-flex items-center justify-center rounded-xl border border-purple-100 bg-white px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:bg-purple-50';
-
-const statusStyles = {
-  pending: { label: 'Pending', badge: 'border-amber-100 bg-amber-50 text-amber-800' },
-  accepted: { label: 'Accepted', badge: 'border-blue-100 bg-blue-50 text-blue-800' },
-  rejected: { label: 'Rejected', badge: 'border-pink-100 bg-pink-50 text-pink-800' },
-  completed: { label: 'Completed', badge: 'border-emerald-100 bg-emerald-50 text-emerald-700' },
-  cancelled: { label: 'Cancelled', badge: 'border-red-100 bg-red-50 text-red-700' },
-};
 
 const SectionHeader = ({ icon: Icon, title, description }) => (
   <div className="mb-5 flex items-start gap-3">
@@ -69,19 +60,14 @@ const ProviderDashboard = () => {
     dispatch(getProviderDashboardStats());
   }, [dispatch]);
 
-  const totalBookings = dashboardStats?.totalBookings || 0;
-  const recentBookings = dashboardStats?.recentBookings || [];
-  const upcomingBookings = dashboardStats?.upcomingBookings || [];
   const totalServices = dashboardStats?.totalServices || 0;
   const averageRating = dashboardStats?.averageRating || 0;
   const totalReviews = dashboardStats?.totalReviews || 0;
+  const profileViews = dashboardStats?.profileViews || 0;
+  const serviceClicks = dashboardStats?.serviceClicks || 0;
+  const serviceClickDetails = dashboardStats?.serviceClickDetails || [];
 
   const communName = user?.communName || user?.communityCommunName;
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString(undefined);
-  };
 
   const reload = () => dispatch(getProviderDashboardStats());
 
@@ -95,7 +81,7 @@ const ProviderDashboard = () => {
         <div className="w-full max-w-sm rounded-2xl border border-purple-100/50 bg-white/80 p-8 text-center shadow-sm shadow-purple-500/5">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
           <p className="text-sm font-medium text-[var(--text-primary)]">Loading your dashboard…</p>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">Fetching bookings and stats.</p>
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">Fetching your service stats.</p>
         </div>
       </motion.div>
     );
@@ -119,8 +105,8 @@ const ProviderDashboard = () => {
   }
 
   const statCards = [
-    { label: 'Total Bookings', value: totalBookings, icon: ClipboardList },
     { label: 'Active Services', value: totalServices, icon: Briefcase },
+    { label: 'Service Clicks', value: serviceClicks, icon: MousePointerClick },
     {
       label: 'Avg. Rating',
       value: averageRating ? averageRating.toFixed(1) : '0.0',
@@ -152,7 +138,7 @@ const ProviderDashboard = () => {
                     · Welcome to {formatCommunDisplayName(communName)}
                   </span>
                 ) : null}
-                . Quick overview of your services and bookings.
+                . Quick overview of your services and engagement.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -174,114 +160,40 @@ const ProviderDashboard = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <motion.div
-            className={cardClass}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <SectionHeader
-              icon={Calendar}
-              title="Upcoming bookings"
-              description="Your next scheduled appointments."
-            />
+        <motion.div
+          className={cardClass}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <SectionHeader
+            icon={Eye}
+            title="Engagement"
+            description={`Profile views: ${profileViews}. Clicks per service below.`}
+          />
 
-            {upcomingBookings.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-purple-100 bg-purple-50/30 py-10 text-center text-sm text-[var(--text-secondary)]">
-                No upcoming bookings.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {upcomingBookings.slice(0, 5).map((booking, index) => {
-                  const customer = booking.customer || {};
-                  const scheduledDate = booking.scheduledDate
-                    ? new Date(booking.scheduledDate).toLocaleString([], {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })
-                    : 'To be decided';
-                  const style = statusStyles[booking.status] || statusStyles.pending;
-
-                  return (
-                    <div
-                      key={booking._id || index}
-                      className="flex items-center gap-3 rounded-xl border border-purple-100/50 bg-purple-50/20 p-3 sm:p-4"
-                    >
-                      <ProfileAvatar user={customer} size="md" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-[var(--text-primary)]">
-                          {getFullName(customer) || 'Customer'}
-                        </p>
-                        <p className="truncate text-sm text-[var(--text-secondary)]">
-                          {booking.serviceCategory} · {scheduledDate}
-                        </p>
-                      </div>
-                      <span
-                        className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium ${style.badge}`}
-                      >
-                        {style.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </motion.div>
-
-          <motion.div
-            className={cardClass}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
-          >
-            <SectionHeader
-              icon={ClipboardList}
-              title="Recent bookings"
-              description="Latest booking activity on your profile."
-            />
-
-            {recentBookings.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-purple-100 bg-purple-50/30 py-10 text-center text-sm text-[var(--text-secondary)]">
-                No bookings yet.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {recentBookings.slice(0, 5).map((booking, index) => {
-                  const customer = booking.customer || {};
-                  const scheduledDate = formatDate(booking.scheduledDate);
-                  const createdAt = formatDate(booking.createdAt);
-                  const style = statusStyles[booking.status] || statusStyles.pending;
-
-                  return (
-                    <div
-                      key={booking._id || index}
-                      className="flex items-center gap-3 rounded-xl border border-purple-100/50 bg-purple-50/20 p-3 sm:p-4"
-                    >
-                      <ProfileAvatar user={customer} size="md" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-[var(--text-primary)]">
-                          {getFullName(customer) || 'Customer'}
-                        </p>
-                        <p className="truncate text-sm text-[var(--text-secondary)]">
-                          {booking.serviceCategory} · Scheduled {scheduledDate}
-                        </p>
-                        <p className="text-xs text-[var(--text-secondary)]">Booked on {createdAt}</p>
-                      </div>
-                      <span
-                        className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium ${style.badge}`}
-                      >
-                        {style.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </motion.div>
-        </div>
+          {serviceClickDetails.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-purple-100 bg-purple-50/30 py-10 text-center text-sm text-[var(--text-secondary)]">
+              No services yet. Add a service to start tracking clicks.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {serviceClickDetails.map((service, index) => (
+                <div
+                  key={service.id || index}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-purple-100/50 bg-purple-50/20 p-3 sm:p-4"
+                >
+                  <p className="min-w-0 truncate font-semibold text-[var(--text-primary)]">
+                    {service.serviceCategory || 'Service'}
+                  </p>
+                  <span className="shrink-0 text-sm font-medium text-[var(--text-secondary)]">
+                    {service.clicks || 0} click{(service.clicks || 0) === 1 ? '' : 's'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
       </div>
     </motion.div>
   );

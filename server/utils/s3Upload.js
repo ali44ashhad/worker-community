@@ -9,6 +9,7 @@ export const S3_FOLDERS = {
     SERVICE: "service_offerings",
     CATEGORY: "category_images",
     EVENT: "community_events",
+    BANNER: "banners",
 };
 
 function encodeS3Key(key) {

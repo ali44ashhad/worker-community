@@ -12,7 +12,6 @@ import { getSmtpStatus } from "./config/smtp.js";
 import userRouter from "./routes/user.route.js";
 import cookieParser from "cookie-parser";
 import providerProfileRouter from "./routes/providerProfile.route.js";
-import bookingRouter from "./routes/booking.route.js";
 import commentRouter from "./routes/comment.routes.js";
 import adminRouter from "./routes/admin.route.js";
 import secretaryRouter from "./routes/secretary.route.js";
@@ -23,6 +22,7 @@ import interestCommunityRouter from "./routes/interestCommunity.route.js";
 import vendorRouter from "./routes/vendor.route.js";
 import emergencyContactRouter from "./routes/emergencyContact.route.js";
 import pushRouter from "./routes/push.route.js";
+import bannerRouter from "./routes/banner.route.js";
 import { initChatSocket } from "./socket/chatSocket.js";
 import cors from "cors";
 import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
@@ -97,7 +97,6 @@ app.use('/api/user', userRouter);
 app.use('/api/provider-profile', providerProfileRouter);
 app.use('/api/service-offering', serviceOfferingRouter);
 app.use('/api/categories', categoryRouter);
-app.use('/api/bookings', bookingRouter);
 app.use('/api/comments', commentRouter);
 app.use('/api/admin',adminRouter)
 app.use('/api/secretary', secretaryRouter);
@@ -105,6 +104,7 @@ app.use('/api/vendors', vendorRouter);
 app.use('/api/emergency-contacts', emergencyContactRouter);
 app.use('/api/interest-communities', interestCommunityRouter);
 app.use('/api/push', pushRouter);
+app.use('/api/banners', bannerRouter);
 app.use('/api', sitemapRouter);
 
 // Global error handler to prevent crashes on unexpected errors

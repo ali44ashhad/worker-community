@@ -162,25 +162,5 @@ const isSecretary = (req, res, next) => {
     }
 };
 
-const isCustomer = (req, res, next) => {
-    const user = req.user;
-    try {
-        if (user.role !== "customer") {
-            return res.status(403).json({ // Use 403 Forbidden status
-                success: false,
-                message: "Unauthorized. Customer access required."
-            });
-        }
-        next();
-    }
-    catch (error) {
-        console.error("Error in isCustomer middleware:", error);
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-};
-
 // Export all middleware functions
-export { protect, isAdmin, isProvider, isSecretary, isCustomer };
+export { protect, isAdmin, isProvider, isSecretary };

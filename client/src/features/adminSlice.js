@@ -422,6 +422,114 @@ export const updateSecretaryDetailsAdmin = createAsyncThunk(
   }
 );
 
+export const fetchAdminReviews = createAsyncThunk(
+  "admin/fetchReviews",
+  async ({ page = 1, limit = 10, search = "" } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("limit", String(limit));
+      if (search.trim()) params.append("search", search.trim());
+      const res = await axios.get(`${API_URL}/api/admin/reviews?${params.toString()}`);
+      return {
+        reviews: res.data?.reviews || [],
+        pagination: res.data?.pagination || null,
+      };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to load reviews");
+    }
+  }
+);
+
+export const updateAdminReview = createAsyncThunk(
+  "admin/updateReview",
+  async ({ commentId, comment, rating }, { rejectWithValue }) => {
+    try {
+      const res = await axios.put(`${API_URL}/api/admin/reviews/${commentId}`, { comment, rating });
+      toast.success(res.data?.message || "Review updated.");
+      return res.data?.review;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update review";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const deleteAdminReview = createAsyncThunk(
+  "admin/deleteReview",
+  async (commentId, { rejectWithValue }) => {
+    try {
+      const res = await axios.delete(`${API_URL}/api/admin/reviews/${commentId}`);
+      toast.success(res.data?.message || "Review deleted.");
+      return commentId;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to delete review";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const fetchAdminBanners = createAsyncThunk(
+  "admin/fetchBanners",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/banners`);
+      return res.data?.banners || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to load banners");
+    }
+  }
+);
+
+export const createAdminBanner = createAsyncThunk(
+  "admin/createBanner",
+  async (file, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await axios.post(`${API_URL}/api/admin/banners`, formData);
+      toast.success(res.data?.message || "Banner uploaded.");
+      return res.data?.banner;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to upload banner";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateAdminBannerStatus = createAsyncThunk(
+  "admin/updateBannerStatus",
+  async ({ bannerId, isActive }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/admin/banners/${bannerId}/status`, { isActive });
+      toast.success(res.data?.message || "Banner status updated.");
+      return res.data?.banner;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update banner status";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const deleteAdminBanner = createAsyncThunk(
+  "admin/deleteBanner",
+  async (bannerId, { rejectWithValue }) => {
+    try {
+      const res = await axios.delete(`${API_URL}/api/admin/banners/${bannerId}`);
+      toast.success(res.data?.message || "Banner deleted.");
+      return bannerId;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to delete banner";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 /* ----------------- SLICE ----------------- */
 
 const adminSlice = createSlice({
@@ -485,6 +593,17 @@ const adminSlice = createSlice({
     },
     secretaries: [],
     secretariesLoading: false,
+    reviews: [],
+    reviewsLoading: false,
+    reviewsError: null,
+    reviewsPagination: null,
+    reviewUpdating: false,
+    reviewDeletingId: null,
+    banners: [],
+    bannersLoading: false,
+    bannersError: null,
+    bannerUploading: false,
+    bannerDeletingId: null,
     isLoading: false,
     error: null,
   },
@@ -726,6 +845,84 @@ const adminSlice = createSlice({
         const updated = action.payload;
         if (!updated?._id) return;
         state.secretaries = (state.secretaries || []).map((u) => (u._id === updated._id ? updated : u));
+      })
+      .addCase(fetchAdminReviews.pending, (state) => {
+        state.reviewsLoading = true;
+        state.reviewsError = null;
+      })
+      .addCase(fetchAdminReviews.fulfilled, (state, action) => {
+        state.reviewsLoading = false;
+        state.reviews = action.payload.reviews || [];
+        state.reviewsPagination = action.payload.pagination;
+      })
+      .addCase(fetchAdminReviews.rejected, (state, action) => {
+        state.reviewsLoading = false;
+        state.reviewsError = action.payload;
+      })
+      .addCase(updateAdminReview.pending, (state) => {
+        state.reviewUpdating = true;
+      })
+      .addCase(updateAdminReview.fulfilled, (state, action) => {
+        state.reviewUpdating = false;
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.reviews = state.reviews.map((r) => (r._id === updated._id ? updated : r));
+      })
+      .addCase(updateAdminReview.rejected, (state) => {
+        state.reviewUpdating = false;
+      })
+      .addCase(deleteAdminReview.pending, (state, action) => {
+        state.reviewDeletingId = action.meta.arg;
+      })
+      .addCase(deleteAdminReview.fulfilled, (state, action) => {
+        state.reviewDeletingId = null;
+        state.reviews = state.reviews.filter((r) => r._id !== action.payload);
+        if (state.reviewsPagination) {
+          state.reviewsPagination = {
+            ...state.reviewsPagination,
+            totalReviews: Math.max(0, (state.reviewsPagination.totalReviews || 1) - 1),
+          };
+        }
+      })
+      .addCase(deleteAdminReview.rejected, (state) => {
+        state.reviewDeletingId = null;
+      })
+      .addCase(fetchAdminBanners.pending, (state) => {
+        state.bannersLoading = true;
+        state.bannersError = null;
+      })
+      .addCase(fetchAdminBanners.fulfilled, (state, action) => {
+        state.bannersLoading = false;
+        state.banners = action.payload || [];
+      })
+      .addCase(fetchAdminBanners.rejected, (state, action) => {
+        state.bannersLoading = false;
+        state.bannersError = action.payload;
+      })
+      .addCase(createAdminBanner.pending, (state) => {
+        state.bannerUploading = true;
+      })
+      .addCase(createAdminBanner.fulfilled, (state, action) => {
+        state.bannerUploading = false;
+        if (action.payload) state.banners = [action.payload, ...state.banners];
+      })
+      .addCase(createAdminBanner.rejected, (state) => {
+        state.bannerUploading = false;
+      })
+      .addCase(updateAdminBannerStatus.fulfilled, (state, action) => {
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.banners = state.banners.map((b) => (b._id === updated._id ? updated : b));
+      })
+      .addCase(deleteAdminBanner.pending, (state, action) => {
+        state.bannerDeletingId = action.meta.arg;
+      })
+      .addCase(deleteAdminBanner.fulfilled, (state, action) => {
+        state.bannerDeletingId = null;
+        state.banners = state.banners.filter((b) => b._id !== action.payload);
+      })
+      .addCase(deleteAdminBanner.rejected, (state) => {
+        state.bannerDeletingId = null;
       });
   },
 });
