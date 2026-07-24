@@ -10,7 +10,7 @@ const faqSections = [
       {
         question: 'What is CommuN?',
         answer:
-          "CommuN is India's first Neighbourhood Operating System (N.O.S.)—a hyperlocal platform that helps residents discover trusted local services, home businesses, professionals, and opportunities within their own neighbourhood.",
+          "CommuN is India's first Neighbourhood Operating System (N.O.S.)— a hyperlocal platform that helps residents discover trusted local services, home businesses, professionals, and opportunities within their own neighbourhood.",
       },
       {
         question: 'Why was CommuN created?',
