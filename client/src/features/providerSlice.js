@@ -48,6 +48,18 @@ export const getMyProviderProfile = createAsyncThunk(
   }
 );
 
+export const updateMyProviderBio = createAsyncThunk(
+  "provider/updateMyBio",
+  async (bio, { rejectWithValue }) => {
+    try {
+      const res = await axios.put(`${API_URL}/api/provider-profile/`, { bio });
+      return res.data.profile;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to update provider bio");
+    }
+  }
+);
+
 export const getProviderDashboardStats = createAsyncThunk(
   "provider/getDashboardStats",
   async (_, { rejectWithValue }) => {
@@ -121,6 +133,14 @@ const providerSlice = createSlice({
       .addCase(getMyProviderProfile.rejected, (state, action) => {
         state.isFetchingMyProfile = false;
         state.error = action.payload;
+      })
+      .addCase(updateMyProviderBio.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.myProviderProfile = {
+            ...(state.myProviderProfile || {}),
+            ...action.payload,
+          };
+        }
       })
       .addCase(getProviderDashboardStats.pending, (state) => {
         state.isFetchingDashboard = true;

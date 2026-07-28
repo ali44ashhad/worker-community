@@ -892,7 +892,8 @@ const BecomeProvider = () => {
                 <span className="text-[var(--text-secondary)]/70">(optional)</span>
               </label>
               <p className="mb-3 text-sm text-[var(--text-secondary)]">
-                Max size: <span className="font-semibold">5 images upto 10 MB each</span> (Images: PNG/JPG/JPEG)
+                Max size: <span className="font-semibold">5 images upto 10 MB each</span> (Images:
+                PNG/JPG/JPEG). Preferred: landscape images.
               </p>
               <div className={uploadZoneClass(errors[`service-${service.id}-images`])}>
                 <input
@@ -909,7 +910,9 @@ const BecomeProvider = () => {
                 >
                   <Upload className="mb-3 text-[var(--purple-primary)]" size={40} />
                   <span className="mb-1 text-base font-semibold text-[var(--text-primary)]">Click to upload images</span>
-                  <span className="text-sm text-[var(--text-secondary)]">PNG, JPG up to 10MB</span>
+                  <span className="text-sm text-[var(--text-secondary)]">
+                    PNG, JPG up to 10MB. Landscape preferred.
+                  </span>
                 </label>
               </div>
               {errors[`service-${service.id}-images`] && (

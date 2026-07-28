@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Briefcase, Eye, MousePointerClick, Star } from 'lucide-react';
-import { getProviderDashboardStats } from '../../features/providerSlice';
+import { getMyProviderProfile, getProviderDashboardStats } from '../../features/providerSlice';
 import { getFirstName } from '../../utils/userHelpers';
 import { formatCommunDisplayName } from '../../utils/communName';
 import { Link } from 'react-router-dom';
@@ -51,13 +51,14 @@ const StatCard = ({ label, value, subValue, icon: Icon, delay = 0 }) => (
 
 const ProviderDashboard = () => {
   const dispatch = useDispatch();
-  const { dashboardStats, isFetchingDashboard, dashboardError } = useSelector(
+  const { dashboardStats, isFetchingDashboard, dashboardError, myProviderProfile } = useSelector(
     (state) => state.provider
   );
   const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     dispatch(getProviderDashboardStats());
+    dispatch(getMyProviderProfile());
   }, [dispatch]);
 
   const totalServices = dashboardStats?.totalServices || 0;
@@ -148,6 +149,11 @@ const ProviderDashboard = () => {
               <Link to="/provider/update-profile" className={btnSecondary}>
                 Update profile
               </Link>
+              {myProviderProfile?._id && (
+                <Link to={`/provider/${myProviderProfile._id}`} className={btnSecondary}>
+                  View public profile
+                </Link>
+              )}
             </div>
           </div>
         </div>

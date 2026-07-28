@@ -14,9 +14,11 @@ import {
   LockKeyhole,
   ArrowLeft,
   Building2,
+  FileText,
   X,
 } from 'lucide-react';
 import { changePasswordUser, joinCommunity, updateProfile } from '../features/authSlice';
+import { getMyProviderProfile, updateMyProviderBio } from '../features/providerSlice';
 import { toast } from 'react-hot-toast';
 import { getApiBase } from '../utils/apiBase';
 import { formatCommunDisplayName } from '../utils/communName';
@@ -27,6 +29,7 @@ import {
   getUserStreetAddressLine1,
 } from '../utils/userHelpers';
 
+const PROVIDER_BIO_MAX_CHARS = 500;
 const inputClass =
   'w-full px-3.5 py-2.5 text-sm border border-purple-100 rounded-xl bg-white text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 focus:border-[var(--purple-primary)] transition-all';
 
@@ -95,6 +98,9 @@ const UpdateProfile = () => {
   const location = useLocation();
   const user = useSelector((state) => state.auth.user);
   const isLoading = useSelector((state) => state.auth.isLoading);
+  const myProviderProfile = useSelector((state) => state.provider.myProviderProfile);
+  const isFetchingMyProfile = useSelector((state) => state.provider.isFetchingMyProfile);
+  const isProvider = user?.role === 'provider';
   const isPanelRoute =
     /^\/(admin|provider|secretary)\//.test(location.pathname) ||
     location.pathname === '/community/update-profile';
@@ -110,6 +116,8 @@ const UpdateProfile = () => {
     state: '',
     zip: '',
   });
+  const [providerBio, setProviderBio] = useState('');
+  const [savingProviderBio, setSavingProviderBio] = useState(false);
   const [showJoinCommunity, setShowJoinCommunity] = useState(false);
   const [communities, setCommunities] = useState([]);
   const [communitiesLoading, setCommunitiesLoading] = useState(false);
@@ -148,6 +156,18 @@ const UpdateProfile = () => {
       setProfileImage(null);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (isProvider && (user?.accountStatus || 'approved') === 'approved') {
+      dispatch(getMyProviderProfile());
+    }
+  }, [dispatch, isProvider, user?.accountStatus]);
+
+  useEffect(() => {
+    if (typeof myProviderProfile?.bio === 'string') {
+      setProviderBio(myProviderProfile.bio);
+    }
+  }, [myProviderProfile?.bio]);
 
   useEffect(() => {
     if (!showJoinCommunity) return undefined;
@@ -287,6 +307,29 @@ const UpdateProfile = () => {
     }
   };
 
+  const handleSaveProviderBio = async (e) => {
+    e.preventDefault();
+    const nextBio = String(providerBio || '').trim();
+    if (!nextBio) {
+      toast.error('Provider bio is required.');
+      return;
+    }
+    if (nextBio.length > PROVIDER_BIO_MAX_CHARS) {
+      toast.error(`Provider bio cannot exceed ${PROVIDER_BIO_MAX_CHARS} characters.`);
+      return;
+    }
+
+    try {
+      setSavingProviderBio(true);
+      await dispatch(updateMyProviderBio(nextBio)).unwrap();
+      toast.success('Provider bio updated successfully');
+    } catch (error) {
+      toast.error(error || 'Failed to update provider bio');
+    } finally {
+      setSavingProviderBio(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -319,7 +362,7 @@ const UpdateProfile = () => {
       const data = await dispatch(updateProfile(formDataToSend)).unwrap();
       if (data.success) {
         toast.success('Profile updated successfully');
-        navigate('/');
+        navigate(isProvider ? '/provider/dashboard' : '/');
       }
     } catch (error) {
       toast.error(error || 'Failed to update profile');
@@ -371,7 +414,9 @@ const UpdateProfile = () => {
           </p>
           <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">Profile</h1>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Update your details and manage account security.
+            {isProvider
+              ? 'Update your personal details, provider bio, and account security.'
+              : 'Update your details and manage account security.'}
           </p>
         </div>
       </section>
@@ -430,6 +475,72 @@ const UpdateProfile = () => {
             </div>
           </div>
         </Section>
+
+        {isProvider && (user?.accountStatus || 'approved') !== 'approved' && (
+          <Section
+            title="Provider bio"
+            description="Your provider profile is pending approval. You can update your bio once it is approved."
+            icon={FileText}
+          >
+            <p className="text-sm text-[var(--text-secondary)]">
+              Until then, you can still update your name, phone number, address, and photo above.
+            </p>
+          </Section>
+        )}
+
+        {isProvider && (user?.accountStatus || 'approved') === 'approved' && (
+          <form onSubmit={handleSaveProviderBio}>
+            <Section
+              title="Provider bio"
+              description="This is the bio shown on your provider profile and service pages. Max 500 characters."
+              icon={FileText}
+            >
+              {isFetchingMyProfile && !myProviderProfile ? (
+                <p className="text-sm text-[var(--text-secondary)]">Loading provider bio…</p>
+              ) : (
+                <div className="space-y-3">
+                  <Field label="Bio" htmlFor="providerBio">
+                    <textarea
+                      id="providerBio"
+                      value={providerBio}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setProviderBio(
+                          next.length <= PROVIDER_BIO_MAX_CHARS
+                            ? next
+                            : next.slice(0, PROVIDER_BIO_MAX_CHARS)
+                        );
+                      }}
+                      rows={5}
+                      maxLength={PROVIDER_BIO_MAX_CHARS}
+                      placeholder="Tell seekers about yourself and your background..."
+                      className={`${inputClass} resize-none`}
+                      required
+                    />
+                  </Field>
+                  <div className="flex items-center justify-between gap-3">
+                    <p
+                      className={`text-xs ${
+                        providerBio.length >= PROVIDER_BIO_MAX_CHARS
+                          ? 'text-red-600'
+                          : 'text-[var(--text-secondary)]'
+                      }`}
+                    >
+                      {providerBio.length}/{PROVIDER_BIO_MAX_CHARS}
+                    </p>
+                    <button
+                      type="submit"
+                      disabled={savingProviderBio}
+                      className="rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {savingProviderBio ? 'Saving…' : 'Save bio'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </Section>
+          </form>
+        )}
 
         {/* Personal info */}
         <form onSubmit={handleSubmit} className="space-y-5">

@@ -70,7 +70,7 @@ const faqSections = [
       {
         question: 'Can I leave reviews?',
         answer:
-          'Yes! After using a service (getting in touch with the provider through the platform), you can leave reviews and ratings to help other community members make informed decisions. Reviews help maintain quality and build trust within the community.',
+          'Yes! You can leave reviews and ratings to help other community members make informed decisions. Reviews help maintain quality and build trust within the community.',
       },
       {
         question: 'Can I give ratings to any provider?',

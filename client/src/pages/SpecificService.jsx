@@ -201,7 +201,13 @@ const SpecificService = () => {
   // Show this service's own clicks (same as Provider Clicks → service row).
   const totalViews = service?.serviceOfferingCount || 0;
   const providerAddress = formatAddress(service?.provider?.user) || 'Address not provided';
-  const descriptionIsLong = serviceDescription.length > 220;
+  const descriptionLines = serviceDescription
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const shouldRenderDescriptionList = descriptionLines.length > 1;
+  // Show enough content for a full ~500-char bio/description before collapsing.
+  const descriptionIsLong = serviceDescription.length > 500;
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -315,7 +321,7 @@ const SpecificService = () => {
                   <h3 className="text-lg font-bold text-[var(--text-primary)]">{providerName}</h3>
                   {serviceCategory && (
                     <p className="text-sm text-[var(--text-secondary)] mt-1">
-                      Professional {serviceCategory} service provider
+                     {serviceCategory} provider
                     </p>
                   )}
                   {providerBio && (
@@ -636,13 +642,25 @@ const SpecificService = () => {
               )}
 
               <div className="mt-5">
-                <p
-                  className={`text-sm text-[var(--text-secondary)] leading-relaxed ${
-                    !showFullDescription && descriptionIsLong ? 'line-clamp-3' : ''
-                  }`}
-                >
-                  {serviceDescription}
-                </p>
+                {shouldRenderDescriptionList ? (
+                  <div className={!showFullDescription && descriptionIsLong ? 'line-clamp-[12]' : ''}>
+                    <ul className="list-disc pl-5 space-y-2 text-sm text-[var(--text-secondary)] leading-relaxed">
+                      {descriptionLines.map((line, index) => (
+                        <li key={`${line}-${index}`} className="whitespace-pre-wrap">
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p
+                    className={`text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap ${
+                      !showFullDescription && descriptionIsLong ? 'line-clamp-[12]' : ''
+                    }`}
+                  >
+                    {serviceDescription}
+                  </p>
+                )}
                 {descriptionIsLong && (
                   <button
                     type="button"

@@ -1,7 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight, Flag, BookOpen, Lightbulb, Sparkles, Users, Briefcase, Zap } from 'lucide-react';
+import {
+  ChevronRight,
+  Flag,
+  BookOpen,
+  Lightbulb,
+  Sparkles,
+  Users,
+  Briefcase,
+  Building2,
+  Target,
+  Heart,
+} from 'lucide-react';
 import CommunityCta from '../components/home/CommunityCta';
 
 const fadeUp = {
@@ -24,7 +35,9 @@ const SectionHeading = ({ icon: Icon, children, subtitle, light = false }) => (
     </div>
     <h2
       className={`text-3xl sm:text-4xl font-bold mb-3 ${
-        light ? 'text-white' : 'bg-gradient-to-r from-[var(--text-primary)] to-[var(--purple-primary)] bg-clip-text text-transparent'
+        light
+          ? 'text-white'
+          : 'bg-gradient-to-r from-[var(--text-primary)] to-[var(--purple-primary)] bg-clip-text text-transparent'
       }`}
     >
       {children}
@@ -57,61 +70,24 @@ const CheckBullet = ({ children }) => (
 );
 
 const About = () => {
-  const problems = [
-    {
-      title: "Residents don't know what services exist within their own colony",
-      body: 'There is no structured way to discover tutors, fitness coaches, hobby experts, home bakers, freelancers, and more — even when they live in the same block.',
-    },
-    {
-      title: 'Home-based service providers have no visibility',
-      body: 'Talented residents struggle to reach their immediate neighbourhood audience, forcing them to depend on citywide listings or word of mouth.',
-    },
-    {
-      title: "Existing platforms aren't hyperlocal",
-      body: null,
-      bullets: [
-        'Justdial, Nearbuy show citywide vendors, not neighbours',
-        'MyGate caters mainly to gated societies',
-        'IamHere is radius-based, not colony-based',
-      ],
-      footnote: 'None of them solve the "my colony, my Community" gap.',
-    },
-    {
-      title: 'No platform strengthens neighbourhood trust & collaboration',
-      body: 'Communities thrive when people know and support each other — but there has never been a digital tool designed for this.',
-    },
-  ];
-
   const audiences = [
     {
       icon: Users,
       title: 'For Residents',
       color: 'from-purple-500 to-fuchsia-500',
-      items: [
-        'Find trusted services offered by neighbours',
-        'Avoid citywide clutter & irrelevant search results',
-        'Support local talent and build real Community connections',
-      ],
+      body: 'A place to discover trusted local services, stay informed, and connect with the community.',
     },
     {
       icon: Briefcase,
-      title: 'For Service Providers',
+      title: 'For Local Professionals & Home Businesses',
       color: 'from-pink-500 to-rose-500',
-      items: [
-        'Get visibility within your own colony',
-        'Build a trusted audience right where you live',
-        'Grow home-based businesses without marketing spend',
-      ],
+      body: 'An opportunity to become visible to the people who matter most—their neighbours.',
     },
     {
-      icon: Zap,
-      title: 'For the Future',
+      icon: Building2,
+      title: 'For RWAs',
       color: 'from-emerald-500 to-teal-500',
-      items: [
-        'Secure in-app payments',
-        'RWA management tools',
-        'Announcements, payrolls, visitor logs, events & more',
-      ],
+      body: 'A modern way to communicate with residents and keep the community informed.',
     },
   ];
 
@@ -135,15 +111,18 @@ const About = () => {
           >
             <div className="inline-block px-4 py-2 bg-gradient-to-r from-purple-100 to-fuchsia-100 rounded-full mb-6">
               <span className="text-sm font-semibold bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
-                Our Mission
+                India&apos;s First Neighbourhood Operating System
               </span>
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-[var(--text-primary)] via-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent mb-6 leading-[1.1]">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-[var(--text-primary)] via-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent mb-4 leading-[1.1]">
               About CommuN
             </h1>
-            <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
-              A hyperlocal platform that helps residents discover trusted neighbourhood services
-              and gives home-based providers the visibility they deserve.
+            <p className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] mb-6">
+              Reimagining Neighbourhood Living
+            </p>
+            <p className="text-lg text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed">
+              Neighbourhoods have always been at the heart of our lives. We believe they deserve a better
+              digital experience—so we created CommuN.
             </p>
           </motion.div>
         </div>
@@ -155,192 +134,196 @@ const About = () => {
           <Card>
             <motion.div {...fadeUp} className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
               <p>
-                Every neighbourhood is rich with talent, services, and people who can support one
-                another — but most of this remains unseen. Someone runs fitness classes at home,
-                someone sells home-cooked products, someone offers tuitions, workshops, repairs, or
-                professional services… yet most residents never know about them.
-              </p>
-              <p className="text-lg font-semibold text-[var(--text-primary)]">
-                CommuN was created to bring all of this to light.
+                Neighbourhoods have always been at the heart of our lives. They&apos;re where we build
+                friendships, celebrate milestones, seek recommendations, support local businesses, and
+                create a sense of belonging.
               </p>
               <p>
-                CommuN helps residents discover trusted services within their neighbourhood and
-                enables those who offer skills or home-based products to become visible to fellow
-                neighbours. Built for independent colonies and Community clusters, CommuN makes
-                discovery easy, communication seamless, and opportunities accessible to everyone.
+                Yet, despite living just a few doors apart, many of us remain disconnected from the
+                people, services, and opportunities around us. Finding a trusted tutor often means asking
+                on WhatsApp. Looking for a reliable plumber relies on referrals. Community announcements
+                get buried in endless chats, and local talent often goes unnoticed.
               </p>
-              <p className="text-sm font-semibold bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] bg-clip-text text-transparent">
-                And this is only the beginning.
+              <p className="text-lg font-semibold text-[var(--text-primary)]">
+                We believe neighbourhoods deserve a better digital experience. That&apos;s why we created
+                CommuN.
               </p>
             </motion.div>
           </Card>
         </div>
       </section>
 
-      {/* Purpose */}
-      <section className="py-16 bg-gradient-to-br from-[var(--purple-primary)] via-[var(--purple-secondary)] to-[var(--purple-primary)] text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(217,70,239,0.2),transparent_70%)]" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <SectionHeading icon={Flag} subtitle="What drives everything we build" light>
-            Our Purpose
-          </SectionHeading>
-          <motion.div
-            {...fadeUp}
-            className="max-w-3xl mx-auto text-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl px-6 py-10 sm:px-12"
-          >
-            <p className="text-xl sm:text-2xl font-semibold leading-snug text-purple-50">
-              To make neighbourhood living more connected, convenient, and Community-driven.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Story */}
-      <section className="py-24 bg-gradient-to-b from-white to-purple-50/30">
+      {/* What is CommuN */}
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeading icon={BookOpen} subtitle="How CommuN came to be">
-            Our Story
+          <SectionHeading icon={Sparkles} subtitle="India's first Neighbourhood Operating System (N.O.S.)">
+            What is CommuN?
           </SectionHeading>
           <Card>
             <motion.div {...fadeUp} className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
-              <p>CommuN began with a simple observation:</p>
               <p>
-                Despite living just a few steps apart, neighbours often remain disconnected from
-                the skills, services, and support systems that exist right around them.
+                CommuN is India&apos;s first Neighbourhood Operating System (N.O.S.)—a trusted digital
+                platform designed to bring every aspect of neighbourhood life together in one place.
               </p>
               <p>
-                Independent colonies — unlike gated Communities — lack a unified platform where
-                residents can communicate, offer services, or discover what others provide. People
-                end up searching the entire internet for services that may be available right next
-                door. This gap inspired the creation of CommuN.
+                Whether it&apos;s discovering trusted local services, connecting with neighbours who share
+                your interests, staying informed through community announcements, participating in local
+                events, or accessing essential neighbourhood information, CommuN makes everyday
+                neighbourhood living simpler, more connected, and more organised.
               </p>
-              <p className="font-semibold text-[var(--text-primary)]">We imagined a platform where:</p>
-              <ul className="space-y-2">
-                <CheckBullet>Residents could list what they offer</CheckBullet>
-                <CheckBullet>Neighbours could find trusted help easily</CheckBullet>
-                <CheckBullet>Communities could strengthen their internal networks</CheckBullet>
-              </ul>
-              <p>
-                What started as an idea for resident-to-resident discovery evolved into a broader
-                vision:{' '}
-                <span className="font-semibold text-[var(--text-primary)]">
-                  to create India&apos;s most connected neighbourhood ecosystem.
-                </span>
-              </p>
-              <p>
-                CommuN is built on the belief that stronger neighbourhoods create better everyday
-                living — and technology can make this happen effortlessly.
+              <p className="font-semibold text-[var(--text-primary)]">
+                Rather than replacing the relationships that make communities special, CommuN strengthens
+                them by making it easier for neighbours to discover, connect, and support one another.
               </p>
             </motion.div>
           </Card>
         </div>
       </section>
 
-      {/* Problems */}
+      {/* Why We Built CommuN */}
+      <section className="py-24 bg-gradient-to-b from-white to-purple-50/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <SectionHeading icon={Lightbulb} subtitle="The challenge isn't talent—it's discoverability">
+            Why We Built CommuN
+          </SectionHeading>
+          <Card>
+            <motion.div {...fadeUp} className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
+              <p>Every neighbourhood already has incredible people.</p>
+              <ul className="space-y-2">
+                <CheckBullet>The tutor helping students succeed</CheckBullet>
+                <CheckBullet>The home baker crafting amazing desserts</CheckBullet>
+                <CheckBullet>The fitness coach inspiring healthier lifestyles</CheckBullet>
+                <CheckBullet>
+                  The architect, doctor, lawyer, artist, musician, entrepreneur, and countless others who
+                  quietly contribute to the community every day
+                </CheckBullet>
+              </ul>
+              <p className="text-lg font-semibold text-[var(--text-primary)]">
+                The challenge isn&apos;t the lack of talent. It&apos;s discoverability.
+              </p>
+              <p>
+                Many neighbourhood services remain hidden behind word-of-mouth recommendations and
+                scattered conversations. Important updates are spread across multiple channels, making it
+                difficult for residents to stay informed and engaged.
+              </p>
+              <p>
+                CommuN brings these everyday neighbourhood interactions into one trusted platform—making
+                local opportunities easier to discover and community life easier to navigate.
+              </p>
+            </motion.div>
+          </Card>
+        </div>
+      </section>
+
+      {/* Built Around Needs */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeading icon={Lightbulb} subtitle="The gap we set out to close">
-            The Problem We&apos;re Solving
+          <SectionHeading icon={Users} subtitle="Designed to serve everyone who contributes to neighbourhood life">
+            Built Around the Needs of Every Neighbourhood
           </SectionHeading>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {problems.map((item, i) => (
-              <motion.div key={item.title} {...fadeUp} transition={{ delay: i * 0.05 }}>
-                <Card className="h-full hover:border-purple-300 hover:shadow-xl hover:shadow-purple-500/10 transition-all">
-                  <span className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--purple-primary)] to-[var(--magenta)] text-sm font-bold text-white shadow-lg">
-                    {i + 1}
-                  </span>
-                  <h3 className="mb-2 text-lg font-bold text-[var(--text-primary)]">{item.title}</h3>
-                  {item.body && (
-                    <p className="text-sm leading-relaxed text-[var(--text-secondary)]">{item.body}</p>
-                  )}
-                  {item.bullets && (
-                    <ul className="mt-3 space-y-2">
-                      {item.bullets.map((b) => (
-                        <CheckBullet key={b}>{b}</CheckBullet>
-                      ))}
-                    </ul>
-                  )}
-                  {item.footnote && (
-                    <p className="mt-4 text-sm font-semibold text-[var(--purple-primary)]">{item.footnote}</p>
-                  )}
+          <div className="grid gap-8 md:grid-cols-3">
+            {audiences.map(({ icon: Icon, title, color, body }, i) => (
+              <motion.div key={title} {...fadeUp} transition={{ delay: i * 0.05 }}>
+                <Card className="h-full hover:border-purple-300 hover:shadow-2xl hover:shadow-purple-500/10 transition-all group">
+                  <div
+                    className={`w-14 h-14 bg-gradient-to-br ${color} rounded-2xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform`}
+                  >
+                    <Icon className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="mb-3 text-xl font-bold text-[var(--text-primary)]">{title}</h3>
+                  <p className="text-sm leading-relaxed text-[var(--text-secondary)]">{body}</p>
                 </Card>
               </motion.div>
             ))}
           </div>
           <motion.p
             {...fadeUp}
-            className="mt-10 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 to-fuchsia-50 px-6 py-5 text-center text-base font-medium text-[var(--text-primary)]"
-          > 
-            CommuN solves all of these with one platform that keeps the neighbourhood at its center.
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Why CommuN */}
-      <section className=" bg-gradient-to-b from-white to-purple-50/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeading icon={Sparkles} subtitle="Built for neighbours, by neighbours">
-            Why CommuN Matters
-          </SectionHeading>
-          <div className="grid gap-8 md:grid-cols-3">
-            {audiences.map(({ icon: Icon, title, color, items }, i) => (
-              <motion.div key={title} {...fadeUp} transition={{ delay: i * 0.05 }}>
-                <Card className="h-full hover:border-purple-300 hover:shadow-2xl hover:shadow-purple-500/10 transition-all group">
-                  <div className={`w-14 h-14 bg-gradient-to-br ${color} rounded-2xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
-                    <Icon className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{title}</h3>
-                  <ul className="space-y-3">
-                    {items.map((text) => (
-                      <CheckBullet key={text}>{text}</CheckBullet>
-                    ))}
-                  </ul>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-          <motion.p {...fadeUp} className="mt-10 text-center text-[var(--text-secondary)] leading-relaxed max-w-2xl mx-auto">
-            CommuN is built to become{' '}
-            <span className="font-semibold text-[var(--text-primary)]">
-              the digital backbone of every neighbourhood
-            </span>{' '}
-            — simple, safe, and truly Community-first.
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Value statement */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            {...fadeUp}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[var(--purple-primary)] via-[var(--magenta)] to-fuchsia-600 p-8 sm:p-12 text-center text-white shadow-2xl shadow-purple-500/20"
+            className="mt-10 text-center text-[var(--text-secondary)] leading-relaxed max-w-2xl mx-auto"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-            <p className="relative text-base leading-relaxed text-purple-50 sm:text-lg max-w-3xl mx-auto">
-              CommuN operates at the intersection of{' '}
-              <span className="font-semibold text-white">
-                Community, convenience, and hyperlocal commerce
-              </span>
-              , aiming to become the default digital layer for neighbourhoods across India. By
-              empowering residents and enabling micro-entrepreneurs, CommuN unlocks a scalable
-              ecosystem with long-term network effects.
-            </p>
-          </motion.div>
+            Together, they create a stronger, more connected neighbourhood ecosystem.
+          </motion.p>
         </div>
       </section>
 
-      {/* Inline CTA before footer CTA */}
+      {/* Vision & Mission */}
+      <section className="py-16 bg-gradient-to-br from-[var(--purple-primary)] via-[var(--purple-secondary)] to-[var(--purple-primary)] text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(217,70,239,0.2),transparent_70%)]" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="grid gap-8 md:grid-cols-2">
+            <motion.div
+              {...fadeUp}
+              className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl px-6 py-10 sm:px-8"
+            >
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 border border-white/20">
+                <Flag className="w-6 h-6" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-4">Our Vision</h2>
+              <p className="text-purple-50 leading-relaxed text-lg">
+                To create the world&apos;s most connected neighbourhood ecosystem where residents, local
+                businesses, and communities discover, connect, and thrive together.
+              </p>
+            </motion.div>
+            <motion.div
+              {...fadeUp}
+              transition={{ delay: 0.05 }}
+              className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl px-6 py-10 sm:px-8"
+            >
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 border border-white/20">
+                <Target className="w-6 h-6" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-4">Our Mission</h2>
+              <p className="text-purple-50 leading-relaxed text-lg">
+                To digitally empower neighbourhoods by making local communities more connected,
+                discoverable, and organised through one trusted platform.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* More Than an App */}
+      <section className="py-24 bg-gradient-to-b from-white to-purple-50/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <SectionHeading icon={Heart} subtitle="The digital foundation for neighbourhood life">
+            More Than an App
+          </SectionHeading>
+          <Card>
+            <motion.div {...fadeUp} className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
+              <p>
+                We don&apos;t see CommuN as just another app. We see it as the digital foundation for
+                neighbourhood life—a platform that helps residents connect more easily, supports local
+                entrepreneurs, strengthens communities, and makes everyday interactions more meaningful.
+              </p>
+              <p className="text-lg font-semibold text-[var(--text-primary)]">
+                Because when neighbourhoods become more connected, everyone benefits.
+              </p>
+            </motion.div>
+          </Card>
+        </div>
+      </section>
+
+      {/* Welcome CTA */}
       <section className="pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div {...fadeUp}>
             <Card className="text-center">
-              <p className="mx-auto mb-4 max-w-xl text-[var(--text-secondary)] leading-relaxed">
-                Whether you&apos;re seeking help, offering your skills, or managing a colony, CommuN
-                is here to strengthen the bond between people and the places they call home.
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-100 to-fuchsia-100 text-[var(--purple-primary)]">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <h2 className="mb-4 text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[var(--text-primary)] to-[var(--purple-primary)] bg-clip-text text-transparent">
+                Welcome to CommuN
+              </h2>
+              <p className="mx-auto mb-4 max-w-2xl text-[var(--text-secondary)] leading-relaxed">
+                Whether you&apos;re looking for a trusted service, growing a local business, participating
+                in your community, or simply staying connected with your neighbourhood, CommuN is built
+                for you.
+              </p>
+              <p className="mx-auto mb-2 max-w-2xl text-[var(--text-secondary)] leading-relaxed">
+                Because we believe every neighbourhood already has everything it needs. It just needs a
+                better way to connect.
               </p>
               <p className="mb-8 text-xl font-bold bg-gradient-to-r from-[var(--text-primary)] to-[var(--purple-primary)] bg-clip-text text-transparent sm:text-2xl">
-                Connect. Discover. Thrive Local — with CommuN.
+                Stronger neighbourhoods build stronger communities.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link

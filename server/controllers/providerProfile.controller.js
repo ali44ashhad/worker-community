@@ -61,10 +61,19 @@ const getS3PresignedUpload = async (req, res) => {
  const updateProviderProfile = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { bio } = req.body; // no experience
+        const rawBio = typeof req.body?.bio === "string" ? req.body.bio.trim() : "";
+        if (!rawBio) {
+            return res.status(400).json({ success: false, message: "Provider bio is required." });
+        }
+        if (rawBio.length > 500) {
+            return res.status(400).json({
+                success: false,
+                message: "Bio cannot be more than 500 characters.",
+            });
+        }
         const profile = await ProviderProfile.findOneAndUpdate(
             { user: userId },
-            { bio },
+            { bio: rawBio },
             { new: true, runValidators: true }
         );
         if (!profile) {
