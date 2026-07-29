@@ -75,7 +75,7 @@ const faqSections = [
       {
         question: 'Can I give ratings to any provider?',
         answer:
-          'Yes! After using a service (getting in touch with the provider through the platform), you can give the provider star rating based on your satisfaction to the services provided to you.',
+          'Yes! You can give the provider star ratings based on your satisfaction to the services provided to you.',
       },
     ],
   },

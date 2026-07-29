@@ -35,15 +35,23 @@ export function isWebPushConfigured() {
     return Boolean((process.env.VAPID_PUBLIC_KEY || "").trim() && (process.env.VAPID_PRIVATE_KEY || "").trim());
 }
 
+function toAbsoluteUrl(pathOrUrl, base) {
+    const value = String(pathOrUrl || "").trim();
+    if (!value) return base;
+    if (value.startsWith("http://") || value.startsWith("https://")) return value;
+    return `${base}${value.startsWith("/") ? value : `/${value}`}`;
+}
+
 function buildPayload({ title, body, url = "/", tag, data = {} }) {
     const base = getFrontendBase();
-    const absoluteUrl = url.startsWith("http") ? url : `${base}${url.startsWith("/") ? url : `/${url}`}`;
+    const absoluteUrl = toAbsoluteUrl(url, base);
+    const logoUrl = toAbsoluteUrl("/vite.png", base);
 
     return JSON.stringify({
         title: title || "CommuN",
         body: body || "",
-        icon: "/CommuN-logo-white.png",
-        badge: "/CommuN-logo-white.png",
+        icon: logoUrl,
+        badge: logoUrl,
         tag: tag || "commun",
         data: {
             url: absoluteUrl,
@@ -53,7 +61,7 @@ function buildPayload({ title, body, url = "/", tag, data = {} }) {
 }
 
 async function sendToSubscriptions(subscriptions, payload) {
-    if (!subscriptions.length || !ensureConfigured()) return { sent: 0, failed: 0 };
+    if (!subscriptions?.length || !ensureConfigured()) return { sent: 0, failed: 0 };
 
     let sent = 0;
     let failed = 0;
@@ -106,9 +114,16 @@ export async function sendPushToUsers(userIds, { title, body, url, tag, data, in
 
         const payload = buildPayload({ title, body, url, tag, data });
         const subscriptions = await PushSubscription.find({ user: { $in: ids } }).lean();
+
         const [webResult, mobileResult] = await Promise.all([
-            sendToSubscriptions(subscriptions, payload),
-            sendMobilePushToUsers(ids, { title, body, url, tag, data }),
+            sendToSubscriptions(subscriptions, payload).catch((err) => {
+                console.error("[push] web send failed:", err?.message || err);
+                return { sent: 0, failed: 0 };
+            }),
+            sendMobilePushToUsers(ids, { title, body, url, tag, data }).catch((err) => {
+                console.error("[push] mobile send failed:", err?.message || err);
+                return { sent: 0, failed: 0 };
+            }),
         ]);
 
         return {

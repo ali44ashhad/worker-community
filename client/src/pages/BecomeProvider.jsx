@@ -11,7 +11,7 @@ import { formatCommunDisplayName } from '../utils/communName';
 import { generateServiceNameImage } from '../utils/generateServiceNameImage';
 
 const DRAFT_KEY = 'becomeProviderDraft:v1';
-const BECOME_PROVIDER_VIDEO_ID = 'x0fy5a018V4';
+const BECOME_PROVIDER_VIDEO_ID = '5uqpie3gCr0';
 
 const inputBase =
   'w-full rounded-xl border bg-white px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 transition-all focus:outline-none focus:ring-2';

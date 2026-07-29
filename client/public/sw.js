@@ -3,8 +3,8 @@ self.addEventListener('push', (event) => {
   let payload = {
     title: 'CommuN',
     body: 'You have a new notification',
-    icon: '/CommuN-logo-white.png',
-    badge: '/CommuN-logo-white.png',
+    icon: '/vite.png',
+    badge: '/vite.png',
     tag: 'commun',
     data: { url: '/' },
   };
@@ -26,8 +26,8 @@ self.addEventListener('push', (event) => {
     (async () => {
       await self.registration.showNotification(payload.title || 'CommuN', {
         body: payload.body || '',
-        icon: payload.icon || '/CommuN-logo-white.png',
-        badge: payload.badge || '/CommuN-logo-white.png',
+        icon: payload.icon || '/vite.png',
+        badge: payload.badge || '/vite.png',
         tag: payload.tag || 'commun',
         data: payload.data || { url: '/' },
         renotify: true,

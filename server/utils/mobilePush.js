@@ -1,4 +1,5 @@
 import admin from "firebase-admin";
+import { getMessaging } from "firebase-admin/messaging";
 import MobilePushDevice from "../models/mobilePushDevice.model.js";
 
 let mobilePushInitAttempted = false;
@@ -21,8 +22,9 @@ export function isMobilePushConfigured() {
 }
 
 function ensureFirebaseAdmin() {
-    if (admin.apps.length > 0) return admin.app();
-    if (mobilePushInitAttempted && admin.apps.length === 0) return null;
+    const apps = admin.getApps();
+    if (apps.length > 0) return admin.getApp();
+    if (mobilePushInitAttempted && apps.length === 0) return null;
 
     mobilePushInitAttempted = true;
     const creds = getFirebaseCredentials();
@@ -34,7 +36,7 @@ function ensureFirebaseAdmin() {
     }
 
     return admin.initializeApp({
-        credential: admin.credential.cert(creds),
+        credential: admin.cert(creds),
     });
 }
 
@@ -130,7 +132,7 @@ export async function sendMobilePushToUsers(userIds, payload) {
         devices.map(async (device) => {
             try {
                 const message = buildFirebaseMessage(device.token, { ...payload, platform: device.platform });
-                await admin.messaging().send(message);
+                await getMessaging(app).send(message);
                 sent += 1;
             } catch (err) {
                 failed += 1;
