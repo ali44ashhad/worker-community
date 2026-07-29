@@ -8,8 +8,6 @@ import { checkAuth } from '../features/authSlice';
 import { getActiveCategories } from '../features/adminSlice';
 import { getApiBase } from '../utils/apiBase';
 import { formatCommunDisplayName } from '../utils/communName';
-import { generateServiceNameImage } from '../utils/generateServiceNameImage';
-
 const DRAFT_KEY = 'becomeProviderDraft:v1';
 const BECOME_PROVIDER_VIDEO_ID = '5uqpie3gCr0';
 
@@ -506,19 +504,13 @@ const BecomeProvider = () => {
       }));
       formData.append('services', JSON.stringify(servicesPayload));
       
-      // Add images with proper fieldnames - images array contains File objects
       for (let index = 0; index < services.length; index++) {
         const service = services[index];
-        const uploadedImages = (service.images || []).filter((file) => file instanceof File);
-        if (uploadedImages.length > 0) {
-          uploadedImages.forEach((file) => {
+        (service.images || [])
+          .filter((file) => file instanceof File)
+          .forEach((file) => {
             formData.append(`service_${index}_images`, file);
           });
-        } else {
-          const generatedCover = await generateServiceNameImage(service.servicename);
-          formData.append(`service_${index}_images`, generatedCover);
-        }
-        // Add PDFs with proper fieldnames
         if (service.pdfs && service.pdfs.length > 0) {
           service.pdfs.forEach((file) => {
             if (file instanceof File) {

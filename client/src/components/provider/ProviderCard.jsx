@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getFullName, formatAddress } from '../../utils/userHelpers';
 import ProfileAvatar from '../ProfileAvatar';
 import ServiceCover from '../service/ServiceCover';
-import { getServiceCoverUrl } from '../../utils/serviceImage';
 
 const chipClass =
   'rounded-full border border-purple-100 bg-purple-50/50 px-2.5 py-1 text-xs font-medium text-[var(--purple-primary)]';
 
 const ProviderCard = ({ provider }) => {
   const navigate = useNavigate();
-  const [imageError, setImageError] = useState(false);
 
   const userName = getFullName(provider?.user) || 'Unknown Provider';
   const bio = provider?.bio || 'No bio available.';
@@ -20,7 +18,6 @@ const ProviderCard = ({ provider }) => {
   const address = formatAddress(provider?.user) || '';
 
   const firstService = services[0];
-  const portfolioImage = firstService ? getServiceCoverUrl(firstService) : null;
 
   const categories = [...new Set(services.map((s) => s.serviceCategory))];
   const primaryCategory = categories[0] || 'Provider';
@@ -30,19 +27,13 @@ const ProviderCard = ({ provider }) => {
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-purple-100/50 bg-white/80 shadow-md shadow-purple-500/5 backdrop-blur-sm transition-all duration-200 hover:border-purple-200 hover:shadow-lg hover:shadow-purple-500/10">
       <div className="relative flex h-44 shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-purple-50 to-fuchsia-50/50 p-3">
-        {portfolioImage && !imageError ? (
-          <img
-            src={portfolioImage}
-            alt={`${userName}'s portfolio`}
-            className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-            onError={() => setImageError(true)}
-          />
-        ) : firstService ? (
+        {firstService ? (
           <ServiceCover
             service={firstService}
+            alt={`${userName}'s portfolio`}
             size="sm"
             className="h-full w-full"
-            imageClassName="max-h-full max-w-full object-contain"
+            imageClassName="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-[var(--purple-primary)]">

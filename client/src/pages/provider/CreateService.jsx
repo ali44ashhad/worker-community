@@ -7,8 +7,6 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { getActiveCategories } from '../../features/adminSlice';
 import { getApiBase } from '../../utils/apiBase';
-import { generateServiceNameImage } from '../../utils/generateServiceNameImage';
-
 const inputBase =
   'w-full rounded-xl border bg-white px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 transition-all focus:outline-none focus:ring-2';
 const inputOk = `${inputBase} border-purple-100 focus:border-[var(--purple-primary)] focus:ring-[var(--purple-primary)]/25`;
@@ -182,14 +180,9 @@ const CreateService = () => {
       if (form.experience !== undefined && form.experience !== '') {
         formData.append('experience', String(form.experience));
       }
-      const uploadedImages = (form.images || []).filter((file) => file instanceof File);
-      if (uploadedImages.length > 0) {
-        uploadedImages.forEach((file) => formData.append('portfolioImages', file));
-      } else {
-        // No user image — generate white text cover and upload to S3 like a normal portfolio image
-        const generatedCover = await generateServiceNameImage(form.servicename);
-        formData.append('portfolioImages', generatedCover);
-      }
+      (form.images || [])
+        .filter((file) => file instanceof File)
+        .forEach((file) => formData.append('portfolioImages', file));
       (form.pdfs || []).forEach((file) => {
         if (file instanceof File) formData.append('portfolioPDFs', file);
       });

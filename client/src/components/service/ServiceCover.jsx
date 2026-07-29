@@ -15,7 +15,6 @@ const ServiceCover = ({
   alt,
   className = '',
   imageClassName = 'h-full w-full object-cover',
-  placeholderClassName = '',
   size = 'md',
 }) => {
   const [imageError, setImageError] = useState(false);
@@ -36,7 +35,7 @@ const ServiceCover = ({
 
   return (
     <div
-      className={`flex h-full w-full items-center justify-center bg-white p-3 text-center ${className} ${placeholderClassName}`}
+      className={`flex h-full w-full items-center justify-center bg-white p-3 text-center ${className}`}
       aria-label={displayName}
     >
       <p
