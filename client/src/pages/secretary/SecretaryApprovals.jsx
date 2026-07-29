@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
-import { ClipboardCheck, UserCheck, UserX } from 'lucide-react';
+import { ClipboardCheck, MapPin, UserCheck, UserX } from 'lucide-react';
 import {
   fetchPendingRegistrations,
   approveUserRegistration,
   rejectUserRegistration,
 } from '../../features/secretarySlice';
-import { getFullName } from '../../utils/userHelpers';
+import { formatAddress, getFullName, getUserFlatNumber } from '../../utils/userHelpers';
 import { formatCommunDisplayName } from '../../utils/communName';
 
 const btnApprove =
@@ -76,7 +76,10 @@ const SecretaryApprovals = () => {
             </p>
           ) : (
             <ul className="divide-y divide-purple-100/60">
-              {pendingUsers.map((u, index) => (
+              {pendingUsers.map((u, index) => {
+                const flat = getUserFlatNumber(u);
+                const address = formatAddress(u);
+                return (
                 <motion.li
                   key={u._id}
                   initial={{ opacity: 0, y: 8 }}
@@ -92,6 +95,24 @@ const SecretaryApprovals = () => {
                         {u.requestedCommunityName && !u.communityCommunName
                           ? `${u.requestedCommunityName} (requested)`
                           : formatCommunDisplayName(u.communName || u.communityCommunName)}
+                      </p>
+                    )}
+                    {flat || address ? (
+                      <p className="mt-1.5 flex items-start gap-1.5 text-xs text-[var(--text-secondary)]">
+                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--purple-primary)]" />
+                        <span>
+                          {flat ? (
+                            <span className="font-medium text-[var(--text-primary)]">
+                              Flat {flat}
+                              {address ? ' · ' : ''}
+                            </span>
+                          ) : null}
+                          {address || null}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 text-xs italic text-[var(--text-secondary)]">
+                        No address provided
                       </p>
                     )}
                     <p className="mt-1 text-xs capitalize text-[var(--text-secondary)]">
@@ -118,7 +139,8 @@ const SecretaryApprovals = () => {
                     </button>
                   </div>
                 </motion.li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </motion.div>

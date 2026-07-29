@@ -1,22 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { ArrowLeft, Circle, Pencil, Reply, Send, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, Circle, LogOut, Pencil, Reply, Send, Trash2, Users } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getApiBase } from '../../utils/apiBase';
 import { getFullName } from '../../utils/userHelpers';
 import { useInterestChat } from '../../hooks/useInterestChat';
 import { formatCommunDisplayName } from '../../utils/communName';
-import { fetchInterestCommunities } from '../../features/interestCommunitySlice';
+import {
+  fetchInterestCommunities,
+  leaveInterestCommunity,
+} from '../../features/interestCommunitySlice';
 
 const API_URL = getApiBase() || 'http://localhost:3000';
 
 const InterestCommunityChat = ({ listPath = '/interest-communities' }) => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const reduxCommunities = useSelector((s) => s.interestCommunity.communities);
+  const leavingId = useSelector((s) => s.interestCommunity.leavingId);
   const [communityName, setCommunityName] = useState('');
   const [communLabel, setCommunLabel] = useState('');
   const [members, setMembers] = useState([]);
@@ -121,6 +126,15 @@ const InterestCommunityChat = ({ listPath = '/interest-communities' }) => {
     return { name, text };
   };
 
+  const handleLeave = async () => {
+    const label = communityName || 'this community';
+    if (!window.confirm(`Leave ${label}? You can join again anytime.`)) return;
+    const result = await dispatch(leaveInterestCommunity(id));
+    if (!result.error) navigate(listPath);
+  };
+
+  const isLeaving = leavingId && String(leavingId) === String(id);
+
   return (
     <motion.div
       className="flex min-h-screen flex-col bg-[var(--background-subtle)]"
@@ -140,7 +154,7 @@ const InterestCommunityChat = ({ listPath = '/interest-communities' }) => {
               {communityName || 'Community Chat'}
             </h1>
             <p className="truncate text-xs text-[var(--text-secondary)]">
-              {communLabel ? `${communLabel} members only` : 'Your Commun members only'}
+              {communLabel ? `${communLabel} members only` : 'Your Community members only'}
               {connected ? (
                 <span className="ml-2 text-emerald-600">
                   · {othersOnline.length} online
@@ -150,6 +164,16 @@ const InterestCommunityChat = ({ listPath = '/interest-communities' }) => {
               )}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={handleLeave}
+            disabled={isLeaving}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+            title="Leave community"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            {isLeaving ? 'Leaving…' : 'Leave'}
+          </button>
         </div>
       </header>
 
@@ -158,7 +182,7 @@ const InterestCommunityChat = ({ listPath = '/interest-communities' }) => {
           <div className="mx-auto max-w-3xl">
             <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
               <Users className="h-3.5 w-3.5" />
-              Members from your Commun ({members.length})
+              Members from your Community ({members.length})
             </p>
             <div className="flex flex-wrap gap-2">
               {members.map((m) => {

@@ -385,6 +385,7 @@ const App = () => {
             <Route path="reviews" element={<SecretaryReviews />} />
             <Route path="vendors" element={<SecretaryVendors />} />
             <Route path="emergency-contacts" element={<SecretaryContacts />} />
+            <Route path="wishlist" element={<Cart />} />
             <Route
               path="communities"
               element={<InterestCommunities chatBasePath="/secretary/communities" />}

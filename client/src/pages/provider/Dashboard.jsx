@@ -136,7 +136,7 @@ const ProviderDashboard = () => {
                 {communName ? (
                   <span className="font-medium text-[var(--purple-primary)]">
                     {' '}
-                    · Welcome to {formatCommunDisplayName(communName)}
+                    · To {formatCommunDisplayName(communName)}
                   </span>
                 ) : null}
                 . Quick overview of your services and engagement.

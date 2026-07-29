@@ -128,16 +128,26 @@ const getMembers = async (req, res) => {
             .sort({ createdAt: 1 })
             .lean();
 
+        // Drop memberships whose User was deleted (populate → null)
+        const orphanIds = members.filter((m) => !m.user).map((m) => m._id);
+        if (orphanIds.length > 0) {
+            await InterestCommunityMembership.deleteMany({ _id: { $in: orphanIds } });
+        }
+
+        const activeMembers = members
+            .filter((m) => m.user)
+            .map((m) => ({
+                _id: m.user._id,
+                firstName: m.user.firstName,
+                lastName: m.user.lastName,
+                profileImage: m.user.profileImage,
+                role: m.user.role,
+            }));
+
         return res.status(200).json({
             success: true,
             data: {
-                members: members.map((m) => ({
-                    _id: m.user?._id,
-                    firstName: m.user?.firstName,
-                    lastName: m.user?.lastName,
-                    profileImage: m.user?.profileImage,
-                    role: m.user?.role,
-                })),
+                members: activeMembers,
                 communName,
                 communLabel: formatCommunDisplayName(communName),
             },

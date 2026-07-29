@@ -326,9 +326,13 @@ const UserManagement = () => {
                 </p>
                 <CommunityDisplay user={user} />
               </div>
-              <div className="mb-3 flex items-center justify-between gap-3 border-t border-purple-100 pt-3 text-xs text-[var(--text-secondary)]">
-                <span>Flat: {getUserFlatNumber(user) || '—'}</span>
-                <span className="capitalize">{user.role}</span>
+              <div className="mb-3 space-y-1.5 border-t border-purple-100 pt-3 text-xs text-[var(--text-secondary)]">
+                <div className="flex items-center justify-between gap-3">
+                  <span>Mobile: {user.phoneNumber || '—'}</span>
+                  <span className="capitalize">{user.role}</span>
+                </div>
+                <p>Flat: {getUserFlatNumber(user) || '—'}</p>
+                <p className="leading-snug">Address: {formatAddress(user) || '—'}</p>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2 border-t border-purple-100 pt-3">
                 {canChangeCommunity(user) ? (
@@ -352,23 +356,29 @@ const UserManagement = () => {
         )}
       </div>
 
-      {/* Desktop table */}
-      <div className="hidden overflow-hidden rounded-2xl border border-purple-100/50 bg-white/80 shadow-sm shadow-purple-500/5 lg:block">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1040px]">
+      {/* Desktop table — horizontal scroll for wider columns */}
+      <div className="hidden rounded-2xl border border-purple-100/50 bg-white/80 shadow-sm shadow-purple-500/5 lg:block">
+        <div className="overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[1360px]">
             <thead className="border-b border-purple-100 bg-purple-50/40">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                <th className="sticky left-0 z-10 bg-purple-50/95 px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] backdrop-blur-sm">
                   User
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Email
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Mobile
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Community
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Flat No.
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Full address
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Role
@@ -384,7 +394,7 @@ const UserManagement = () => {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
+                  <td colSpan={9} className="px-4 py-12 text-center">
                     <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
                     <p className="text-sm text-[var(--text-secondary)]">Loading users…</p>
                   </td>
@@ -392,19 +402,19 @@ const UserManagement = () => {
               )}
               {!isLoading && users.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-[var(--text-secondary)]">
+                  <td colSpan={9} className="px-4 py-10 text-center text-sm text-[var(--text-secondary)]">
                     No users found.
                   </td>
                 </tr>
               )}
               {!isLoading &&
                 users.map((user) => (
-                  <tr key={user._id} className="border-b border-purple-50 last:border-b-0 hover:bg-purple-50/30">
-                    <td className="px-4 py-3">
+                  <tr key={user._id} className="group border-b border-purple-50 last:border-b-0 hover:bg-purple-50/30">
+                    <td className="sticky left-0 z-10 bg-white px-4 py-3 group-hover:bg-purple-50/95">
                       <button
                         type="button"
                         onClick={() => openProfile(user)}
-                        className="flex items-center gap-3 text-left"
+                        className="flex min-w-[160px] items-center gap-3 text-left"
                       >
                         <ProfileAvatar
                           user={user}
@@ -417,12 +427,20 @@ const UserManagement = () => {
                         </div>
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{user.email}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] whitespace-nowrap">
+                      {user.email}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] whitespace-nowrap">
+                      {user.phoneNumber || '—'}
+                    </td>
                     <td className="px-4 py-3">
                       <CommunityDisplay user={user} />
                     </td>
-                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] whitespace-nowrap">
                       {getUserFlatNumber(user) || '—'}
+                    </td>
+                    <td className="max-w-[280px] px-4 py-3 text-sm leading-snug text-[var(--text-secondary)]">
+                      {formatAddress(user) || '—'}
                     </td>
                     <td className="px-4 py-3 text-sm capitalize text-[var(--text-secondary)]">
                       {user.role}

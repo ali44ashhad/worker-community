@@ -6,12 +6,13 @@ import { MessageCircle, Users } from 'lucide-react';
 import {
   fetchInterestCommunities,
   joinInterestCommunity,
+  leaveInterestCommunity,
 } from '../../features/interestCommunitySlice';
 
 const InterestCommunities = ({ chatBasePath = '/interest-communities' }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { communities, communLabel, needsCommunName, loading, joiningId } = useSelector(
+  const { communities, communLabel, needsCommunName, loading, joiningId, leavingId } = useSelector(
     (state) => state.interestCommunity
   );
 
@@ -34,7 +35,7 @@ const InterestCommunities = ({ chatBasePath = '/interest-communities' }) => {
             Interest Communities
           </h1>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Join a community and chat with neighbours from your Commun
+            Join a community and chat with neighbours from your Community
             {communLabel ? (
               <span className="font-medium text-[var(--purple-primary)]"> ({communLabel})</span>
             ) : null}
@@ -46,7 +47,7 @@ const InterestCommunities = ({ chatBasePath = '/interest-communities' }) => {
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         {needsCommunName && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-            Link your account to a Commun locality first to join communities.
+            Link your account to a Community locality first to join communities.
           </div>
         )}
 
@@ -69,18 +70,36 @@ const InterestCommunities = ({ chatBasePath = '/interest-communities' }) => {
                     <h3 className="font-semibold text-[var(--text-primary)]">{c.name}</h3>
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-[var(--text-secondary)]">
                       <Users className="h-3.5 w-3.5" />
-                      {c.memberCount} from your Commun
+                      {c.memberCount} from your Community
                     </p>
                   </div>
                 </div>
 
                 {c.joined ? (
-                  <Link
-                    to={`${chatBasePath}/${c._id}/chat`}
-                    className="mt-auto rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-2.5 text-center text-sm font-semibold text-white"
-                  >
-                    Open Chat
-                  </Link>
+                  <div className="mt-auto flex gap-2">
+                    <Link
+                      to={`${chatBasePath}/${c._id}/chat`}
+                      className="flex-1 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-2.5 text-center text-sm font-semibold text-white"
+                    >
+                      Open Chat
+                    </Link>
+                    <button
+                      type="button"
+                      disabled={leavingId === c._id}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Leave ${c.name}? You can join again anytime.`
+                          )
+                        ) {
+                          dispatch(leaveInterestCommunity(c._id));
+                        }
+                      }}
+                      className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                    >
+                      {leavingId === c._id ? 'Leaving…' : 'Leave'}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     type="button"

@@ -102,6 +102,7 @@ const interestCommunitySlice = createSlice({
     loading: false,
     error: null,
     joiningId: null,
+    leavingId: null,
     adminCommunities: [],
     adminLoading: false,
     adminSaving: false,
@@ -130,16 +131,27 @@ const interestCommunitySlice = createSlice({
       .addCase(joinInterestCommunity.fulfilled, (state, action) => {
         state.joiningId = null;
         state.communities = state.communities.map((c) =>
-          String(c._id) === String(action.payload) ? { ...c, joined: true } : c
+          String(c._id) === String(action.payload)
+            ? { ...c, joined: true, memberCount: (c.memberCount || 0) + 1 }
+            : c
         );
       })
       .addCase(joinInterestCommunity.rejected, (state) => {
         state.joiningId = null;
       })
+      .addCase(leaveInterestCommunity.pending, (state, action) => {
+        state.leavingId = action.meta.arg;
+      })
       .addCase(leaveInterestCommunity.fulfilled, (state, action) => {
+        state.leavingId = null;
         state.communities = state.communities.map((c) =>
-          String(c._id) === String(action.payload) ? { ...c, joined: false } : c
+          String(c._id) === String(action.payload)
+            ? { ...c, joined: false, memberCount: Math.max(0, (c.memberCount || 1) - 1) }
+            : c
         );
+      })
+      .addCase(leaveInterestCommunity.rejected, (state) => {
+        state.leavingId = null;
       })
       .addCase(fetchAdminInterestCommunities.pending, (state) => {
         state.adminLoading = true;

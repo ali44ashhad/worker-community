@@ -17,7 +17,8 @@ const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const isPanelRoute = location.pathname.startsWith('/community/');
+  const isPanelRoute =
+    location.pathname.startsWith('/community/') || location.pathname.startsWith('/secretary/');
   const { allProviders, isFetchingAll } = useSelector((s) => s.provider);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
   const user = useSelector((s) => s.auth.user);

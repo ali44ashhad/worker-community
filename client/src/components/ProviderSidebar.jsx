@@ -5,6 +5,7 @@ import {
   Briefcase,
   Building2,
   Calendar,
+  Heart,
   Home,
   LayoutGrid,
   LogOut,
@@ -77,6 +78,7 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
           { icon: PhoneCall, label: 'Emergency Contacts', path: '/community/emergency-contacts' },
         ]
       : []),
+    { icon: Heart, label: 'Wishlist', path: '/community/wishlist' },
     { icon: User, label: 'Update Profile', path: '/provider/update-profile' },
     { icon: Home, label: 'Commun Home', path: '/' },
   ];

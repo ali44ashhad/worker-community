@@ -170,6 +170,35 @@ userSchema.virtual('address').get(function() {
 userSchema.set('toJSON', { virtuals: true });
 userSchema.set('toObject', { virtuals: true });
 
+/** Remove interest-community memberships when a User document is deleted. */
+async function deleteInterestMembershipsForUsers(userIds) {
+    const ids = (userIds || []).filter(Boolean);
+    if (!ids.length) return;
+    const { default: InterestCommunityMembership } = await import(
+        "./interestCommunityMembership.model.js"
+    );
+    await InterestCommunityMembership.deleteMany({ user: { $in: ids } });
+}
+
+userSchema.pre("deleteOne", { document: true, query: false }, async function () {
+    await deleteInterestMembershipsForUsers([this._id]);
+});
+
+userSchema.pre("deleteOne", { document: false, query: true }, async function () {
+    const docs = await this.model.find(this.getFilter()).select("_id").lean();
+    await deleteInterestMembershipsForUsers(docs.map((d) => d._id));
+});
+
+userSchema.pre("findOneAndDelete", async function () {
+    const doc = await this.model.findOne(this.getFilter()).select("_id").lean();
+    if (doc) await deleteInterestMembershipsForUsers([doc._id]);
+});
+
+userSchema.pre("deleteMany", async function () {
+    const docs = await this.model.find(this.getFilter()).select("_id").lean();
+    await deleteInterestMembershipsForUsers(docs.map((d) => d._id));
+});
+
 const User = mongoose.model("User", userSchema);
 
 export default User;
