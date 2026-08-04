@@ -16,6 +16,7 @@ import {
   Wrench,
   X,
   MessageCircle,
+  Store,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -73,6 +74,7 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
       : []),
     ...(!isPublicMember
       ? [
+          { icon: Store, label: 'Local Businesses', path: '/community/local-businesses' },
           { icon: Users2, label: 'Vendors', path: '/community/vendors' },
           { icon: Building2, label: 'Directories', path: '/community/directory' },
           { icon: PhoneCall, label: 'Emergency Contacts', path: '/community/emergency-contacts' },

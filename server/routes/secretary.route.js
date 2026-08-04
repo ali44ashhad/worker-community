@@ -37,6 +37,16 @@ import {
     updateReviewSecretary,
     deleteReviewSecretary,
 } from "../controllers/reviewModeration.controller.js";
+import {
+    listActiveBusinessCategories,
+    listLocalBusinessesForSecretary,
+    getLocalBusinessForSecretary,
+    createLocalBusinessForSecretary,
+    updateLocalBusinessForSecretary,
+    updateLocalBusinessStatusForSecretary,
+    deleteLocalBusinessForSecretary,
+} from "../controllers/localBusiness.controller.js";
+import { localBusinessImageUpload } from "../middlewares/localBusinessUpload.js";
 
 const router = express.Router();
 
@@ -63,6 +73,36 @@ router.get("/vendors/categories", protect, isSecretary, listVendorCategoriesForS
 router.get("/vendors", protect, isSecretary, listVendorsForSecretary);
 router.post("/vendors", protect, isSecretary, createVendorForSecretary);
 router.delete("/vendors/:vendorId", protect, isSecretary, deleteVendorForSecretary);
+
+router.get("/local-businesses/categories", protect, isSecretary, listActiveBusinessCategories);
+router.get("/local-businesses", protect, isSecretary, listLocalBusinessesForSecretary);
+router.get("/local-businesses/:businessId", protect, isSecretary, getLocalBusinessForSecretary);
+router.post(
+    "/local-businesses",
+    protect,
+    isSecretary,
+    localBusinessImageUpload,
+    createLocalBusinessForSecretary
+);
+router.put(
+    "/local-businesses/:businessId",
+    protect,
+    isSecretary,
+    localBusinessImageUpload,
+    updateLocalBusinessForSecretary
+);
+router.patch(
+    "/local-businesses/:businessId/status",
+    protect,
+    isSecretary,
+    updateLocalBusinessStatusForSecretary
+);
+router.delete(
+    "/local-businesses/:businessId",
+    protect,
+    isSecretary,
+    deleteLocalBusinessForSecretary
+);
 
 router.get("/emergency-contacts", protect, isSecretary, listEmergencyContactsForSecretary);
 router.post("/emergency-contacts", protect, isSecretary, createEmergencyContactForSecretary);

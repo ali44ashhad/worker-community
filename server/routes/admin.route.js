@@ -40,6 +40,12 @@ import {
     updateBannerStatusAdmin,
     deleteBannerAdmin,
 } from "../controllers/banner.controller.js";
+import {
+    listBusinessCategoriesAdmin,
+    createBusinessCategoryAdmin,
+    updateBusinessCategoryAdmin,
+    updateBusinessCategoryStatusAdmin,
+} from "../controllers/localBusiness.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
 
@@ -214,5 +220,15 @@ router.get("/banners", protect, isAdmin, listBannersAdmin);
 router.post("/banners", protect, isAdmin, upload.single("image"), createBannerAdmin);
 router.patch("/banners/:bannerId/status", protect, isAdmin, updateBannerStatusAdmin);
 router.delete("/banners/:bannerId", protect, isAdmin, deleteBannerAdmin);
+
+router.get("/business-categories", protect, isAdmin, listBusinessCategoriesAdmin);
+router.post("/business-categories", protect, isAdmin, createBusinessCategoryAdmin);
+router.put("/business-categories/:categoryId", protect, isAdmin, updateBusinessCategoryAdmin);
+router.patch(
+    "/business-categories/:categoryId/status",
+    protect,
+    isAdmin,
+    updateBusinessCategoryStatusAdmin
+);
 
 export default router;

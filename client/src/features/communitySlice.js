@@ -94,6 +94,34 @@ export const fetchCommunityVendors = createAsyncThunk(
   }
 );
 
+export const fetchCommunityLocalBusinesses = createAsyncThunk(
+  'community/fetchLocalBusinesses',
+  async ({ search = '', category = '' } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      if (search.trim()) params.append('search', search.trim());
+      if (category) params.append('category', category);
+      const qs = params.toString();
+      const res = await axios.get(`${API_URL}/api/local-businesses/community${qs ? `?${qs}` : ''}`);
+      return res.data?.data || { businesses: [], needsCommunity: false, communityCommunName: null };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to load local businesses');
+    }
+  }
+);
+
+export const fetchCommunityLocalBusinessById = createAsyncThunk(
+  'community/fetchLocalBusinessById',
+  async (businessId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/local-businesses/community/${businessId}`);
+      return res.data?.data?.business || null;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to load business details');
+    }
+  }
+);
+
 export const fetchCommunityEmergencyContacts = createAsyncThunk(
   'community/fetchEmergencyContacts',
   async (_, { rejectWithValue }) => {
@@ -153,6 +181,16 @@ const communitySlice = createSlice({
       needsCommunity: false,
       communityCommunName: null,
     },
+    localBusinesses: [],
+    localBusinessesLoading: false,
+    localBusinessesError: null,
+    localBusinessesMeta: {
+      needsCommunity: false,
+      communityCommunName: null,
+    },
+    localBusinessDetail: null,
+    localBusinessDetailLoading: false,
+    localBusinessDetailError: null,
     emergencyContacts: [],
     emergencyContactsLoading: false,
     emergencyContactsError: null,
@@ -190,6 +228,11 @@ const communitySlice = createSlice({
       state.vendors = { categories: [], vendorsByCategory: {} };
       state.vendorsError = null;
       state.vendorsMeta = { needsCommunity: false, communityCommunName: null };
+      state.localBusinesses = [];
+      state.localBusinessesError = null;
+      state.localBusinessesMeta = { needsCommunity: false, communityCommunName: null };
+      state.localBusinessDetail = null;
+      state.localBusinessDetailError = null;
       state.emergencyContacts = [];
       state.emergencyContactsError = null;
       state.emergencyContactsMeta = { needsCommunity: false, communityCommunName: null };
@@ -288,6 +331,35 @@ const communitySlice = createSlice({
       .addCase(fetchCommunityVendors.rejected, (state, action) => {
         state.vendorsLoading = false;
         state.vendorsError = action.payload;
+      })
+      .addCase(fetchCommunityLocalBusinesses.pending, (state) => {
+        state.localBusinessesLoading = true;
+        state.localBusinessesError = null;
+      })
+      .addCase(fetchCommunityLocalBusinesses.fulfilled, (state, action) => {
+        state.localBusinessesLoading = false;
+        state.localBusinesses = action.payload.businesses || [];
+        state.localBusinessesMeta = {
+          needsCommunity: Boolean(action.payload.needsCommunity),
+          communityCommunName: action.payload.communityCommunName || null,
+        };
+      })
+      .addCase(fetchCommunityLocalBusinesses.rejected, (state, action) => {
+        state.localBusinessesLoading = false;
+        state.localBusinessesError = action.payload;
+      })
+      .addCase(fetchCommunityLocalBusinessById.pending, (state) => {
+        state.localBusinessDetailLoading = true;
+        state.localBusinessDetailError = null;
+        state.localBusinessDetail = null;
+      })
+      .addCase(fetchCommunityLocalBusinessById.fulfilled, (state, action) => {
+        state.localBusinessDetailLoading = false;
+        state.localBusinessDetail = action.payload;
+      })
+      .addCase(fetchCommunityLocalBusinessById.rejected, (state, action) => {
+        state.localBusinessDetailLoading = false;
+        state.localBusinessDetailError = action.payload;
       })
       .addCase(fetchCommunityEmergencyContacts.pending, (state) => {
         state.emergencyContactsLoading = true;

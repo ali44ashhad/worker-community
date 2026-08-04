@@ -58,6 +58,8 @@ import SecretaryEvents from './pages/secretary/SecretaryEvents'
 import SecretaryServices from './pages/secretary/SecretaryServices'
 import SecretaryReviews from './pages/secretary/SecretaryReviews'
 import SecretaryVendors from './pages/secretary/SecretaryVendors'
+import SecretaryLocalBusinesses from './pages/secretary/SecretaryLocalBusinesses'
+import SecretaryLocalBusinessForm from './pages/secretary/SecretaryLocalBusinessForm'
 import SecretaryContacts from './pages/secretary/SecretaryContacts'
 import CommunityMgmt from './pages/admin/CommunityMgmt'
 import InterestCommunities from './pages/interest/InterestCommunities'
@@ -67,8 +69,11 @@ import PendingApproval from './pages/PendingApproval'
 import CommunityBroadcast from './pages/community/CommunityBroadcast'
 import CommunityEvents from './pages/community/CommunityEvents'
 import CommunityVendors from './pages/community/CommunityVendors'
+import CommunityLocalBusinesses from './pages/community/CommunityLocalBusinesses'
+import CommunityLocalBusinessDetail from './pages/community/CommunityLocalBusinessDetail'
 import CommunityEmergencyContacts from './pages/community/CommunityEmergencyContacts'
 import CommunityDirectory from './pages/community/CommunityDirectory'
+import AdminBusinessCategories from './pages/admin/AdminBusinessCategories'
 import MemberProtectedRoute from './components/MemberProtectedRoute'
 import ProviderAwareLayout from './components/ProviderAwareLayout'
 import { fetchCommunityFeatures, clearCommunityFeatures } from './features/communitySlice'
@@ -128,6 +133,7 @@ const App = () => {
     '/community/become-provider',
     '/community/services',
     '/community/vendors',
+    '/community/local-businesses',
     '/community/emergency-contacts',
     '/community/directory',
     '/community/communities',
@@ -299,6 +305,26 @@ const App = () => {
           }
         />
         <Route
+          path='/community/local-businesses'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <CommunityLocalBusinesses />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
+          path='/community/local-businesses/:businessId'
+          element={
+            <MemberProtectedRoute>
+              <ProviderAwareLayout>
+                <CommunityLocalBusinessDetail />
+              </ProviderAwareLayout>
+            </MemberProtectedRoute>
+          }
+        />
+        <Route
           path='/community/emergency-contacts'
           element={
             <MemberProtectedRoute>
@@ -367,6 +393,7 @@ const App = () => {
           <Route path="category-clicks" element={<CategoryClicks />} />
           <Route path="provider-clicks" element={<ProviderClicks />} />
           <Route path="categories" element={<CategoryManagement />} />
+          <Route path="business-categories" element={<AdminBusinessCategories />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="secretaries" element={<SecretaryManagement />} />
           <Route path="communities" element={<CommunityMgmt />} />
@@ -383,6 +410,9 @@ const App = () => {
             <Route path="events" element={<SecretaryEvents />} />
             <Route path="services" element={<SecretaryServices />} />
             <Route path="reviews" element={<SecretaryReviews />} />
+            <Route path="local-businesses" element={<SecretaryLocalBusinesses />} />
+            <Route path="local-businesses/add" element={<SecretaryLocalBusinessForm />} />
+            <Route path="local-businesses/:businessId/edit" element={<SecretaryLocalBusinessForm />} />
             <Route path="vendors" element={<SecretaryVendors />} />
             <Route path="emergency-contacts" element={<SecretaryContacts />} />
             <Route path="wishlist" element={<Cart />} />

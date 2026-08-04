@@ -530,6 +530,78 @@ export const deleteAdminBanner = createAsyncThunk(
   }
 );
 
+export const fetchAdminBusinessCategories = createAsyncThunk(
+  "admin/fetchBusinessCategories",
+  async ({ search = "" } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      if (search.trim()) params.append("search", search.trim());
+      const qs = params.toString();
+      const res = await axios.get(`${API_URL}/api/admin/business-categories${qs ? `?${qs}` : ""}`);
+      return res.data?.data?.categories || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to load business categories");
+    }
+  }
+);
+
+export const createAdminBusinessCategory = createAsyncThunk(
+  "admin/createBusinessCategory",
+  async ({ name, subCategories, sortOrder, isActive }, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/admin/business-categories`, {
+        name,
+        subCategories,
+        sortOrder,
+        isActive,
+      });
+      toast.success(res.data?.message || "Business category created.");
+      return res.data?.data?.category;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to create business category";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateAdminBusinessCategory = createAsyncThunk(
+  "admin/updateBusinessCategory",
+  async ({ categoryId, name, subCategories, sortOrder, isActive }, { rejectWithValue }) => {
+    try {
+      const res = await axios.put(`${API_URL}/api/admin/business-categories/${categoryId}`, {
+        name,
+        subCategories,
+        sortOrder,
+        isActive,
+      });
+      toast.success(res.data?.message || "Business category updated.");
+      return res.data?.data?.category;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update business category";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateAdminBusinessCategoryStatus = createAsyncThunk(
+  "admin/updateBusinessCategoryStatus",
+  async ({ categoryId, isActive }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/admin/business-categories/${categoryId}/status`, {
+        isActive,
+      });
+      toast.success(res.data?.message || "Business category status updated.");
+      return res.data?.data?.category;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update category status";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 /* ----------------- SLICE ----------------- */
 
 const adminSlice = createSlice({
@@ -604,6 +676,10 @@ const adminSlice = createSlice({
     bannersError: null,
     bannerUploading: false,
     bannerDeletingId: null,
+    businessCategoriesAdmin: [],
+    businessCategoriesAdminLoading: false,
+    businessCategoriesAdminError: null,
+    businessCategorySaving: false,
     isLoading: false,
     error: null,
   },
@@ -923,6 +999,55 @@ const adminSlice = createSlice({
       })
       .addCase(deleteAdminBanner.rejected, (state) => {
         state.bannerDeletingId = null;
+      })
+      .addCase(fetchAdminBusinessCategories.pending, (state) => {
+        state.businessCategoriesAdminLoading = true;
+        state.businessCategoriesAdminError = null;
+      })
+      .addCase(fetchAdminBusinessCategories.fulfilled, (state, action) => {
+        state.businessCategoriesAdminLoading = false;
+        state.businessCategoriesAdmin = action.payload || [];
+      })
+      .addCase(fetchAdminBusinessCategories.rejected, (state, action) => {
+        state.businessCategoriesAdminLoading = false;
+        state.businessCategoriesAdminError = action.payload;
+      })
+      .addCase(createAdminBusinessCategory.pending, (state) => {
+        state.businessCategorySaving = true;
+      })
+      .addCase(createAdminBusinessCategory.fulfilled, (state, action) => {
+        state.businessCategorySaving = false;
+        if (action.payload) {
+          state.businessCategoriesAdmin = [...state.businessCategoriesAdmin, action.payload].sort(
+            (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0) || String(a.name).localeCompare(String(b.name))
+          );
+        }
+      })
+      .addCase(createAdminBusinessCategory.rejected, (state) => {
+        state.businessCategorySaving = false;
+      })
+      .addCase(updateAdminBusinessCategory.pending, (state) => {
+        state.businessCategorySaving = true;
+      })
+      .addCase(updateAdminBusinessCategory.fulfilled, (state, action) => {
+        state.businessCategorySaving = false;
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.businessCategoriesAdmin = state.businessCategoriesAdmin
+          .map((c) => (c._id === updated._id ? updated : c))
+          .sort(
+            (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0) || String(a.name).localeCompare(String(b.name))
+          );
+      })
+      .addCase(updateAdminBusinessCategory.rejected, (state) => {
+        state.businessCategorySaving = false;
+      })
+      .addCase(updateAdminBusinessCategoryStatus.fulfilled, (state, action) => {
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.businessCategoriesAdmin = state.businessCategoriesAdmin.map((c) =>
+          c._id === updated._id ? updated : c
+        );
       });
   },
 });

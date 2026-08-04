@@ -483,6 +483,136 @@ export const deleteSecretaryReview = createAsyncThunk(
   }
 );
 
+const appendLocalBusinessFields = (formData, payload = {}) => {
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (key === "logo" || key === "banner") return;
+    if (Array.isArray(value)) {
+      formData.append(key, JSON.stringify(value));
+      return;
+    }
+    formData.append(key, String(value));
+  });
+  if (payload.logo instanceof File) formData.append("logo", payload.logo);
+  if (payload.banner instanceof File) formData.append("banner", payload.banner);
+};
+
+export const fetchBusinessCategories = createAsyncThunk(
+  "secretary/fetchBusinessCategories",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/secretary/local-businesses/categories`);
+      return res.data?.data?.categories || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to load business categories");
+    }
+  }
+);
+
+export const fetchSecretaryLocalBusinesses = createAsyncThunk(
+  "secretary/fetchLocalBusinesses",
+  async ({ search = "", category = "", status = "" } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      if (search.trim()) params.append("search", search.trim());
+      if (category) params.append("category", category);
+      if (status) params.append("status", status);
+      const qs = params.toString();
+      const res = await axios.get(`${API_URL}/api/secretary/local-businesses${qs ? `?${qs}` : ""}`);
+      const data = res.data?.data || {};
+      return {
+        businesses: data.businesses || [],
+        needsCommunName: Boolean(data.needsCommunName),
+        communityCommunName: data.communityCommunName || null,
+      };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to load businesses");
+    }
+  }
+);
+
+export const fetchSecretaryLocalBusinessById = createAsyncThunk(
+  "secretary/fetchLocalBusinessById",
+  async (businessId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/secretary/local-businesses/${businessId}`);
+      return res.data?.data?.business || null;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to load business");
+    }
+  }
+);
+
+export const createSecretaryLocalBusiness = createAsyncThunk(
+  "secretary/createLocalBusiness",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      appendLocalBusinessFields(formData, payload);
+      const res = await axios.post(`${API_URL}/api/secretary/local-businesses`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success(res.data?.message || "Business created.");
+      return res.data?.data?.business;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to create business";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateSecretaryLocalBusiness = createAsyncThunk(
+  "secretary/updateLocalBusiness",
+  async ({ businessId, ...payload }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      appendLocalBusinessFields(formData, payload);
+      const res = await axios.put(`${API_URL}/api/secretary/local-businesses/${businessId}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success(res.data?.message || "Business updated.");
+      return res.data?.data?.business;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update business";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateSecretaryLocalBusinessStatus = createAsyncThunk(
+  "secretary/updateLocalBusinessStatus",
+  async ({ businessId, status }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/secretary/local-businesses/${businessId}/status`, {
+        status,
+      });
+      toast.success(res.data?.message || "Business status updated.");
+      return res.data?.data?.business;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update status";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const deleteSecretaryLocalBusiness = createAsyncThunk(
+  "secretary/deleteLocalBusiness",
+  async (businessId, { rejectWithValue }) => {
+    try {
+      const res = await axios.delete(`${API_URL}/api/secretary/local-businesses/${businessId}`);
+      toast.success(res.data?.message || "Business deleted.");
+      return businessId;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to delete business";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 const secretarySlice = createSlice({
   name: "secretary",
   initialState: {
@@ -556,6 +686,22 @@ const secretarySlice = createSlice({
     vendorsError: null,
     vendorCreating: false,
     vendorDeletingId: null,
+
+    businessCategories: [],
+    businessCategoriesLoading: false,
+    businessCategoriesError: null,
+    localBusinesses: [],
+    localBusinessesLoading: false,
+    localBusinessesError: null,
+    localBusinessesMeta: {
+      needsCommunName: false,
+      communityCommunName: null,
+    },
+    localBusinessDetail: null,
+    localBusinessDetailLoading: false,
+    localBusinessSaving: false,
+    localBusinessDeletingId: null,
+    localBusinessStatusUpdatingId: null,
 
     emergencyContacts: [],
     emergencyContactsLoading: false,
@@ -916,6 +1062,97 @@ const secretarySlice = createSlice({
       })
       .addCase(deleteSecretaryReview.rejected, (state) => {
         state.reviewDeletingId = null;
+      })
+      .addCase(fetchBusinessCategories.pending, (state) => {
+        state.businessCategoriesLoading = true;
+        state.businessCategoriesError = null;
+      })
+      .addCase(fetchBusinessCategories.fulfilled, (state, action) => {
+        state.businessCategoriesLoading = false;
+        state.businessCategories = action.payload || [];
+      })
+      .addCase(fetchBusinessCategories.rejected, (state, action) => {
+        state.businessCategoriesLoading = false;
+        state.businessCategoriesError = action.payload;
+      })
+      .addCase(fetchSecretaryLocalBusinesses.pending, (state) => {
+        state.localBusinessesLoading = true;
+        state.localBusinessesError = null;
+      })
+      .addCase(fetchSecretaryLocalBusinesses.fulfilled, (state, action) => {
+        state.localBusinessesLoading = false;
+        state.localBusinesses = action.payload.businesses || [];
+        state.localBusinessesMeta = {
+          needsCommunName: action.payload.needsCommunName,
+          communityCommunName: action.payload.communityCommunName,
+        };
+      })
+      .addCase(fetchSecretaryLocalBusinesses.rejected, (state, action) => {
+        state.localBusinessesLoading = false;
+        state.localBusinessesError = action.payload;
+      })
+      .addCase(fetchSecretaryLocalBusinessById.pending, (state) => {
+        state.localBusinessDetailLoading = true;
+        state.localBusinessDetail = null;
+      })
+      .addCase(fetchSecretaryLocalBusinessById.fulfilled, (state, action) => {
+        state.localBusinessDetailLoading = false;
+        state.localBusinessDetail = action.payload;
+      })
+      .addCase(fetchSecretaryLocalBusinessById.rejected, (state) => {
+        state.localBusinessDetailLoading = false;
+        state.localBusinessDetail = null;
+      })
+      .addCase(createSecretaryLocalBusiness.pending, (state) => {
+        state.localBusinessSaving = true;
+      })
+      .addCase(createSecretaryLocalBusiness.fulfilled, (state, action) => {
+        state.localBusinessSaving = false;
+        if (action.payload) {
+          state.localBusinesses = [action.payload, ...state.localBusinesses];
+        }
+      })
+      .addCase(createSecretaryLocalBusiness.rejected, (state) => {
+        state.localBusinessSaving = false;
+      })
+      .addCase(updateSecretaryLocalBusiness.pending, (state) => {
+        state.localBusinessSaving = true;
+      })
+      .addCase(updateSecretaryLocalBusiness.fulfilled, (state, action) => {
+        state.localBusinessSaving = false;
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.localBusinesses = state.localBusinesses.map((b) =>
+          b._id === updated._id ? updated : b
+        );
+        state.localBusinessDetail = updated;
+      })
+      .addCase(updateSecretaryLocalBusiness.rejected, (state) => {
+        state.localBusinessSaving = false;
+      })
+      .addCase(updateSecretaryLocalBusinessStatus.pending, (state, action) => {
+        state.localBusinessStatusUpdatingId = action.meta.arg?.businessId || null;
+      })
+      .addCase(updateSecretaryLocalBusinessStatus.fulfilled, (state, action) => {
+        state.localBusinessStatusUpdatingId = null;
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.localBusinesses = state.localBusinesses.map((b) =>
+          b._id === updated._id ? updated : b
+        );
+      })
+      .addCase(updateSecretaryLocalBusinessStatus.rejected, (state) => {
+        state.localBusinessStatusUpdatingId = null;
+      })
+      .addCase(deleteSecretaryLocalBusiness.pending, (state, action) => {
+        state.localBusinessDeletingId = action.meta.arg;
+      })
+      .addCase(deleteSecretaryLocalBusiness.fulfilled, (state, action) => {
+        state.localBusinessDeletingId = null;
+        state.localBusinesses = state.localBusinesses.filter((b) => b._id !== action.payload);
+      })
+      .addCase(deleteSecretaryLocalBusiness.rejected, (state) => {
+        state.localBusinessDeletingId = null;
       });
   },
 });
