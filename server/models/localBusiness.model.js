@@ -40,7 +40,7 @@ const localBusinessSchema = new Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: 2000,
+      maxlength: 10000,
       default: "",
     },
     ownerName: {
@@ -57,10 +57,10 @@ const localBusinessSchema = new Schema(
     },
     email: {
       type: String,
-      required: true,
       trim: true,
       lowercase: true,
       maxlength: 120,
+      default: "",
     },
     address: {
       type: String,
@@ -85,11 +85,17 @@ const localBusinessSchema = new Schema(
         message: "At least one business category is required.",
       },
     },
+    /** Whether this business offers a community discount. */
+    hasDiscount: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     discountPercentage: {
       type: Number,
-      required: true,
       min: 0,
       max: 100,
+      default: 0,
     },
     /** Services/products that receive the discount. */
     discountedCategories: {
@@ -103,11 +109,11 @@ const localBusinessSchema = new Schema(
     },
     discountStartDate: {
       type: Date,
-      required: true,
+      default: null,
     },
     discountEndDate: {
       type: Date,
-      required: true,
+      default: null,
     },
     status: {
       type: String,

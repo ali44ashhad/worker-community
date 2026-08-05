@@ -128,7 +128,7 @@ const CommunityLocalBusinesses = () => {
             : 'No participating businesses right now.'}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence>
             {scopedBusinesses.map((business) => (
               <motion.div
@@ -140,23 +140,30 @@ const CommunityLocalBusinesses = () => {
                 className="overflow-hidden rounded-2xl border border-purple-100/60 bg-white/90 shadow-sm"
               >
                 {business.bannerUrl ? (
-                  <img src={business.bannerUrl} alt="" className="h-28 w-full object-cover" />
+                  <div className="aspect-video w-full overflow-hidden bg-purple-50">
+                    <img src={business.bannerUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
                 ) : (
-                  <div className="h-16 bg-gradient-to-r from-purple-50 to-fuchsia-50" />
+                  <div className="aspect-video w-full bg-gradient-to-r from-purple-50 to-fuchsia-50" />
                 )}
                 <div className="p-5">
                   <div className="flex items-start gap-3">
-                    {business.logoUrl ? (
-                      <img
-                        src={business.logoUrl}
-                        alt=""
-                        className="h-12 w-12 rounded-xl border border-purple-100 object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-[var(--purple-primary)]">
-                        <Building2 className="h-5 w-5" />
-                      </div>
-                    )}
+                    <div
+                      className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-purple-100 bg-purple-50"
+                      style={{ borderRadius: '9999px' }}
+                    >
+                      {business.logoUrl ? (
+                        <img
+                          src={business.logoUrl}
+                          alt=""
+                          className="block h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[var(--purple-primary)]">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                      )}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="truncate text-base font-semibold text-[var(--text-primary)]">
                         {business.businessName}

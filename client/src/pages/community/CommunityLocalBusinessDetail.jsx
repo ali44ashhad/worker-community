@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { fetchCommunityLocalBusinessById } from '../../features/communitySlice';
+import SafeHtml from '../../components/SafeHtml';
 
 const cardClass =
   'rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-6';
@@ -69,13 +70,17 @@ const CommunityLocalBusinessDetail = () => {
         Back to listing
       </Link>
 
-      <div className="overflow-hidden rounded-2xl border border-purple-100/60 bg-white/90 shadow-sm">
-        {business.bannerUrl ? (
-          <img src={business.bannerUrl} alt="" className="h-40 w-full object-cover sm:h-52" />
-        ) : (
-          <div className="h-28 bg-gradient-to-r from-purple-50 to-fuchsia-50" />
-        )}
-        <div className="p-5 sm:p-6">
+      <div className="rounded-2xl border border-purple-100/60 bg-white/90 shadow-sm">
+        <div className="overflow-hidden">
+          {business.bannerUrl ? (
+            <div className="aspect-video w-full overflow-hidden bg-purple-50">
+              <img src={business.bannerUrl} alt="" className="h-full w-full object-cover" />
+            </div>
+          ) : (
+            <div className="aspect-video w-full bg-gradient-to-r from-purple-50 to-fuchsia-50" />
+          )}
+        </div>
+        <div className="min-w-0 p-5 sm:p-6">
           <div className="flex items-start gap-3">
             {business.logoUrl ? (
               <img
@@ -98,7 +103,9 @@ const CommunityLocalBusinessDetail = () => {
           </div>
 
           {business.description ? (
-            <p className="mt-4 text-sm leading-relaxed text-[var(--text-secondary)]">{business.description}</p>
+            <div className="mt-4 min-w-0 w-full">
+              <SafeHtml html={business.description} />
+            </div>
           ) : null}
         </div>
       </div>

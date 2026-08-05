@@ -6,6 +6,7 @@ import {
   uploadBufferToS3,
   deleteS3AssetByUrl,
 } from "../utils/s3Upload.js";
+import { sanitizeBusinessDescriptionHtml } from "../utils/sanitizeHtml.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+]?[\d\s().-]{7,30}$/;
@@ -67,6 +68,9 @@ const parseDate = (value) => {
 const isDiscountCurrentlyValid = (business, now = new Date()) => {
   if (!business) return false;
   if (business.status !== "active") return false;
+  if (business.hasDiscount === false) return false;
+  const percentage = Number(business.discountPercentage) || 0;
+  if (percentage <= 0) return false;
   const start = business.discountStartDate ? new Date(business.discountStartDate) : null;
   const end = business.discountEndDate ? new Date(business.discountEndDate) : null;
   if (!start || !end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
@@ -134,10 +138,11 @@ async function validateBusinessPayload(body, { partial = false } = {}) {
   const errors = [];
 
   const businessName = body.businessName !== undefined ? normalizeRequired(body.businessName) : undefined;
-  const description = body.description !== undefined ? normalizeOptional(body.description) : undefined;
+  const description =
+    body.description !== undefined ? sanitizeBusinessDescriptionHtml(body.description) : undefined;
   const ownerName = body.ownerName !== undefined ? normalizeRequired(body.ownerName) : undefined;
   const contactNumber = body.contactNumber !== undefined ? normalizeRequired(body.contactNumber) : undefined;
-  const email = body.email !== undefined ? normalizeRequired(body.email).toLowerCase() : undefined;
+  const email = body.email !== undefined ? normalizeOptional(body.email).toLowerCase() : undefined;
   const address = body.address !== undefined ? normalizeRequired(body.address) : undefined;
   const website = body.website !== undefined ? normalizeOptional(body.website) : undefined;
   const status = body.status !== undefined ? normalizeOptional(body.status).toLowerCase() : undefined;
@@ -151,14 +156,34 @@ async function validateBusinessPayload(body, { partial = false } = {}) {
       ? uniqueStrings(parseStringArray(body.nonDiscountedCategories))
       : undefined;
 
+  let hasDiscount;
+  if (body.hasDiscount !== undefined && body.hasDiscount !== "") {
+    const raw = body.hasDiscount;
+    hasDiscount =
+      raw === true ||
+      raw === "true" ||
+      raw === "1" ||
+      raw === 1 ||
+      raw === "yes";
+  }
+
   let discountPercentage;
   if (body.discountPercentage !== undefined && body.discountPercentage !== "") {
     discountPercentage = Number(body.discountPercentage);
   }
 
   const discountStartDate =
-    body.discountStartDate !== undefined ? parseDate(body.discountStartDate) : undefined;
-  const discountEndDate = body.discountEndDate !== undefined ? parseDate(body.discountEndDate) : undefined;
+    body.discountStartDate !== undefined
+      ? body.discountStartDate === "" || body.discountStartDate === null
+        ? null
+        : parseDate(body.discountStartDate)
+      : undefined;
+  const discountEndDate =
+    body.discountEndDate !== undefined
+      ? body.discountEndDate === "" || body.discountEndDate === null
+        ? null
+        : parseDate(body.discountEndDate)
+      : undefined;
 
   if (!partial || businessName !== undefined) {
     if (!businessName) errors.push("Business name is required.");
@@ -171,15 +196,14 @@ async function validateBusinessPayload(body, { partial = false } = {}) {
     if (!contactNumber) errors.push("Contact number is required.");
     else if (!PHONE_RE.test(contactNumber)) errors.push("Contact number is invalid.");
   }
-  if (!partial || email !== undefined) {
-    if (!email) errors.push("Email address is required.");
-    else if (!EMAIL_RE.test(email) || email.length > 120) errors.push("Email address is invalid.");
+  if (email !== undefined && email) {
+    if (!EMAIL_RE.test(email) || email.length > 120) errors.push("Email address is invalid.");
   }
   if (!partial || address !== undefined) {
     if (!address) errors.push("Business address is required.");
     else if (address.length > 500) errors.push("Business address is too long.");
   }
-  if (description !== undefined && description.length > 2000) {
+  if (description !== undefined && description.length > 10000) {
     errors.push("Description is too long.");
   }
   if (website !== undefined && website) {
@@ -190,20 +214,26 @@ async function validateBusinessPayload(body, { partial = false } = {}) {
   if (!partial || businessCategories !== undefined) {
     if (!businessCategories?.length) errors.push("Select at least one business category.");
   }
-  if (!partial || discountPercentage !== undefined) {
-    if (!Number.isFinite(discountPercentage) || discountPercentage < 0 || discountPercentage > 100) {
-      errors.push("Discount percentage must be between 0 and 100.");
+  if (!partial && hasDiscount === undefined) {
+    errors.push("Please choose whether this business has a discount.");
+  }
+
+  const discountEnabled = hasDiscount === true;
+
+  if (discountEnabled) {
+    if (!Number.isFinite(discountPercentage) || discountPercentage <= 0 || discountPercentage > 100) {
+      errors.push("Discount percentage must be between 1 and 100.");
     }
-  }
-  if (!partial || discountStartDate !== undefined) {
     if (!discountStartDate) errors.push("Discount start date is required.");
-  }
-  if (!partial || discountEndDate !== undefined) {
     if (!discountEndDate) errors.push("Discount end date is required.");
+    if (discountStartDate && discountEndDate && discountEndDate < discountStartDate) {
+      errors.push("Discount end date must be on or after the start date.");
+    }
+  } else if (hasDiscount === false) {
+    // Clear discount fields when explicitly disabled
+    discountPercentage = 0;
   }
-  if (discountStartDate && discountEndDate && discountEndDate < discountStartDate) {
-    errors.push("Discount end date must be on or after the start date.");
-  }
+
   if (status !== undefined && !["active", "inactive"].includes(status)) {
     errors.push("Status must be active or inactive.");
   }
@@ -216,7 +246,7 @@ async function validateBusinessPayload(body, { partial = false } = {}) {
     if (categoryResolution.error) return { errors: [categoryResolution.error] };
   }
 
-  if (discountedCategories || nonDiscountedCategories) {
+  if (discountEnabled && (discountedCategories || nonDiscountedCategories)) {
     const allowedServices = categoryResolution?.allowedServices;
     if (!allowedServices) {
       // For partial updates without category change, caller must pass existing categories.
@@ -241,24 +271,35 @@ async function validateBusinessPayload(body, { partial = false } = {}) {
     }
   }
 
-  return {
-    data: {
-      ...(businessName !== undefined ? { businessName } : {}),
-      ...(description !== undefined ? { description } : {}),
-      ...(ownerName !== undefined ? { ownerName } : {}),
-      ...(contactNumber !== undefined ? { contactNumber } : {}),
-      ...(email !== undefined ? { email } : {}),
-      ...(address !== undefined ? { address } : {}),
-      ...(website !== undefined ? { website } : {}),
-      ...(businessCategories !== undefined ? { businessCategories } : {}),
-      ...(discountPercentage !== undefined ? { discountPercentage } : {}),
-      ...(discountedCategories !== undefined ? { discountedCategories } : {}),
-      ...(nonDiscountedCategories !== undefined ? { nonDiscountedCategories } : {}),
-      ...(discountStartDate !== undefined ? { discountStartDate } : {}),
-      ...(discountEndDate !== undefined ? { discountEndDate } : {}),
-      ...(status !== undefined ? { status } : {}),
-    },
+  const data = {
+    ...(businessName !== undefined ? { businessName } : {}),
+    ...(description !== undefined ? { description } : {}),
+    ...(ownerName !== undefined ? { ownerName } : {}),
+    ...(contactNumber !== undefined ? { contactNumber } : {}),
+    ...(email !== undefined ? { email } : {}),
+    ...(address !== undefined ? { address } : {}),
+    ...(website !== undefined ? { website } : {}),
+    ...(businessCategories !== undefined ? { businessCategories } : {}),
+    ...(status !== undefined ? { status } : {}),
   };
+
+  if (hasDiscount === false) {
+    data.hasDiscount = false;
+    data.discountPercentage = 0;
+    data.discountedCategories = [];
+    data.nonDiscountedCategories = [];
+    data.discountStartDate = null;
+    data.discountEndDate = null;
+  } else if (hasDiscount === true) {
+    data.hasDiscount = true;
+    if (discountPercentage !== undefined) data.discountPercentage = discountPercentage;
+    if (discountedCategories !== undefined) data.discountedCategories = discountedCategories;
+    if (nonDiscountedCategories !== undefined) data.nonDiscountedCategories = nonDiscountedCategories;
+    if (discountStartDate !== undefined) data.discountStartDate = discountStartDate;
+    if (discountEndDate !== undefined) data.discountEndDate = discountEndDate;
+  }
+
+  return { data };
 }
 
 async function uploadBusinessImage(file, existingUrl) {
@@ -668,7 +709,7 @@ const listCommunityLocalBusinesses = async (req, res) => {
     const businesses = await LocalBusiness.find(query)
       .sort({ createdAt: -1 })
       .select(
-        "businessName logoUrl bannerUrl description ownerName contactNumber email address website businessCategories discountPercentage discountedCategories nonDiscountedCategories discountStartDate discountEndDate status communityCommunName createdAt"
+        "businessName logoUrl bannerUrl description ownerName contactNumber email address website businessCategories hasDiscount discountPercentage discountedCategories nonDiscountedCategories discountStartDate discountEndDate status communityCommunName createdAt"
       )
       .lean();
 

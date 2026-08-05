@@ -8,6 +8,8 @@ import {
   fetchSecretaryLocalBusinessById,
   updateSecretaryLocalBusiness,
 } from '../../features/secretarySlice';
+import RichTextEditor from '../../components/RichTextEditor';
+import { sanitizeRichTextHtml } from '../../utils/sanitizeHtml';
 
 const cardClass =
   'rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-6';
@@ -44,6 +46,7 @@ const emptyForm = {
   address: '',
   website: '',
   businessCategories: [],
+  hasDiscount: null, // null = not chosen yet, true/false after Yes/No
   discountPercentage: '10',
   discountedCategories: [],
   nonDiscountedCategories: [],
@@ -91,8 +94,18 @@ const SecretaryLocalBusinessForm = () => {
       email: localBusinessDetail.email || '',
       address: localBusinessDetail.address || '',
       website: localBusinessDetail.website || '',
-      businessCategories: localBusinessDetail.businessCategories || [],
-      discountPercentage: String(localBusinessDetail.discountPercentage ?? '10'),
+      businessCategories: localBusinessDetail.businessCategories?.[0]
+        ? [localBusinessDetail.businessCategories[0]]
+        : [],
+      hasDiscount:
+        typeof localBusinessDetail.hasDiscount === 'boolean'
+          ? localBusinessDetail.hasDiscount
+          : Number(localBusinessDetail.discountPercentage) > 0,
+      discountPercentage: String(
+        localBusinessDetail.hasDiscount === false
+          ? '10'
+          : localBusinessDetail.discountPercentage ?? '10'
+      ),
       discountedCategories: localBusinessDetail.discountedCategories || [],
       nonDiscountedCategories: localBusinessDetail.nonDiscountedCategories || [],
       discountStartDate: toDateInput(localBusinessDetail.discountStartDate),
@@ -123,16 +136,12 @@ const SecretaryLocalBusinessForm = () => {
     }));
   }, [availableServices]);
 
-  const toggleBusinessCategory = (name) => {
-    setForm((prev) => {
-      const exists = prev.businessCategories.includes(name);
-      return {
-        ...prev,
-        businessCategories: exists
-          ? prev.businessCategories.filter((c) => c !== name)
-          : [...prev.businessCategories, name],
-      };
-    });
+  const selectBusinessCategory = (name) => {
+    setForm((prev) => ({
+      ...prev,
+      // Single category only — keep array shape for API compatibility
+      businessCategories: prev.businessCategories[0] === name ? [] : [name],
+    }));
   };
 
   const setServiceDiscount = (serviceName, mode) => {
@@ -166,16 +175,30 @@ const SecretaryLocalBusinessForm = () => {
     if (!form.businessName.trim()) return setFormError('Business name is required.');
     if (!form.ownerName.trim()) return setFormError('Owner name is required.');
     if (!form.contactNumber.trim()) return setFormError('Contact number is required.');
-    if (!form.email.trim()) return setFormError('Email address is required.');
     if (!form.address.trim()) return setFormError('Business address is required.');
-    if (!form.businessCategories.length) return setFormError('Select at least one business category.');
-    if (!form.discountStartDate || !form.discountEndDate) {
-      return setFormError('Discount start and end dates are required.');
+    if (!form.businessCategories.length) return setFormError('Select a business category.');
+    if (form.hasDiscount === null) {
+      return setFormError('Please choose whether this business has a discount (Yes / No).');
+    }
+    if (form.hasDiscount) {
+      if (!form.discountStartDate || !form.discountEndDate) {
+        return setFormError('Discount start and end dates are required.');
+      }
+      const pct = Number(form.discountPercentage);
+      if (!Number.isFinite(pct) || pct <= 0 || pct > 100) {
+        return setFormError('Discount percentage must be between 1 and 100.');
+      }
     }
 
     const payload = {
       ...form,
-      discountPercentage: Number(form.discountPercentage),
+      description: sanitizeRichTextHtml(form.description || ''),
+      hasDiscount: Boolean(form.hasDiscount),
+      discountPercentage: form.hasDiscount ? Number(form.discountPercentage) : 0,
+      discountedCategories: form.hasDiscount ? form.discountedCategories : [],
+      nonDiscountedCategories: form.hasDiscount ? form.nonDiscountedCategories : [],
+      discountStartDate: form.hasDiscount ? form.discountStartDate : '',
+      discountEndDate: form.hasDiscount ? form.discountEndDate : '',
       logo: logoFile || undefined,
       banner: bannerFile || undefined,
     };
@@ -242,7 +265,7 @@ const SecretaryLocalBusinessForm = () => {
                 onChange={(e) => setForm((p) => ({ ...p, contactNumber: e.target.value }))}
               />
             </Field>
-            <Field label="Email Address" required>
+            <Field label="Email Address (Optional)">
               <input
                 type="email"
                 className={inputBase}
@@ -277,14 +300,16 @@ const SecretaryLocalBusinessForm = () => {
               onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
             />
           </Field>
-          <Field label="Business Description">
-            <textarea
-              rows={3}
-              className={inputBase}
+          <div>
+            <span className="mb-1.5 block text-xs font-semibold text-[var(--text-secondary)]">
+              Business Description
+            </span> 
+            <RichTextEditor
               value={form.description}
-              onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+              onChange={(html) => setForm((p) => ({ ...p, description: html }))}
+              placeholder="Describe the business, offers, timings…"
             />
-          </Field>
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Business Logo / Image">
               <input type="file" accept="image/*" onChange={onLogoChange} className="text-sm" />
@@ -303,18 +328,18 @@ const SecretaryLocalBusinessForm = () => {
 
         <section className={`${cardClass} space-y-4`}>
           <h2 className="text-sm font-semibold text-[var(--text-primary)]">Business Category</h2>
-          <p className="text-xs text-[var(--text-secondary)]">Choose one or more categories.</p>
+          <p className="text-xs text-[var(--text-secondary)]">Choose one category.</p>
           {businessCategoriesLoading ? (
             <p className="text-sm text-[var(--text-secondary)]">Loading categories…</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {(businessCategories || []).map((cat) => {
-                const selected = form.businessCategories.includes(cat.name);
+                const selected = form.businessCategories[0] === cat.name;
                 return (
                   <button
                     key={cat._id || cat.name}
                     type="button"
-                    onClick={() => toggleBusinessCategory(cat.name)}
+                    onClick={() => selectBusinessCategory(cat.name)}
                     className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
                       selected
                         ? 'border-purple-300 bg-purple-50 text-[var(--purple-primary)]'
@@ -331,86 +356,129 @@ const SecretaryLocalBusinessForm = () => {
 
         <section className={`${cardClass} space-y-4`}>
           <h2 className="text-sm font-semibold text-[var(--text-primary)]">Discount Configuration</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Discount Percentage" required>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                className={inputBase}
-                value={form.discountPercentage}
-                onChange={(e) => setForm((p) => ({ ...p, discountPercentage: e.target.value }))}
-              />
-            </Field>
-            <Field label="Discount Start Date" required>
-              <input
-                type="date"
-                className={inputBase}
-                value={form.discountStartDate}
-                onChange={(e) => setForm((p) => ({ ...p, discountStartDate: e.target.value }))}
-              />
-            </Field>
-            <Field label="Discount End Date" required>
-              <input
-                type="date"
-                className={inputBase}
-                value={form.discountEndDate}
-                onChange={(e) => setForm((p) => ({ ...p, discountEndDate: e.target.value }))}
-              />
-            </Field>
+          <p className="text-xs text-[var(--text-secondary)]">
+            Does this business offer a community discount?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setForm((p) => ({ ...p, hasDiscount: true }))}
+              className={`rounded-xl border px-5 py-2.5 text-sm font-semibold transition ${
+                form.hasDiscount === true
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                  : 'border-purple-100 bg-white text-[var(--text-primary)] hover:bg-purple-50'
+              }`}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setForm((p) => ({
+                  ...p,
+                  hasDiscount: false,
+                  discountedCategories: [],
+                  nonDiscountedCategories: [],
+                }))
+              }
+              className={`rounded-xl border px-5 py-2.5 text-sm font-semibold transition ${
+                form.hasDiscount === false
+                  ? 'border-red-200 bg-red-50 text-red-700'
+                  : 'border-purple-100 bg-white text-[var(--text-primary)] hover:bg-purple-50'
+              }`}
+            >
+              No
+            </button>
           </div>
 
-          <div>
-            <p className="mb-2 text-xs font-semibold text-[var(--text-secondary)]">
-              Discount Applicable On (services / products)
-            </p>
-            {!availableServices.length ? (
-              <p className="text-sm text-[var(--text-secondary)]">
-                Select a business category to configure discounted services.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {availableServices.map((service) => {
-                  const isDiscounted = form.discountedCategories.includes(service);
-                  const isNone = form.nonDiscountedCategories.includes(service);
-                  return (
-                    <div
-                      key={service}
-                      className="flex flex-col gap-2 rounded-xl border border-purple-100/70 bg-white/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <span className="text-sm font-medium text-[var(--text-primary)]">{service}</span>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setServiceDiscount(service, 'discounted')}
-                          className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-                            isDiscounted
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                              : 'border-purple-100 bg-white text-[var(--text-secondary)]'
-                          }`}
-                        >
-                          <Check className="h-3.5 w-3.5" />
-                          {form.discountPercentage || 0}% Off
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setServiceDiscount(service, 'none')}
-                          className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-                            isNone
-                              ? 'border-red-200 bg-red-50 text-red-700'
-                              : 'border-purple-100 bg-white text-[var(--text-secondary)]'
-                          }`}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                          No Discount
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+          {form.hasDiscount === true ? (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <Field label="Discount Percentage" required>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    className={inputBase}
+                    value={form.discountPercentage}
+                    onChange={(e) => setForm((p) => ({ ...p, discountPercentage: e.target.value }))}
+                  />
+                </Field>
+                <Field label="Discount Start Date" required>
+                  <input
+                    type="date"
+                    className={inputBase}
+                    value={form.discountStartDate}
+                    onChange={(e) => setForm((p) => ({ ...p, discountStartDate: e.target.value }))}
+                  />
+                </Field>
+                <Field label="Discount End Date" required>
+                  <input
+                    type="date"
+                    className={inputBase}
+                    value={form.discountEndDate}
+                    onChange={(e) => setForm((p) => ({ ...p, discountEndDate: e.target.value }))}
+                  />
+                </Field>
               </div>
-            )}
-          </div>
+
+              <div>
+                <p className="mb-2 text-xs font-semibold text-[var(--text-secondary)]">
+                  Discount Applicable On (services / products)
+                </p>
+                {!availableServices.length ? (
+                  <p className="text-sm text-[var(--text-secondary)]">
+                    Select a business category to configure discounted services.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {availableServices.map((service) => {
+                      const isDiscounted = form.discountedCategories.includes(service);
+                      const isNone = form.nonDiscountedCategories.includes(service);
+                      return (
+                        <div
+                          key={service}
+                          className="flex flex-col gap-2 rounded-xl border border-purple-100/70 bg-white/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <span className="text-sm font-medium text-[var(--text-primary)]">{service}</span>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setServiceDiscount(service, 'discounted')}
+                              className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+                                isDiscounted
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                  : 'border-purple-100 bg-white text-[var(--text-secondary)]'
+                              }`}
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                              {form.discountPercentage || 0}% Off
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setServiceDiscount(service, 'none')}
+                              className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+                                isNone
+                                  ? 'border-red-200 bg-red-50 text-red-700'
+                                  : 'border-purple-100 bg-white text-[var(--text-secondary)]'
+                              }`}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                              No Discount
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : form.hasDiscount === false ? (
+            <p className="text-sm text-[var(--text-secondary)]">
+              No discount for this business. You can create the listing directly.
+            </p>
+          ) : null}
         </section>
 
         {formError ? (
