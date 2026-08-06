@@ -855,29 +855,6 @@ const BecomeProvider = () => {
                 <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-experience`]}</p>
               )}
             </div>
-
-            {/* Price */}
-            {/* <div className="mb-6">
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wide">
-                Price (in ₹) *
-              </label>
-              <input
-                type="number"
-                value={service.price}
-                onChange={(e) => handleInputChange(service.id, 'price', e.target.value)}
-                placeholder="e.g., 500"
-                min="0"
-                step="0.01"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all font-medium ${
-                  errors[`service-${service.id}-price`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-400'
-                }`}
-              />
-              {errors[`service-${service.id}-price`] && (
-                <p className="text-red-600 text-sm mt-2 font-medium">{errors[`service-${service.id}-price`]}</p>
-              )}
-            </div> */}
-
-            {/* Image Upload */}
             <div className="mb-6">
               <label className={labelClass}>
                 Upload Work Images{' '}
