@@ -258,7 +258,7 @@ const CommunityEvents = () => {
         onSubmit={handleCreateEvent}
         isSubmitting={eventSending}
         heading="Create event"
-        subheading="Share a meetup, market, workshop, or any local gathering with your Commun."
+        subheading="Share a gathering, class, or any local activity with your Commun."
         submitLabel="Post event"
         eventTypeOptions={eventsMeta.enabledEventTypes}
         requireEventType

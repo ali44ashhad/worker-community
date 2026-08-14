@@ -132,11 +132,21 @@ const userSchema = new Schema({
     },
     /** Secretary-only: which community event types are visible to members. */
     eventToggles: {
-        communityMeetup: { type: Boolean, default: true },
-        marketDay: { type: Boolean, default: false },
-        workshop: { type: Boolean, default: false },
-        sports: { type: Boolean, default: false },
-        fundraiser: { type: Boolean, default: false },
+        type: Schema.Types.Mixed,
+        default: () => ({
+            communitySocial: true,
+            sportsFitness: false,
+            workshopsClasses: false,
+            kidsFamily: false,
+            foodLifestyle: false,
+            exhibitionsPopups: false,
+            entertainmentCulture: false,
+            businessProfessional: false,
+            festivalsCelebrations: false,
+            communityInitiatives: false,
+            rwaNotices: false,
+            other: false,
+        }),
     },
     /** Secretary-only: which service categories are visible in this community. */
     categoryToggles: {

@@ -13,6 +13,7 @@ import { getFrontendBase } from "../utils/frontendUrl.js";
 import { normalizeCommunName, isValidCommunName } from "../utils/communName.js";
 import { normalizeFeatureToggles } from "../utils/featureToggles.js";
 import {
+    DEFAULT_EVENT_TYPE,
     getCommunityEventToggles,
     getEnabledEventTypes,
     isEventTypeEnabled,
@@ -1154,7 +1155,7 @@ const listMemberCommunityEvents = async (req, res) => {
             .lean();
 
         const events = eventsRaw.filter((event) =>
-            isEventTypeEnabled(eventToggles, event.eventType || "communityMeetup")
+            isEventTypeEnabled(eventToggles, event.eventType || DEFAULT_EVENT_TYPE)
         );
 
         return res.status(200).json({

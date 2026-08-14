@@ -11,7 +11,7 @@ import {
   createCommunityEvent,
   deleteCommunityEvent,
 } from '../../features/secretarySlice';
-import { EVENT_TYPE_OPTIONS } from '../../utils/eventTypes';
+import { EVENT_TYPE_OPTIONS, getEventTypeLabel } from '../../utils/eventTypes';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import EventAttachmentList from '../../components/EventAttachmentList';
 import CreateEventModal from '../../components/CreateEventModal';
@@ -164,17 +164,17 @@ const SecretaryEvents = () => {
             description="Choose which kinds of events customers and providers can create. You can still create any type as secretary."
           />
           <ul className="space-y-3">
-            {EVENT_TYPE_OPTIONS.map(({ key, label }) => {
+            {EVENT_TYPE_OPTIONS.map(({ key, label, description }) => {
               const enabled = Boolean(eventToggles[key]);
               return (
                 <li
                   key={key}
                   className="flex flex-col gap-3 border-b border-purple-100/60 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-[var(--text-primary)]">{label}</p>
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      {enabled ? 'Visible to members' : 'Hidden from member create & list'}
+                    <p className="mt-0.5 text-xs leading-relaxed text-[var(--text-secondary)]">
+                      {description}
                     </p>
                   </div>
                   <ToggleSwitch
@@ -243,8 +243,7 @@ const SecretaryEvents = () => {
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-[var(--text-primary)]">{item.title}</p>
                           <span className="inline-flex rounded-full border border-purple-100 bg-purple-50/50 px-2.5 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
-                            {EVENT_TYPE_OPTIONS.find((t) => t.key === (item.eventType || 'communityMeetup'))?.label ||
-                              'Community meetup'}
+                            {getEventTypeLabel(item.eventType)}
                           </span>
                           <span
                             className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${

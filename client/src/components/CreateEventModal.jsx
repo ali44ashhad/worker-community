@@ -7,7 +7,7 @@ import {
   getMinExpiryDateInput,
   MAX_EVENT_DAYS,
 } from '../utils/communityEventDates';
-import { EVENT_TYPE_OPTIONS } from '../utils/eventTypes';
+import { DEFAULT_EVENT_TYPE, EVENT_TYPE_OPTIONS } from '../utils/eventTypes';
 
 const inputClass =
   'w-full rounded-xl border border-purple-100 bg-white px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:border-[var(--purple-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25 transition-all disabled:cursor-not-allowed disabled:opacity-50';
@@ -44,8 +44,9 @@ const CreateEventModal = ({
       ? EVENT_TYPE_OPTIONS.filter(({ key }) => eventTypeOptions.includes(key))
       : EVENT_TYPE_OPTIONS;
 
-  const defaultType = typeChoices[0]?.key || 'communityMeetup';
+  const defaultType = typeChoices[0]?.key || DEFAULT_EVENT_TYPE;
   const [form, setForm] = useState(() => emptyForm(defaultType));
+  const selectedType = typeChoices.find((t) => t.key === (form.eventType || defaultType));
 
   useEffect(() => {
     if (!isOpen) {
@@ -185,6 +186,11 @@ const CreateEventModal = ({
                         </option>
                       ))}
                     </select>
+                    {selectedType?.description && (
+                      <p className="mt-1.5 text-xs leading-relaxed text-[var(--text-secondary)]">
+                        {selectedType.description}
+                      </p>
+                    )}
                   </div>
                 )}
 

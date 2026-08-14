@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { DEFAULT_EVENT_TYPE, EVENT_TYPE_ENUM } from "../utils/eventToggles.js";
 
 const { Schema } = mongoose;
 
@@ -30,8 +31,8 @@ const communityEventSchema = new Schema(
         },
         eventType: {
             type: String,
-            enum: ["communityMeetup", "marketDay", "workshop", "sports", "fundraiser"],
-            default: "communityMeetup",
+            enum: EVENT_TYPE_ENUM,
+            default: DEFAULT_EVENT_TYPE,
             required: true,
         },
         expiresAt: {

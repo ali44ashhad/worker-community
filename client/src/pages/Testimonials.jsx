@@ -329,4 +329,4 @@ const Testimonials = () => {
     </motion.div>
   );
 };  
-export default Testimonials; 
+export default Testimonials;  
