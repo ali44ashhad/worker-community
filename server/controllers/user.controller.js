@@ -30,6 +30,7 @@ import {
     notifyCommunityMembers,
 } from "../utils/webPush.js";
 import { JWT_EXPIRES_IN, setAuthCookie, clearAuthCookies } from "../utils/authCookie.js";
+import { deleteCustomerOrProviderAccount } from "../utils/deleteUserAccount.js";
 
 /**
  * Community directory for members (customer/provider): list approved active members by flat number.
@@ -944,6 +945,59 @@ const changePassword = async (req, res) => {
     }
 };
 
+const deleteAccount = async (req, res) => {
+    try {
+        const role = req.user?.role;
+        if (role === "secretary" || role === "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Secretary and admin accounts cannot be deleted from the app.",
+            });
+        }
+        if (!["customer", "provider"].includes(role)) {
+            return res.status(403).json({
+                success: false,
+                message: "This account cannot be deleted.",
+            });
+        }
+
+        const currentPassword = String(req.body?.currentPassword || "").trim();
+        if (!currentPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter your password to confirm.",
+            });
+        }
+
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const passwordMatches = await bcrypt.compare(currentPassword, String(user.password || ""));
+        if (!passwordMatches) {
+            return res.status(400).json({
+                success: false,
+                message: "Password is incorrect",
+            });
+        }
+
+        await deleteCustomerOrProviderAccount(user);
+        clearAuthCookies(res);
+
+        return res.status(200).json({
+            success: true,
+            message: "Your account has been deleted.",
+        });
+    } catch (error) {
+        console.error("Error in deleteAccount:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Could not delete account. Please try again.",
+        });
+    }
+};
+
 // Add service to wishlist
 export const addServiceToWishlist = async (req, res) => {
   try {
@@ -1333,6 +1387,7 @@ export {
     joinCommunity,
     updateUserProfile,
     changePassword,
+    deleteAccount,
     forgotPassword,
     resetPassword
 };

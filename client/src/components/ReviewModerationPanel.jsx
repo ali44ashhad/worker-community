@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FaStar } from 'react-icons/fa';
 import { Pencil, Search, Trash2, X } from 'lucide-react';
-import { getFullName, getUserCommunityLabel } from '../utils/userHelpers';
+import { getFullName, getMemberDisplayName, getUserCommunityLabel } from '../utils/userHelpers';
 import { formatCommunDisplayName } from '../utils/communName';
 import ProfileAvatar from './ProfileAvatar';
 
@@ -61,10 +61,7 @@ const ReviewModerationPanel = ({
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const reviewerLabel = (review) => {
-    if (!review.customer) return 'Deleted user';
-    return getFullName(review.customer);
-  };
+  const reviewerLabel = (review) => getMemberDisplayName(review.customer);
 
   const serviceLabel = (review) => {
     const s = review.serviceOffering;

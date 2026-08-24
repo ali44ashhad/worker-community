@@ -34,8 +34,8 @@ export const isEventActive = (event) => {
 };
 
 export const getAuthorLabel = (author) => {
-  if (!author) return 'Community member';
+  if (!author) return 'Former member';
   const name = [author.firstName, author.lastName].filter(Boolean).join(' ').trim();
   if (name) return name;
-  return author.email || 'Community member';
+  return author.email || 'Former member';
 };

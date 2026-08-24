@@ -119,7 +119,23 @@ export const changePasswordUser = createAsyncThunk(
       return rejectWithValue(error.response?.data?.message || "Password update failed");
     }
   }
-);    
+);
+
+// ========================== DELETE ACCOUNT ==========================
+export const deleteAccountUser = createAsyncThunk(
+  "auth/deleteAccount",
+  async ({ currentPassword }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/user/delete-account`, {
+        currentPassword,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Account deletion failed");
+    }
+  }
+);
+
 const initialState = {
   user: null,
   isLoading: false,
@@ -253,6 +269,21 @@ const authSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(changePasswordUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
+      // ---------- DELETE ACCOUNT ----------
+      .addCase(deleteAccountUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteAccountUser.fulfilled, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.error = null;
+      })
+      .addCase(deleteAccountUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       });

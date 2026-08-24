@@ -13,7 +13,7 @@ import {
   deleteReplyToComment,
 } from '../features/commentSlice';
 import axios from 'axios';
-import { getFullName } from '../utils/userHelpers';
+import { getFullName, getMemberDisplayName } from '../utils/userHelpers';
 import { getApiBase } from '../utils/apiBase';
 import ProfileAvatar from './ProfileAvatar';
 
@@ -373,7 +373,7 @@ const Comment = ({ serviceId }) => {
                       <ProfileAvatar user={c.customer} size="lg" className="shrink-0" />
                       <div>
                         <p className="font-semibold text-[var(--text-primary)]">
-                          {getFullName(c.customer) || 'User'}
+                          {getMemberDisplayName(c.customer)}
                         </p>
                         <div className="flex flex-wrap items-center gap-2">
                           {c.rating && (

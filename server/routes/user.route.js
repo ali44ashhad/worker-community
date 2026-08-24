@@ -17,6 +17,7 @@ import {
     deleteMemberCommunityEvent,
     updateUserProfile, 
     changePassword,
+    deleteAccount,
     forgotPassword,
     resetPassword,
     joinCommunity,
@@ -53,6 +54,7 @@ userRouter.put(
 );
 
 userRouter.put("/change-password", protect, changePassword);
+userRouter.post("/delete-account", protect, deleteAccount);
 userRouter.post("/join-community", protect, joinCommunity);
 userRouter.post("/forgot-password", forgotPassword);
 userRouter.post("/reset-password/:token", resetPassword);

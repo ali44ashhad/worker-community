@@ -146,6 +146,17 @@ export const getFullName = (user) => {
   return 'Unknown User';
 };
 
+export const FORMER_MEMBER_LABEL = 'Former member';
+
+export const getMemberDisplayName = (user) => {
+  if (!user || typeof user !== 'object') return FORMER_MEMBER_LABEL;
+  const hasIdentity = Boolean(user._id || user.firstName || user.lastName || user.email || user.name);
+  if (!hasIdentity) return FORMER_MEMBER_LABEL;
+  const name = getFullName(user);
+  if (!name || name === 'Unknown User') return FORMER_MEMBER_LABEL;
+  return name;
+};
+
 /**
  * Get the first name of a user
  * @param {Object} user - User object

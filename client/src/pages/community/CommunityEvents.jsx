@@ -79,6 +79,10 @@ const CommunityEvents = () => {
   };
 
   const handleInterested = (item) => {
+    if (!item.author?._id) {
+      toast.error('This event was posted by a member who left the community.');
+      return;
+    }
     const authorPhone = item.author?.phoneNumber;
     const whatsappUrl = buildWhatsAppUrl(
       authorPhone,
@@ -214,7 +218,7 @@ const CommunityEvents = () => {
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 self-start sm:items-end">
-                        {!isOwner && (
+                        {!isOwner && item.author?._id && (
                           <button
                             type="button"
                             onClick={() => handleInterested(item)}

@@ -141,8 +141,7 @@ const getCommentsForService = async (req, res) => {
             .populate({
                 path: 'customer',
                 select: 'firstName lastName name profileImage isActive',
-                match: { isActive: { $ne: false } },
-            }) // hide deactivated users' reviews from public
+            })
             .populate('provider', 'user') // Get provider info for ownership checking
             .populate({
                 path: 'replyBy',
@@ -154,7 +153,10 @@ const getCommentsForService = async (req, res) => {
             }) // Get reply author's info
             .sort({ createdAt: -1 }); // Show newest comments first
 
-        const visibleComments = comments.filter((c) => Boolean(c.customer));
+        const visibleComments = comments.filter((c) => {
+            if (!c.customer) return true;
+            return c.customer.isActive !== false;
+        });
 
         // Also get the service offering to include provider info
         const serviceOffering = await ServiceOffering.findById(serviceId)

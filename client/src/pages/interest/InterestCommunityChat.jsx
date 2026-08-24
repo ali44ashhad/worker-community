@@ -5,7 +5,7 @@ import axios from 'axios';
 import { ArrowLeft, Circle, LogOut, Pencil, Reply, Send, Trash2, Users } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getApiBase } from '../../utils/apiBase';
-import { getFullName } from '../../utils/userHelpers';
+import { getFullName, getMemberDisplayName } from '../../utils/userHelpers';
 import { useInterestChat } from '../../hooks/useInterestChat';
 import { formatCommunDisplayName } from '../../utils/communName';
 import {
@@ -114,13 +114,13 @@ const InterestCommunityChat = ({ listPath = '/interest-communities' }) => {
   const getMsgAuthorName = (msg) => {
     if (!msg) return '';
     const mine = String(msg.author?._id) === String(user?._id);
-    return mine ? 'You' : getFullName(msg.author);
+    return mine ? 'You' : getMemberDisplayName(msg.author);
   };
 
   const resolveReplyPreview = (msg) => {
     const r = msg?.replyTo;
     if (!r) return null;
-    const name = r.author ? getFullName(r.author) : 'Unknown';
+    const name = r.author ? getMemberDisplayName(r.author) : 'Former member';
     const deleted = Boolean(r.deletedAt);
     const text = deleted ? 'Message deleted' : String(r.text || '');
     return { name, text };
@@ -269,7 +269,7 @@ const InterestCommunityChat = ({ listPath = '/interest-communities' }) => {
                 >
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <p className="text-xs font-semibold opacity-80">
-                      {mine ? 'You' : getFullName(msg.author)}
+                      {mine ? 'You' : getMemberDisplayName(msg.author)}
                       {!mine && isOnline(msg.author?._id) && (
                         <span className="ml-1 text-[10px] text-emerald-600">online</span>
                       )}

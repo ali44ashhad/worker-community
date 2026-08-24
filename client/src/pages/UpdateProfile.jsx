@@ -16,8 +16,10 @@ import {
   Building2,
   FileText,
   X,
+  AlertTriangle,
+  Trash2,
 } from 'lucide-react';
-import { changePasswordUser, joinCommunity, updateProfile } from '../features/authSlice';
+import { changePasswordUser, joinCommunity, updateProfile, deleteAccountUser } from '../features/authSlice';
 import { getMyProviderProfile, updateMyProviderBio } from '../features/providerSlice';
 import { toast } from 'react-hot-toast';
 import { getApiBase } from '../utils/apiBase';
@@ -136,7 +138,13 @@ const UpdateProfile = () => {
     next: false,
     confirm: false,
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const fileInputRef = useRef(null);
+  const canDeleteAccount = user?.role === 'customer' || user?.role === 'provider';
 
   useEffect(() => {
     if (user) {
@@ -288,6 +296,37 @@ const UpdateProfile = () => {
       setShowPasswords({ current: false, next: false, confirm: false });
     } catch (error) {
       toast.error(error || 'Failed to update password');
+    }
+  };
+
+  const closeDeleteModal = () => {
+    if (isDeletingAccount) return;
+    setShowDeleteModal(false);
+    setDeletePassword('');
+    setDeleteConfirmText('');
+    setShowDeletePassword(false);
+  };
+
+  const handleDeleteAccount = async (e) => {
+    e.preventDefault();
+    const currentPassword = String(deletePassword || '').trim();
+    if (!currentPassword) {
+      toast.error('Enter your password to delete your account.');
+      return;
+    }
+    if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
+      toast.error('Type DELETE to confirm.');
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    try {
+      const data = await dispatch(deleteAccountUser({ currentPassword })).unwrap();
+      toast.success(data?.message || 'Your account has been deleted.');
+      navigate('/', { replace: true });
+    } catch (error) {
+      toast.error(error || 'Could not delete account.');
+      setIsDeletingAccount(false);
     }
   };
 
@@ -796,6 +835,33 @@ const UpdateProfile = () => {
             </div>
           </form>
         </Section>
+
+        {canDeleteAccount && (
+          <Section
+            title="Delete account"
+            description="Permanently remove your login and personal details. This cannot be undone."
+            icon={AlertTriangle}
+          >
+            <div className="space-y-3 rounded-xl border border-red-100 bg-red-50/50 p-4">
+              <ul className="list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-[var(--text-secondary)]">
+                <li>Your profile, wishlist, notifications, and login are deleted.</li>
+                <li>Events and chat messages stay in the community as “Former member”.</li>
+                <li>Reviews you wrote on other services stay as “Former member”.</li>
+                {isProvider && (
+                  <li>Your service listings and reviews on those listings are removed.</li>
+                )}
+              </ul>
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete my account
+              </button>
+            </div>
+          </Section>
+        )}
       </div>
 
       {showJoinCommunity && (
@@ -852,6 +918,76 @@ const UpdateProfile = () => {
                   className="flex-1 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   {joiningCommunity ? 'Submitting…' : 'Submit request'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md rounded-2xl border border-red-100 bg-white p-6 shadow-xl"
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-red-700">Delete account?</h3>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  You will be signed out immediately. Secretary and admin accounts cannot use this option.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                className="rounded-lg p-1 text-[var(--text-secondary)] hover:bg-red-50"
+                aria-label="Close"
+                disabled={isDeletingAccount}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleDeleteAccount} className="space-y-4">
+              <PasswordField
+                id="deleteAccountPassword"
+                label="Current password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                show={showDeletePassword}
+                onToggle={() => setShowDeletePassword((v) => !v)}
+                autoComplete="current-password"
+              />
+              <div>
+                <label htmlFor="deleteConfirmText" className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">
+                  Type DELETE to confirm
+                </label>
+                <input
+                  id="deleteConfirmText"
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  className={inputClass}
+                  placeholder="DELETE"
+                  autoComplete="off"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={closeDeleteModal}
+                  disabled={isDeletingAccount}
+                  className="flex-1 rounded-xl border border-purple-100 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-purple-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isDeletingAccount}
+                  className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                >
+                  {isDeletingAccount ? 'Deleting…' : 'Delete permanently'}
                 </button>
               </div>
             </form>
