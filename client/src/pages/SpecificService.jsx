@@ -205,7 +205,35 @@ const SpecificService = () => {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  const shouldRenderDescriptionList = descriptionLines.length > 1;
+
+  const isDescriptionListItem = (line) =>
+    /^(?:[-*•●]\s+|\d+[.)]\s+|\p{Extended_Pictographic})/u.test(line);
+
+  const stripDescriptionListMarker = (line) =>
+    line.replace(/^(?:[-*•●]\s+|\d+[.)]\s+)/, '');
+
+  // Mix paragraphs + only true list lines (emoji / -, *, • / 1.) as bullets.
+  const descriptionBlocks = (() => {
+    const blocks = [];
+    let listItems = null;
+
+    descriptionLines.forEach((line) => {
+      if (isDescriptionListItem(line)) {
+        if (!listItems) {
+          listItems = [];
+          blocks.push({ type: 'list', items: listItems });
+        }
+        listItems.push(stripDescriptionListMarker(line));
+        return;
+      }
+      listItems = null;
+      blocks.push({ type: 'paragraph', text: line });
+    });
+
+    return blocks;
+  })();
+
+  const hasDescriptionList = descriptionBlocks.some((block) => block.type === 'list');
   // Show enough content for a full ~500-char bio/description before collapsing.
   const descriptionIsLong = serviceDescription.length > 500;
 
@@ -309,28 +337,28 @@ const SpecificService = () => {
       case 'about':
         return (
           <div className="space-y-8">
-            <div className=""> 
+            <div>
               <div className="flex items-start gap-4">
                 <ProfileAvatar
                   user={service?.provider?.user}
                   size="2xl"
                   alt={providerName}
-                  className="border-2 border-[var(--purple-primary)]"
+                  className="border-2 border-[var(--purple-primary)] shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-bold text-[var(--text-primary)]">{providerName}</h3>
                   {serviceCategory && (
                     <p className="text-sm text-[var(--text-secondary)] mt-1">
-                     {serviceCategory} provider
-                    </p>
-                  )}
-                  {providerBio && (
-                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed mt-3 whitespace-pre-wrap">
-                      {providerBio}
+                      {serviceCategory} provider
                     </p>
                   )}
                 </div>
               </div>
+              {providerBio && (
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed mt-4 whitespace-pre-wrap w-full">
+                  {providerBio}
+                </p>
+              )}
             </div>
 
             {portfolioPDFs.length > 0 && (
@@ -642,15 +670,27 @@ const SpecificService = () => {
               )}
 
               <div className="mt-5">
-                {shouldRenderDescriptionList ? (
-                  <div className={!showFullDescription && descriptionIsLong ? 'line-clamp-[12]' : ''}>
-                    <ul className="list-disc pl-5 space-y-2 text-sm text-[var(--text-secondary)] leading-relaxed">
-                      {descriptionLines.map((line, index) => (
-                        <li key={`${line}-${index}`} className="whitespace-pre-wrap">
-                          {line}
-                        </li>
-                      ))}
-                    </ul>
+                {hasDescriptionList ? (
+                  <div
+                    className={`space-y-3 text-sm text-[var(--text-secondary)] leading-relaxed ${
+                      !showFullDescription && descriptionIsLong ? 'line-clamp-[12]' : ''
+                    }`}
+                  >
+                    {descriptionBlocks.map((block, index) =>
+                      block.type === 'list' ? (
+                        <ul key={`list-${index}`} className="list-disc pl-5 space-y-2">
+                          {block.items.map((item, itemIndex) => (
+                            <li key={`${item}-${itemIndex}`} className="whitespace-pre-wrap">
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p key={`p-${index}`} className="whitespace-pre-wrap">
+                          {block.text}
+                        </p>
+                      )
+                    )}
                   </div>
                 ) : (
                   <p

@@ -20,8 +20,6 @@ import ProfileAvatar from './ProfileAvatar';
 const API_URL = getApiBase() || 'http://localhost:3001';
 axios.defaults.withCredentials = true;
 
-const cardClass =
-  'rounded-2xl border border-purple-100/50 bg-white/80 p-5 shadow-sm shadow-purple-500/5 backdrop-blur-sm sm:p-6';
 const inputClass =
   'w-full rounded-xl border border-purple-100 bg-white px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/70 focus:border-[var(--purple-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/25';
 const btnPrimary =
@@ -279,298 +277,296 @@ const Comment = ({ serviceId }) => {
   );
 
   return (
-    <div className="mt-10">
-      <div className={cardClass}>
-        <h2 className="mb-4 text-2xl font-bold text-[var(--text-primary)]">Reviews</h2>
+    <div>
+      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Reviews</h2>
 
-        <div className="border-b border-purple-100/60 pb-4">
-          {user ? (
-            hasUserReviewed ? (
-              <p className="text-sm text-[var(--text-secondary)]">
-                You have already reviewed this service.
-              </p>
-            ) : canReview === false ? (
-              <p className="text-sm text-[var(--text-secondary)]">
-                {canReviewReason === 'own_service'
-                  ? 'You cannot review your own service.'
-                  : 'You cannot review this service.'}
-              </p>
-            ) : canReview !== true ? (
-              <p className="text-sm text-[var(--text-secondary)]">Checking review access…</p>
-            ) : !showReviewForm ? (
-              <button type="button" onClick={() => setShowReviewForm(true)} className={btnPrimary}>
-                Write Review
-              </button>
-            ) : (
-              <form onSubmit={onSubmit} className="flex flex-col gap-3">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-[var(--text-secondary)]">Rating</label>
-                  {renderStarPicker(rating, hoveredRating, setRating, setHoveredRating, () =>
-                    setHoveredRating(0)
-                  )}
-                  {rating > 0 && (
-                    <p className="text-xs text-[var(--text-secondary)]">{rating} out of 5 stars</p>
-                  )}
-                </div>
-                <textarea
-                  className={inputClass}
-                  rows={3}
-                  placeholder="Write your review..."
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                />
-                <div className="flex gap-2 self-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowReviewForm(false);
-                      setText('');
-                      setRating(0);
-                    }}
-                    className={btnSecondary}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className={btnPrimary}>
-                    Submit Review
-                  </button>
-                </div>
-              </form>
-            )
-          ) : (
-            <p className="text-sm text-[var(--text-secondary)]">Please login to post a review.</p>
-          )}
-        </div>
-
-        <div className="mt-4">
-          {isLoading && (
-            <div className="mb-4 flex items-center gap-3 text-sm text-[var(--text-secondary)]">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
-              Loading comments...
-            </div>
-          )}
-
-          {!isLoading && comments.length === 0 && (
-            <p className="mb-4 rounded-xl border border-dashed border-purple-100 bg-purple-50/30 py-8 text-center text-sm text-[var(--text-secondary)]">
-              No comments yet. Be the first!
+      <div className="border-b border-purple-100 pb-4">
+        {user ? (
+          hasUserReviewed ? (
+            <p className="text-sm text-[var(--text-secondary)]">
+              You have already reviewed this service.
             </p>
-          )}
-
-          <ul className="space-y-4">
-            {comments.map((c) => {
-              const replyUser = getReplyUser(c);
-              const customerId =
-                typeof c.customer === 'object' ? c.customer?._id : c.customer;
-              const isOwnReview = user && c.customer && customerId && user._id === customerId;
-
-              return (
-                <li
-                  key={c._id}
-                  className="rounded-xl border border-purple-100/60 bg-white/60 p-4"
+          ) : canReview === false ? (
+            <p className="text-sm text-[var(--text-secondary)]">
+              {canReviewReason === 'own_service'
+                ? 'You cannot review your own service.'
+                : 'You cannot review this service.'}
+            </p>
+          ) : canReview !== true ? (
+            <p className="text-sm text-[var(--text-secondary)]">Checking review access…</p>
+          ) : !showReviewForm ? (
+            <button type="button" onClick={() => setShowReviewForm(true)} className={btnPrimary}>
+              Write Review
+            </button>
+          ) : (
+            <form onSubmit={onSubmit} className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Rating</label>
+                {renderStarPicker(rating, hoveredRating, setRating, setHoveredRating, () =>
+                  setHoveredRating(0)
+                )}
+                {rating > 0 && (
+                  <p className="text-xs text-[var(--text-secondary)]">{rating} out of 5 stars</p>
+                )}
+              </div>
+              <textarea
+                className={inputClass}
+                rows={3}
+                placeholder="Write your review..."
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+              <div className="flex gap-2 self-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReviewForm(false);
+                    setText('');
+                    setRating(0);
+                  }}
+                  className={btnSecondary}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <ProfileAvatar user={c.customer} size="lg" className="shrink-0" />
-                      <div>
-                        <p className="font-semibold text-[var(--text-primary)]">
-                          {getMemberDisplayName(c.customer)}
+                  Cancel
+                </button>
+                <button type="submit" className={btnPrimary}>
+                  Submit Review
+                </button>
+              </div>
+            </form>
+          )
+        ) : (
+          <p className="text-sm text-[var(--text-secondary)]">Please login to post a review.</p>
+        )}
+      </div>
+
+      <div className="mt-4">
+        {isLoading && (
+          <div className="mb-4 flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
+            Loading comments...
+          </div>
+        )}
+
+        {!isLoading && comments.length === 0 && (
+          <p className="mb-4 rounded-xl border border-dashed border-purple-100 bg-purple-50/30 py-8 text-center text-sm text-[var(--text-secondary)]">
+            No comments yet. Be the first!
+          </p>
+        )}
+
+        <ul className="space-y-4">
+          {comments.map((c) => {
+            const replyUser = getReplyUser(c);
+            const customerId =
+              typeof c.customer === 'object' ? c.customer?._id : c.customer;
+            const isOwnReview = user && c.customer && customerId && user._id === customerId;
+
+            return (
+              <li
+                key={c._id}
+                className="rounded-xl border border-purple-100 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <ProfileAvatar user={c.customer} size="lg" className="shrink-0" />
+                    <div>
+                      <p className="font-semibold text-[var(--text-primary)]">
+                        {getMemberDisplayName(c.customer)}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {c.rating && (
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <FaStar
+                                key={star}
+                                className={`text-sm ${starClass(star <= c.rating)}`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          {new Date(c.createdAt).toLocaleString()}
                         </p>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {c.rating && (
-                            <div className="flex items-center gap-0.5">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <FaStar
-                                  key={star}
-                                  className={`text-sm ${starClass(star <= c.rating)}`}
-                                />
-                              ))}
-                            </div>
-                          )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isOwnReview && (
+                    <div className="flex gap-2">
+                      {editingId === c._id ? (
+                        <>
+                          <button type="button" onClick={onSaveEdit} className={btnPrimarySm}>
+                            Save
+                          </button>
+                          <button type="button" onClick={onCancelEdit} className={btnSecondarySm}>
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => onStartEdit(c)}
+                            className={btnSecondarySm}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDelete(c._id)}
+                            className={btnSecondarySm}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-3 text-[var(--text-primary)]">
+                  {editingId === c._id ? (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-[var(--text-secondary)]">
+                          Rating
+                        </label>
+                        {renderStarPicker(
+                          editingRating,
+                          editingHoveredRating,
+                          setEditingRating,
+                          setEditingHoveredRating,
+                          () => setEditingHoveredRating(0)
+                        )}
+                        {editingRating > 0 && (
                           <p className="text-xs text-[var(--text-secondary)]">
-                            {new Date(c.createdAt).toLocaleString()}
+                            {editingRating} out of 5 stars
+                          </p>
+                        )}
+                      </div>
+                      <textarea
+                        className={inputClass}
+                        rows={3}
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                      />
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
+                      {c.comment}
+                    </p>
+                  )}
+                </div>
+
+                {c.reply ? (
+                  <div className="ml-4 mt-4 border-l-2 border-purple-200 pl-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <ProfileAvatar user={replyUser} size="smd" className="shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">
+                            {getFullName(replyUser) || 'Provider'}
+                          </p>
+                          <p className="text-xs text-[var(--text-secondary)]">
+                            {c.replyCreatedAt && new Date(c.replyCreatedAt).toLocaleString()}
                           </p>
                         </div>
                       </div>
-                    </div>
-
-                    {isOwnReview && (
-                      <div className="flex gap-2">
-                        {editingId === c._id ? (
-                          <>
-                            <button type="button" onClick={onSaveEdit} className={btnPrimarySm}>
-                              Save
-                            </button>
-                            <button type="button" onClick={onCancelEdit} className={btnSecondarySm}>
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => onStartEdit(c)}
-                              className={btnSecondarySm}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onDelete(c._id)}
-                              className={btnSecondarySm}
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-3 text-[var(--text-primary)]">
-                    {editingId === c._id ? (
-                      <div className="flex flex-col gap-3">
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-medium text-[var(--text-secondary)]">
-                            Rating
-                          </label>
-                          {renderStarPicker(
-                            editingRating,
-                            editingHoveredRating,
-                            setEditingRating,
-                            setEditingHoveredRating,
-                            () => setEditingHoveredRating(0)
-                          )}
-                          {editingRating > 0 && (
-                            <p className="text-xs text-[var(--text-secondary)]">
-                              {editingRating} out of 5 stars
-                            </p>
-                          )}
+                      {isProvider && editingReplyId !== c._id && (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onStartEditReply(c)}
+                            className={btnSecondarySm}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteReply(c._id)}
+                            className={btnSecondarySm}
+                          >
+                            Delete
+                          </button>
                         </div>
-                        <textarea
-                          className={inputClass}
-                          rows={3}
-                          value={editingText}
-                          onChange={(e) => setEditingText(e.target.value)}
-                        />
-                      </div>
-                    ) : (
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
-                        {c.comment}
-                      </p>
-                    )}
-                  </div>
-
-                  {c.reply ? (
-                    <div className="ml-4 mt-4 border-l-2 border-purple-200 pl-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <ProfileAvatar user={replyUser} size="smd" className="shrink-0" />
-                          <div>
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">
-                              {getFullName(replyUser) || 'Provider'}
-                            </p>
-                            <p className="text-xs text-[var(--text-secondary)]">
-                              {c.replyCreatedAt && new Date(c.replyCreatedAt).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                        {isProvider && editingReplyId !== c._id && (
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => onStartEditReply(c)}
-                              className={btnSecondarySm}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onDeleteReply(c._id)}
-                              className={btnSecondarySm}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      {editingReplyId === c._id ? (
-                        <div className="mt-3 flex flex-col gap-2">
-                          <textarea
-                            className={inputClass}
-                            rows={2}
-                            value={editingReplyText}
-                            onChange={(e) => setEditingReplyText(e.target.value)}
-                          />
-                          <div className="flex gap-2 self-end">
-                            <button
-                              type="button"
-                              onClick={onCancelEditReply}
-                              className={btnSecondarySm}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onSaveReply(c._id)}
-                              className={btnPrimarySm}
-                            >
-                              Save
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
-                          {c.reply}
-                        </p>
                       )}
                     </div>
-                  ) : isProvider && replyingToId !== c._id ? (
-                    <div className="ml-4 mt-4">
-                      <button
-                        type="button"
-                        onClick={() => setReplyingToId(c._id)}
-                        className="text-sm font-medium text-[var(--purple-primary)] transition-colors hover:text-[var(--magenta)]"
-                      >
-                        Reply
-                      </button>
-                    </div>
-                  ) : isProvider && replyingToId === c._id ? (
-                    <div className="ml-4 mt-4 border-l-2 border-purple-200 pl-4">
-                      <div className="flex flex-col gap-2">
+                    {editingReplyId === c._id ? (
+                      <div className="mt-3 flex flex-col gap-2">
                         <textarea
                           className={inputClass}
                           rows={2}
-                          placeholder="Write your reply..."
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
+                          value={editingReplyText}
+                          onChange={(e) => setEditingReplyText(e.target.value)}
                         />
                         <div className="flex gap-2 self-end">
                           <button
                             type="button"
-                            onClick={() => {
-                              setReplyingToId(null);
-                              setReplyText('');
-                            }}
+                            onClick={onCancelEditReply}
                             className={btnSecondarySm}
                           >
                             Cancel
                           </button>
                           <button
                             type="button"
-                            onClick={() => onAddReply(c._id)}
+                            onClick={() => onSaveReply(c._id)}
                             className={btnPrimarySm}
                           >
-                            Submit Reply
+                            Save
                           </button>
                         </div>
                       </div>
+                    ) : (
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
+                        {c.reply}
+                      </p>
+                    )}
+                  </div>
+                ) : isProvider && replyingToId !== c._id ? (
+                  <div className="ml-4 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setReplyingToId(c._id)}
+                      className="text-sm font-medium text-[var(--purple-primary)] transition-colors hover:text-[var(--magenta)]"
+                    >
+                      Reply
+                    </button>
+                  </div>
+                ) : isProvider && replyingToId === c._id ? (
+                  <div className="ml-4 mt-4 border-l-2 border-purple-200 pl-4">
+                    <div className="flex flex-col gap-2">
+                      <textarea
+                        className={inputClass}
+                        rows={2}
+                        placeholder="Write your reply..."
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                      />
+                      <div className="flex gap-2 self-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingToId(null);
+                            setReplyText('');
+                          }}
+                          className={btnSecondarySm}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onAddReply(c._id)}
+                          className={btnPrimarySm}
+                        >
+                          Submit Reply
+                        </button>
+                      </div>
                     </div>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );
