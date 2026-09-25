@@ -251,7 +251,8 @@ export function initChatSocket(io) {
                     messageId: String(msg._id),
                     deletedAt: msg.deletedAt,
                 });
-            } catch {
+            } catch (err) {
+                console.error("delete_message:", err?.message || err);
                 socket.emit("chat_error", { message: "Failed to delete message." });
             }
         });

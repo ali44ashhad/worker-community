@@ -28,7 +28,9 @@ const chatMessageSchema = new mongoose.Schema(
         },
         text: {
             type: String,
-            required: true,
+            required() {
+                return !this.deletedAt;
+            },
             trim: true,
             maxlength: 2000,
         },
