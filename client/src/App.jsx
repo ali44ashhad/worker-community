@@ -79,6 +79,7 @@ import ProviderAwareLayout from './components/ProviderAwareLayout'
 import { fetchCommunityFeatures, clearCommunityFeatures } from './features/communitySlice'
 import Terms from './pages/Terms'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import DeleteAccount from './pages/DeleteAccount'
 import Breadcrumb from './components/Breadcrumb'
 import { BreadcrumbProvider } from './context/BreadcrumbContext'
 import PushNotificationPrompt from './components/PushNotificationPrompt'
@@ -169,6 +170,7 @@ const App = () => {
         <Route path='/testimonials' element={<Testimonials />} />
         <Route path='/terms' element={<Terms />} />
         <Route path='/privacy-policy' element={<PrivacyPolicy />} />
+        <Route path='/delete-account' element={<DeleteAccount />} />
         <Route path='/provider' element={<Providers></Providers>}></Route>
         <Route path="/pending-approval" element={<PendingApproval />} />
         <Route path='/login' element={<Login></Login>}></Route>

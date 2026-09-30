@@ -74,6 +74,7 @@ export function buildBreadcrumbs(pathname, { allProviders = [], activeCategories
     '/testimonials': 'Testimonials',
     '/terms': 'Terms & Conditions',
     '/privacy-policy': 'Privacy Policy',
+    '/delete-account': 'Delete Account',
     '/contact': 'Contact',
     '/service': 'Services',
     '/category': 'Categories',
