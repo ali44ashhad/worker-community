@@ -5,9 +5,7 @@ import { getAllProviders } from '../features/providerSlice';
 import ProviderCard from '../components/provider/ProviderCard';
 import HomePageLoader from '../components/loaders/HomePageLoader'; 
 import { Search, RefreshCw } from 'lucide-react';
-import { getFullName } from '../utils/userHelpers';
 import Pagination from '../components/Pagination';
-import { textIncludesSearch } from '../utils/searchText';
 
 const chipClass = (active) =>
   `px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
@@ -18,68 +16,45 @@ const chipClass = (active) =>
 
 const Providers = () => {
   const dispatch = useDispatch();
-  const { allProviders, isFetchingAll, error, pagination } = useSelector((state) => state.provider);
+  const { allProviders, categories: categoryOptions, isFetchingAll, error, pagination } = useSelector(
+    (state) => state.provider
+  );
 
   const ITEMS_PER_PAGE = 12;
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [filteredProviders, setFilteredProviders] = useState([]);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
-    dispatch(getAllProviders({ page: currentPage, limit: ITEMS_PER_PAGE }));
-  }, [dispatch, currentPage]);
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const filterKey = `${debouncedSearch}|${selectedCategory}`;
+  const [appliedFilterKey, setAppliedFilterKey] = useState(filterKey);
+  if (appliedFilterKey !== filterKey) {
+    setAppliedFilterKey(filterKey);
+    setCurrentPage(1);
+  }
 
   useEffect(() => {
-    let filtered = [...allProviders];
+    dispatch(
+      getAllProviders({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        search: debouncedSearch,
+        category: selectedCategory !== 'All' ? selectedCategory : '',
+      })
+    );
+  }, [dispatch, currentPage, debouncedSearch, selectedCategory, refreshToken]);
 
-    if (searchQuery.trim()) {
-      filtered = filtered.filter((provider) => {
-        const userName = getFullName(provider?.user)?.toLowerCase() || '';
-        const bio = provider?.bio?.toLowerCase() || '';
-        const services = provider?.serviceOfferings || [];
-        const categories = services.map((s) => s.serviceCategory?.toLowerCase()).join(' ');
-        const keywords = services
-          .flatMap((s) => s.keywords || [])
-          .map((k) => k?.toLowerCase())
-          .join(' ');
-
-        const query = searchQuery.trim();
-
-        return (
-          textIncludesSearch(userName, query) ||
-          textIncludesSearch(bio, query) ||
-          textIncludesSearch(categories, query) ||
-          textIncludesSearch(keywords, query)
-        );
-      });
-    }
-
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter((provider) => {
-        const services = provider?.serviceOfferings || [];
-        return services.some((s) => s.serviceCategory === selectedCategory);
-      });
-    }
-
-    setFilteredProviders(filtered);
-  }, [searchQuery, selectedCategory, allProviders]);
-
-  const getUniqueCategories = () => {
-    const categories = new Set();
-    allProviders.forEach((provider) => {
-      provider?.serviceOfferings?.forEach((service) => {
-        if (service?.serviceCategory) categories.add(service.serviceCategory);
-      });
-    });
-    return Array.from(categories).sort();
-  };
-
-  const categories = getUniqueCategories();
+  const categories = categoryOptions || [];
   const hasActiveFilters = searchQuery || selectedCategory !== 'All';
 
   const handleRefresh = () => {
-    dispatch(getAllProviders({ page: currentPage, limit: ITEMS_PER_PAGE }));
+    setRefreshToken((value) => value + 1);
   };
 
   const handleClearFilters = () => {
@@ -223,7 +198,7 @@ const Providers = () => {
                 </div>
               )}
 
-              {!isFetchingAll && !error && filteredProviders.length === 0 && (
+              {!isFetchingAll && !error && allProviders.length === 0 && (
                 <div className="text-center py-12">
                   <div className="bg-white/80 backdrop-blur-sm border border-purple-100/50 rounded-3xl p-8 max-w-md mx-auto shadow-lg shadow-purple-500/5">
                     <Search className="mx-auto mb-4 w-12 h-12 text-purple-300" />
@@ -248,17 +223,17 @@ const Providers = () => {
                 </div>
               )}
 
-              {!isFetchingAll && !error && filteredProviders.length > 0 && (
+              {!isFetchingAll && !error && allProviders.length > 0 && (
                 <>
                   <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {filteredProviders.map((provider) => (
+                    {allProviders.map((provider) => (
                       <ProviderCard key={provider._id} provider={provider} />
                     ))}
                   </div>
 
                   <Pagination
-                    totalItems={pagination?.total || filteredProviders.length}
-                    itemsPerPage={ITEMS_PER_PAGE}
+                    totalItems={pagination?.total || 0}
+                    itemsPerPage={pagination?.limit || ITEMS_PER_PAGE}
                     currentPage={pagination?.page || currentPage}
                     onPageChange={setCurrentPage}
                   />

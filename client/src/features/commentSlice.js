@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { getApiBase } from "../utils/apiBase";
 
-const API_URL = getApiBase() || "http://localhost:3001";
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 export const fetchCommentsByService = createAsyncThunk(
@@ -29,6 +29,8 @@ export const canReviewService = createAsyncThunk(
       return {
         serviceId,
         canReview: Boolean(res.data?.canReview),
+        canRate: Boolean(res.data?.canRate),
+        canWriteReview: Boolean(res.data?.canWriteReview),
         reason: res.data?.reason || null,
       };
     } catch (err) {
@@ -41,7 +43,10 @@ export const createServiceComment = createAsyncThunk(
   "comments/create",
   async ({ serviceId, comment, rating }, { rejectWithValue, getState }) => {
     try {
-      const res = await axios.post(`${API_URL}/api/comments/create-comment/${serviceId}`, { comment, rating });
+      const payload = {};
+      if (typeof comment === "string" && comment.trim()) payload.comment = comment.trim();
+      if (rating !== undefined && rating !== null) payload.rating = rating;
+      const res = await axios.post(`${API_URL}/api/comments/create-comment/${serviceId}`, payload);
       const state = getState();
       const currentUser = state?.auth?.user;
       // Enrich the returned comment with current user's info for immediate UI display
@@ -68,7 +73,10 @@ export const updateServiceComment = createAsyncThunk(
   "comments/update",
   async ({ commentId, comment, rating }, { rejectWithValue, getState }) => {
     try {
-      const res = await axios.put(`${API_URL}/api/comments/update-comment/${commentId}`, { comment, rating });
+      const payload = {};
+      if (typeof comment === "string") payload.comment = comment.trim();
+      if (rating !== undefined && rating !== null) payload.rating = rating;
+      const res = await axios.put(`${API_URL}/api/comments/update-comment/${commentId}`, payload);
       const state = getState();
       const currentUser = state?.auth?.user;
       const updated = res.data.comment || {};
@@ -144,6 +152,8 @@ const initialState = {
   byServiceId: {},
   serviceProviders: {}, // Store service provider info by serviceId
   canReviewByServiceId: {},
+  canRateByServiceId: {},
+  canWriteReviewByServiceId: {},
   canReviewReasonByServiceId: {},
   isLoading: false,
   error: null,
@@ -173,8 +183,10 @@ const commentSlice = createSlice({
       })
 
       .addCase(canReviewService.fulfilled, (state, action) => {
-        const { serviceId, canReview, reason } = action.payload;
+        const { serviceId, canReview, canRate, canWriteReview, reason } = action.payload;
         state.canReviewByServiceId[serviceId] = canReview;
+        state.canRateByServiceId[serviceId] = canRate;
+        state.canWriteReviewByServiceId[serviceId] = canWriteReview;
         state.canReviewReasonByServiceId[serviceId] = reason || null;
       })
 
@@ -184,7 +196,9 @@ const commentSlice = createSlice({
       .addCase(createServiceComment.fulfilled, (state, action) => {
         const { serviceId, comment } = action.payload;
         if (!state.byServiceId[serviceId]) state.byServiceId[serviceId] = [];
-        state.byServiceId[serviceId].unshift(comment);
+        const existingIndex = state.byServiceId[serviceId].findIndex((entry) => entry._id === comment._id);
+        if (existingIndex === -1) state.byServiceId[serviceId].unshift(comment);
+        else state.byServiceId[serviceId][existingIndex] = comment;
       })
       .addCase(createServiceComment.rejected, (state, action) => {
         state.error = action.payload;
@@ -241,5 +255,3 @@ const commentSlice = createSlice({
 });
 
 export default commentSlice.reducer;
-
-

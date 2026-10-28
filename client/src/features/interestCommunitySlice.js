@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { getApiBase } from "../utils/apiBase";
 import { shouldToastApiMessage } from "../utils/apiToast";
 
-const API_URL = getApiBase() || "http://localhost:3000";
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 export const fetchInterestCommunities = createAsyncThunk(

@@ -1,25 +1,23 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { logoutUser } from "./authSlice";
+import { checkAuth, loginUser, loginWithPhoneOtp, logoutUser, signupUser } from "./authSlice";
 import { getApiBase } from "../utils/apiBase";
 import { shouldToastApiMessage } from "../utils/apiToast";
 
-const API_URL = getApiBase() || "http://localhost:3001";
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
-export const fetchWishlist = createAsyncThunk(
-  "wishlist/fetch",
-  async (_, { rejectWithValue }) => {
-    try {
-      const res = await axios.get(`${API_URL}/api/user/check-auth`);
-      const ids = res.data?.user?.wishlist || [];
-      return ids.map((id) => (typeof id === 'string' ? id : id?._id)).filter(Boolean);
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to load wishlist");
-    }
-  }
-);
+const wishlistIdsFromUser = (user) =>
+  (user?.wishlist || [])
+    .map((id) => (typeof id === "string" ? id : id?._id))
+    .filter(Boolean);
+
+const applyWishlistFromUser = (state, user) => {
+  state.ids = wishlistIdsFromUser(user);
+  state.isLoading = false;
+  state.error = null;
+};
 
 export const addToWishlist = createAsyncThunk(
   "wishlist/add",
@@ -53,20 +51,18 @@ const wishlistSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchWishlist.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+      .addCase(checkAuth.fulfilled, (state, action) => {
+        applyWishlistFromUser(state, action.payload?.user);
       })
-      .addCase(fetchWishlist.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.ids = action.payload || [];
+      .addCase(loginUser.fulfilled, (state, action) => {
+        applyWishlistFromUser(state, action.payload?.user);
       })
-      .addCase(fetchWishlist.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
-        if (shouldToastApiMessage(action.payload)) toast.error(action.payload);
+      .addCase(loginWithPhoneOtp.fulfilled, (state, action) => {
+        applyWishlistFromUser(state, action.payload?.user);
       })
-
+      .addCase(signupUser.fulfilled, (state, action) => {
+        applyWishlistFromUser(state, action.payload?.user);
+      })
       .addCase(addToWishlist.fulfilled, (state, action) => {
         state.ids = action.payload || state.ids;
         toast.success("Added to wishlist");

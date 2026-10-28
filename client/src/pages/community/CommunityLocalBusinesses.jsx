@@ -27,35 +27,34 @@ const CommunityLocalBusinesses = () => {
   const userCommunityHandle = (user?.communityCommunName || '').trim().toLowerCase();
 
   useEffect(() => {
-    if (!userCommunityHandle) return;
+    if (!userCommunityHandle) return undefined;
     const timer = setTimeout(() => {
-      dispatch(fetchCommunityLocalBusinesses({ search, category }));
+      dispatch(fetchCommunityLocalBusinesses({ search }));
     }, 250);
     return () => clearTimeout(timer);
-  }, [dispatch, userCommunityHandle, search, category]);
+  }, [dispatch, userCommunityHandle, search]);
 
-  const scopedBusinesses = useMemo(() => {
+  const communityBusinesses = useMemo(() => {
     if (!userCommunityHandle) return [];
-    return (localBusinesses || [])
-      .filter(
-        (b) => String(b.communityCommunName || '').trim().toLowerCase() === userCommunityHandle
-      )
-      .sort((a, b) => {
-        const pctA = Number(a.discountPercentage) || 0;
-        const pctB = Number(b.discountPercentage) || 0;
-        if (pctB !== pctA) return pctB - pctA;
-        if (Boolean(a.discountActive) !== Boolean(b.discountActive)) {
-          return a.discountActive ? -1 : 1;
-        }
-        return String(a.businessName || '').localeCompare(String(b.businessName || ''));
-      });
+    return (localBusinesses || []).filter(
+      (b) => String(b.communityCommunName || '').trim().toLowerCase() === userCommunityHandle
+    );
   }, [localBusinesses, userCommunityHandle]);
 
   const categoryOptions = useMemo(() => {
     const set = new Set();
-    scopedBusinesses.forEach((b) => (b.businessCategories || []).forEach((c) => set.add(c)));
+    communityBusinesses.forEach((b) => (b.businessCategories || []).forEach((c) => set.add(c)));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [scopedBusinesses]);
+  }, [communityBusinesses]);
+
+  const scopedBusinesses = useMemo(() => {
+    if (!category) return communityBusinesses;
+    return communityBusinesses.filter((b) => (b.businessCategories || []).includes(category));
+  }, [communityBusinesses, category]);
+
+  useEffect(() => {
+    if (category && !categoryOptions.includes(category)) setCategory('');
+  }, [category, categoryOptions]);
 
   if (!userCommunityHandle) {
     return (

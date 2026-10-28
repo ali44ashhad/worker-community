@@ -31,25 +31,6 @@ function humanizeSlug(slug) {
   }
 }
 
-function findServiceById(allProviders, serviceId) {
-  for (const provider of allProviders || []) {
-    const offerings = provider?.serviceOfferings;
-    if (!Array.isArray(offerings)) continue;
-    const found = offerings.find((s) => s._id === serviceId);
-    if (found) {
-      return {
-        ...found,
-        provider,
-      };
-    }
-  }
-  return null;
-}
-
-function findProviderById(allProviders, providerId) {
-  return (allProviders || []).find((p) => p._id === providerId) || null;
-}
-
 function resolveCategoryName(activeCategories, slug) {
   const categorySlug = String(slug || '').toLowerCase();
   const match = (activeCategories || []).find((c) => slugifyCategoryName(c.name) === categorySlug);
@@ -59,7 +40,7 @@ function resolveCategoryName(activeCategories, slug) {
 /**
  * @returns {{ to?: string, label: string }[] | null}
  */
-export function buildBreadcrumbs(pathname, { allProviders = [], activeCategories = [], overrides = null } = {}) {
+export function buildBreadcrumbs(pathname, { activeCategories = [], overrides = null } = {}) {
   if (!shouldShowBreadcrumb(pathname)) return null;
 
   if (overrides?.length) {
@@ -93,33 +74,14 @@ export function buildBreadcrumbs(pathname, { allProviders = [], activeCategories
     return crumbs;
   }
 
-  const serviceMatch = pathname.match(/^\/service\/([^/]+)$/);
-  if (serviceMatch) {
-    const serviceId = serviceMatch[1];
-    const service = findServiceById(allProviders, serviceId);
-    const category = service?.serviceCategory;
-    const name = service?.servicename || service?.serviceCategory || humanizeSlug(serviceId);
-
-    if (category) {
-      crumbs.push({
-        to: `/category/${slugifyCategoryName(category)}`,
-        label: category,
-      });
-    }
-    crumbs.push({ label: name });
+  if (/^\/service\/([^/]+)$/.test(pathname)) {
+    crumbs.push({ label: 'Service' });
     return crumbs;
   }
 
-  const providerMatch = pathname.match(/^\/provider\/([^/]+)$/);
-  if (providerMatch) {
-    const providerId = providerMatch[1];
-    const provider = findProviderById(allProviders, providerId);
-    const firstName = provider?.user?.firstName || '';
-    const lastName = provider?.user?.lastName || '';
-    const name = `${firstName} ${lastName}`.trim() || humanizeSlug(providerId);
-
+  if (/^\/provider\/([^/]+)$/.test(pathname)) {
     crumbs.push({ to: '/provider', label: 'Providers' });
-    crumbs.push({ label: name });
+    crumbs.push({ label: 'Provider' });
     return crumbs;
   }
 

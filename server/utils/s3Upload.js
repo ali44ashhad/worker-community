@@ -136,12 +136,43 @@ export async function deleteS3AssetByUrl(url) {
     }
 }
 
-export async function createPresignedUploadUrl({ folder, contentType, filename }) {
-    const key = buildObjectKey(folder, filename, contentType || "application/octet-stream");
+const PRESIGN_CONTENT_TYPES = new Set([
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "application/pdf",
+]);
+
+export const PRESIGN_MAX_BYTES = 10 * 1024 * 1024;
+
+function presignError(message) {
+    const error = new Error(message);
+    error.status = 400;
+    return error;
+}
+
+export async function createPresignedUploadUrl({ folder, contentType, contentLength }) {
+    const type = String(contentType || "").trim().toLowerCase();
+    if (!PRESIGN_CONTENT_TYPES.has(type)) {
+        throw presignError("Only images and PDFs can be uploaded.");
+    }
+
+    const size = Number(contentLength);
+    if (!Number.isInteger(size) || size <= 0) {
+        throw presignError("Could not read the file size.");
+    }
+    if (size > PRESIGN_MAX_BYTES) {
+        throw presignError("Each file must be 10MB or smaller.");
+    }
+
+    const key = buildObjectKey(folder, "", type);
     const command = new PutObjectCommand({
         Bucket: getS3Bucket(),
         Key: key,
-        ContentType: contentType || "application/octet-stream",
+        ContentType: type,
+        ContentLength: size,
     });
 
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });

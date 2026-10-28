@@ -12,6 +12,9 @@ import {
 import {
     resolveServicePortfolioImages,
 } from "../utils/generateServiceNameImage.js";
+import { notifySecretaryNewRegistration } from "../utils/webPush.js";
+import { loadRequestUser } from "../middlewares/user.middleware.js";
+import { redactProviderContacts, redactUserContact } from "../utils/contactVisibility.js";
 
 /** Public provider listings only include users approved by secretary (legacy: missing status = approved). */
 const USER_PUBLIC_POPULATE_MATCH = {
@@ -26,13 +29,13 @@ const USER_PUBLIC_POPULATE_MATCH = {
  */
 const getS3PresignedUpload = async (req, res) => {
     try {
-        const filename = String(req.body?.filename || "upload").trim();
-        const contentType = String(req.body?.contentType || "application/octet-stream").trim();
+        const contentType = String(req.body?.contentType || "").trim();
+        const contentLength = Number(req.body?.contentLength);
 
         const presigned = await createPresignedUploadUrl({
             folder: S3_FOLDERS.SERVICE,
             contentType,
-            filename,
+            contentLength,
         });
 
         return res.status(200).json({
@@ -43,12 +46,15 @@ const getS3PresignedUpload = async (req, res) => {
         });
     } catch (error) {
         console.error(`[${req?.requestId || "no-rid"}] Error in getS3PresignedUpload:`, error?.message || error);
-        const isDev = process.env.NODE_ENV !== "production";
+        if (error?.status === 400) {
+            return res.status(400).json({
+                success: false,
+                message: error.message,
+            });
+        }
         return res.status(500).json({
             success: false,
-            message: isDev
-                ? `Upload setup failed: ${error?.message || "unknown error"}`
-                : "Unable to prepare upload. Please try again.",
+            message: "Unable to prepare upload. Please try again.",
         });
     }
 };
@@ -271,7 +277,16 @@ const getProviderDashboardStats = async (req, res) => {
                         $group: {
                             _id: null,
                             averageRating: { $avg: "$rating" },
-                            totalReviews: { $sum: 1 }
+                            ratingCount: { $sum: 1 },
+                            totalReviews: {
+                                $sum: {
+                                    $cond: [
+                                        { $gt: [{ $ifNull: ["$comment", ""] }, ""] },
+                                        1,
+                                        0,
+                                    ],
+                                },
+                            }
                         }
                     }
                 ])
@@ -291,7 +306,7 @@ const getProviderDashboardStats = async (req, res) => {
         let averageRating = 0;
         let totalReviews = 0;
 
-        if (ratingStats.length > 0 && ratingStats[0].totalReviews > 0) {
+        if (ratingStats.length > 0 && ratingStats[0].ratingCount > 0) {
             averageRating = parseFloat(ratingStats[0].averageRating.toFixed(1));
             totalReviews = ratingStats[0].totalReviews;
         }
@@ -334,11 +349,18 @@ const getProviderDashboardStats = async (req, res) => {
  */
 const getAllProviders = async (req, res) => {
     try {
+        const viewer = await loadRequestUser(req);
         const pageParam = parseInt(req.query.page, 10);
         const limitParam = parseInt(req.query.limit, 10);
         const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
         const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 50) : 12;
         const skip = (page - 1) * limit;
+        const categoryName = String(req.query.category || "").trim().slice(0, 80);
+        const searchTerm = String(req.query.search || "")
+            .trim()
+            .slice(0, 80)
+            .replace(/[''`´′ʻ]/g, "'");
+        const searchPattern = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
         // NOTE: Providers page doesn't need per-service ratings. Services page uses a separate paginated endpoint.
         const userMatch = {
@@ -397,23 +419,76 @@ const getAllProviders = async (req, res) => {
                     },
                 },
             },
-            { $sort: { totalServiceClicks: -1, createdAt: -1 } },
-            {
-                $facet: {
-                    data: [{ $skip: skip }, { $limit: limit }],
-                    meta: [{ $count: "total" }],
-                },
-            },
         ];
+
+        const listMatch = [];
+        if (categoryName) {
+            listMatch.push({ $match: { "serviceOfferings.serviceCategory": categoryName } });
+        }
+        if (searchPattern) {
+            listMatch.push({
+                $match: {
+                    $or: [
+                        { "user.firstName": { $regex: searchPattern, $options: "i" } },
+                        { "user.lastName": { $regex: searchPattern, $options: "i" } },
+                        { bio: { $regex: searchPattern, $options: "i" } },
+                        { "serviceOfferings.serviceCategory": { $regex: searchPattern, $options: "i" } },
+                        { "serviceOfferings.keywords": { $regex: searchPattern, $options: "i" } },
+                        { "serviceOfferings.servicename": { $regex: searchPattern, $options: "i" } },
+                        {
+                            $expr: {
+                                $regexMatch: {
+                                    input: {
+                                        $trim: {
+                                            input: {
+                                                $concat: [
+                                                    { $ifNull: ["$user.firstName", ""] },
+                                                    " ",
+                                                    { $ifNull: ["$user.lastName", ""] },
+                                                ],
+                                            },
+                                        },
+                                    },
+                                    regex: searchPattern,
+                                    options: "i",
+                                },
+                            },
+                        },
+                    ],
+                },
+            });
+        }
+
+        pipeline.push({
+            $facet: {
+                categories: [
+                    { $unwind: "$serviceOfferings" },
+                    { $group: { _id: "$serviceOfferings.serviceCategory" } },
+                    { $match: { _id: { $type: "string", $ne: "" } } },
+                    { $sort: { _id: 1 } },
+                ],
+                data: [
+                    ...listMatch,
+                    { $sort: { totalServiceClicks: -1, createdAt: -1 } },
+                    { $skip: skip },
+                    { $limit: limit },
+                ],
+                meta: [...listMatch, { $count: "total" }],
+            },
+        });
 
         const [result] = await ProviderProfile.aggregate(pipeline);
         const providers = result?.data || [];
         const total = result?.meta?.[0]?.total || 0;
         const totalPages = Math.max(1, Math.ceil(total / limit));
+        const categories = (result?.categories || [])
+            .map((row) => row?._id)
+            .filter((name) => typeof name === "string" && name);
 
         return res.status(200).json({
             success: true,
-            providers,
+            providers: redactProviderContacts(providers, viewer),
+            categories,
             pagination: {
                 page,
                 limit,
@@ -529,6 +604,7 @@ const getTopProvidersByServiceClicks = async (req, res) => {
  */
 const getProviderById = async (req, res) => {
     try {
+        const viewer = await loadRequestUser(req);
         const provider = await ProviderProfile.findById(req.params.id)
             .populate({
                 path: 'user',
@@ -559,21 +635,35 @@ const getProviderById = async (req, res) => {
                     $group: {
                         _id: null,
                         averageRating: { $avg: "$rating" },
-                        totalReviews: { $sum: 1 }
+                        ratingCount: { $sum: 1 },
+                        totalReviews: {
+                            $sum: {
+                                $cond: [
+                                    { $gt: [{ $ifNull: ["$comment", ""] }, ""] },
+                                    1,
+                                    0,
+                                ],
+                            },
+                        }
                     }
                 }
             ]);
             
-            if (ratingStats.length > 0 && ratingStats[0].totalReviews > 0) {
+            if (ratingStats.length > 0 && ratingStats[0].ratingCount > 0) {
                 averageRating = parseFloat(ratingStats[0].averageRating.toFixed(1));
                 totalReviews = ratingStats[0].totalReviews;
             }
         }
         
+        const providerObject = provider.toObject();
+        if (providerObject.user) {
+            providerObject.user = redactUserContact(providerObject.user, viewer);
+        }
+
         return res.status(200).json({
             success: true,
             provider: {
-                ...provider.toObject(),
+                ...providerObject,
                 stats: {
                     averageRating,
                     totalReviews
@@ -853,17 +943,28 @@ const becomeProviderWithServices = async (req, res) => {
             });
         }
 
-        await User.findByIdAndUpdate(userId, { role: "provider", accountStatus: "approved" });
+        await User.findByIdAndUpdate(userId, { role: "provider", accountStatus: "pending" });
         const updatedUser = await User.findById(userId).select(
-            "role accountStatus communName communityCommunName firstName lastName email phoneNumber"
+            "role accountStatus communName communityCommunName firstName lastName email phoneNumber isPublicMember"
         );
 
-        // Provider applications are auto-approved on submit (no secretary pending step).
+        const communityHandle = String(updatedUser?.communityCommunName || "").trim().toLowerCase();
+        if (communityHandle && updatedUser?.isPublicMember !== true) {
+            const memberName = [updatedUser.firstName, updatedUser.lastName].filter(Boolean).join(" ").trim();
+            notifySecretaryNewRegistration({
+                communityCommunName: communityHandle,
+                memberName: memberName || "A provider applicant",
+            }).catch((err) => {
+                console.error("Provider application push failed:", err?.message || err);
+            });
+        }
 
         return res.status(201).json({
             success: true,
-            message: "You are now a provider. Your services are live.",
-            pendingApproval: false,
+            message: communityHandle && updatedUser?.isPublicMember !== true
+                ? "Application submitted. A secretary will review it before your services go live."
+                : "Application submitted. An admin will review it before your services go live.",
+            pendingApproval: true,
             profile: newProfile,
             services: createdServices,
             user: {

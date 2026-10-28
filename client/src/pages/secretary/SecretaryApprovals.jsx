@@ -7,7 +7,12 @@ import {
   approveUserRegistration,
   rejectUserRegistration,
 } from '../../features/secretarySlice';
-import { formatAddress, getFullName, getUserFlatNumber } from '../../utils/userHelpers';
+import {
+  formatAddress,
+  getFullName,
+  getUserFlatNumber,
+  getUserStreetAddressLine1,
+} from '../../utils/userHelpers';
 import { formatCommunDisplayName } from '../../utils/communName';
 
 const btnApprove =
@@ -79,46 +84,78 @@ const SecretaryApprovals = () => {
               {pendingUsers.map((u, index) => {
                 const flat = getUserFlatNumber(u);
                 const address = formatAddress(u);
+                const joined = u.createdAt
+                  ? new Date(u.createdAt).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })
+                  : '—';
                 return (
                 <motion.li
                   key={u._id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between"
                 >
                   <div className="min-w-0">
                     <p className="font-semibold text-[var(--text-primary)]">{getFullName(u)}</p>
-                    <p className="text-xs text-[var(--text-secondary)]">{u.email}</p>
-                    {(u.communName || u.communityCommunName || u.requestedCommunityName) && (
-                      <p className="text-xs font-medium text-[var(--purple-primary)]">
+                    <div className="mt-2 grid gap-x-6 gap-y-1.5 text-xs sm:grid-cols-2">
+                      <p className="text-[var(--text-secondary)]">
+                        <span className="font-medium text-[var(--text-primary)]">Email:</span> {u.email || '—'}
+                      </p>
+                      <p className="text-[var(--text-secondary)]">
+                        <span className="font-medium text-[var(--text-primary)]">Phone:</span> {u.phoneNumber || '—'}
+                      </p>
+                      <p className="text-[var(--text-secondary)]">
+                        <span className="font-medium text-[var(--text-primary)]">Community:</span>{' '}
                         {u.requestedCommunityName && !u.communityCommunName
                           ? `${u.requestedCommunityName} (requested)`
-                          : formatCommunDisplayName(u.communName || u.communityCommunName)}
+                          : formatCommunDisplayName(u.communName || u.communityCommunName) || '—'}
                       </p>
-                    )}
-                    {flat || address ? (
-                      <p className="mt-1.5 flex items-start gap-1.5 text-xs text-[var(--text-secondary)]">
-                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--purple-primary)]" />
-                        <span>
-                          {flat ? (
-                            <span className="font-medium text-[var(--text-primary)]">
-                              Flat {flat}
-                              {address ? ' · ' : ''}
-                            </span>
-                          ) : null}
-                          {address || null}
-                        </span>
+                      <p className="text-[var(--text-secondary)]">
+                        <span className="font-medium text-[var(--text-primary)]">Registered:</span> {joined}
                       </p>
-                    ) : (
-                      <p className="mt-1.5 text-xs italic text-[var(--text-secondary)]">
-                        No address provided
+                      <p className="text-[var(--text-secondary)] sm:col-span-2">
+                        <span className="font-medium text-[var(--text-primary)]">Role:</span>{' '}
+                        <span className="capitalize">{u.role || '—'}</span>
+                        {u.role === 'provider' ? ' · provider application' : ' · new signup'}
                       </p>
-                    )}
-                    <p className="mt-1 text-xs capitalize text-[var(--text-secondary)]">
-                      Role: {u.role}
-                      {u.role === 'provider' ? ' · provider application' : ' · new signup'}
-                    </p>
+                    </div>
+                    <div className="mt-3 rounded-xl border border-purple-100/70 bg-purple-50/30 p-3">
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-[var(--text-primary)]">
+                        <MapPin className="h-3.5 w-3.5 text-[var(--purple-primary)]" />
+                        Full address
+                      </p>
+                      <div className="grid gap-x-6 gap-y-1.5 text-xs sm:grid-cols-2">
+                        <p className="text-[var(--text-secondary)]">
+                          <span className="font-medium text-[var(--text-primary)]">Flat / house:</span> {flat || '—'}
+                        </p>
+                        <p className="text-[var(--text-secondary)]">
+                          <span className="font-medium text-[var(--text-primary)]">Street line 1:</span>{' '}
+                          {getUserStreetAddressLine1(u) || '—'}
+                        </p>
+                        <p className="text-[var(--text-secondary)]">
+                          <span className="font-medium text-[var(--text-primary)]">Street line 2:</span>{' '}
+                          {u.addressLine2 || '—'}
+                        </p>
+                        <p className="text-[var(--text-secondary)]">
+                          <span className="font-medium text-[var(--text-primary)]">City:</span> {u.city || '—'}
+                        </p>
+                        <p className="text-[var(--text-secondary)]">
+                          <span className="font-medium text-[var(--text-primary)]">State:</span> {u.state || '—'}
+                        </p>
+                        <p className="text-[var(--text-secondary)]">
+                          <span className="font-medium text-[var(--text-primary)]">Postal code:</span> {u.zip || '—'}
+                        </p>
+                      </div>
+                      {address ? (
+                        <p className="mt-2 border-t border-purple-100/70 pt-2 text-xs text-[var(--text-secondary)]">
+                          <span className="font-medium text-[var(--text-primary)]">Formatted:</span> {address}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <button

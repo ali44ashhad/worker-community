@@ -44,21 +44,10 @@ const CommunityDirectory = () => {
   const filteredMembers = useMemo(() => {
     const q = searchInput.trim().toLowerCase();
     const list = [...(directoryMembers || [])];
-    const hasFlat = (m) => Boolean(String(m?.flatNumber || '').trim() || getUserFlatNumber(m));
     list.sort((a, b) => {
-      const aHas = hasFlat(a);
-      const bHas = hasFlat(b);
-      // Flat listed first, then unlisted
-      if (aHas !== bHas) return aHas ? -1 : 1;
-      if (aHas) {
-        const flatCmp = String(getUserFlatNumber(a) || a.flatNumber || '').localeCompare(
-          String(getUserFlatNumber(b) || b.flatNumber || ''),
-          undefined,
-          { numeric: true, sensitivity: 'base' }
-        );
-        if (flatCmp !== 0) return flatCmp;
-      }
-      return getFullName(a).localeCompare(getFullName(b));
+      return getFullName(a).localeCompare(getFullName(b), undefined, {
+        sensitivity: 'base',
+      });
     });
     if (!q) return list;
     return list.filter((m) => {

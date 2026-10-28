@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { getApiBase } from "../utils/apiBase";
 
-const API_URL = getApiBase() || "http://localhost:3001";
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 // ========================== SIGNUP ==========================

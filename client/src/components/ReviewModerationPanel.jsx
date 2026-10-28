@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FaStar } from 'react-icons/fa';
 import { Pencil, Search, Trash2, X } from 'lucide-react';
@@ -7,7 +7,6 @@ import { formatCommunDisplayName } from '../utils/communName';
 import ProfileAvatar from './ProfileAvatar';
 
 const PAGE_SIZE = 12;
-const FETCH_LIMIT = 1000;
 
 const starClass = (filled) => (filled ? 'text-amber-400' : 'text-purple-100');
 
@@ -30,6 +29,7 @@ const ReviewModerationPanel = ({
   title = 'Reviews',
   description,
   reviews = [],
+  pagination = null,
   loading = false,
   error = null,
   needsCommunName = false,
@@ -41,7 +41,7 @@ const ReviewModerationPanel = ({
   deletingId = null,
 }) => {
   const [searchInput, setSearchInput] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedReview, setSelectedReview] = useState(null);
   const [editReview, setEditReview] = useState(null);
@@ -50,16 +50,20 @@ const ReviewModerationPanel = ({
   const [deleteReview, setDeleteReview] = useState(null);
 
   useEffect(() => {
-    onFetch?.({ page: 1, limit: FETCH_LIMIT, search: '' });
-  }, [onFetch]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchTerm(searchInput.trim().toLowerCase());
-      setCurrentPage(1);
-    }, 300);
+    const timer = setTimeout(() => setDebouncedSearch(searchInput.trim()), 300);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  const filterKey = debouncedSearch;
+  const [appliedFilterKey, setAppliedFilterKey] = useState(filterKey);
+  if (appliedFilterKey !== filterKey) {
+    setAppliedFilterKey(filterKey);
+    setCurrentPage(1);
+  }
+
+  useEffect(() => {
+    onFetch?.({ page: currentPage, limit: PAGE_SIZE, search: debouncedSearch });
+  }, [onFetch, currentPage, debouncedSearch]);
 
   const reviewerLabel = (review) => getMemberDisplayName(review.customer);
 
@@ -81,40 +85,9 @@ const ReviewModerationPanel = ({
   const communityLabel = (value) =>
     value ? formatCommunDisplayName(value) : 'No community / public';
 
-  const filteredReviews = useMemo(() => {
-    const sorted = [...(reviews || [])].sort(
-      (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-    );
-    if (!searchTerm) return sorted;
-
-    return sorted.filter((review) => {
-      const haystack = [
-        reviewerLabel(review),
-        review.customer?.email,
-        review.reviewerCommunity,
-        getUserCommunityLabel(review.customer),
-        serviceLabel(review),
-        review.serviceOffering?.serviceCategory,
-        providerLabel(review),
-        review.providerCommunity,
-        getUserCommunityLabel(review.serviceOffering?.provider?.user),
-        review.comment,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(searchTerm);
-    });
-  }, [reviews, searchTerm]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredReviews.length / PAGE_SIZE) || 1);
-  const safePage = Math.min(currentPage, totalPages);
-  const pageStart = (safePage - 1) * PAGE_SIZE;
-  const pageReviews = filteredReviews.slice(pageStart, pageStart + PAGE_SIZE);
-
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
-  }, [currentPage, totalPages]);
+  const totalReviews = pagination?.totalReviews ?? reviews.length;
+  const totalPages = Math.max(1, pagination?.totalPages || 1);
+  const safePage = pagination?.currentPage || currentPage;
 
   // Keep detail popup in sync after edit
   useEffect(() => {
@@ -127,22 +100,26 @@ const ReviewModerationPanel = ({
   const openEdit = (review) => {
     setEditReview(review);
     setEditText(review.comment || '');
-    setEditRating(review.rating || 5);
+    setEditRating(review.rating || 0);
   };
 
   const closeEdit = () => {
     setEditReview(null);
     setEditText('');
-    setEditRating(5);
+    setEditRating(0);
   };
 
   const submitEdit = async (e) => {
     e.preventDefault();
     if (!editReview?._id) return;
+    const comment = editText.trim();
+    if (!comment && !editRating) {
+      return;
+    }
     const result = await onUpdate?.({
       commentId: editReview._id,
-      comment: editText.trim(),
-      rating: editRating,
+      ...(comment ? { comment } : {}),
+      ...(editRating ? { rating: editRating } : {}),
     });
     if (result !== false) closeEdit();
   };
@@ -154,6 +131,11 @@ const ReviewModerationPanel = ({
     if (result !== false) {
       setDeleteReview(null);
       if (selectedReview?._id === id) setSelectedReview(null);
+      if (reviews.length <= 1 && currentPage > 1) {
+        setCurrentPage((page) => Math.max(1, page - 1));
+      } else {
+        onFetch?.({ page: currentPage, limit: PAGE_SIZE, search: debouncedSearch });
+      }
     }
   };
 
@@ -180,10 +162,10 @@ const ReviewModerationPanel = ({
               ({formatCommunDisplayName(communityCommunName)})
             </span>
           ) : null}
-          {filteredReviews.length > 0 ? (
+          {totalReviews > 0 ? (
             <span className="text-[var(--text-secondary)]">
               {' '}
-              · {filteredReviews.length} review{filteredReviews.length !== 1 ? 's' : ''}
+              · {totalReviews} review{totalReviews !== 1 ? 's' : ''}
             </span>
           ) : null}
         </p>
@@ -220,15 +202,15 @@ const ReviewModerationPanel = ({
           </p>
         )}
 
-        {loading && reviews.length === 0 && !error ? (
+        {loading && !error ? (
           <p className="mt-8 text-center text-sm text-[var(--text-secondary)]">Loading…</p>
-        ) : !needsCommunName && filteredReviews.length === 0 ? (
+        ) : !needsCommunName && reviews.length === 0 ? (
           <p className="mt-8 rounded-xl border border-dashed border-purple-100 bg-purple-50/30 py-10 text-center text-sm text-[var(--text-secondary)]">
             No reviews found.
           </p>
         ) : (
           <ul className="mt-6 divide-y divide-purple-50 overflow-hidden rounded-xl border border-purple-100/60">
-            {pageReviews.map((review) => (
+            {reviews.map((review) => (
               <li key={review._id}>
                 <button
                   type="button"
@@ -262,7 +244,7 @@ const ReviewModerationPanel = ({
           </ul>
         )}
 
-        {filteredReviews.length > PAGE_SIZE && (
+        {!loading && totalPages > 1 && (
           <div className="mt-6 flex items-center justify-between gap-3">
             <button
               type="button"

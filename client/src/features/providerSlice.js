@@ -4,19 +4,21 @@ import { toast } from "react-hot-toast";
 import { getApiBase } from "../utils/apiBase";
 import { shouldToastApiMessage } from "../utils/apiToast";
 
-const API_URL = getApiBase() || "http://localhost:3001";
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 export const getAllProviders = createAsyncThunk(
   "provider/getAll",
-  async ({ page = 1, limit = 12 } = {}, { rejectWithValue }) => {
+  async ({ page = 1, limit = 12, search, category } = {}, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/api/provider-profile`, {
-        params: { page, limit },
-      });
+      const params = { page, limit };
+      if (search) params.search = search;
+      if (category) params.category = category;
+      const res = await axios.get(`${API_URL}/api/provider-profile`, { params });
       return {
         providers: res.data.providers || [],
         pagination: res.data.pagination || null,
+        categories: res.data.categories || [],
       };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch providers");
@@ -74,7 +76,9 @@ export const getProviderDashboardStats = createAsyncThunk(
 
 const initialState = {
   allProviders: [],
+  categories: [],
   pagination: null,
+  listRequestId: null,
   selectedProvider: null,
   myProviderProfile: null,
   dashboardStats: null,
@@ -97,16 +101,21 @@ const providerSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getAllProviders.pending, (state) => {
+      .addCase(getAllProviders.pending, (state, action) => {
         state.isFetchingAll = true;
         state.error = null;
+        state.listRequestId = action.meta.requestId;
       })
       .addCase(getAllProviders.fulfilled, (state, action) => {
+        if (state.listRequestId !== action.meta.requestId) return;
         state.isFetchingAll = false;
         state.allProviders = action.payload?.providers || [];
         state.pagination = action.payload?.pagination || null;
+        state.categories = action.payload?.categories || [];
+        state.error = null;
       })
       .addCase(getAllProviders.rejected, (state, action) => {
+        if (state.listRequestId !== action.meta.requestId) return;
         state.isFetchingAll = false;
         state.error = action.payload;
       })

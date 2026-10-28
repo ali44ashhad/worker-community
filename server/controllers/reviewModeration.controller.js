@@ -5,8 +5,8 @@ import { invalidateCommentCaches, isCommentInCommunity } from "../utils/reviewSc
 
 function parsePagination(query) {
     const page = Math.max(1, parseInt(query.page, 10) || 1);
-    const limit = Math.min(1000, Math.max(1, parseInt(query.limit, 10) || 10));
-    const search = typeof query.search === "string" ? query.search.trim() : "";
+    const limit = Math.min(50, Math.max(1, parseInt(query.limit, 10) || 10));
+    const search = typeof query.search === "string" ? query.search.trim().slice(0, 80) : "";
     return { page, limit, search, skip: (page - 1) * limit };
 }
 
@@ -166,7 +166,10 @@ function communityMatchExpr(communityHandle) {
 }
 
 async function listReviews({ page, limit, skip, search, communityHandle = null }) {
-    const pipeline = [...reviewEnrichmentStages()];
+    const pipeline = [
+        { $match: { comment: { $type: "string", $ne: "" } } },
+        ...reviewEnrichmentStages(),
+    ];
 
     if (communityHandle) {
         pipeline.push({ $match: { $expr: communityMatchExpr(communityHandle) } });
@@ -174,6 +177,25 @@ async function listReviews({ page, limit, skip, search, communityHandle = null }
 
     if (search) {
         const regex = new RegExp(escapeRegex(search), "i");
+        const nameMatch = (firstField, lastField) => ({
+            $expr: {
+                $regexMatch: {
+                    input: {
+                        $trim: {
+                            input: {
+                                $concat: [
+                                    { $ifNull: [firstField, ""] },
+                                    " ",
+                                    { $ifNull: [lastField, ""] },
+                                ],
+                            },
+                        },
+                    },
+                    regex: escapeRegex(search),
+                    options: "i",
+                },
+            },
+        });
         pipeline.push({
             $match: {
                 $or: [
@@ -182,12 +204,14 @@ async function listReviews({ page, limit, skip, search, communityHandle = null }
                     { "customerDoc.lastName": regex },
                     { "customerDoc.email": regex },
                     { "customerDoc.communityCommunName": regex },
+                    nameMatch("$customerDoc.firstName", "$customerDoc.lastName"),
                     { "serviceDoc.servicename": regex },
                     { "serviceDoc.serviceCategory": regex },
                     { "providerUserDoc.firstName": regex },
                     { "providerUserDoc.lastName": regex },
                     { "providerUserDoc.email": regex },
                     { "providerUserDoc.communityCommunName": regex },
+                    nameMatch("$providerUserDoc.firstName", "$providerUserDoc.lastName"),
                 ],
             },
         });
@@ -232,14 +256,16 @@ async function loadEnrichedReview(commentId) {
 }
 
 async function applyReviewUpdate(commentId, { comment, rating }) {
-    if (!comment || !String(comment).trim()) {
-        const err = new Error("Comment text is required.");
+    const hasComment = typeof comment === "string";
+    const hasRating = rating !== undefined && rating !== null && rating !== "";
+    const ratingNum = hasRating ? Number(rating) : null;
+    if (!hasComment && !hasRating) {
+        const err = new Error("Provide a rating or review comment.");
         err.status = 400;
         throw err;
     }
-    const ratingNum = parseInt(rating, 10);
-    if (!ratingNum || ratingNum < 1 || ratingNum > 5) {
-        const err = new Error("Rating is required and must be between 1 and 5.");
+    if (hasRating && (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5)) {
+        const err = new Error("Rating must be a whole number between 1 and 5.");
         err.status = 400;
         throw err;
     }
@@ -251,8 +277,15 @@ async function applyReviewUpdate(commentId, { comment, rating }) {
         throw err;
     }
 
-    existing.comment = String(comment).trim();
-    existing.rating = ratingNum;
+    const nextComment = hasComment ? String(comment).trim() : existing.comment;
+    const nextRating = hasRating ? ratingNum : existing.rating;
+    if (!nextComment && nextRating == null) {
+        const err = new Error("A rating or review comment is required.");
+        err.status = 400;
+        throw err;
+    }
+    if (hasComment) existing.comment = nextComment || undefined;
+    if (hasRating) existing.rating = nextRating;
     await existing.save();
     invalidateCommentCaches();
 

@@ -5,6 +5,9 @@ import InterestCommunityMembership from "../models/interestCommunityMembership.m
 import InterestChatMessage from "../models/interestChatMessage.model.js";
 import { buildChatRoomId, getMemberCommunName } from "../utils/memberCommun.js";
 import { notifyInterestGroupMessage } from "../utils/webPush.js";
+import { isTokenIssuedBeforePasswordChange } from "../utils/authCookie.js";
+
+const MAX_CHAT_TEXT = 2000;
 
 const roomPresence = new Map();
 const roomTyping = new Map();
@@ -39,6 +42,7 @@ async function authenticateSocket(socket) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId).select("-password");
     if (!user || user.isActive === false) throw new Error("Unauthorized");
+    if (isTokenIssuedBeforePasswordChange(decoded, user)) throw new Error("Unauthorized");
     return user;
 }
 
@@ -124,6 +128,10 @@ export function initChatSocket(io) {
             try {
                 const messageText = String(text || "").trim();
                 if (!messageText) return;
+                if (messageText.length > MAX_CHAT_TEXT) {
+                    socket.emit("chat_error", { message: "Message is too long." });
+                    return;
+                }
 
                 const roomId = buildChatRoomId(interestCommunityId, communName);
                 const membership = await InterestCommunityMembership.findOne({
@@ -208,6 +216,10 @@ export function initChatSocket(io) {
             try {
                 const messageText = String(text || "").trim();
                 if (!messageText) return;
+                if (messageText.length > MAX_CHAT_TEXT) {
+                    socket.emit("chat_error", { message: "Message is too long." });
+                    return;
+                }
 
                 const roomId = buildChatRoomId(interestCommunityId, communName);
                 const msg = await InterestChatMessage.findOne({
@@ -257,9 +269,15 @@ export function initChatSocket(io) {
             }
         });
 
-        socket.on("typing", ({ interestCommunityId, isTyping }) => {
+        socket.on("typing", async ({ interestCommunityId, isTyping }) => {
             if (!communName) return;
             const roomId = buildChatRoomId(interestCommunityId, communName);
+            if (socket.activeRoomId !== roomId) return;
+            const membership = await InterestCommunityMembership.findOne({
+                user: user._id,
+                interestCommunity: interestCommunityId,
+            });
+            if (!membership) return;
             const key = `${roomId}:${user._id}`;
 
             if (isTyping) {

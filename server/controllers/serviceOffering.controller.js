@@ -5,6 +5,8 @@ import {
     getEnabledCategoriesForCommunity,
     getMemberCommunityHandle,
 } from "../utils/communityServices.js";
+import { loadRequestUser } from "../middlewares/user.middleware.js";
+import { redactServiceContacts, redactUserContact } from "../utils/contactVisibility.js";
 
 const parsePagination = (req) => {
     const pageParam = parseInt(req.query.page, 10);
@@ -15,13 +17,29 @@ const parsePagination = (req) => {
     return { page, limit, skip };
 };
 
-const runServicesQuery = async ({ communityHandle, enabledCategories, publicOnly = false, page, limit, skip }) => {
+const parseListFilters = (req) => {
+    const minRatingParam = parseFloat(req.query.minRating);
+    return {
+        search: req.query.search,
+        category: req.query.category,
+        subcategory: req.query.subcategory,
+        keyword: req.query.keyword,
+        minRating: Number.isFinite(minRatingParam) ? minRatingParam : 0,
+        sort: req.query.sort === "clicks" ? "clicks" : "newest",
+    };
+};
+
+const filterNames = (rows) =>
+    (rows || []).map((row) => row?._id).filter((name) => typeof name === "string" && name);
+
+const runServicesQuery = async ({ communityHandle, enabledCategories, publicOnly = false, page, limit, skip, filters }) => {
     const pipeline = buildPublicServicesPipeline({
         communityHandle,
         enabledCategories,
         publicOnly,
         skip,
         limit,
+        ...filters,
     });
 
     const [result] = await ServiceOffering.aggregate(pipeline);
@@ -32,6 +50,8 @@ const runServicesQuery = async ({ communityHandle, enabledCategories, publicOnly
     return {
         services,
         pagination: { page, limit, total, totalPages },
+        categories: filterNames(result?.categories),
+        subcategories: filterNames(result?.subcategories),
     };
 };
 
@@ -42,19 +62,23 @@ const runServicesQuery = async ({ communityHandle, enabledCategories, publicOnly
  */
 const getPublicServices = async (req, res) => {
     try {
+        const viewer = await loadRequestUser(req);
         const { page, limit, skip } = parsePagination(req);
-        const { services, pagination } = await runServicesQuery({
+        const { services, pagination, categories, subcategories } = await runServicesQuery({
             communityHandle: null,
             enabledCategories: null,
             page,
             limit,
             skip,
+            filters: parseListFilters(req),
         });
 
         return res.status(200).json({
             success: true,
-            services,
+            services: redactServiceContacts(services, viewer),
             pagination,
+            categories,
+            subcategories,
         });
     } catch (error) {
         console.error("Error in getPublicServices:", error.message);
@@ -73,19 +97,22 @@ const getCommunityServices = async (req, res) => {
         if (!communityHandle) {
             if (req.user?.isPublicMember) {
                 const { page, limit, skip } = parsePagination(req);
-                const { services, pagination } = await runServicesQuery({
+                const { services, pagination, categories, subcategories } = await runServicesQuery({
                     communityHandle: null,
                     enabledCategories: null,
                     publicOnly: true,
                     page,
                     limit,
                     skip,
+                    filters: parseListFilters(req),
                 });
 
                 return res.status(200).json({
                     success: true,
-                    services,
+                    services: redactServiceContacts(services, req.user),
                     pagination,
+                    categories,
+                    subcategories,
                     communityCommunName: null,
                     publicServices: true,
                     needsCommunity: false,
@@ -96,6 +123,8 @@ const getCommunityServices = async (req, res) => {
                 success: true,
                 services: [],
                 pagination: { page: 1, limit: 12, total: 0, totalPages: 1 },
+                categories: [],
+                subcategories: [],
                 communityCommunName: null,
                 needsCommunity: true,
             });
@@ -103,18 +132,21 @@ const getCommunityServices = async (req, res) => {
 
         const { page, limit, skip } = parsePagination(req);
         const enabledCategories = await getEnabledCategoriesForCommunity(communityHandle);
-        const { services, pagination } = await runServicesQuery({
+        const { services, pagination, categories, subcategories } = await runServicesQuery({
             communityHandle,
             enabledCategories,
             page,
             limit,
             skip,
+            filters: parseListFilters(req),
         });
 
         return res.status(200).json({
             success: true,
-            services,
+            services: redactServiceContacts(services, req.user),
             pagination,
+            categories,
+            subcategories,
             communityCommunName: communityHandle,
             needsCommunity: false,
         });
@@ -131,6 +163,7 @@ const getCommunityServices = async (req, res) => {
  */
 const getTopServicesByClicks = async (req, res) => {
     try {
+        const viewer = await loadRequestUser(req);
         const limitParam = parseInt(req.query.limit, 10);
         const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 12) : 6;
 
@@ -188,7 +221,15 @@ const getTopServicesByClicks = async (req, res) => {
                             $group: {
                                 _id: "$serviceOffering",
                                 averageRating: { $avg: "$rating" },
-                                reviewCount: { $sum: 1 },
+                                reviewCount: {
+                                    $sum: {
+                                        $cond: [
+                                            { $gt: [{ $ifNull: ["$comment", ""] }, ""] },
+                                            1,
+                                            0,
+                                        ],
+                                    },
+                                },
                             },
                         },
                     ],
@@ -214,7 +255,7 @@ const getTopServicesByClicks = async (req, res) => {
 
         const services = await ServiceOffering.aggregate(pipeline);
 
-        return res.status(200).json({ success: true, services });
+        return res.status(200).json({ success: true, services: redactServiceContacts(services, viewer) });
     } catch (error) {
         console.error("Error in getTopServicesByClicks:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -228,6 +269,7 @@ const getTopServicesByClicks = async (req, res) => {
  */
 const getServiceOfferingById = async (req, res) => {
     try {
+        const viewer = await loadRequestUser(req);
         const { id } = req.params;
 
         const pipeline = [
@@ -289,6 +331,10 @@ const getServiceOfferingById = async (req, res) => {
 
         if (!service) {
             return res.status(404).json({ success: false, message: "Service not found" });
+        }
+
+        if (service.provider?.user) {
+            service.provider.user = redactUserContact(service.provider.user, viewer);
         }
 
         return res.status(200).json({ success: true, service });

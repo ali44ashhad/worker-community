@@ -1,21 +1,22 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import axios from 'axios';
 import { getActiveCategories } from '../features/adminSlice';
-import { getAllPublicServices } from '../features/serviceSlice';
 import { HiOutlineSearch } from 'react-icons/hi';
 import { FiTrendingUp } from 'react-icons/fi';
 import { getFullName } from '../utils/userHelpers';
 import { slugifyCategoryName } from '../utils/slug';
-import { textIncludesSearch } from '../utils/searchText';
+import { getApiBase } from '../utils/apiBase';
 import ServiceCover from './service/ServiceCover';
 
 const SearchDropdown = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { services, isFetching } = useSelector((state) => state.services);
   const { activeCategories } = useSelector((state) => state.admin);
   const [searchQuery, setSearchQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const dropdownRef = useRef(null);
 
   // Fetch DB-driven categories once (used for category list)
@@ -25,45 +26,45 @@ const SearchDropdown = ({ isOpen, onClose }) => {
     }
   }, [isOpen, activeCategories, dispatch]);
 
-  // Fetch all services for search (not paginated)
-  useEffect(() => {
-    if (isOpen && (!services || services.length === 0)) {
-      dispatch(getAllPublicServices());
-    }
-  }, [isOpen, services, dispatch]);
-
-  // Reset search query when dropdown closes
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery('');
+      setResults([]);
     }
   }, [isOpen]);
 
-  const allServices = useMemo(() => services || [], [services]);
-
-  // Filter services based on search query
-  const filteredServices = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    
+  useEffect(() => {
     const query = searchQuery.trim();
-    return allServices.filter(service => {
-      const servicename = service?.servicename || '';
-      const category = service?.serviceCategory || '';
-      const description = service?.description || '';
-      const keywords = (service?.keywords || []).join(' ');
-      const subCategories = (service?.subCategories || []).join(' ');
-      const providerName = getFullName(service?.provider?.user) || '';
+    if (!isOpen || !query) {
+      setResults([]);
+      setIsSearching(false);
+      return undefined;
+    }
 
-      return (
-        textIncludesSearch(servicename, query) ||
-        textIncludesSearch(category, query) ||
-        textIncludesSearch(description, query) ||
-        textIncludesSearch(keywords, query) ||
-        textIncludesSearch(subCategories, query) ||
-        textIncludesSearch(providerName, query)
-      );
-    }).slice(0, 10); // Limit to 10 results
-  }, [searchQuery, allServices]);
+    const controller = new AbortController();
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await axios.get(`${getApiBase()}/api/service-offering`, {
+          params: { page: 1, limit: 10, search: query },
+          signal: controller.signal,
+          withCredentials: true,
+        });
+        setResults(res.data?.services || []);
+      } catch (error) {
+        if (error?.code !== 'ERR_CANCELED') setResults([]);
+      } finally {
+        if (!controller.signal.aborted) setIsSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [isOpen, searchQuery]);
+
+  const filteredServices = results;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -151,7 +152,7 @@ const SearchDropdown = ({ isOpen, onClose }) => {
             <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
               Services ({filteredServices.length})
             </h3>
-            {isFetching && allServices.length === 0 ? (
+            {isSearching && filteredServices.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 text-sm">Loading services...</p>
               </div>

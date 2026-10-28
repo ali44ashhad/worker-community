@@ -32,13 +32,16 @@ const createComment = async (req, res) => {
         const { serviceId } = req.params; 
         const { comment, rating } = req.body;
         const reviewerId = req.user._id;
+        const normalizedComment = typeof comment === "string" ? comment.trim() : "";
+        const hasRating = rating !== undefined && rating !== null && rating !== "";
+        const parsedRating = hasRating ? Number(rating) : null;
 
-        if (!comment) {
-            return res.status(400).json({ success: false, message: "Comment text is required." });
+        if (!normalizedComment && !hasRating) {
+            return res.status(400).json({ success: false, message: "Provide a rating or review comment." });
         }
 
-        if (!rating || rating < 1 || rating > 5) {
-            return res.status(400).json({ success: false, message: "Rating is required and must be between 1 and 5." });
+        if (hasRating && (!Number.isInteger(parsedRating) || parsedRating < 1 || parsedRating > 5)) {
+            return res.status(400).json({ success: false, message: "Rating must be a whole number between 1 and 5." });
         }
 
         // 1. Verify the service offering exists
@@ -58,18 +61,27 @@ const createComment = async (req, res) => {
             serviceOffering: serviceId,
             customer: reviewerId
         });
+
         if (existingComment) {
-            return res.status(400).json({ success: false, message: "You have already reviewed this service. You can only leave one review per service." });
+            if (hasRating) existingComment.rating = parsedRating;
+            if (normalizedComment) existingComment.comment = normalizedComment;
+            await existingComment.save();
+            invalidateCache();
+            return res.status(200).json({
+                success: true,
+                message: "Your rating or review was updated.",
+                comment: existingComment,
+            });
         }
 
-        // 4. Create the new comment associated with the service offering
-        const newComment = await Comment.create({
+        const commentData = {
             serviceOffering: serviceId,
             provider: serviceOffering.provider, // optional legacy linkage
             customer: reviewerId,
-            comment,
-            rating: parseInt(rating)
-        });
+        };
+        if (normalizedComment) commentData.comment = normalizedComment;
+        if (hasRating) commentData.rating = parsedRating;
+        const newComment = await Comment.create(commentData);
 
         // Invalidate cache when new comment is created
         invalidateCache();
@@ -118,7 +130,20 @@ const canReviewService = async (req, res) => {
             return res.status(200).json({ success: true, canReview: false, reason: "own_service" });
         }
 
-        return res.status(200).json({ success: true, canReview: true });
+        const existingEntry = await Comment.findOne({
+            serviceOffering: serviceId,
+            customer: user._id,
+        }).select("comment rating").lean();
+        const canRate = !existingEntry || existingEntry.rating == null;
+        const canWriteReview = !existingEntry || !String(existingEntry.comment || "").trim();
+
+        return res.status(200).json({
+            success: true,
+            canReview: canRate || canWriteReview,
+            canRate,
+            canWriteReview,
+            reason: canRate || canWriteReview ? null : "already_submitted",
+        });
     } catch (error) {
         console.error("Error in canReviewService controller:", error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -193,12 +218,14 @@ const updateComment = async (req, res) => {
         const { comment, rating } = req.body;
         const customerId = req.user._id;
 
-        if (!comment) {
-            return res.status(400).json({ success: false, message: "Comment text is required." });
+        const hasComment = typeof comment === "string";
+        const hasRating = rating !== undefined && rating !== null && rating !== "";
+        const parsedRating = hasRating ? Number(rating) : null;
+        if (!hasComment && !hasRating) {
+            return res.status(400).json({ success: false, message: "Provide a rating or review comment." });
         }
-
-        if (!rating || rating < 1 || rating > 5) {
-            return res.status(400).json({ success: false, message: "Rating is required and must be between 1 and 5." });
+        if (hasRating && (!Number.isInteger(parsedRating) || parsedRating < 1 || parsedRating > 5)) {
+            return res.status(400).json({ success: false, message: "Rating must be a whole number between 1 and 5." });
         }
 
         const existingComment = await Comment.findById(commentId);
@@ -221,8 +248,13 @@ const updateComment = async (req, res) => {
             }
         }
         
-        existingComment.comment = comment;
-        existingComment.rating = parseInt(rating);
+        const nextComment = hasComment ? comment.trim() : existingComment.comment;
+        const nextRating = hasRating ? parsedRating : existingComment.rating;
+        if (!nextComment && nextRating == null) {
+            return res.status(400).json({ success: false, message: "A rating or review comment is required." });
+        }
+        if (hasComment) existingComment.comment = nextComment || undefined;
+        if (hasRating) existingComment.rating = nextRating;
         const updatedComment = await existingComment.save();
 
         // Invalidate cache when comment rating is updated
@@ -248,6 +280,9 @@ const updateComment = async (req, res) => {
 
     } catch (error) {
         console.error("Error in updateComment controller:", error.message);
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ success: false, message: error.message });
+        }
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -514,11 +549,20 @@ const getTopServices = async (req, res) => {
 
         // Aggregate comments to calculate average rating and review count per service
         const topServices = await Comment.aggregate([
+            { $match: { rating: { $type: "number" } } },
             {
                 $group: {
                     _id: "$serviceOffering",
                     averageRating: { $avg: "$rating" },
-                    reviewCount: { $sum: 1 }
+                    reviewCount: {
+                        $sum: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ["$comment", ""] }, ""] },
+                                1,
+                                0,
+                            ],
+                        },
+                    }
                 }
             },
             {
@@ -540,7 +584,7 @@ const getTopServices = async (req, res) => {
                     select: "user",
                     populate: {
                         path: "user",
-                        select: "firstName lastName profileImage email phoneNumber isActive",
+                        select: "firstName lastName profileImage isActive",
                         match: { isActive: { $ne: false } },
                     },
                 })
@@ -577,7 +621,7 @@ const getTopServices = async (req, res) => {
                 select: 'user',
                 populate: {
                     path: 'user',
-                    select: 'firstName lastName profileImage email phoneNumber isActive',
+                    select: 'firstName lastName profileImage isActive',
                     match: { isActive: { $ne: false } },
                 }
             })
@@ -597,7 +641,8 @@ const getTopServices = async (req, res) => {
                 // Explicitly set fields to ensure they're in the response
                 serviceObj.provider.user.firstName = populatedUser?.firstName;
                 serviceObj.provider.user.lastName = populatedUser?.lastName;
-                serviceObj.provider.user.email = populatedUser?.email;
+                delete serviceObj.provider.user.email;
+                delete serviceObj.provider.user.phoneNumber;
                 // Remove virtual name field if firstName/lastName exist (to avoid confusion)
                 if (populatedUser?.firstName || populatedUser?.lastName) {
                     delete serviceObj.provider.user.name;
@@ -656,6 +701,7 @@ const getTopCategories = async (req, res) => {
         // Use aggregation to join comments with service offerings and calculate category stats.
         // Only count services that belong to active providers (user.isActive !== false).
         const categoryStats = await Comment.aggregate([
+            { $match: { rating: { $type: "number" } } },
             {
                 $lookup: {
                     from: 'serviceofferings',
@@ -693,14 +739,23 @@ const getTopCategories = async (req, res) => {
                 $group: {
                     _id: '$service.serviceCategory',
                     totalRating: { $sum: '$rating' },
-                    reviewCount: { $sum: 1 },
+                    ratingCount: { $sum: 1 },
+                    reviewCount: {
+                        $sum: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ["$comment", ""] }, ""] },
+                                1,
+                                0,
+                            ],
+                        },
+                    },
                     serviceCount: { $addToSet: '$serviceOffering' }
                 }
             },
             {
                 $project: {
                     category: '$_id',
-                    averageRating: { $divide: ['$totalRating', '$reviewCount'] },
+                    averageRating: { $divide: ['$totalRating', '$ratingCount'] },
                     reviewCount: 1,
                     serviceCount: { $size: '$serviceCount' },
                     _id: 0

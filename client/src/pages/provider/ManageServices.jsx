@@ -6,6 +6,7 @@ import { getMyProviderProfile } from '../../features/providerSlice';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import ServiceCover from '../../components/service/ServiceCover';
+import { getApiBase } from '../../utils/apiBase';
 
 const btnPrimary =
   'inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
@@ -36,7 +37,7 @@ const ManageServices = () => {
 
     try {
       setDeletingId(serviceId);
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = getApiBase();
       const response = await fetch(`${API_URL}/api/provider-profile/service/${serviceId}`, {
         method: 'DELETE',
         credentials: 'include',

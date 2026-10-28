@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getApiBase } from '../utils/apiBase';
 import { appendEventAttachmentsToFormData } from '../utils/eventAttachmentForm';
 
-const API_URL = getApiBase() || 'http://localhost:3001';
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 const defaultFeatures = {
@@ -84,9 +84,12 @@ export const fetchCommunityBroadcasts = createAsyncThunk(
 
 export const fetchCommunityVendors = createAsyncThunk(
   'community/fetchVendors',
-  async (_, { rejectWithValue }) => {
+  async ({ search = '' } = {}, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/api/vendors/community`);
+      const params = new URLSearchParams();
+      if (search.trim()) params.append('search', search.trim());
+      const qs = params.toString();
+      const res = await axios.get(`${API_URL}/api/vendors/community${qs ? `?${qs}` : ''}`);
       return res.data?.data || { categories: [], vendorsByCategory: {}, needsCommunity: false, communityCommunName: null };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to load vendors');

@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { getApiBase } from "../utils/apiBase";
 import { shouldToastApiMessage } from "../utils/apiToast";
 
-const API_URL = getApiBase() || "http://localhost:3001";
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 /* ----------------- THUNKS ----------------- */
@@ -303,6 +303,12 @@ export const getActiveCategories = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch categories");
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const status = getState().admin.activeCategoriesStatus;
+      return status !== "loading" && status !== "succeeded";
+    },
   }
 );
 
@@ -636,6 +642,7 @@ const adminSlice = createSlice({
       limit: 10
     },
     activeCategories: [],
+    activeCategoriesStatus: "idle",
     categoriesAdmin: [],
     categoriesAdminPagination: {
       currentPage: 1,
@@ -669,6 +676,7 @@ const adminSlice = createSlice({
     reviewsLoading: false,
     reviewsError: null,
     reviewsPagination: null,
+    reviewsRequestId: null,
     reviewUpdating: false,
     reviewDeletingId: null,
     banners: [],
@@ -846,14 +854,17 @@ const adminSlice = createSlice({
       .addCase(getActiveCategories.pending, (state) => {
         state.isLoading = true;
         state.error = null;
+        state.activeCategoriesStatus = "loading";
       })
       .addCase(getActiveCategories.fulfilled, (state, action) => {
         state.isLoading = false;
         state.activeCategories = action.payload || [];
+        state.activeCategoriesStatus = "succeeded";
       })
       .addCase(getActiveCategories.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+        state.activeCategoriesStatus = "failed";
       })
 
       // Admin categories list
@@ -922,16 +933,19 @@ const adminSlice = createSlice({
         if (!updated?._id) return;
         state.secretaries = (state.secretaries || []).map((u) => (u._id === updated._id ? updated : u));
       })
-      .addCase(fetchAdminReviews.pending, (state) => {
+      .addCase(fetchAdminReviews.pending, (state, action) => {
         state.reviewsLoading = true;
         state.reviewsError = null;
+        state.reviewsRequestId = action.meta.requestId;
       })
       .addCase(fetchAdminReviews.fulfilled, (state, action) => {
+        if (state.reviewsRequestId !== action.meta.requestId) return;
         state.reviewsLoading = false;
         state.reviews = action.payload.reviews || [];
         state.reviewsPagination = action.payload.pagination;
       })
       .addCase(fetchAdminReviews.rejected, (state, action) => {
+        if (state.reviewsRequestId !== action.meta.requestId) return;
         state.reviewsLoading = false;
         state.reviewsError = action.payload;
       })

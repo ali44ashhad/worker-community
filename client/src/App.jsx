@@ -29,10 +29,10 @@ import KnowMoreProviders from './pages/KnowMoreProviders'
 import KnowMoreSeekers from './pages/KnowMoreSeekers'
 import TopServices from './pages/TopServices'
 import TopCategories from './pages/TopCategories'
-import { fetchWishlist } from './features/wishlistSlice'
 import AdminLayout from './layouts/AdminLayout'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
 import UserProtectedRoute from './components/UserProtectedRoute'
+import RequireAuth from './components/RequireAuth'
 import ProviderProtectedRoute from './components/ProviderProtectedRoute'
 import Dashboard from './pages/admin/Dashboard'
 import UpdateProviders from './pages/admin/UpdateProviders'
@@ -80,6 +80,7 @@ import { fetchCommunityFeatures, clearCommunityFeatures } from './features/commu
 import Terms from './pages/Terms'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import DeleteAccount from './pages/DeleteAccount'
+import NotFound from './pages/NotFound'
 import Breadcrumb from './components/Breadcrumb'
 import { BreadcrumbProvider } from './context/BreadcrumbContext'
 import PushNotificationPrompt from './components/PushNotificationPrompt'
@@ -95,14 +96,6 @@ const App = () => {
   useEffect(() => {
     dispatch(checkAuth())
   }, [dispatch])
-
-  // Fetch wishlist when user is authenticated
-  useEffect(() => {
-    const approved = !user || (user.accountStatus || 'approved') === 'approved';
-    if (!isCheckingAuth && user && approved) {
-      dispatch(fetchWishlist());
-    }
-  }, [dispatch, user, isCheckingAuth])
 
   useEffect(() => {
     const approved = !user || (user.accountStatus || 'approved') === 'approved';
@@ -185,7 +178,14 @@ const App = () => {
           }
         ></Route>
         <Route path='/contact' element={<Contact></Contact>}></Route>
-        <Route path='/update-profile' element={<UpdateProfile></UpdateProfile>}></Route>
+        <Route
+          path='/update-profile'
+          element={
+            <RequireAuth>
+              <UpdateProfile></UpdateProfile>
+            </RequireAuth>
+          }
+        ></Route>
         <Route
           path='/provider/manage-services'
           element={
@@ -400,6 +400,7 @@ const App = () => {
           <Route path="secretaries" element={<SecretaryManagement />} />
           <Route path="communities" element={<CommunityMgmt />} />
           <Route path="update-profile" element={<UpdateProfile />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         <Route path="/secretary" element={<SecretaryProtectedRoute />}>
@@ -427,8 +428,10 @@ const App = () => {
               element={<InterestCommunityChat listPath="/secretary/communities" />}
             />
             <Route path="update-profile" element={<UpdateProfile />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Route>
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       {!hideGlobalChrome && <Footer></Footer>}

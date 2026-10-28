@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Mail, Phone, Search, User, X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCommunityMemberById, fetchCommunityMembers, updateCommunityMemberStatus } from '../../features/secretarySlice';
-import { formatAddress, getFullName } from '../../utils/userHelpers';
+import { formatAddress, getFullName, getUserFlatNumber } from '../../utils/userHelpers';
 import { formatCommunDisplayName } from '../../utils/communName';
 
 const PAGE_SIZE = 10;
@@ -52,6 +52,16 @@ const SecretaryMembers = () => {
       day: 'numeric',
     });
   }, [selectedMember?.createdAt]);
+  const selectedAddress = useMemo(
+    () =>
+      [
+        getUserFlatNumber(selectedMember) ? `Flat ${getUserFlatNumber(selectedMember)}` : '',
+        formatAddress(selectedMember),
+      ]
+        .filter(Boolean)
+        .join(', '),
+    [selectedMember]
+  );
 
   const openProfile = (userId) => {
     setSelectedMemberId(userId);
@@ -126,15 +136,15 @@ const SecretaryMembers = () => {
         ) : members.length > 0 ? (
           <>
             <div className="mt-6 overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm">
+              <table className="w-full min-w-[900px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 text-xs font-semibold uppercase tracking-wide text-gray-500">
                     <th className="pb-3 pr-4">Name</th>
                     <th className="pb-3 pr-4">Email</th>
                     <th className="pb-3 pr-4">Phone</th>
+                    <th className="pb-3 pr-4">Address</th>
                     <th className="pb-3 pr-4">Role</th>
                     <th className="pb-3 pr-4">Status</th>
-                    <th className="pb-3 pr-4">Provider @</th>
                     <th className="pb-3 pr-4">Joined</th>
                     <th className="pb-3 text-right">Change status</th>
                   </tr>
@@ -142,6 +152,12 @@ const SecretaryMembers = () => {
                 <tbody className="divide-y divide-gray-100">
                   {members.map((u) => {
                     const status = u.accountStatus || 'approved';
+                    const address = [
+                      getUserFlatNumber(u) ? `Flat ${getUserFlatNumber(u)}` : '',
+                      formatAddress(u),
+                    ]
+                      .filter(Boolean)
+                      .join(', ');
                     const joined = u.createdAt
                       ? new Date(u.createdAt).toLocaleDateString(undefined, {
                           year: 'numeric',
@@ -163,6 +179,9 @@ const SecretaryMembers = () => {
                         </td>
                         <td className="py-3 pr-4 text-gray-600">{u.email || '—'}</td>
                         <td className="py-3 pr-4 text-gray-600">{u.phoneNumber || '—'}</td>
+                        <td className="max-w-xs whitespace-normal py-3 pr-4 text-gray-600">
+                          {address || '—'}
+                        </td>
                         <td className="py-3 pr-4 capitalize">{u.role || '—'}</td>
                         <td className="py-3 pr-4">
                           <span
@@ -176,11 +195,6 @@ const SecretaryMembers = () => {
                           >
                             {status}
                           </span>
-                        </td>
-                        <td className="py-3 pr-4 text-indigo-600">
-                          {u.role === 'provider' && u.communName
-                            ? formatCommunDisplayName(u.communName)
-                            : '—'}
                         </td>
                         <td className="py-3 pr-4 text-gray-500">{joined}</td>
                         <td className="py-3 text-right">
@@ -340,7 +354,7 @@ const SecretaryMembers = () => {
 
                     <div className="sm:col-span-2 rounded-xl border border-gray-100 bg-gray-50 p-4">
                       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Address</p>
-                      <p className="mt-3 text-sm text-gray-800">{formatAddress(selectedMember) || '—'}</p>
+                      <p className="mt-3 text-sm text-gray-800">{selectedAddress || '—'}</p>
                     </div>
 
                     {(selectedMember.communName || selectedMember.communityCommunName || selectedMember.requestedCommunityName) && (

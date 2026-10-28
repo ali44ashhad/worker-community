@@ -11,6 +11,7 @@ const SecretaryReviews = () => {
   const dispatch = useDispatch();
   const {
     reviews,
+    reviewsPagination,
     reviewsLoading,
     reviewsError,
     reviewsMeta,
@@ -47,6 +48,7 @@ const SecretaryReviews = () => {
       title="Reviews"
       description="Moderate reviews on services from providers in your Commun"
       reviews={reviews}
+      pagination={reviewsPagination}
       loading={reviewsLoading}
       error={reviewsError}
       needsCommunName={reviewsMeta?.needsCommunName}

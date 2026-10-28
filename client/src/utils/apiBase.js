@@ -9,8 +9,8 @@ export function getSocketUrl() {
 }
 
 export function getApiBase() {
-  // In production (Vercel), prefer relative `/api/*` so `vercel.json` rewrites work.
-  // In local dev, set VITE_API_URL=http://localhost:3001 (no trailing `/api`).
+  // In production (Vercel), an empty value keeps requests relative so `vercel.json` rewrites work.
+  // In local dev with no env, the API runs on port 3000.
   const raw = (import.meta.env.VITE_API_URL || "").trim();
   if (!raw) {
     // If env isn't set, try to infer a sane default in production.
@@ -20,6 +20,9 @@ export function getApiBase() {
       if (host.endsWith("commun.in")) {
         return "https://api.commun.in";
       }
+    }
+    if (import.meta.env.DEV) {
+      return "http://localhost:3000";
     }
     return "";
   }

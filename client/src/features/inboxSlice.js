@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getApiBase } from '../utils/apiBase';
 import { logoutUser } from './authSlice';
 
-const API_URL = getApiBase() || 'http://localhost:3001';
+const API_URL = getApiBase();
 
 export const fetchInboxCounts = createAsyncThunk(
   'inbox/fetchCounts',

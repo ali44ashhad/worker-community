@@ -50,3 +50,10 @@ export function setAuthCookie(res, token) {
     clearAuthCookies(res);
     res.cookie("jwt", token, getAuthCookieSetOptions());
 }
+
+/** True when this token was issued before the user's latest password change. */
+export function isTokenIssuedBeforePasswordChange(decoded, user) {
+    if (!decoded?.iat || !user?.passwordChangedAt) return false;
+    const changedAtSeconds = Math.floor(new Date(user.passwordChangedAt).getTime() / 1000);
+    return decoded.iat < changedAtSeconds;
+}

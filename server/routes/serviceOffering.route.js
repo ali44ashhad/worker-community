@@ -2,6 +2,9 @@ import express from "express";
 import { incrementServiceOfferingCount } from "../controllers/providerProfile.controller.js";
 import { getPublicServices, getCommunityServices, getTopServicesByClicks, getServiceOfferingById } from "../controllers/serviceOffering.controller.js";
 import { protect } from "../middlewares/user.middleware.js";
+import { rateLimit } from "../middlewares/rateLimit.js";
+
+const incrementLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 1 });
 
 const router = express.Router();
 
@@ -18,7 +21,7 @@ router.get("/top-clicked", getTopServicesByClicks);
 router.get("/:id", getServiceOfferingById);
 
 // Public route to increment service offering click count
-router.post("/:id/increment-count", incrementServiceOfferingCount);
+router.post("/:id/increment-count", incrementLimit, incrementServiceOfferingCount);
 
 export default router;
 

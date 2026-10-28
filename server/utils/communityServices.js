@@ -106,7 +106,23 @@ export async function getEnabledCategoriesForCommunity(communityHandle) {
     return resolveEnabledCategoryNames(toggles, categoryNames);
 }
 
-export function buildPublicServicesPipeline({ communityHandle, enabledCategories, publicOnly = false, skip, limit }) {
+const cleanFilterText = (value, max = 80) => String(value || "").trim().slice(0, max);
+
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export function buildPublicServicesPipeline({
+    communityHandle,
+    enabledCategories,
+    publicOnly = false,
+    skip,
+    limit,
+    search = "",
+    category = "",
+    subcategory = "",
+    keyword = "",
+    minRating = 0,
+    sort = "newest",
+}) {
     const userMatch = approvedActiveUserMatch;
 
     const pipeline = [
@@ -163,7 +179,54 @@ export function buildPublicServicesPipeline({ communityHandle, enabledCategories
         }
     }
 
-    pipeline.push(
+    const categoryName = cleanFilterText(category);
+    const subcategoryName = cleanFilterText(subcategory);
+    const keywordName = cleanFilterText(keyword);
+    const searchTerm = cleanFilterText(search).replace(/[''`´′ʻ]/g, "'");
+    const ratingFloor = Number(minRating);
+    const listMatch = [];
+
+    if (categoryName) listMatch.push({ $match: { serviceCategory: categoryName } });
+    if (subcategoryName) listMatch.push({ $match: { subCategories: subcategoryName } });
+    if (keywordName) listMatch.push({ $match: { keywords: keywordName } });
+    if (searchTerm) {
+        const pattern = escapeRegex(searchTerm);
+        listMatch.push({
+            $match: {
+                $or: [
+                    { servicename: { $regex: pattern, $options: "i" } },
+                    { serviceCategory: { $regex: pattern, $options: "i" } },
+                    { description: { $regex: pattern, $options: "i" } },
+                    { keywords: { $regex: pattern, $options: "i" } },
+                    { subCategories: { $regex: pattern, $options: "i" } },
+                    { "providerUser.firstName": { $regex: pattern, $options: "i" } },
+                    { "providerUser.lastName": { $regex: pattern, $options: "i" } },
+                    {
+                        $expr: {
+                            $regexMatch: {
+                                input: {
+                                    $trim: {
+                                        input: {
+                                            $concat: [
+                                                { $ifNull: ["$providerUser.firstName", ""] },
+                                                " ",
+                                                { $ifNull: ["$providerUser.lastName", ""] },
+                                            ],
+                                        },
+                                    },
+                                },
+                                regex: pattern,
+                                options: "i",
+                            },
+                        },
+                    },
+                ],
+            },
+        });
+    }
+
+    const needsRating = Number.isFinite(ratingFloor) && ratingFloor > 0;
+    const ratingStages = [
         {
             $lookup: {
                 from: "comments",
@@ -174,7 +237,15 @@ export function buildPublicServicesPipeline({ communityHandle, enabledCategories
                         $group: {
                             _id: "$serviceOffering",
                             averageRating: { $avg: "$rating" },
-                            reviewCount: { $sum: 1 },
+                            reviewCount: {
+                                $sum: {
+                                    $cond: [
+                                        { $gt: [{ $ifNull: ["$comment", ""] }, ""] },
+                                        1,
+                                        0,
+                                    ],
+                                },
+                            },
                         },
                     },
                 ],
@@ -196,14 +267,32 @@ export function buildPublicServicesPipeline({ communityHandle, enabledCategories
             },
         },
         { $project: { ratingStats: 0, providerProfile: 0, providerUser: 0 } },
-        { $sort: { createdAt: -1 } },
-        {
-            $facet: {
-                data: [{ $skip: skip }, { $limit: limit }],
-                meta: [{ $count: "total" }],
-            },
-        }
-    );
+    ];
+    const ratingFloorMatch = needsRating ? [{ $match: { averageRating: { $gte: ratingFloor } } }] : [];
+    const sortStage = {
+        $sort: sort === "clicks" ? { serviceOfferingCount: -1, createdAt: -1 } : { createdAt: -1 },
+    };
+
+    pipeline.push({
+        $facet: {
+            categories: [
+                { $group: { _id: "$serviceCategory" } },
+                { $match: { _id: { $type: "string", $ne: "" } } },
+                { $sort: { _id: 1 } },
+            ],
+            subcategories: categoryName
+                ? [
+                      { $match: { serviceCategory: categoryName } },
+                      { $unwind: "$subCategories" },
+                      { $group: { _id: "$subCategories" } },
+                      { $match: { _id: { $type: "string", $ne: "" } } },
+                      { $sort: { _id: 1 } },
+                  ]
+                : [{ $match: { _id: null } }],
+            data: [...listMatch, ...ratingStages, ...ratingFloorMatch, sortStage, { $skip: skip }, { $limit: limit }],
+            meta: [...listMatch, ...(needsRating ? [...ratingStages, ...ratingFloorMatch] : []), { $count: "total" }],
+        },
+    });
 
     return pipeline;
 }

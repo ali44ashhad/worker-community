@@ -124,6 +124,11 @@ const userSchema = new Schema({
         type: Date,
         default: null
     },
+    /** Set on password change/reset so older JWTs are rejected. */
+    passwordChangedAt: {
+        type: Date,
+        default: null
+    },
      wishlist: [{ type: Schema.Types.ObjectId, ref: 'ServiceOffering', default: [] }],
     /** Secretary-only: show broadcast/events to community members. */
     featureToggles: {
@@ -176,9 +181,16 @@ userSchema.virtual('address').get(function() {
     return parts.join(', ') || '';
 });
 
+function hideSecretUserFields(_doc, ret) {
+    delete ret.password;
+    delete ret.resetPasswordToken;
+    delete ret.resetPasswordExpires;
+    return ret;
+}
+
 // Ensure virtual fields are included in JSON output
-userSchema.set('toJSON', { virtuals: true });
-userSchema.set('toObject', { virtuals: true });
+userSchema.set('toJSON', { virtuals: true, transform: hideSecretUserFields });
+userSchema.set('toObject', { virtuals: true, transform: hideSecretUserFields });
 
 /** Remove interest-community memberships when a User document is deleted. */
 async function deleteInterestMembershipsForUsers(userIds) {

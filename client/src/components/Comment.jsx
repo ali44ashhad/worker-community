@@ -17,7 +17,7 @@ import { getFullName, getMemberDisplayName } from '../utils/userHelpers';
 import { getApiBase } from '../utils/apiBase';
 import ProfileAvatar from './ProfileAvatar';
 
-const API_URL = getApiBase() || 'http://localhost:3001';
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 const inputClass =
@@ -48,6 +48,8 @@ const Comment = ({ serviceId }) => {
   const comments = useMemo(() => commentsState.byServiceId[serviceId] || [], [commentsState.byServiceId, serviceId]);
   const serviceProvider = commentsState.serviceProviders[serviceId];
   const canReview = commentsState.canReviewByServiceId?.[serviceId];
+  const canRate = commentsState.canRateByServiceId?.[serviceId];
+  const canWriteReview = commentsState.canWriteReviewByServiceId?.[serviceId];
   const canReviewReason = commentsState.canReviewReasonByServiceId?.[serviceId];
   const isLoading = commentsState.isLoading;
 
@@ -64,13 +66,6 @@ const Comment = ({ serviceId }) => {
   const [replyText, setReplyText] = useState('');
   const [editingReplyId, setEditingReplyId] = useState(null);
   const [editingReplyText, setEditingReplyText] = useState('');
-
-  const hasUserReviewed =
-    user &&
-    comments.some((c) => {
-      const customerId = typeof c.customer === 'object' ? c.customer?._id : c.customer;
-      return customerId === user._id;
-    });
 
   const isProvider = user && serviceProviderUserId && user._id === serviceProviderUserId;
 
@@ -137,21 +132,22 @@ const Comment = ({ serviceId }) => {
     e.preventDefault();
     const trimmed = text.trim();
 
-    if (!rating || rating < 1 || rating > 5) {
-      toast.error('Please select a rating (1-5 stars)');
+    const submitRating = canRate && rating >= 1 && rating <= 5 ? rating : undefined;
+    const submitComment = canWriteReview && trimmed ? trimmed : undefined;
+    if (submitRating === undefined && submitComment === undefined) {
+      toast.error('Add a rating, a review comment, or both.');
       return;
     }
 
-    if (!trimmed) {
-      toast.error('Please write a review comment');
-      return;
-    }
-
-    const result = await dispatch(createServiceComment({ serviceId, comment: trimmed, rating }));
+    const result = await dispatch(
+      createServiceComment({ serviceId, comment: submitComment, rating: submitRating })
+    );
     if (createServiceComment.fulfilled.match(result)) {
       setText('');
       setRating(0);
       setShowReviewForm(false);
+      dispatch(fetchCommentsByService(serviceId));
+      dispatch(canReviewService(serviceId));
     } else if (createServiceComment.rejected.match(result)) {
       toast.error(result.payload || 'Failed to submit review');
     }
@@ -159,25 +155,24 @@ const Comment = ({ serviceId }) => {
 
   const onStartEdit = (c) => {
     setEditingId(c._id);
-    setEditingText(c.comment);
+    setEditingText(c.comment || '');
     setEditingRating(c.rating || 0);
   };
 
   const onSaveEdit = async () => {
     const trimmed = editingText.trim();
 
-    if (!editingRating || editingRating < 1 || editingRating > 5) {
-      toast.error('Please select a rating (1-5 stars)');
-      return;
-    }
-
-    if (!trimmed) {
-      toast.error('Please write a review comment');
+    if ((!editingRating || editingRating < 1 || editingRating > 5) && !trimmed) {
+      toast.error('Add a rating, a review comment, or both.');
       return;
     }
 
     const result = await dispatch(
-      updateServiceComment({ commentId: editingId, comment: trimmed, rating: editingRating })
+      updateServiceComment({
+        commentId: editingId,
+        ...(trimmed ? { comment: trimmed } : {}),
+        ...(editingRating >= 1 && editingRating <= 5 ? { rating: editingRating } : {}),
+      })
     );
     if (updateServiceComment.fulfilled.match(result)) {
       setEditingId(null);
@@ -282,40 +277,57 @@ const Comment = ({ serviceId }) => {
 
       <div className="border-b border-purple-100 pb-4">
         {user ? (
-          hasUserReviewed ? (
-            <p className="text-sm text-[var(--text-secondary)]">
-              You have already reviewed this service.
-            </p>
-          ) : canReview === false ? (
+          canReview === false ? (
             <p className="text-sm text-[var(--text-secondary)]">
               {canReviewReason === 'own_service'
                 ? 'You cannot review your own service.'
-                : 'You cannot review this service.'}
+                : canReviewReason === 'already_submitted'
+                  ? 'You have already rated and reviewed this service.'
+                  : 'You cannot review this service.'}
             </p>
           ) : canReview !== true ? (
             <p className="text-sm text-[var(--text-secondary)]">Checking review access…</p>
           ) : !showReviewForm ? (
-            <button type="button" onClick={() => setShowReviewForm(true)} className={btnPrimary}>
-              Write Review
-            </button>
+            <div className="space-y-2">
+              {canRate && canWriteReview ? (
+                <p className="text-sm text-[var(--text-secondary)]">
+                  You can rate this service, write a review, or do both.
+                </p>
+              ) : canRate ? (
+                <p className="text-sm text-[var(--text-secondary)]">
+                  You have written a review. You can still rate this service.
+                </p>
+              ) : (
+                <p className="text-sm text-[var(--text-secondary)]">
+                  You have rated this service. You can still write a review.
+                </p>
+              )}
+              <button type="button" onClick={() => setShowReviewForm(true)} className={btnPrimary}>
+                {canRate && canWriteReview ? 'Rate or Write a Review' : canRate ? 'Rate Service' : 'Write Review'}
+              </button>
+            </div>
           ) : (
             <form onSubmit={onSubmit} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Rating</label>
-                {renderStarPicker(rating, hoveredRating, setRating, setHoveredRating, () =>
-                  setHoveredRating(0)
-                )}
-                {rating > 0 && (
-                  <p className="text-xs text-[var(--text-secondary)]">{rating} out of 5 stars</p>
-                )}
-              </div>
-              <textarea
-                className={inputClass}
-                rows={3}
-                placeholder="Write your review..."
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-              />
+              {canRate && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Rating (optional)</label>
+                  {renderStarPicker(rating, hoveredRating, setRating, setHoveredRating, () =>
+                    setHoveredRating(0)
+                  )}
+                  {rating > 0 && (
+                    <p className="text-xs text-[var(--text-secondary)]">{rating} out of 5 stars</p>
+                  )}
+                </div>
+              )}
+              {canWriteReview && (
+                <textarea
+                  className={inputClass}
+                  rows={3}
+                  placeholder="Write your review (optional)..."
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
+              )}
               <div className="flex gap-2 self-end">
                 <button
                   type="button"
@@ -329,7 +341,7 @@ const Comment = ({ serviceId }) => {
                   Cancel
                 </button>
                 <button type="submit" className={btnPrimary}>
-                  Submit Review
+                  Submit {canRate && canWriteReview ? 'Rating / Review' : canRate ? 'Rating' : 'Review'}
                 </button>
               </div>
             </form>
@@ -450,11 +462,13 @@ const Comment = ({ serviceId }) => {
                         onChange={(e) => setEditingText(e.target.value)}
                       />
                     </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
-                      {c.comment}
-                    </p>
-                  )}
+                  ) : c.comment ? (
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
+                        {c.comment}
+                      </p>
+                    ) : (
+                      <p className="text-sm italic text-[var(--text-secondary)]">Rating only — no written review.</p>
+                    )}
                 </div>
 
                 {c.reply ? (

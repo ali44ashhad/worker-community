@@ -11,6 +11,7 @@ const AdminReviews = () => {
   const dispatch = useDispatch();
   const {
     reviews,
+    reviewsPagination,
     reviewsLoading,
     reviewsError,
     reviewUpdating,
@@ -46,6 +47,7 @@ const AdminReviews = () => {
       title="Reviews Mgmt"
       description="View, edit, or delete any review across the site."
       reviews={reviews}
+      pagination={reviewsPagination}
       loading={reviewsLoading}
       error={reviewsError}
       onFetch={onFetch}

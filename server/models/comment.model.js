@@ -24,11 +24,12 @@ const commentSchema = new Schema({
     },
     comment: {
         type: String,
-        required: true
+        trim: true,
+        required: false
     },
     rating: {
         type: Number,
-        required: true,
+        required: false,
         min: 1,
         max: 5
     },
@@ -46,6 +47,13 @@ const commentSchema = new Schema({
         required: false
     }
 }, { timestamps: true });
+
+commentSchema.pre("validate", function (next) {
+    if (!this.comment && this.rating == null) {
+        this.invalidate("comment", "A rating or review comment is required.");
+    }
+    next();
+});
 
 // Add indexes for performance optimization
 // Index on serviceOffering for fast lookups and aggregations

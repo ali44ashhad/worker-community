@@ -9,7 +9,7 @@ import { getApiBase } from '../utils/apiBase';
 import CategoryIcon from '../components/CategoryIcon';
 import { getCategoryDescription } from '../utils/categoryDisplay';
 
-const API_URL = getApiBase() || 'http://localhost:3001';
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 const GRADIENTS = [

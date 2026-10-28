@@ -61,23 +61,13 @@ const listCommunityDirectory = async (req, res) => {
             )
             .lean();
 
-        const hasFlat = (m) => Boolean(String(m?.flatNumber || "").trim());
         const fullName = (m) =>
-            `${m?.firstName || ""} ${m?.lastName || ""}`.trim().toLowerCase();
+            `${m?.firstName || ""} ${m?.lastName || ""}`.trim();
 
         members.sort((a, b) => {
-            const aHas = hasFlat(a);
-            const bHas = hasFlat(b);
-            // Members with a flat number first, then unlisted
-            if (aHas !== bHas) return aHas ? -1 : 1;
-            if (aHas) {
-                const flatCmp = String(a.flatNumber).localeCompare(String(b.flatNumber), undefined, {
-                    numeric: true,
-                    sensitivity: "base",
-                });
-                if (flatCmp !== 0) return flatCmp;
-            }
-            return fullName(a).localeCompare(fullName(b));
+            return fullName(a).localeCompare(fullName(b), undefined, {
+                sensitivity: "base",
+            });
         });
 
         return res.status(200).json({
@@ -135,7 +125,7 @@ const forgotPassword = async (req, res) => {
         });
     } catch (error) {
         console.error("Error in forgotPassword:", error.message);
-        return res.status(500).json({ success: false, message: "Internal server error: " + error.message });
+        return res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
     }
 };
 
@@ -166,6 +156,7 @@ const resetPassword = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(String(newPassword), 10);
         user.password = hashedPassword;
+        user.passwordChangedAt = new Date();
         user.resetPasswordToken = "";
         user.resetPasswordExpires = null;
         await user.save();
@@ -173,7 +164,7 @@ const resetPassword = async (req, res) => {
         return res.status(200).json({ success: true, message: "Password reset successfully. Please login." });
     } catch (error) {
         console.error("Error in resetPassword:", error.message);
-        return res.status(500).json({ success: false, message: "Internal server error: " + error.message });
+        return res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
     }
 };
 
@@ -231,7 +222,7 @@ const sendSignupOtp = async (req, res) => {
         console.error("sendSignupOtp:", error?.message || error);
         return res.status(500).json({
             success: false,
-            message: error?.message || "Could not send OTP. Please try again.",
+            message: "Could not send OTP. Please try again.",
         });
     }
 };
@@ -277,17 +268,13 @@ const verifySignupOtp = async (req, res) => {
         console.error("verifySignupOtp:", error?.message || error);
         return res.status(500).json({
             success: false,
-            message: error?.message || "Could not verify OTP. Please try again.",
+            message: "Could not verify OTP. Please try again.",
         });
     }
 };
 
 const findUserByPhoneDigits = async (phoneDigits) => {
-    const direct = await User.findOne({ phoneNumber: phoneDigits });
-    if (direct) return direct;
-    return User.findOne({
-        phoneNumber: { $regex: new RegExp(`${phoneDigits}$`) },
-    });
+    return User.findOne({ phoneNumber: phoneDigits });
 };
 
 const sendLoginOtp = async (req, res) => {
@@ -302,9 +289,9 @@ const sendLoginOtp = async (req, res) => {
 
         const user = await findUserByPhoneDigits(phoneDigits);
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "This phone number is not registered.",
+            return res.status(200).json({
+                success: true,
+                message: "OTP sent to your phone.",
             });
         }
 
@@ -325,7 +312,7 @@ const sendLoginOtp = async (req, res) => {
         console.error("sendLoginOtp:", error?.message || error);
         return res.status(500).json({
             success: false,
-            message: error?.message || "Could not send OTP. Please try again.",
+            message: "Could not send OTP. Please try again.",
         });
     }
 };
@@ -358,9 +345,9 @@ const verifyLoginOtp = async (req, res) => {
 
         const user = await findUserByPhoneDigits(phoneDigits);
         if (!user) {
-            return res.status(404).json({
+            return res.status(400).json({
                 success: false,
-                message: "This phone number is not registered.",
+                message: "Invalid or expired OTP.",
             });
         }
 
@@ -383,7 +370,7 @@ const verifyLoginOtp = async (req, res) => {
         console.error("verifyLoginOtp:", error?.message || error);
         return res.status(500).json({
             success: false,
-            message: error?.message || "Could not verify OTP. Please try again.",
+            message: "Could not verify OTP. Please try again.",
         });
     }
 };
@@ -473,6 +460,18 @@ const register = async (req, res) => {
             });
         }
 
+        if (
+            !String(addressLine1 || "").trim() ||
+            !String(city || "").trim() ||
+            !String(state || "").trim() ||
+            !String(zip || "").trim()
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Street address, city, state, and postal code are required.",
+            });
+        }
+
         if (!isOtherCommunity && (rawCommunity === undefined || rawCommunity === null || String(rawCommunity).trim() === "")) {
             return res.status(400).json({
                 success: false,
@@ -550,7 +549,7 @@ const register = async (req, res) => {
             accountStatus: isOtherCommunity ? "approved" : "pending",
             role: "customer",
             flatNumber: flatNo,
-            addressLine1: "",
+            addressLine1: flatNumber ? String(addressLine1 || "").trim() : "",
             isPublicMember: isOtherCommunity,
         };
 
@@ -558,10 +557,10 @@ const register = async (req, res) => {
             userPayload.requestedCommunityName = rawOtherCommunity;
         }
 
-        if (addressLine2) userPayload.addressLine2 = addressLine2;
-        if (city) userPayload.city = city;
-        if (state) userPayload.state = state;
-        if (zip) userPayload.zip = zip;
+        if (addressLine2) userPayload.addressLine2 = String(addressLine2).trim();
+        if (city) userPayload.city = String(city).trim();
+        if (state) userPayload.state = String(state).trim();
+        if (zip) userPayload.zip = String(zip).trim();
 
         const user = await User.create(userPayload);
 
@@ -625,10 +624,13 @@ const register = async (req, res) => {
         }
         return res.status(500).json({
             success: false,
-            message: error.message,
+            message: "Something went wrong. Please try again.",
         });
     }
 };
+
+const INVALID_LOGIN_MESSAGE = "Email or password is incorrect";
+const LOGIN_TIMING_PAD_HASH = "$2b$10$Xp2rzoH7OF0L0D.VYp4zGOfImtEW532q4uGzI2VITmvy5aHTrn4YW";
 
 const login = async (req, res) => {
     const { email, password } = req.body;
@@ -639,7 +641,13 @@ const login = async (req, res) => {
 
         const user = await User.findOne({ email: String(email).trim().toLowerCase() });
         if (!user) {
-            return res.status(401).json({ success: false, message: "Email is not registered" });
+            await bcrypt.compare(String(password), LOGIN_TIMING_PAD_HASH);
+            return res.status(401).json({ success: false, message: INVALID_LOGIN_MESSAGE });
+        }
+
+        const isCorrectPassword = await bcrypt.compare(password, user.password);
+        if (!isCorrectPassword) {
+            return res.status(401).json({ success: false, message: INVALID_LOGIN_MESSAGE });
         }
 
         if (user.isActive === false) {
@@ -647,11 +655,6 @@ const login = async (req, res) => {
                 success: false,
                 message: "Your account is deactivated. Please contact admin."
             });
-        }
-
-        const isCorrectPassword = await bcrypt.compare(password, user.password);
-        if (!isCorrectPassword) {
-            return res.status(401).json({ success: false, message: "Email or Password is incorrect" });
         }
 
         generateToken(user._id, res);
@@ -666,7 +669,7 @@ const login = async (req, res) => {
         console.error("Error while logging in the user", error);
         return res.status(500).json({
             success: false,
-            message: error.message
+            message: "Something went wrong. Please try again.",
         });
     }
 };
@@ -682,7 +685,7 @@ const logout = (req, res) => {
         console.error("Error during logout:", error.message);
         return res.status(500).json({
             success: false,
-            message: error.message,
+            message: "Something went wrong. Please try again.",
         });
     }
 };
@@ -706,7 +709,7 @@ const checkAuth = (req, res) => {
         console.error("Error in checkAuth:", error.message);
         return res.status(500).json({
             success: false,
-            message: error.message,
+            message: "Something went wrong. Please try again.",
         });
     }
 };
@@ -823,7 +826,7 @@ const joinCommunity = async (req, res) => {
         console.error("joinCommunity:", error.message);
         return res.status(500).json({
             success: false,
-            message: error.message || "Could not join community.",
+            message: "Could not join community.",
         });
     }
 };
@@ -887,7 +890,7 @@ const updateUserProfile = async (req, res) => {
         console.error("Error in updateUserProfile:", error.message);
         return res.status(500).json({
             success: false,
-            message: "Internal server error: " + error.message,
+            message: "Something went wrong. Please try again.",
         });
     }
 };
@@ -930,7 +933,9 @@ const changePassword = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(String(newPassword), 10);
         user.password = hashedPassword;
+        user.passwordChangedAt = new Date();
         await user.save();
+        generateToken(user._id, res);
 
         return res.status(200).json({
             success: true,
@@ -940,7 +945,7 @@ const changePassword = async (req, res) => {
         console.error("Error in changePassword:", error.message);
         return res.status(500).json({
             success: false,
-            message: "Internal server error: " + error.message,
+            message: "Something went wrong. Please try again.",
         });
     }
 };

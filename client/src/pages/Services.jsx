@@ -1,14 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import ServiceCard from '../components/service/ServiceCard';
 import HomePageLoader from '../components/loaders/HomePageLoader'; 
 import { Search, RefreshCw } from 'lucide-react';
-import { getFullName } from '../utils/userHelpers';
 import Pagination from '../components/Pagination';
-import { getAllPublicServices, getAllCommunityServices } from '../features/serviceSlice';
+import { getPublicServices, getCommunityServices } from '../features/serviceSlice';
 import { formatCommunDisplayName } from '../utils/communName';
-import { textIncludesSearch } from '../utils/searchText';
 
 const chipClass = (active) =>
   `px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
@@ -19,110 +17,89 @@ const chipClass = (active) =>
 
 const Services = ({ communityScope = false, compact = false, embedded = false }) => {
   const dispatch = useDispatch();
-  const { services, isFetching, error, communityCommunName, needsCommunity, publicServices } = useSelector(
-    (state) => state.services
+  const catalog = useSelector((state) =>
+    (communityScope ? state.services.communityCatalog : state.services.publicCatalog) || {
+      services: [],
+      pagination: null,
+      categories: [],
+      subcategories: [],
+      communityCommunName: null,
+      needsCommunity: false,
+      publicServices: false,
+      isFetching: false,
+      error: null,
+    }
   );
+  const {
+    services,
+    isFetching,
+    error,
+    pagination,
+    categories: categoryOptions,
+    subcategories: subcategoryOptions,
+    communityCommunName,
+    needsCommunity,
+    publicServices,
+  } = catalog;
 
   const ITEMS_PER_PAGE = 12;
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [minRating, setMinRating] = useState(0);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const filterKey = `${communityScope}|${debouncedSearch}|${selectedCategory}|${selectedSubcategory}|${minRating}`;
+  const [appliedFilterKey, setAppliedFilterKey] = useState(filterKey);
+  if (appliedFilterKey !== filterKey) {
+    setAppliedFilterKey(filterKey);
+    setCurrentPage(1);
+  }
+
+  useEffect(() => {
+    const params = {
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+      search: debouncedSearch,
+      category: selectedCategory !== 'All' ? selectedCategory : '',
+      subcategory: selectedCategory !== 'All' && selectedSubcategory !== 'All' ? selectedSubcategory : '',
+      minRating,
+    };
     if (communityScope) {
-      dispatch(getAllCommunityServices());
+      dispatch(getCommunityServices(params));
       return;
     }
-    dispatch(getAllPublicServices());
-  }, [dispatch, communityScope]);
+    dispatch(getPublicServices(params));
+  }, [
+    dispatch,
+    communityScope,
+    currentPage,
+    debouncedSearch,
+    selectedCategory,
+    selectedSubcategory,
+    minRating,
+    refreshToken,
+  ]);
 
-  const allServices = useMemo(() => services || [], [services]);
-
-  const filteredServices = useMemo(() => {
-    let filtered = [...allServices];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.trim();
-      filtered = filtered.filter((service) => {
-        const servicename = service?.servicename || '';
-        const category = service?.serviceCategory || '';
-        const description = service?.description || '';
-        const keywords = (service?.keywords || []).join(' ');
-        const subCategories = (service?.subCategories || []).join(' ');
-        const providerName = getFullName(service?.provider?.user) || '';
-
-        return (
-          textIncludesSearch(servicename, query) ||
-          textIncludesSearch(category, query) ||
-          textIncludesSearch(description, query) ||
-          textIncludesSearch(keywords, query) ||
-          textIncludesSearch(subCategories, query) ||
-          textIncludesSearch(providerName, query)
-        );
-      });
-    }
-
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter((service) => service?.serviceCategory === selectedCategory);
-    }
-
-    if (selectedCategory !== 'All' && selectedSubcategory !== 'All') {
-      filtered = filtered.filter((service) =>
-        (service?.subCategories || []).includes(selectedSubcategory)
-      );
-    }
-
-    if (minRating > 0) {
-      filtered = filtered.filter((service) => (service?.averageRating || 0) >= minRating);
-    }
-
-    return filtered;
-  }, [allServices, searchQuery, selectedCategory, selectedSubcategory, minRating]);
-
-  const paginatedServices = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredServices.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredServices, currentPage, ITEMS_PER_PAGE]);
-
-  const getUniqueCategories = () => {
-    const categories = new Set();
-    allServices.forEach((service) => {
-      if (service?.serviceCategory) categories.add(service.serviceCategory);
-    });
-    return Array.from(categories).sort();
-  };
-
-  const getUniqueSubcategories = () => {
-    if (selectedCategory === 'All') return [];
-
-    const subcategories = new Set();
-    allServices.forEach((service) => {
-      if (service?.serviceCategory === selectedCategory && service?.subCategories) {
-        service.subCategories.forEach((subCat) => {
-          if (subCat) subcategories.add(subCat);
-        });
-      }
-    });
-    return Array.from(subcategories).sort();
-  };
-
-  const categories = getUniqueCategories();
-  const subcategories = getUniqueSubcategories();
+  const categories = categoryOptions || [];
+  const subcategories = selectedCategory === 'All' ? [] : subcategoryOptions || [];
   const hasActiveFilters =
     searchQuery || selectedCategory !== 'All' || selectedSubcategory !== 'All' || minRating > 0;
 
-  useEffect(() => {
+  const chooseCategory = (category) => {
+    setSelectedCategory(category);
     setSelectedSubcategory('All');
-  }, [selectedCategory]);
+  };
 
   const handleRefresh = () => {
-    if (communityScope) {
-      dispatch(getAllCommunityServices());
-      return;
-    }
-    dispatch(getAllPublicServices());
+    setRefreshToken((value) => value + 1);
   };
 
   const handleClearFilters = () => {
@@ -131,10 +108,6 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
     setSelectedSubcategory('All');
     setMinRating(0);
   };
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedSubcategory, minRating]);
 
   return (
     <motion.div
@@ -241,14 +214,14 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
                       Categories
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
-                      <button type="button" onClick={() => setSelectedCategory('All')} className={chipClass(selectedCategory === 'All')}>
+                      <button type="button" onClick={() => chooseCategory('All')} className={chipClass(selectedCategory === 'All')}>
                         All
                       </button>
                       {categories.map((category) => (
                         <button
                           key={category}
                           type="button"
-                          onClick={() => setSelectedCategory(category)}
+                          onClick={() => chooseCategory(category)}
                           className={chipClass(selectedCategory === category)}
                         >
                           {category}
@@ -364,7 +337,7 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
                 </div>
               )}
 
-              {!needsCommunity && !isFetching && !error && filteredServices.length === 0 && (
+              {!needsCommunity && !isFetching && !error && services.length === 0 && (
                 <div className="text-center py-12">
                   <div className="bg-white/80 backdrop-blur-sm border border-purple-100/50 rounded-3xl p-8 max-w-md mx-auto shadow-lg shadow-purple-500/5">
                     <Search className="mx-auto mb-4 w-12 h-12 text-purple-300" />
@@ -389,18 +362,18 @@ const Services = ({ communityScope = false, compact = false, embedded = false })
                 </div>
               )}
 
-              {!isFetching && !error && filteredServices.length > 0 && (
+              {!isFetching && !error && services.length > 0 && (
                 <>
                   <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {paginatedServices.map((service) => (
+                    {services.map((service) => (
                       <ServiceCard key={service._id} service={service} />
                     ))}
                   </div>
 
                   <Pagination
-                    totalItems={filteredServices.length}
-                    itemsPerPage={ITEMS_PER_PAGE}
-                    currentPage={currentPage}
+                    totalItems={pagination?.total || 0}
+                    itemsPerPage={pagination?.limit || ITEMS_PER_PAGE}
+                    currentPage={pagination?.page || currentPage}
                     onPageChange={setCurrentPage}
                   />
                 </>

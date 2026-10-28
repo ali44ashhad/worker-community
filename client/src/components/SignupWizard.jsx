@@ -19,7 +19,7 @@ const btnSecondary =
 const btnAction =
   'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] px-5 py-3 text-sm font-semibold text-white shadow-md shadow-purple-500/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
 
-const STEP_LABELS = ['Name', 'Account', 'Phone', 'Community', 'Flat'];
+const STEP_LABELS = ['Name', 'Account', 'Phone', 'Community', 'Address'];
 
 const slideVariants = {
   enter: (dir) => ({ x: dir > 0 ? 40 : -40, opacity: 0 }),
@@ -46,6 +46,11 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
     communityCommunName: '',
     otherCommunityName: '',
     flatNumber: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    zip: '',
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -245,6 +250,15 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
       toast.error('Please enter your flat number.');
       return;
     }
+    if (
+      !formData.addressLine1.trim() ||
+      !formData.city.trim() ||
+      !formData.state.trim() ||
+      !formData.zip.trim()
+    ) {
+      toast.error('Please complete your street address, city, state, and postal code.');
+      return;
+    }
     if (!phoneVerificationToken) {
       toast.error('Please verify your phone number again.');
       goToStep(3, -1);
@@ -261,6 +275,11 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
         phoneNumber: formData.phoneNumber,
         phoneVerificationToken,
         flatNumber: formData.flatNumber.trim(),
+        addressLine1: formData.addressLine1.trim(),
+        addressLine2: formData.addressLine2.trim(),
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        zip: formData.zip.trim(),
         communityCommunName: formData.communityCommunName,
         otherCommunityName:
           formData.communityCommunName === '__other__'
@@ -307,14 +326,14 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
           {step === 2 && 'Account details'}
           {step === 3 && 'Verify phone'}
           {step === 4 && 'Your community'}
-          {step === 5 && 'Flat number'}
+          {step === 5 && 'Your address'}
         </h2>
         <p className="text-base text-[var(--text-secondary)]">
           {step === 1 && 'Tell us who you are'}
           {step === 2 && 'Set up your login credentials'}
           {step === 3 && 'We will send an OTP via SMS'}
           {step === 4 && 'Select your colony or enter another'}
-          {step === 5 && 'Enter your flat / house number'}
+          {step === 5 && 'Add your flat or house number and address'}
         </p>
       </div>
 
@@ -569,7 +588,7 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.25 }}
-              className="space-y-4"
+              className="space-y-3"
             >
               <input
                 type="text"
@@ -577,6 +596,52 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
                 value={formData.flatNumber}
                 onChange={handleChange}
                 placeholder="Flat / House Number"
+                className={inputClass}
+                required
+              />
+              <input
+                type="text"
+                name="addressLine1"
+                value={formData.addressLine1}
+                onChange={handleChange}
+                placeholder="Street address"
+                className={inputClass}
+                required
+              />
+              <input
+                type="text"
+                name="addressLine2"
+                value={formData.addressLine2}
+                onChange={handleChange}
+                placeholder="Apartment, suite, etc. (optional)"
+                className={inputClass}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  placeholder="City"
+                  className={inputClass}
+                  required
+                />
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  placeholder="State"
+                  className={inputClass}
+                  required
+                />
+              </div>
+              <input
+                type="text"
+                name="zip"
+                value={formData.zip}
+                onChange={handleChange}
+                placeholder="Postal code"
                 className={inputClass}
                 required
               />

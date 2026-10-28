@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -7,8 +7,10 @@ import { MapPin, MessageCircle, Star } from 'lucide-react';
 import ServiceCard from '../components/service/ServiceCard'; 
 import axios from 'axios';
 import { getFullName, getInitials, formatAddress } from '../utils/userHelpers';
+import { getApiBase } from '../utils/apiBase';
+import { usePageBreadcrumbs } from '../context/BreadcrumbContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 const Card = ({ children, className = '' }) => (
@@ -37,6 +39,16 @@ const SpecificProvider = () => {
       dispatch(clearSelectedProvider());
     };
   }, [dispatch, id]);
+
+  const breadcrumbItems = useMemo(() => {
+    if (!selectedProvider) return null;
+    return [
+      { to: '/provider', label: 'Providers' },
+      { label: getFullName(selectedProvider.user) || 'Provider' },
+    ];
+  }, [selectedProvider]);
+
+  usePageBreadcrumbs(breadcrumbItems);
 
   const services = selectedProvider?.serviceOfferings || [];
 

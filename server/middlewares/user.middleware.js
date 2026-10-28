@@ -1,5 +1,29 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import { isTokenIssuedBeforePasswordChange } from "../utils/authCookie.js";
+
+function requestPath(req) {
+    const raw = req.originalUrl || req.url || "";
+    const path = raw.split("?")[0];
+    if (path.length > 1 && path.endsWith("/")) return path.slice(0, -1);
+    return path;
+}
+
+/** Load the session user when a cookie is present. Public routes use this without failing closed. */
+export async function loadRequestUser(req) {
+    const token = req.cookies?.jwt;
+    if (!token) return null;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (!decoded?.userId) return null;
+        const user = await User.findById(decoded.userId).select("-password");
+        if (!user || user.isActive === false) return null;
+        if (isTokenIssuedBeforePasswordChange(decoded, user)) return null;
+        return user;
+    } catch {
+        return null;
+    }
+}
 
 const protect = async (req, res, next) => {
     const token = req.cookies.jwt;
@@ -37,30 +61,33 @@ const protect = async (req, res, next) => {
             });
         }
 
+        if (isTokenIssuedBeforePasswordChange(decodedToken, user)) {
+            return res.status(401).json({
+                success: false,
+                code: "JWT_EXPIRED",
+                message: "Your session expired. Please log in again.",
+            });
+        }
+
         const accountStatus = user.accountStatus || "approved";
         if (user.role !== "admin" && user.role !== "secretary") {
-            const url = req.originalUrl || "";
-            const isCheckAuth = url.includes("/user/check-auth");
+            const path = requestPath(req);
+            const isCheckAuth = path === "/api/user/check-auth";
+            const isPush = path.startsWith("/api/push/");
 
-            if (accountStatus === "rejected" && !isCheckAuth) {
-                const allowRejectedPush = url.includes("/api/push/");
-                if (!allowRejectedPush) {
-                    return res.status(403).json({
-                        success: false,
-                        code: "ACCOUNT_REJECTED",
-                        message: "Your registration was not approved. Please contact support if you need help.",
-                    });
-                }
+            if (accountStatus === "rejected" && !isCheckAuth && !isPush) {
+                return res.status(403).json({
+                    success: false,
+                    code: "ACCOUNT_REJECTED",
+                    message: "Your registration was not approved. Please contact support if you need help.",
+                });
             }
-            if (accountStatus === "pending" && !isCheckAuth) {
-                const allowPendingPush = url.includes("/api/push/");
-                if (!allowPendingPush) {
-                    return res.status(403).json({
-                        success: false,
-                        code: "ACCOUNT_PENDING",
-                        message: "Your account is pending secretary approval.",
-                    });
-                }
+            if (accountStatus === "pending" && !isCheckAuth && !isPush) {
+                return res.status(403).json({
+                    success: false,
+                    code: "ACCOUNT_PENDING",
+                    message: "Your account is pending secretary approval.",
+                });
             }
         }
 

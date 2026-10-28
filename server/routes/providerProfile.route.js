@@ -16,7 +16,10 @@ import {
     getS3PresignedUpload
 } from "../controllers/providerProfile.controller.js";
 import { protect, isProvider } from "../middlewares/user.middleware.js";
+import { rateLimit } from "../middlewares/rateLimit.js";
 import upload, { uploadAny } from "../middlewares/multer.js";
+
+const incrementLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 1 });
 
 const router = express.Router();
 
@@ -25,7 +28,7 @@ router.get("/top-providers", getTopProvidersByServiceClicks);
 router.get("/", getAllProviders);
 
 // Public route to increment provider profile click count (must be before /:id)
-router.post("/:id/increment-count", incrementProviderProfileCount);
+router.post("/:id/increment-count", incrementLimit, incrementProviderProfileCount);
 
 // --- Private Provider Routes (must come before /:id to avoid conflicts) ---
 // Get current user's profile
@@ -39,7 +42,7 @@ router.put("/", protect, isProvider, updateProviderProfile);
 
 router.post("/become-provider-multi", protect, upload.any(), becomeProviderWithServices);
 
-router.post("/s3-presign", protect, getS3PresignedUpload);
+router.post("/s3-presign", protect, isProvider, getS3PresignedUpload);
 
 // --- Routes for Managing Services ---
 router.post("/service", protect, isProvider, uploadAny, addServiceOffering);

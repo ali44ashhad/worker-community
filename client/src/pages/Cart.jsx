@@ -1,16 +1,16 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getAllProviders } from '../features/providerSlice';
-import { fetchWishlist, removeFromWishlist } from '../features/wishlistSlice';
+import { removeFromWishlist } from '../features/wishlistSlice';
 import { ArrowRight, Heart, MessageCircle, X } from 'lucide-react';
 import { getFullName, getInitials } from '../utils/userHelpers';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import ServiceCover from '../components/service/ServiceCover';
+import { getApiBase } from '../utils/apiBase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 const Cart = () => {
@@ -19,29 +19,49 @@ const Cart = () => {
   const location = useLocation();
   const isPanelRoute =
     location.pathname.startsWith('/community/') || location.pathname.startsWith('/secretary/');
-  const { allProviders, isFetchingAll } = useSelector((s) => s.provider);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
   const user = useSelector((s) => s.auth.user);
+  const [savedServices, setSavedServices] = useState([]);
+  const [isLoadingSaved, setIsLoadingSaved] = useState(false);
+  const wishlistKey = wishlistIds.join(',');
 
   useEffect(() => {
-    if (allProviders.length === 0) dispatch(getAllProviders());
-  }, [dispatch, allProviders.length]);
-
-  useEffect(() => {
-    if (user) dispatch(fetchWishlist());
-  }, [dispatch, user]);
-
-  const wishlistServices = useMemo(() => {
-    const out = [];
-    for (const provider of allProviders || []) {
-      for (const offering of provider?.serviceOfferings || []) {
-        if (wishlistIds.includes(offering._id)) {
-          out.push({ ...offering, provider });
-        }
-      }
+    if (!wishlistIds.length) {
+      setSavedServices([]);
+      setIsLoadingSaved(false);
+      return undefined;
     }
-    return out;
-  }, [allProviders, wishlistIds]);
+
+    const controller = new AbortController();
+    setIsLoadingSaved(true);
+
+    Promise.all(
+      wishlistIds.map(async (id) => {
+        try {
+          const res = await axios.get(`${API_URL}/api/service-offering/${id}`, {
+            signal: controller.signal,
+          });
+          return res.data?.service || null;
+        } catch (error) {
+          if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') throw error;
+          return null;
+        }
+      })
+    )
+      .then((services) => {
+        if (!controller.signal.aborted) setSavedServices(services.filter(Boolean));
+      })
+      .catch((error) => {
+        if (error?.code !== 'ERR_CANCELED' && error?.name !== 'CanceledError' && !controller.signal.aborted) {
+          setSavedServices([]);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoadingSaved(false);
+      });
+
+    return () => controller.abort();
+  }, [wishlistKey, wishlistIds]);
 
   const handleRemove = async (serviceId, e) => {
     e.stopPropagation();
@@ -128,9 +148,9 @@ const Cart = () => {
           </div>
           <h1 className="text-2xl font-semibold text-[var(--text-primary)] sm:text-3xl">
             Your Wishlist
-            {!isFetchingAll && (
+            {!isLoadingSaved && (
               <span className="ml-2 text-lg font-medium text-[var(--purple-primary)]">
-                ({wishlistServices.length})
+                ({savedServices.length})
               </span>
             )}
           </h1>
@@ -141,7 +161,7 @@ const Cart = () => {
       </section>
 
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-        {isFetchingAll ? (
+        {isLoadingSaved ? (
           <div className="rounded-2xl border border-purple-100/50 bg-white/80 p-10 text-center shadow-sm shadow-purple-500/5">
             <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
             <p className="text-sm font-medium text-[var(--text-primary)]">Loading your wishlist…</p>
@@ -149,7 +169,7 @@ const Cart = () => {
               Fetching your saved services.
             </p>
           </div>
-        ) : wishlistServices.length === 0 ? (
+        ) : savedServices.length === 0 ? (
           <div className="rounded-2xl border border-purple-100/50 bg-white/80 p-10 text-center shadow-lg shadow-purple-500/5 sm:p-12">
             <Heart className="mx-auto mb-4 h-12 w-12 text-purple-200" />
             <p className="mb-2 text-lg font-semibold text-[var(--text-primary)]">
@@ -169,7 +189,7 @@ const Cart = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {wishlistServices.map((service) => {
+            {savedServices.map((service) => {
               const title = service?.servicename || service?.serviceCategory || 'Service';
               const description = service?.description || '';
               const providerName = getFullName(service?.provider?.user) || 'Unknown Provider';

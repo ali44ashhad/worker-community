@@ -13,7 +13,7 @@ import {
   leaveInterestCommunity,
 } from '../../features/interestCommunitySlice';
 
-const API_URL = getApiBase() || 'http://localhost:3000';
+const API_URL = getApiBase();
 
 const InterestCommunityChat = ({ listPath = '/interest-communities' }) => {
   const { id } = useParams();
@@ -55,23 +55,18 @@ const InterestCommunityChat = ({ listPath = '/interest-communities' }) => {
     if (!id) return;
     const load = async () => {
       try {
-        const [msgRes, memberRes, listRes] = await Promise.all([
+        const [msgRes, memberRes] = await Promise.all([
           axios.get(`${API_URL}/api/interest-communities/${id}/messages`, {
             withCredentials: true,
           }),
           axios.get(`${API_URL}/api/interest-communities/${id}/members`, {
             withCredentials: true,
           }),
-          axios.get(`${API_URL}/api/interest-communities`, { withCredentials: true }),
         ]);
         setMessages(msgRes.data?.data?.messages || []);
         const cn = memberRes.data?.data?.communName;
         setCommunLabel(memberRes.data?.data?.communLabel || formatCommunDisplayName(cn));
         setMembers(memberRes.data?.data?.members || []);
-        const found = (listRes.data?.data?.communities || []).find(
-          (x) => String(x._id) === String(id)
-        );
-        if (found?.name) setCommunityName(found.name);
       } catch {
         /* access denied if not joined */
       }

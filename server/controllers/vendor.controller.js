@@ -6,6 +6,7 @@ const normalizeCategory = (value) =>
     .replace(/\s+/g, " ");
 
 const normalizeOptional = (value) => String(value || "").trim();
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Members see vendors only for the community they joined (`communityCommunName`). */
 const getVendorCommunityHandle = (user) => {
@@ -157,7 +158,16 @@ const getCommunityVendors = async (req, res) => {
       });
     }
 
-    const vendors = await Vendor.find({ communityCommunName: communityHandle })
+    const search = normalizeOptional(req.query?.search).slice(0, 80);
+    const query = { communityCommunName: communityHandle };
+    if (search) {
+      const safeSearch = escapeRegex(search);
+      query.$or = ["name", "category", "service", "phone", "email"].map((field) => ({
+        [field]: { $regex: safeSearch, $options: "i" },
+      }));
+    }
+
+    const vendors = await Vendor.find(query)
       .sort({ category: 1, createdAt: -1 })
       .lean();
     const vendorsByCategory = vendors.reduce((acc, v) => {
@@ -185,4 +195,3 @@ export {
   deleteVendorForSecretary,
   getCommunityVendors,
 };
-

@@ -7,7 +7,7 @@ import ServiceCard from '../components/service/ServiceCard';
 import HomePageLoader from '../components/loaders/HomePageLoader';
 import { getApiBase } from '../utils/apiBase';
 
-const API_URL = getApiBase() || 'http://localhost:3001';
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 const fadeUp = {

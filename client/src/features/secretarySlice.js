@@ -5,7 +5,7 @@ import { getApiBase } from "../utils/apiBase";
 import { shouldToastApiMessage } from "../utils/apiToast";
 import { appendEventAttachmentsToFormData } from "../utils/eventAttachmentForm";
 
-const API_URL = getApiBase() || "http://localhost:3001";
+const API_URL = getApiBase();
 axios.defaults.withCredentials = true;
 
 export const fetchPendingRegistrations = createAsyncThunk(
@@ -717,6 +717,7 @@ const secretarySlice = createSlice({
     reviewsLoading: false,
     reviewsError: null,
     reviewsPagination: null,
+    reviewsRequestId: null,
     reviewsMeta: {
       needsCommunName: false,
       communityCommunName: null,
@@ -1018,11 +1019,13 @@ const secretarySlice = createSlice({
       .addCase(deleteEmergencyContact.rejected, (state) => {
         state.emergencyContactDeletingId = null;
       })
-      .addCase(fetchSecretaryReviews.pending, (state) => {
+      .addCase(fetchSecretaryReviews.pending, (state, action) => {
         state.reviewsLoading = true;
         state.reviewsError = null;
+        state.reviewsRequestId = action.meta.requestId;
       })
       .addCase(fetchSecretaryReviews.fulfilled, (state, action) => {
+        if (state.reviewsRequestId !== action.meta.requestId) return;
         state.reviewsLoading = false;
         state.reviews = action.payload.reviews || [];
         state.reviewsPagination = action.payload.pagination;
@@ -1032,6 +1035,7 @@ const secretarySlice = createSlice({
         };
       })
       .addCase(fetchSecretaryReviews.rejected, (state, action) => {
+        if (state.reviewsRequestId !== action.meta.requestId) return;
         state.reviewsLoading = false;
         state.reviewsError = action.payload;
       })

@@ -2,7 +2,6 @@ import React, { useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ChevronRight } from 'lucide-react';
-import { getAllProviders } from '../features/providerSlice';
 import { getActiveCategories } from '../features/adminSlice';
 import { buildBreadcrumbs, shouldShowBreadcrumb } from '../utils/breadcrumbs';
 import { useBreadcrumbContext } from '../context/BreadcrumbContext';
@@ -11,18 +10,9 @@ const Breadcrumb = () => {
   const { pathname } = useLocation();
   const dispatch = useDispatch();
   const { overrides } = useBreadcrumbContext() || {};
-  const { allProviders } = useSelector((state) => state.provider);
   const { activeCategories } = useSelector((state) => state.admin);
 
-  const needsProviders =
-    shouldShowBreadcrumb(pathname) && (pathname.startsWith('/service/') || pathname.startsWith('/provider/'));
   const needsCategories = shouldShowBreadcrumb(pathname) && pathname.startsWith('/category/');
-
-  useEffect(() => {
-    if (needsProviders && allProviders.length === 0) {
-      dispatch(getAllProviders());
-    }
-  }, [dispatch, needsProviders, allProviders.length]);
 
   useEffect(() => {
     if (needsCategories && (!activeCategories || activeCategories.length === 0)) {
@@ -33,11 +23,10 @@ const Breadcrumb = () => {
   const crumbs = useMemo(
     () =>
       buildBreadcrumbs(pathname, {
-        allProviders,
         activeCategories,
         overrides,
       }),
-    [pathname, allProviders, activeCategories, overrides]
+    [pathname, activeCategories, overrides]
   );
 
   if (!crumbs || crumbs.length <= 1) return null;

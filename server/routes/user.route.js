@@ -25,6 +25,18 @@ import {
     removeServiceFromWishlist 
 } from '../controllers/user.controller.js';
 import { protect } from '../middlewares/user.middleware.js';
+import { emailKey, phoneKey, rateLimit } from '../middlewares/rateLimit.js';
+
+const FIFTEEN_MIN = 15 * 60 * 1000;
+const TEN_MIN = 10 * 60 * 1000;
+const ONE_HOUR = 60 * 60 * 1000;
+
+const loginLimit = rateLimit({ windowMs: FIFTEEN_MIN, max: 10, keyExtra: emailKey });
+const forgotLimit = rateLimit({ windowMs: ONE_HOUR, max: 5, keyExtra: emailKey });
+const resetLimit = rateLimit({ windowMs: FIFTEEN_MIN, max: 10 });
+const registerLimit = rateLimit({ windowMs: ONE_HOUR, max: 8 });
+const otpSendLimit = rateLimit({ windowMs: TEN_MIN, max: 5, keyExtra: phoneKey });
+const otpVerifyLimit = rateLimit({ windowMs: FIFTEEN_MIN, max: 8, keyExtra: phoneKey });
 import { getInboxCounts, markInboxRead } from '../controllers/inbox.controller.js';
 import upload from '../middlewares/multer.js';
 import { eventAttachmentUpload } from '../middlewares/eventAttachmentUpload.js';
@@ -32,12 +44,12 @@ import { eventAttachmentUpload } from '../middlewares/eventAttachmentUpload.js';
 const userRouter = express.Router();
 
 userRouter.get('/signup-communities', listSignupCommunities);
-userRouter.post('/signup/send-otp', sendSignupOtp);
-userRouter.post('/signup/verify-otp', verifySignupOtp);
-userRouter.post('/login/send-otp', sendLoginOtp);
-userRouter.post('/login/verify-otp', verifyLoginOtp);
-userRouter.post('/register', register);
-userRouter.post('/login', login);
+userRouter.post('/signup/send-otp', otpSendLimit, sendSignupOtp);
+userRouter.post('/signup/verify-otp', otpVerifyLimit, verifySignupOtp);
+userRouter.post('/login/send-otp', otpSendLimit, sendLoginOtp);
+userRouter.post('/login/verify-otp', otpVerifyLimit, verifyLoginOtp);
+userRouter.post('/register', registerLimit, register);
+userRouter.post('/login', loginLimit, login);
 userRouter.post('/logout', logout);
 userRouter.get('/check-auth', protect, checkAuth);
 userRouter.get('/community-features', protect, getCommunityFeatures);
@@ -56,8 +68,8 @@ userRouter.put(
 userRouter.put("/change-password", protect, changePassword);
 userRouter.post("/delete-account", protect, deleteAccount);
 userRouter.post("/join-community", protect, joinCommunity);
-userRouter.post("/forgot-password", forgotPassword);
-userRouter.post("/reset-password/:token", resetPassword);
+userRouter.post("/forgot-password", forgotLimit, forgotPassword);
+userRouter.post("/reset-password/:token", resetLimit, resetPassword);
 userRouter.post('/wishlist/:serviceId', protect, addServiceToWishlist);
 userRouter.delete('/wishlist/:serviceId', protect, removeServiceFromWishlist);
 userRouter.get('/inbox/counts', protect, getInboxCounts);

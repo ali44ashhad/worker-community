@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -10,7 +10,7 @@ const inputClass =
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const API_URL = useMemo(() => getApiBase() || 'http://localhost:3001', []);
+  const API_URL = getApiBase();
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);

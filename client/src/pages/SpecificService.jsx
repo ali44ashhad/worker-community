@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { getAllProviders } from '../features/providerSlice';
 import {
   ChevronLeft,
   ChevronRight,
@@ -20,7 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import Comment from '../components/Comment';
-import { addToWishlist, removeFromWishlist, fetchWishlist } from '../features/wishlistSlice';
+import { addToWishlist, removeFromWishlist } from '../features/wishlistSlice';
 import { fetchCommentsByService } from '../features/commentSlice';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -31,8 +30,8 @@ import ServiceCover from '../components/service/ServiceCover';
 import { getServiceDisplayImages } from '../utils/serviceImage';
 import { usePageBreadcrumbs } from '../context/BreadcrumbContext';
 import { slugifyCategoryName } from '../utils/slug';
+import { getApiBase } from '../utils/apiBase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 axios.defaults.withCredentials = true;
 
 const TABS = [
@@ -53,23 +52,24 @@ const SpecificService = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { allProviders } = useSelector((state) => state.provider);
   const user = useSelector((s) => s.auth.user);
   const wishlistIds = useSelector((s) => s.wishlist.ids);
   const comments = useSelector((state) => state.comments.byServiceId[id] || []);
 
   const [service, setService] = useState(null);
+  const [loadError, setLoadError] = useState('');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
   const [isImageLightboxOpen, setIsImageLightboxOpen] = useState(false);
 
+  const ratedComments = comments.filter((comment) => Number.isFinite(comment.rating));
   const averageRating =
-    comments.length > 0
-      ? (comments.reduce((sum, c) => sum + (c.rating || 0), 0) / comments.length).toFixed(1)
+    ratedComments.length > 0
+      ? (ratedComments.reduce((sum, comment) => sum + comment.rating, 0) / ratedComments.length).toFixed(1)
       : null;
-  const reviewCount = comments.length;
+  const reviewCount = comments.filter((comment) => Boolean(comment.comment?.trim())).length;
 
   const breadcrumbItems = useMemo(() => {
     if (!service) return null;
@@ -86,66 +86,36 @@ const SpecificService = () => {
   usePageBreadcrumbs(breadcrumbItems);
 
   useEffect(() => {
-    if (allProviders.length === 0) {
-      dispatch(getAllProviders());
-    }
-  }, [dispatch, allProviders.length]);
-
-  useEffect(() => {
-    if (user) dispatch(fetchWishlist());
-  }, [dispatch, user]);
-
-  useEffect(() => {
     if (id) {
       dispatch(fetchCommentsByService(id));
     }
   }, [dispatch, id]);
 
   useEffect(() => {
-    const findService = () => {
-      for (const provider of allProviders) {
-        if (provider?.serviceOfferings && Array.isArray(provider.serviceOfferings)) {
-          const foundService = provider.serviceOfferings.find((s) => s._id === id);
-          if (foundService) {
-            setService({
-              ...foundService,
-              provider: {
-                ...provider,
-                user: provider.user,
-                _id: provider._id,
-                bio: provider.bio,
-                experience: provider.experience,
-              },
-            });
-            return;
-          }
-        }
-      }
-    };
+    let cancelled = false;
 
-    if (allProviders.length > 0) {
-      findService();
-    }
-  }, [allProviders, id]);
-
-  useEffect(() => {
     const fetchServiceById = async () => {
       if (!id) return;
-  // Always refresh from API so click counters match admin panel.
-      // `allProviders` data can be partial/stale.
+      setService(null);
+      setLoadError('');
       try {
-        const res = await axios.get(`${API_URL}/api/service-offering/${id}`);
-        if (res?.data?.service) {
+        const res = await axios.get(`${getApiBase()}/api/service-offering/${id}`);
+        if (!cancelled && res?.data?.service) {
           setService(res.data.service);
         }
       } catch (error) {
-        // Keep the loading state, but surface a helpful error.
-        console.error('Failed to fetch service offering by id:', error);
-        toast.error(error?.response?.data?.message || 'Service not found');
+        if (!cancelled) {
+          const message = error?.response?.data?.message || 'Service not found';
+          setLoadError(message);
+          toast.error(message);
+        }
       }
     };
 
     fetchServiceById();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   useEffect(() => {
@@ -178,8 +148,23 @@ const SpecificService = () => {
     return (
       <div className="home-page min-h-screen bg-[var(--background-subtle)] flex items-center justify-center">
         <motion.div className="text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-purple-100 border-t-[var(--purple-primary)] mx-auto mb-4" />
-          <p className="text-xl font-semibold text-[var(--text-secondary)]">Loading service...</p>
+          {loadError ? (
+            <>
+              <p className="text-xl font-semibold text-[var(--text-primary)] mb-2">{loadError}</p>
+              <button
+                type="button"
+                onClick={() => navigate('/service')}
+                className="mt-4 px-6 py-2.5 bg-gradient-to-r from-[var(--purple-primary)] to-[var(--magenta)] text-white rounded-xl font-semibold"
+              >
+                Back to services
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="animate-spin rounded-full h-12 w-12 border-2 border-purple-100 border-t-[var(--purple-primary)] mx-auto mb-4" />
+              <p className="text-xl font-semibold text-[var(--text-secondary)]">Loading service...</p>
+            </>
+          )}
         </motion.div>
       </div>
     );
@@ -246,12 +231,12 @@ const SpecificService = () => {
 
   const trackInterest = async () => {
     try {
-      await axios.post(`${API_URL}/api/service-offering/${id}/increment-count`);
+      await axios.post(`${getApiBase()}/api/service-offering/${id}/increment-count`);
     } catch (error) {
       console.error('Failed to increment service offering count:', error);
     }
     try {
-      await axios.post(`${API_URL}/api/provider-profile/${service.provider._id}/increment-count`);
+      await axios.post(`${getApiBase()}/api/provider-profile/${service.provider._id}/increment-count`);
     } catch (error) {
       console.error('Failed to increment provider profile count:', error);
     }
