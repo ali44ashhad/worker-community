@@ -10,7 +10,7 @@ import ProfileAvatar from '../components/ProfileAvatar';
 import { getFullName } from '../utils/userHelpers';
 import { formatCommunDisplayName } from '../utils/communName';
 
-const SecretaryLayout = () => {
+const SecretaryLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
@@ -157,7 +157,7 @@ const SecretaryLayout = () => {
         </div>
 
         <div className="min-h-screen">
-          <Outlet />
+          {children || <Outlet />}
         </div>
       </main>
     </div>

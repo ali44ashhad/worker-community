@@ -39,6 +39,8 @@ import UpdateProviders from './pages/admin/UpdateProviders'
 import AdminServices from './pages/admin/AdminServices'
 import AdminReviews from './pages/admin/AdminReviews'
 import AdminBanners from './pages/admin/AdminBanners'
+import AdminAnnouncements from './pages/admin/AdminAnnouncements'
+import NotificationsRoute from './components/NotificationsRoute'
 import CategoryClicks from './pages/admin/CategoryClicks'
 import ProviderClicks from './pages/admin/ProviderClicks'
 import UserManagement from './pages/admin/UserManagement'
@@ -134,7 +136,8 @@ const App = () => {
   ];
   const isMemberCommunityRoute =
     ['customer', 'provider'].includes(user?.role) &&
-    (location.pathname.startsWith('/community/broadcast') ||
+    (location.pathname === '/notifications' ||
+      location.pathname.startsWith('/community/broadcast') ||
       location.pathname.startsWith('/community/events'));
   const isProviderLayoutRoute =
     providerLayoutRoutes.some((path) => location.pathname.startsWith(path)) ||
@@ -146,7 +149,8 @@ const App = () => {
     (isMemberCommunityRoute ||
       customerPanelPaths.some((path) => location.pathname.startsWith(path)));
   const hideGlobalChrome =
-    isAdminRoute || isProviderLayoutRoute || isCustomerLayoutRoute || isSecretaryRoute;
+    isAdminRoute || isProviderLayoutRoute || isCustomerLayoutRoute || isSecretaryRoute ||
+    location.pathname === '/notifications';
 
   return (
     <BreadcrumbProvider>
@@ -157,6 +161,14 @@ const App = () => {
       {!hideGlobalChrome && <Navbar></Navbar>}
       {!hideGlobalChrome && <Breadcrumb />}
       <Routes>
+        <Route
+          path="/notifications"
+          element={
+            <RequireAuth>
+              <NotificationsRoute />
+            </RequireAuth>
+          }
+        />
         <Route path='/' element={<Home></Home>}></Route>
         <Route path='/about' element={<About></About>}></Route> 
         <Route path='/faq' element={<FAQ></FAQ>}></Route>
@@ -392,6 +404,7 @@ const App = () => {
           <Route path="services" element={<AdminServices />} />
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="banners" element={<AdminBanners />} />
+          <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="category-clicks" element={<CategoryClicks />} />
           <Route path="provider-clicks" element={<ProviderClicks />} />
           <Route path="categories" element={<CategoryManagement />} />

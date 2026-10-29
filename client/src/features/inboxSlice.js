@@ -39,6 +39,7 @@ const emptyCounts = {
   broadcast: 0,
   events: 0,
   registration: 0,
+  announcements: 0,
 };
 
 const inboxSlice = createSlice({

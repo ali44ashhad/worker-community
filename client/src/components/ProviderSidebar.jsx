@@ -17,6 +17,7 @@ import {
   X,
   MessageCircle,
   Store,
+  Bell,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -33,6 +34,7 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
   const user = useSelector((state) => state.auth.user);
   const communityFeatures = useSelector((state) => state.community.features);
   const inboxCounts = useInboxBadges();
+  const unreadNotificationCount = Object.values(inboxCounts).reduce((total, count) => total + Number(count || 0), 0);
 
   useEffect(() => {
     const container = document.createElement('div');
@@ -55,6 +57,7 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
 
   const menuItems = [
     { icon: LayoutGrid, label: 'Dashboard', path: '/provider/dashboard' },
+    { icon: Bell, label: 'Notifications', path: '/notifications', notificationCount: unreadNotificationCount },
     ...(isPublicMember || communityFeatures.hasCommunity
       ? [
           { icon: Wrench, label: 'Services', path: '/community/services', inboxCategory: 'registration' },
@@ -151,7 +154,9 @@ const ProviderSidebar = ({ isOpen = true, onClose }) => {
                 >
                   <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : ''}`} />
                   <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                  {item.inboxCategory ? (
+                  {item.notificationCount ? (
+                    <SidebarNavBadge count={item.notificationCount} active={isActive} />
+                  ) : item.inboxCategory ? (
                     <SidebarNavBadge count={inboxCounts[item.inboxCategory]} active={isActive} />
                   ) : null}
                 </Link>

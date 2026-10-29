@@ -7,6 +7,7 @@ export const INBOX_CATEGORIES = [
     "broadcast",
     "events",
     "registration",
+    "announcements",
 ];
 
 const inAppNotificationSchema = new mongoose.Schema(
@@ -21,6 +22,23 @@ const inAppNotificationSchema = new mongoose.Schema(
             type: String,
             required: true,
             enum: INBOX_CATEGORIES,
+        },
+        title: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 120,
+        },
+        message: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 2000,
+        },
+        destination: {
+            type: String,
+            default: "",
+            maxlength: 500,
         },
         readAt: {
             type: Date,
