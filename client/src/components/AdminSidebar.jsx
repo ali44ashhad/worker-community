@@ -18,6 +18,7 @@ import {
   X,
   MessageCircle,
   Store,
+  Megaphone,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -30,6 +31,7 @@ const menuItems = [
   { icon: Briefcase, label: 'Services Mgmt', path: '/admin/services' },
   { icon: Star, label: 'Reviews Mgmt', path: '/admin/reviews' },
   { icon: Image, label: 'Banner Management', path: '/admin/banners' },
+  { icon: Megaphone, label: 'Announcements', path: '/admin/announcements' },
   { icon: Tag, label: 'Categories Mgnt', path: '/admin/categories' },
   { icon: Store, label: 'Business Categories', path: '/admin/business-categories' },
   { icon: Layers, label: 'Category Clicks', path: '/admin/category-clicks' },

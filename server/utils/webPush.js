@@ -103,13 +103,31 @@ async function sendToSubscriptions(subscriptions, payload) {
 /**
  * Send a push notification to one or more user IDs.
  */
-export async function sendPushToUsers(userIds, { title, body, url, tag, data, inboxCategory } = {}) {
+export async function sendPushToUsers(
+    userIds,
+    {
+        title,
+        body,
+        url,
+        tag,
+        data,
+        inboxCategory,
+        inboxTitle = title,
+        inboxMessage = body,
+        inboxDestination = url,
+    } = {}
+) {
     const ids = [...new Set((userIds || []).map((id) => String(id)).filter(Boolean))];
     if (!ids.length) return { sent: 0, failed: 0 };
 
     try {
         if (inboxCategory) {
-            await createInAppNotifications(ids, inboxCategory);
+            await createInAppNotifications(ids, {
+                category: inboxCategory,
+                title: inboxTitle,
+                message: inboxMessage,
+                destination: inboxDestination,
+            });
         }
 
         const payload = buildPayload({ title, body, url, tag, data });
@@ -186,6 +204,9 @@ export async function notifyCommunityMembers({
     url,
     tag,
     inboxCategory,
+    inboxTitle,
+    inboxMessage,
+    inboxDestination,
 }) {
     const handle = String(communityCommunName || "")
         .trim()
@@ -205,7 +226,16 @@ export async function notifyCommunityMembers({
         ids = ids.filter((id) => id !== String(excludeUserId));
     }
 
-    await sendPushToUsers(ids, { title, body, url, tag, inboxCategory });
+    await sendPushToUsers(ids, {
+        title,
+        body,
+        url,
+        tag,
+        inboxCategory,
+        inboxTitle,
+        inboxMessage,
+        inboxDestination,
+    });
 }
 
 export async function notifyInterestGroupMessage({

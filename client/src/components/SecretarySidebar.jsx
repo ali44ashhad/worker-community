@@ -18,6 +18,7 @@ import {
   PhoneCall,
   UserRound,
   Building2,
+  Bell,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -28,6 +29,7 @@ import { useInboxBadges } from '../hooks/useInboxBadges';
 
 const menuItems = [
   { icon: LayoutGrid, label: 'Dashboard', path: '/secretary/dashboard' },
+  { icon: Bell, label: 'Notifications', path: '/notifications', inboxCategory: 'notifications' },
   { icon: Wrench, label: 'Services', path: '/secretary/services' },
   { icon: Star, label: 'Reviews', path: '/secretary/reviews' },
   { icon: MessageCircle, label: 'Communities', path: '/secretary/communities', inboxCategory: 'communities' },
@@ -50,6 +52,7 @@ const SecretarySidebar = ({ isOpen = true, onClose }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const inboxCounts = useInboxBadges();
+  const unreadNotificationCount = Object.values(inboxCounts).reduce((total, count) => total + Number(count || 0), 0);
 
   useEffect(() => {
     const container = document.createElement('div');
@@ -135,7 +138,10 @@ const SecretarySidebar = ({ isOpen = true, onClose }) => {
                   <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : ''}`} />
                   <span className="min-w-0 flex-1 truncate">{item.label}</span>
                   {item.inboxCategory ? (
-                    <SidebarNavBadge count={inboxCounts[item.inboxCategory]} active={isActive} />
+                    <SidebarNavBadge
+                      count={item.inboxCategory === 'notifications' ? unreadNotificationCount : inboxCounts[item.inboxCategory]}
+                      active={isActive}
+                    />
                   ) : null}
                 </Link>
               </motion.li>

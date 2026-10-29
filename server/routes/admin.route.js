@@ -48,8 +48,12 @@ import {
 } from "../controllers/localBusiness.controller.js";
 import { protect, isAdmin } from "../middlewares/user.middleware.js";
 import upload from "../middlewares/multer.js";
+import { createAnnouncement, listAnnouncements } from "../controllers/announcement.controller.js";
 
 const router = express.Router();
+
+router.get("/announcements", protect, isAdmin, listAnnouncements);
+router.post("/announcements", protect, isAdmin, createAnnouncement);
 
 router.get(
     "/dashboard-stats",

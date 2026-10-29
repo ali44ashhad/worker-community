@@ -37,7 +37,12 @@ const resetLimit = rateLimit({ windowMs: FIFTEEN_MIN, max: 10 });
 const registerLimit = rateLimit({ windowMs: ONE_HOUR, max: 8 });
 const otpSendLimit = rateLimit({ windowMs: TEN_MIN, max: 5, keyExtra: phoneKey });
 const otpVerifyLimit = rateLimit({ windowMs: FIFTEEN_MIN, max: 8, keyExtra: phoneKey });
-import { getInboxCounts, markInboxRead } from '../controllers/inbox.controller.js';
+import {
+    getInboxCounts,
+    getInboxNotifications,
+    markInboxRead,
+    markNotificationReadController,
+} from '../controllers/inbox.controller.js';
 import upload from '../middlewares/multer.js';
 import { eventAttachmentUpload } from '../middlewares/eventAttachmentUpload.js';
 
@@ -72,7 +77,9 @@ userRouter.post("/forgot-password", forgotLimit, forgotPassword);
 userRouter.post("/reset-password/:token", resetLimit, resetPassword);
 userRouter.post('/wishlist/:serviceId', protect, addServiceToWishlist);
 userRouter.delete('/wishlist/:serviceId', protect, removeServiceFromWishlist);
+userRouter.get('/inbox', protect, getInboxNotifications);
 userRouter.get('/inbox/counts', protect, getInboxCounts);
 userRouter.post('/inbox/mark-read', protect, markInboxRead);
+userRouter.patch('/inbox/:notificationId/read', protect, markNotificationReadController);
 
 export default userRouter;

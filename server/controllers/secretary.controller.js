@@ -575,6 +575,9 @@ const createCommunityEvent = async (req, res) => {
                 url: "/community/events",
                 tag: `event-${String(event._id)}`,
                 inboxCategory: "events",
+                inboxTitle: title,
+                inboxMessage: description,
+                inboxDestination: "/community/events",
             });
         } catch (pushError) {
             console.error("createCommunityEvent push failed:", pushError?.message || pushError);
@@ -699,6 +702,9 @@ const createBroadcast = async (req, res) => {
                 url: "/community/broadcast",
                 tag: `broadcast-${String(broadcast._id)}`,
                 inboxCategory: "broadcast",
+                inboxTitle: broadcast.title,
+                inboxMessage: broadcast.message,
+                inboxDestination: "/community/broadcast",
             });
         } catch (pushError) {
             console.error("createBroadcast push failed:", pushError?.message || pushError);

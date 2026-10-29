@@ -1318,6 +1318,9 @@ const createMemberCommunityEvent = async (req, res) => {
                 url: "/community/events",
                 tag: `event-${String(event._id)}`,
                 inboxCategory: "events",
+                inboxTitle: title,
+                inboxMessage: description,
+                inboxDestination: "/community/events",
             });
         } catch (pushError) {
             console.error("createMemberCommunityEvent push failed:", pushError?.message || pushError);
