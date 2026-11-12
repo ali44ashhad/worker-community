@@ -460,18 +460,6 @@ const register = async (req, res) => {
             });
         }
 
-        if (
-            !String(addressLine1 || "").trim() ||
-            !String(city || "").trim() ||
-            !String(state || "").trim() ||
-            !String(zip || "").trim()
-        ) {
-            return res.status(400).json({
-                success: false,
-                message: "Street address, city, state, and postal code are required.",
-            });
-        }
-
         if (!isOtherCommunity && (rawCommunity === undefined || rawCommunity === null || String(rawCommunity).trim() === "")) {
             return res.status(400).json({
                 success: false,
