@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AnimatePresence, motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   Search,
   ChevronLeft,
@@ -12,9 +13,11 @@ import {
   MapPin,
   Building2,
   CalendarDays,
+  Download,
 } from 'lucide-react';
 import {
   getAllUsersAdmin,
+  exportUsersAdmin,
   updateUserStatusAdmin,
   getUserByIdAdmin,
   updateUserCommunityAdmin,
@@ -115,6 +118,118 @@ const formatJoinDate = (value) => {
   });
 };
 
+const formatExcelDateTime = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const escapeXml = (value) =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+const USER_EXPORT_COLUMNS = [
+  { key: 'id', label: 'User ID', get: (u) => u._id || '' },
+  { key: 'firstName', label: 'First Name', get: (u) => u.firstName || '' },
+  { key: 'lastName', label: 'Last Name', get: (u) => u.lastName || '' },
+  { key: 'fullName', label: 'Full Name', get: (u) => getFullName(u) },
+  { key: 'email', label: 'Email', get: (u) => u.email || '' },
+  { key: 'phoneNumber', label: 'Phone Number', get: (u) => u.phoneNumber || '' },
+  { key: 'role', label: 'Role', get: (u) => u.role || '' },
+  { key: 'accountStatus', label: 'Account Status', get: (u) => u.accountStatus || 'approved' },
+  {
+    key: 'isActive',
+    label: 'Active Status',
+    get: (u) => (u.isActive === false ? 'Inactive' : 'Active'),
+  },
+  { key: 'flatNumber', label: 'Flat Number', get: (u) => getUserFlatNumber(u) || u.flatNumber || '' },
+  { key: 'addressLine1', label: 'Address Line 1', get: (u) => u.addressLine1 || '' },
+  { key: 'addressLine2', label: 'Address Line 2', get: (u) => u.addressLine2 || '' },
+  { key: 'city', label: 'City', get: (u) => u.city || '' },
+  { key: 'state', label: 'State', get: (u) => u.state || '' },
+  { key: 'zip', label: 'ZIP', get: (u) => u.zip || '' },
+  { key: 'fullAddress', label: 'Full Address', get: (u) => formatAddress(u) || '' },
+  {
+    key: 'community',
+    label: 'Community',
+    get: (u) => getUserCommunityInfo(u).name || '',
+  },
+  {
+    key: 'communityHandle',
+    label: 'Community Handle',
+    get: (u) => u.communityCommunName || '',
+  },
+  {
+    key: 'requestedCommunityName',
+    label: 'Requested Community Name',
+    get: (u) => u.requestedCommunityName || '',
+  },
+  { key: 'communName', label: 'Commun Name', get: (u) => u.communName || '' },
+  {
+    key: 'isPublicMember',
+    label: 'Public Member',
+    get: (u) => (u.isPublicMember ? 'Yes' : 'No'),
+  },
+  {
+    key: 'communityType',
+    label: 'Community Type',
+    get: (u) => getUserCommunityInfo(u).badge || '',
+  },
+  { key: 'profileImage', label: 'Profile Image URL', get: (u) => u.profileImage || '' },
+  { key: 'joinedAt', label: 'Joined At', get: (u) => formatExcelDateTime(u.createdAt) },
+  { key: 'updatedAt', label: 'Updated At', get: (u) => formatExcelDateTime(u.updatedAt) },
+];
+
+const downloadUsersExcel = (users) => {
+  const headerCells = USER_EXPORT_COLUMNS.map(
+    (col) => `<Cell><Data ss:Type="String">${escapeXml(col.label)}</Data></Cell>`
+  ).join('');
+  const bodyRows = users
+    .map((user) => {
+      const cells = USER_EXPORT_COLUMNS.map(
+        (col) => `<Cell><Data ss:Type="String">${escapeXml(col.get(user))}</Data></Cell>`
+      ).join('');
+      return `<Row>${cells}</Row>`;
+    })
+    .join('');
+
+  const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Worksheet ss:Name="Users">
+  <Table>
+   <Row>${headerCells}</Row>
+   ${bodyRows}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  link.href = url;
+  link.download = `commun-users-${stamp}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 const DetailRow = ({ label, value }) => (
   <div className="flex items-start justify-between gap-3 border-b border-purple-50 py-2 last:border-b-0">
     <span className="text-xs font-medium text-[var(--text-secondary)]">{label}</span>
@@ -135,6 +250,9 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [joinedFrom, setJoinedFrom] = useState('');
   const [joinedTo, setJoinedTo] = useState('');
+  const [communityFilter, setCommunityFilter] = useState('');
+  const [exportLimit, setExportLimit] = useState('1000');
+  const [exporting, setExporting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [updatingUserId, setUpdatingUserId] = useState(null);
   const pageSize = 10;
@@ -178,9 +296,10 @@ const UserManagement = () => {
         search: searchTerm,
         joinedFrom,
         joinedTo,
+        community: communityFilter,
       })
     );
-  }, [dispatch, currentPage, searchTerm, joinedFrom, joinedTo]);
+  }, [dispatch, currentPage, searchTerm, joinedFrom, joinedTo, communityFilter]);
 
   useEffect(() => {
     dispatch(getSecretariesAdmin());
@@ -266,6 +385,33 @@ const UserManagement = () => {
     }
   };
 
+  const handleExportUsers = async () => {
+    const limitNum = Math.min(Math.max(parseInt(exportLimit, 10) || 1000, 1), 5000);
+    setExporting(true);
+    try {
+      const result = await dispatch(
+        exportUsersAdmin({
+          limit: limitNum,
+          search: searchTerm,
+          joinedFrom,
+          joinedTo,
+          community: communityFilter,
+        })
+      ).unwrap();
+      const rows = result?.users || [];
+      if (!rows.length) {
+        toast.error('No users matched these filters.');
+        return;
+      }
+      downloadUsersExcel(rows);
+      toast.success(`Downloaded ${rows.length} user${rows.length === 1 ? '' : 's'}.`);
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Could not download users.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const joinedLabel = selectedUser?.createdAt
     ? new Date(selectedUser.createdAt).toLocaleString()
     : '—';
@@ -296,17 +442,59 @@ const UserManagement = () => {
         </span>
       </div>
 
-      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]" />
-          <input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by name, email, role, phone, community"
-            className={inputClass}
-          />
+      <div className="mb-5 rounded-2xl border border-purple-100/60 bg-white/80 p-4 shadow-sm shadow-purple-500/5">
+        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Filters & Excel export</h2>
+            <p className="text-xs text-[var(--text-secondary)]">
+              Filter the list, then download matching users with full details (max 5000).
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleExportUsers}
+            disabled={exporting}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--purple-primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Download className="h-4 w-4" />
+            {exporting ? 'Preparing…' : 'Download Excel'}
+          </button>
         </div>
-        <div className="flex flex-wrap items-end gap-3">
+
+        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search by name, email, role, phone, community"
+              className={inputClass}
+            />
+          </div>
+
+          <label className="min-w-[180px] flex-1 sm:max-w-[220px]">
+            <span className="mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+              <Building2 className="h-3.5 w-3.5" />
+              Community
+            </span>
+            <select
+              value={communityFilter}
+              onChange={(e) => {
+                setCommunityFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className={selectClass}
+            >
+              <option value="">All communities</option>
+              <option value="__other__">Other / Public</option>
+              {communityOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <label className="min-w-[150px]">
             <span className="mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
               <CalendarDays className="h-3.5 w-3.5" />
@@ -323,6 +511,7 @@ const UserManagement = () => {
               className={selectClass}
             />
           </label>
+
           <label className="min-w-[150px]">
             <span className="mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
               <CalendarDays className="h-3.5 w-3.5" />
@@ -339,17 +528,33 @@ const UserManagement = () => {
               className={selectClass}
             />
           </label>
-          {(joinedFrom || joinedTo) && (
+
+          <label className="min-w-[120px] sm:max-w-[140px]">
+            <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+              Download count
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={5000}
+              value={exportLimit}
+              onChange={(e) => setExportLimit(e.target.value)}
+              className={selectClass}
+            />
+          </label>
+
+          {(joinedFrom || joinedTo || communityFilter) && (
             <button
               type="button"
               onClick={() => {
                 setJoinedFrom('');
                 setJoinedTo('');
+                setCommunityFilter('');
                 setCurrentPage(1);
               }}
               className="rounded-xl border border-purple-100 px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-purple-50"
             >
-              Clear dates
+              Clear filters
             </button>
           )}
         </div>
