@@ -574,6 +574,62 @@ export const deleteAdminBanner = createAsyncThunk(
   }
 );
 
+export const fetchAdminLocalities = createAsyncThunk(
+  "admin/fetchLocalities",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/localities`);
+      return res.data?.localities || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to load localities");
+    }
+  }
+);
+
+export const createAdminLocality = createAsyncThunk(
+  "admin/createLocality",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/admin/localities`, payload);
+      toast.success(res.data?.message || "Locality created.");
+      return res.data?.locality;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to create locality";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const updateAdminLocality = createAsyncThunk(
+  "admin/updateLocality",
+  async ({ localityId, data }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/admin/localities/${localityId}`, data);
+      return res.data?.locality;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update locality";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const deleteAdminLocality = createAsyncThunk(
+  "admin/deleteLocality",
+  async (localityId, { rejectWithValue }) => {
+    try {
+      await axios.delete(`${API_URL}/api/admin/localities/${localityId}`);
+      toast.success("Locality deleted.");
+      return localityId;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to delete locality";
+      if (shouldToastApiMessage(message, err.response?.status, err.response?.data)) toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 export const fetchAdminBusinessCategories = createAsyncThunk(
   "admin/fetchBusinessCategories",
   async ({ search = "" } = {}, { rejectWithValue }) => {
@@ -722,6 +778,10 @@ const adminSlice = createSlice({
     bannersError: null,
     bannerUploading: false,
     bannerDeletingId: null,
+    localities: [],
+    localitiesLoading: false,
+    localitiesError: null,
+    localitySaving: false,
     businessCategoriesAdmin: [],
     businessCategoriesAdminLoading: false,
     businessCategoriesAdminError: null,
@@ -1051,6 +1111,54 @@ const adminSlice = createSlice({
       })
       .addCase(deleteAdminBanner.rejected, (state) => {
         state.bannerDeletingId = null;
+      })
+      .addCase(fetchAdminLocalities.pending, (state) => {
+        state.localitiesLoading = true;
+        state.localitiesError = null;
+      })
+      .addCase(fetchAdminLocalities.fulfilled, (state, action) => {
+        state.localitiesLoading = false;
+        state.localities = action.payload || [];
+      })
+      .addCase(fetchAdminLocalities.rejected, (state, action) => {
+        state.localitiesLoading = false;
+        state.localitiesError = action.payload;
+      })
+      .addCase(createAdminLocality.pending, (state) => {
+        state.localitySaving = true;
+      })
+      .addCase(createAdminLocality.fulfilled, (state, action) => {
+        state.localitySaving = false;
+        if (action.payload) {
+          state.localities = [...state.localities, action.payload].sort(
+            (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
+          );
+        }
+      })
+      .addCase(createAdminLocality.rejected, (state) => {
+        state.localitySaving = false;
+      })
+      .addCase(updateAdminLocality.pending, (state) => {
+        state.localitySaving = true;
+      })
+      .addCase(updateAdminLocality.fulfilled, (state, action) => {
+        state.localitySaving = false;
+        const updated = action.payload;
+        if (!updated?._id) return;
+        state.localities = state.localities.map((l) => (l._id === updated._id ? updated : l));
+      })
+      .addCase(updateAdminLocality.rejected, (state) => {
+        state.localitySaving = false;
+      })
+      .addCase(deleteAdminLocality.pending, (state) => {
+        state.localitySaving = true;
+      })
+      .addCase(deleteAdminLocality.fulfilled, (state, action) => {
+        state.localitySaving = false;
+        state.localities = state.localities.filter((l) => l._id !== action.payload);
+      })
+      .addCase(deleteAdminLocality.rejected, (state) => {
+        state.localitySaving = false;
       })
       .addCase(fetchAdminBusinessCategories.pending, (state) => {
         state.businessCategoriesAdminLoading = true;

@@ -41,6 +41,12 @@ import {
     deleteBannerAdmin,
 } from "../controllers/banner.controller.js";
 import {
+    listLocalitiesAdmin,
+    createLocalityAdmin,
+    updateLocalityAdmin,
+    deleteLocalityAdmin,
+} from "../controllers/locality.controller.js";
+import {
     listBusinessCategoriesAdmin,
     createBusinessCategoryAdmin,
     updateBusinessCategoryAdmin,
@@ -224,6 +230,11 @@ router.get("/banners", protect, isAdmin, listBannersAdmin);
 router.post("/banners", protect, isAdmin, upload.single("image"), createBannerAdmin);
 router.patch("/banners/:bannerId/status", protect, isAdmin, updateBannerStatusAdmin);
 router.delete("/banners/:bannerId", protect, isAdmin, deleteBannerAdmin);
+
+router.get("/localities", protect, isAdmin, listLocalitiesAdmin);
+router.post("/localities", protect, isAdmin, createLocalityAdmin);
+router.patch("/localities/:localityId", protect, isAdmin, updateLocalityAdmin);
+router.delete("/localities/:localityId", protect, isAdmin, deleteLocalityAdmin);
 
 router.get("/business-categories", protect, isAdmin, listBusinessCategoriesAdmin);
 router.post("/business-categories", protect, isAdmin, createBusinessCategoryAdmin);
