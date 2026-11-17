@@ -27,6 +27,8 @@ import { initChatSocket } from "./socket/chatSocket.js";
 import cors from "cors";
 import { seedCategoriesIfMissing } from "./utils/seedCategories.js";
 import { seedBusinessCategoriesIfMissing } from "./utils/seedBusinessCategories.js";
+import { seedLocalitiesIfMissing } from "./utils/seedLocalities.js";
+import localityRouter from "./routes/locality.route.js";
 import { isWebPushConfigured } from "./utils/webPush.js";
 import { isMobilePushConfigured } from "./utils/mobilePush.js";
 import { ALLOWED_ORIGINS, ALLOWED_ORIGINS_LIST } from "./config/allowedOrigins.js";
@@ -115,6 +117,7 @@ app.use('/api/emergency-contacts', emergencyContactRouter);
 app.use('/api/interest-communities', interestCommunityRouter);
 app.use('/api/push', pushRouter);
 app.use('/api/banners', bannerRouter);
+app.use('/api/localities', localityRouter);
 app.use('/api', sitemapRouter);
 
 // Global error handler to prevent crashes on unexpected errors
@@ -157,6 +160,7 @@ async function init() {
       await dbConnect();
       await seedCategoriesIfMissing();
       await seedBusinessCategoriesIfMissing();
+      await seedLocalitiesIfMissing();
     })();
   }
   return initPromise;
