@@ -1093,18 +1093,20 @@ const getProviderClicks = async (req, res) => {
 };
 
 /**
- * @description Get all users with pagination/search/join-date filter (admin)
+ * @description Get all users with pagination/search/join-date/community filter (admin)
  * @route GET /api/admin/all-users
- * @queryParams page, limit, search, joinedFrom (YYYY-MM-DD), joinedTo (YYYY-MM-DD)
+ * @queryParams page, limit, search, joinedFrom, joinedTo, community (__other__ = public/other)
  * @access Private (Admin)
  */
 const getAllUsers = async (req, res) => {
     try {
-        const page = parseInt(req.query.page, 10) || 1;
-        const limit = parseInt(req.query.limit, 10) || 10;
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const rawLimit = parseInt(req.query.limit, 10) || 10;
+        const limit = Math.min(Math.max(rawLimit, 1), 5000);
         const search = (req.query.search || '').trim();
         const joinedFrom = (req.query.joinedFrom || '').trim();
         const joinedTo = (req.query.joinedTo || '').trim();
+        const community = (req.query.community || '').trim();
         const skip = (page - 1) * limit;
 
         const andConditions = [];
@@ -1121,6 +1123,22 @@ const getAllUsers = async (req, res) => {
                     { requestedCommunityName: { $regex: search, $options: 'i' } },
                 ],
             });
+        }
+
+        if (community) {
+            if (community === '__other__') {
+                andConditions.push({
+                    $or: [
+                        { isPublicMember: true },
+                        { communityCommunName: { $in: ['', null] } },
+                    ],
+                });
+            } else {
+                const cn = normalizeCommunName(community);
+                if (cn) {
+                    andConditions.push({ communityCommunName: cn });
+                }
+            }
         }
 
         const createdAt = {};
@@ -1144,7 +1162,7 @@ const getAllUsers = async (req, res) => {
 
         const totalUsers = await User.countDocuments(query);
         const users = await User.find(query)
-            .select('firstName lastName email phoneNumber role profileImage isActive createdAt flatNumber communityCommunName requestedCommunityName isPublicMember communName accountStatus addressLine1 addressLine2 city state zip')
+            .select('firstName lastName email phoneNumber role profileImage isActive createdAt updatedAt flatNumber communityCommunName requestedCommunityName isPublicMember communName accountStatus addressLine1 addressLine2 city state zip')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);

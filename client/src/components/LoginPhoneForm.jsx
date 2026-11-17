@@ -14,7 +14,7 @@ const btnPrimary =
 const btnSecondary =
   'flex items-center justify-center rounded-xl border border-purple-100 bg-white px-4 py-3 font-semibold text-[var(--text-primary)] transition-all hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-60';
 
-const LoginPhoneForm = ({ onLoginSuccess, onSwitchToEmail }) => {
+const LoginPhoneForm = ({ onLoginSuccess, onSwitchToEmail, onSwitchToSignup }) => {
   const dispatch = useDispatch();
   const PHONE_DIGITS = 10;
   const RESEND_COOLDOWN = 30;
@@ -59,6 +59,11 @@ const LoginPhoneForm = ({ onLoginSuccess, onSwitchToEmail }) => {
         body: JSON.stringify({ phoneNumber }),
       });
       const data = await res.json();
+      if (res.status === 404 || data?.code === 'PHONE_NOT_REGISTERED') {
+        toast.error(data?.message || 'No account found with this phone number. Please sign up first.');
+        onSwitchToSignup?.(phoneNumber);
+        return;
+      }
       if (!res.ok) throw new Error(data?.message || 'Could not send OTP.');
       setOtpSent(true);
       setResendSeconds(RESEND_COOLDOWN);

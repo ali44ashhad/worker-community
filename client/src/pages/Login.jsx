@@ -14,6 +14,7 @@ const inputClass =
 const Login = () => {
   const [mode, setMode] = useState(null);
   const [loginMethod, setLoginMethod] = useState('phone');
+  const [signupPhoneNumber, setSignupPhoneNumber] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -90,18 +91,26 @@ const Login = () => {
   const goBackToChoice = () => {
     setMode(null);
     setLoginMethod('phone');
+    setSignupPhoneNumber('');
     setShowPassword(false);
     setLoading(false);
   };
 
   const selectMode = (selected) => {
     setLoginMethod('phone');
+    if (selected !== 'signup') setSignupPhoneNumber('');
     setMode(selected);
   };
 
   const switchToLogin = () => {
     setLoginMethod('phone');
+    setSignupPhoneNumber('');
     setMode('login');
+  };
+
+  const switchToSignupFromLogin = (phoneNumber = '') => {
+    setSignupPhoneNumber(String(phoneNumber || '').replace(/\D/g, '').slice(0, 10));
+    setMode('signup');
   };
 
   return (
@@ -196,6 +205,7 @@ const Login = () => {
                   onBack={goBackToChoice}
                   onSuccess={handleSignupSuccess}
                   onSwitchToLogin={switchToLogin}
+                  initialPhoneNumber={signupPhoneNumber}
                 />
               </motion.div>
             ) : (
@@ -234,6 +244,7 @@ const Login = () => {
                   <LoginPhoneForm
                     onLoginSuccess={handlePhoneLoginSuccess}
                     onSwitchToEmail={() => setLoginMethod('email')}
+                    onSwitchToSignup={switchToSignupFromLogin}
                   />
                 ) : (
                   <motion.form

@@ -47,7 +47,10 @@ export const getAllProvidersAdmin = createAsyncThunk(
 // Get all users (admin) with pagination
 export const getAllUsersAdmin = createAsyncThunk(
   "admin/getAllUsers",
-  async ({ page = 1, limit = 10, search = '', joinedFrom = '', joinedTo = '' } = {}, { rejectWithValue }) => {
+  async (
+    { page = 1, limit = 10, search = '', joinedFrom = '', joinedTo = '', community = '' } = {},
+    { rejectWithValue }
+  ) => {
     try {
       const params = new URLSearchParams();
       params.append('page', page.toString());
@@ -61,6 +64,9 @@ export const getAllUsersAdmin = createAsyncThunk(
       if (joinedTo) {
         params.append('joinedTo', joinedTo);
       }
+      if (community) {
+        params.append('community', community);
+      }
       const res = await axios.get(`${API_URL}/api/admin/all-users?${params.toString()}`);
       return {
         users: res.data.users,
@@ -68,6 +74,32 @@ export const getAllUsersAdmin = createAsyncThunk(
       };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch users");
+    }
+  }
+);
+
+/** Fetch users for Excel export without touching the table list state. */
+export const exportUsersAdmin = createAsyncThunk(
+  "admin/exportUsers",
+  async (
+    { limit = 1000, search = '', joinedFrom = '', joinedTo = '', community = '' } = {},
+    { rejectWithValue }
+  ) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('page', '1');
+      params.append('limit', String(Math.min(Math.max(Number(limit) || 1000, 1), 5000)));
+      if (search.trim()) params.append('search', search.trim());
+      if (joinedFrom) params.append('joinedFrom', joinedFrom);
+      if (joinedTo) params.append('joinedTo', joinedTo);
+      if (community) params.append('community', community);
+      const res = await axios.get(`${API_URL}/api/admin/all-users?${params.toString()}`);
+      return {
+        users: res.data.users || [],
+        totalUsers: res.data.pagination?.totalUsers ?? (res.data.users || []).length,
+      };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to export users");
     }
   }
 );

@@ -3,11 +3,18 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
 
-const activeLocality = {
-  name: 'Sainik Farms',
-  className:
-    'bottom-[20%] right-[6%] sm:bottom-[16%] sm:right-[12%] sm:top-auto sm:left-auto sm:translate-x-0 sm:translate-y-0 lg:bottom-auto lg:top-[62%] lg:right-auto lg:left-[55%]',
-};
+const activeLocalities = [
+  {
+    name: 'Sainik Farms',
+    className:
+      'bottom-[14%] right-[2%] sm:bottom-[12%] sm:right-[6%] sm:top-auto sm:left-auto sm:translate-x-0 sm:translate-y-0 lg:bottom-auto lg:top-[70%] lg:right-auto lg:left-[64%]',
+  },
+  {
+    name: 'Anupam Gardens',
+    className:
+      'bottom-[14%] right-[31%] sm:bottom-[12%] sm:right-[27%] sm:top-auto sm:left-auto sm:translate-x-0 sm:translate-y-0 lg:bottom-auto lg:top-[70%] lg:right-auto lg:left-[51%]',
+  },
+];
 
 const comingSoonLocalities = [
   {
@@ -41,9 +48,7 @@ const LocalitiesSection = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
       <div className="text-center mb-16">
         <h2 className="text-4xl sm:text-5xl font-bold mb-4">Available in Delhi</h2>
-        <p className="text-lg text-purple-100 max-w-2xl mx-auto">
-          Starting with Sainik Farms. More localities coming soon.
-        </p>
+         
       </div>
 
       <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-4 sm:p-8 overflow-hidden shadow-2xl">
@@ -69,46 +74,32 @@ const LocalitiesSection = () => (
             <path d="M 75 0 L 75 100" stroke="white" strokeWidth="0.45" fill="none" vectorEffect="non-scaling-stroke" />
           </svg>
 
-          {/* Active locality */}
-          <motion.div
-            className={`absolute z-10 ${activeLocality.className}`}
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1 }}
-          >
-            <div className="flex flex-col items-center">
-              <div className="relative flex items-center justify-center w-[5.5rem] h-[4.75rem] sm:w-[6.25rem] sm:h-[5.25rem]">
-                <svg
-                  className="absolute inset-0 w-full h-full"
-                  viewBox="0 0 100 100"
-                  aria-hidden="true"
-                >
-                  <ellipse
-                    cx="50"
-                    cy="50"
-                    rx="30"
-                    ry="27"
-                    fill="rgba(219,88,159,0.35)"
-                    stroke="rgba(255,255,255,0.5)"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-                <div className="relative z-10 w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white/30">
+          {/* Active localities */}
+          {activeLocalities.map((locality, i) => (
+            <motion.div
+              key={locality.name}
+              className={`absolute z-10 ${locality.className}`}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, delay: i * 0.15 }}
+            >
+              <div className="flex flex-col items-center">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-fuchsia-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white/30">
                   <MapPin className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
                 </div>
-              </div>
-              <div className="mt-0.5 max-w-[9.5rem] sm:max-w-none">
-                <div className="bg-white/20 backdrop-blur-sm text-white px-2.5 py-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs border border-white/30 font-medium text-center">
-                  {activeLocality.name}
-                  <div className="text-[10px] sm:text-xs text-fuchsia-200 mt-0.5 flex items-center justify-center gap-1 font-semibold">
-                    <span className="w-1.5 h-1.5 bg-fuchsia-300 rounded-full animate-pulse shrink-0" />
-                    Active Now
+                <div className="mt-1.5 max-w-[9.5rem] sm:max-w-none">
+                  <div className="bg-white/20 backdrop-blur-sm text-white px-2.5 py-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs border border-white/30 font-medium text-center">
+                    {locality.name}
+                    <div className="text-[10px] sm:text-xs text-fuchsia-200 mt-0.5 flex items-center justify-center gap-1 font-semibold">
+                      <span className="w-1.5 h-1.5 bg-fuchsia-300 rounded-full animate-pulse shrink-0" />
+                      Active Now
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          ))}
 
           {comingSoonLocalities.map((locality, i) => (
             <motion.div

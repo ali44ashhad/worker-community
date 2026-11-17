@@ -289,9 +289,10 @@ const sendLoginOtp = async (req, res) => {
 
         const user = await findUserByPhoneDigits(phoneDigits);
         if (!user) {
-            return res.status(200).json({
-                success: true,
-                message: "OTP sent to your phone.",
+            return res.status(404).json({
+                success: false,
+                code: "PHONE_NOT_REGISTERED",
+                message: "No account found with this phone number. Please sign up first.",
             });
         }
 
