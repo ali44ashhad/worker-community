@@ -39,6 +39,7 @@ import UpdateProviders from './pages/admin/UpdateProviders'
 import AdminServices from './pages/admin/AdminServices'
 import AdminReviews from './pages/admin/AdminReviews'
 import AdminBanners from './pages/admin/AdminBanners'
+import AdminLocalities from './pages/admin/AdminLocalities'
 import AdminAnnouncements from './pages/admin/AdminAnnouncements'
 import NotificationsRoute from './components/NotificationsRoute'
 import CategoryClicks from './pages/admin/CategoryClicks'
@@ -404,6 +405,7 @@ const App = () => {
           <Route path="services" element={<AdminServices />} />
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="banners" element={<AdminBanners />} />
+          <Route path="localities" element={<AdminLocalities />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="category-clicks" element={<CategoryClicks />} />
           <Route path="provider-clicks" element={<ProviderClicks />} />

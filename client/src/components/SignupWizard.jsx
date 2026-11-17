@@ -27,7 +27,7 @@ const slideVariants = {
   exit: (dir) => ({ x: dir > 0 ? -40 : 40, opacity: 0 }),
 };
 
-const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
+const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin, initialPhoneNumber = '' }) => {
   const dispatch = useDispatch();
   const PHONE_DIGITS = 10;
   const RESEND_COOLDOWN = 30;
@@ -42,7 +42,7 @@ const SignupWizard = ({ onBack, onSuccess, onSwitchToLogin }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    phoneNumber: '',
+    phoneNumber: String(initialPhoneNumber || '').replace(/\D/g, '').slice(0, 10),
     communityCommunName: '',
     otherCommunityName: '',
     flatNumber: '',
