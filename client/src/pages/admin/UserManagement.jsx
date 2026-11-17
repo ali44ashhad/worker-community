@@ -11,6 +11,7 @@ import {
   User,
   MapPin,
   Building2,
+  CalendarDays,
 } from 'lucide-react';
 import {
   getAllUsersAdmin,
@@ -103,6 +104,17 @@ const ActionButton = ({ user, updatingUserId, authUserId, onToggle }) => {
 
 const canChangeCommunity = (user) => user && user.role !== 'admin' && user.role !== 'secretary';
 
+const formatJoinDate = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
 const DetailRow = ({ label, value }) => (
   <div className="flex items-start justify-between gap-3 border-b border-purple-50 py-2 last:border-b-0">
     <span className="text-xs font-medium text-[var(--text-secondary)]">{label}</span>
@@ -121,6 +133,8 @@ const UserManagement = () => {
 
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [joinedFrom, setJoinedFrom] = useState('');
+  const [joinedTo, setJoinedTo] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [updatingUserId, setUpdatingUserId] = useState(null);
   const pageSize = 10;
@@ -157,8 +171,16 @@ const UserManagement = () => {
   }, [searchInput]);
 
   useEffect(() => {
-    dispatch(getAllUsersAdmin({ page: currentPage, limit: pageSize, search: searchTerm }));
-  }, [dispatch, currentPage, searchTerm]);
+    dispatch(
+      getAllUsersAdmin({
+        page: currentPage,
+        limit: pageSize,
+        search: searchTerm,
+        joinedFrom,
+        joinedTo,
+      })
+    );
+  }, [dispatch, currentPage, searchTerm, joinedFrom, joinedTo]);
 
   useEffect(() => {
     dispatch(getSecretariesAdmin());
@@ -274,14 +296,63 @@ const UserManagement = () => {
         </span>
       </div>
 
-      <div className="relative mb-5 max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]" />
-        <input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search by name, email, role, phone, community"
-          className={inputClass}
-        />
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]" />
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by name, email, role, phone, community"
+            className={inputClass}
+          />
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="min-w-[150px]">
+            <span className="mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Joined from
+            </span>
+            <input
+              type="date"
+              value={joinedFrom}
+              max={joinedTo || undefined}
+              onChange={(e) => {
+                setJoinedFrom(e.target.value);
+                setCurrentPage(1);
+              }}
+              className={selectClass}
+            />
+          </label>
+          <label className="min-w-[150px]">
+            <span className="mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Joined to
+            </span>
+            <input
+              type="date"
+              value={joinedTo}
+              min={joinedFrom || undefined}
+              onChange={(e) => {
+                setJoinedTo(e.target.value);
+                setCurrentPage(1);
+              }}
+              className={selectClass}
+            />
+          </label>
+          {(joinedFrom || joinedTo) && (
+            <button
+              type="button"
+              onClick={() => {
+                setJoinedFrom('');
+                setJoinedTo('');
+                setCurrentPage(1);
+              }}
+              className="rounded-xl border border-purple-100 px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-purple-50"
+            >
+              Clear dates
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Mobile cards */}
@@ -331,6 +402,7 @@ const UserManagement = () => {
                   <span>Mobile: {user.phoneNumber || '—'}</span>
                   <span className="capitalize">{user.role}</span>
                 </div>
+                <p>Joined: {formatJoinDate(user.createdAt)}</p>
                 <p>Flat: {getUserFlatNumber(user) || '—'}</p>
                 <p className="leading-snug">Address: {formatAddress(user) || '—'}</p>
               </div>
@@ -359,7 +431,7 @@ const UserManagement = () => {
       {/* Desktop table — horizontal scroll for wider columns */}
       <div className="hidden rounded-2xl border border-purple-100/50 bg-white/80 shadow-sm shadow-purple-500/5 lg:block">
         <div className="overflow-x-auto overscroll-x-contain">
-          <table className="w-full min-w-[1360px]">
+          <table className="w-full min-w-[1480px]">
             <thead className="border-b border-purple-100 bg-purple-50/40">
               <tr>
                 <th className="sticky left-0 z-10 bg-purple-50/95 px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] backdrop-blur-sm">
@@ -373,6 +445,9 @@ const UserManagement = () => {
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Community
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  Join date
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
                   Flat No.
@@ -394,7 +469,7 @@ const UserManagement = () => {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center">
+                  <td colSpan={10} className="px-4 py-12 text-center">
                     <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-2 border-purple-100 border-t-[var(--purple-primary)]" />
                     <p className="text-sm text-[var(--text-secondary)]">Loading users…</p>
                   </td>
@@ -402,7 +477,7 @@ const UserManagement = () => {
               )}
               {!isLoading && users.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-10 text-center text-sm text-[var(--text-secondary)]">
+                  <td colSpan={10} className="px-4 py-10 text-center text-sm text-[var(--text-secondary)]">
                     No users found.
                   </td>
                 </tr>
@@ -435,6 +510,9 @@ const UserManagement = () => {
                     </td>
                     <td className="px-4 py-3">
                       <CommunityDisplay user={user} />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] whitespace-nowrap">
+                      {formatJoinDate(user.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-sm text-[var(--text-secondary)] whitespace-nowrap">
                       {getUserFlatNumber(user) || '—'}

@@ -47,13 +47,19 @@ export const getAllProvidersAdmin = createAsyncThunk(
 // Get all users (admin) with pagination
 export const getAllUsersAdmin = createAsyncThunk(
   "admin/getAllUsers",
-  async ({ page = 1, limit = 10, search = '' } = {}, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10, search = '', joinedFrom = '', joinedTo = '' } = {}, { rejectWithValue }) => {
     try {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('limit', limit.toString());
       if (search.trim()) {
         params.append('search', search.trim());
+      }
+      if (joinedFrom) {
+        params.append('joinedFrom', joinedFrom);
+      }
+      if (joinedTo) {
+        params.append('joinedTo', joinedTo);
       }
       const res = await axios.get(`${API_URL}/api/admin/all-users?${params.toString()}`);
       return {

@@ -1093,8 +1093,9 @@ const getProviderClicks = async (req, res) => {
 };
 
 /**
- * @description Get all users with pagination/search (admin)
+ * @description Get all users with pagination/search/join-date filter (admin)
  * @route GET /api/admin/all-users
+ * @queryParams page, limit, search, joinedFrom (YYYY-MM-DD), joinedTo (YYYY-MM-DD)
  * @access Private (Admin)
  */
 const getAllUsers = async (req, res) => {
@@ -1102,11 +1103,14 @@ const getAllUsers = async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const search = (req.query.search || '').trim();
+        const joinedFrom = (req.query.joinedFrom || '').trim();
+        const joinedTo = (req.query.joinedTo || '').trim();
         const skip = (page - 1) * limit;
 
-        let query = {};
+        const andConditions = [];
+
         if (search) {
-            query = {
+            andConditions.push({
                 $or: [
                     { firstName: { $regex: search, $options: 'i' } },
                     { lastName: { $regex: search, $options: 'i' } },
@@ -1115,9 +1119,28 @@ const getAllUsers = async (req, res) => {
                     { role: { $regex: search, $options: 'i' } },
                     { communityCommunName: { $regex: search, $options: 'i' } },
                     { requestedCommunityName: { $regex: search, $options: 'i' } },
-                ]
-            };
+                ],
+            });
         }
+
+        const createdAt = {};
+        if (joinedFrom) {
+            const fromDate = new Date(`${joinedFrom}T00:00:00`);
+            if (!Number.isNaN(fromDate.getTime())) {
+                createdAt.$gte = fromDate;
+            }
+        }
+        if (joinedTo) {
+            const toDate = new Date(`${joinedTo}T23:59:59.999`);
+            if (!Number.isNaN(toDate.getTime())) {
+                createdAt.$lte = toDate;
+            }
+        }
+        if (Object.keys(createdAt).length) {
+            andConditions.push({ createdAt });
+        }
+
+        const query = andConditions.length ? { $and: andConditions } : {};
 
         const totalUsers = await User.countDocuments(query);
         const users = await User.find(query)
